@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-Bản thiết kế, chưa có code. Nối tiếp [context-suggestion.md](context-suggestion.md) (bigram cá
+Engine Rust đã hiện thực (bước 2); C ABI, JNI và hai nền tảng còn lại. Nối tiếp [context-suggestion.md](context-suggestion.md) (bigram cá
 nhân) và [vietnamese-seed-suggestion.md](vietnamese-seed-suggestion.md) (dữ liệu kèm app). Như hai
 tài liệu đó, đây là nơi mọi quyết định thiết kế sống: chỗ nào hiện thực lệch khỏi bản viết này thì
 sửa lại ngay trong PR đó và đánh dấu **Đã đổi khi hiện thực**.
@@ -94,8 +94,12 @@ Một `Entry<2>` khoảng 52 byte (khoá 16, đếm 2, follower 32, cộng paddi
 (256 KiB đo thật) và trần retained heap 4 MiB của `tests/stress.rs`, vẫn dư.
 
 Con số 4096 là ước lượng: gõ vài chục nghìn chữ thì phần lớn cặp chỉ gặp một lần, và luật nạp ô sẽ
-đẩy chúng ra. Ghi số đo thật vào đây khi hiện thực xong, đặt trần trong test như
-`the_shipped_tables_stay_small`, rồi đo lại trên extension iOS ở bước cuối.
+đẩy chúng ra. Đo lại trên extension iOS ở bước cuối.
+
+**Đã đổi khi hiện thực**: test gác thay cho lời hứa, trong `src/tests/ngram/memory.rs`:
+`size_of::<Entry<2>>() <= 52` và bảng mặc định ≤ 256 KiB; chưa học trigram nào thì bảng chưa cấp
+byte nào; 50.000 lần học trên bảng 64 ô không làm bảng lớn thêm một byte; `reset()` trả lại bộ nhớ.
+`ngram_contexts` kẹp trong `8..=65536` và làm tròn lên luỹ thừa 2.
 
 ## Học
 
@@ -106,6 +110,16 @@ learn_after(context = [a, b], token = c):
         ô = bảng trigram tìm hoặc chiếm khoá [a, b]
         slots::record(ô.followers, ô.context_seen, c)
 ```
+
+**Đã đổi khi hiện thực: chữ `a` lấy từ journal, không do nền tảng truyền.** `learn_after(prev,
+token)` giữ nguyên chữ ký. `JournalChain` (`src/ngram/chain.rs`, thay `journalled_previous`) nhớ hai
+chữ vừa ghi journal liền mạch. Trigram `[a, b] → c` được học **đúng khi** `c` nối với `b` và `b` đã
+nối với `a` trong journal, tức đúng khi replay dựng lại được nó. Nhờ vậy:
+
+- bảng đọc lại từ journal sau một lần crash **bằng đúng** bảng trong bộ nhớ (proptest
+  `the_table_on_disk_is_the_table_in_memory`), không chỉ "bỏ sót chứ không bịa";
+- nền tảng không phải đổi đường học, chỉ đường truy vấn cần hai chữ;
+- cái giá: sau mỗi `compact` chuỗi bắt đầu lại, nên mất một hai trigram ở chỗ đó.
 
 - Chữ bị chặn không bao giờ được học (đã gác sẵn ở `learn_inner`), nên cũng không vào khoá hay
   follower của trigram nào.
@@ -156,16 +170,20 @@ phép quét bảng.
   `NgramTable`: bỏ ô có chữ bị xoá trong khoá, bỏ follower trỏ tới nó và trừ `uses` của nó khỏi
   `context_seen` (như `slots::relocate`), đổi đích chữ bị dời chỗ do `swap_remove`.
 - `enforce_capacity` lúc nạp có thể xoá cả nghìn từ. Gom thành **một** lượt quét bảng sau khi xoá
-  xong, không phải mỗi từ một lượt.
-- `reset()` xoá luôn các bảng.
-- Mọi edit vẫn cắt chuỗi ngữ cảnh của journal (`journalled_previous`), như hôm nay.
+  xong, không phải mỗi từ một lượt. **Đã đổi khi hiện thực**: bảng bị **xoá sạch** khi phải bỏ bớt
+  chữ. Kho chỉ co lại khi một bản build hạ `max_words`; dời chỉ số cho cả bảng sau một loạt
+  `swap_remove` cần bảng ánh xạ riêng, trong khi trigram học lại được. Chữ và cặp bigram giữ nguyên.
+- Khoá có chữ bị dời chỗ thì băm ra chỗ khác, nên ô đó được nhấc ra rồi chèn lại sau lượt quét
+  (`src/ngram/table/relocate.rs`).
+- `reset()` xoá luôn các bảng và trả lại bộ nhớ.
+- Mọi edit vẫn cắt chuỗi ngữ cảnh của journal (`JournalChain::clear`), như hôm nay.
 
 ## Lưu trữ
 
 **Journal không đổi định dạng.** Cờ `chained` trên mỗi token đã đủ dựng lại chuỗi: token `c` nối
-với `b`, và `b` nối với `a`, thì replay có trigram `[a, b] → c`. Replay giữ hai token gần nhất thay
-vì một, edit vẫn cắt chuỗi. Luật cũ giữ nguyên: replay có thể **bỏ sót** một cạnh, không bao giờ
-**bịa** một cạnh sai.
+với `b`, và `b` nối với `a`, thì replay có trigram `[a, b] → c`. Luật cũ giữ nguyên: replay có thể
+**bỏ sót** một cạnh, không bao giờ **bịa** một cạnh sai. **Đã đổi khi hiện thực**: replay không đổi
+một dòng nào, vì học trigram đã dựa trên chính chuỗi journal (mục "Học").
 
 **Snapshot v4.** Thêm các khối bảng sau danh sách từ:
 
@@ -181,36 +199,57 @@ u8 order · u32 byte_len · u32 count · count × (K × u32 key · u16 context_s
   nguyên tệp như mọi lần nâng version trước.
 - 4096 ô ≈ 140 KiB trên đĩa, trong trần 2 MiB của snapshot.
 - Bảng phải nạp **trước** `enforce_capacity`, vì bước đó dời chỉ số từ.
+- Khối trigram ghi ngữ cảnh và follower bằng đúng bộ mã của bản ghi chữ (`encode_edges`,
+  `decode_edges` trong `snapshot/words.rs`).
 
 ## Hợp đồng ngữ cảnh và binding
 
 Crate vẫn không tự giữ ngữ cảnh: nền tảng truyền vào, cũ → mới.
 
-**Rust.** Một kiểu `Context<'a>` (tối đa `MAX_CONTEXT` chữ, dài hơn thì giữ phần cuối), có
-`From<Option<&str>>` và `From<&[&str]>`. `learn_after` và `suggest_with` nhận
-`impl Into<Context<'a>>`, nên mọi chỗ gọi `learn_after(Some("xin"), …)` hôm nay vẫn biên dịch,
-không có breaking change.
+**Rust.** **Đã đổi khi hiện thực**: không có kiểu `Context<'a>`; suy kiểu cho `None` qua
+`impl Into<…>` dễ vỡ ở chỗ gọi. Thay bằng `suggest_in(context: &[&str], prefix)`, cũ → mới, chỉ đọc
+`MAX_CONTEXT` chữ cuối; `suggest_with(prev, prefix)` là `suggest_in(prev.as_slice(), prefix)`.
+Không có breaking change. Học không cần hàm mới (mục "Học").
 
-**C ABI.** Thêm `funput_suggestion_learn_in` và `funput_suggestion_query_in`, nhận một mảng
-`{ptr, len}` UTF-32 cũ → mới. Hai hàm hiện có thành lớp mỏng gọi sang với một chữ, ABI cũ giữ
-nguyên. Tạo lại `funput.h` và bản header trong `FunputCore.xcframework`.
+Chữ ngữ cảnh được tìm trong `context_slots` (`src/ngram/context.rs`): chữ cuối trước, chữ trước nó
+chỉ khi chữ cuối có trong kho. Một lượt quét gộp cả hai chữ đã được đo và không nhanh hơn.
 
-**JNI.** `nativeLearnIn(handle, context: Array<String>, token)` và `nativeQueryIn(handle, context,
-prefix)`. Phía Kotlin giữ sẵn mảng, không tạo mảng mới mỗi phím.
+Đo bằng `benches/suggestions.rs` trên kho 5000 chữ:
 
-**Nền tảng.** `AuthoredTokenTracker` ở iOS và Android giữ một vòng `MAX_CONTEXT` chữ thay vì một chữ,
-cắt ở đúng các ranh giới đang có: dấu câu không phải dấu cách, xoá lùi qua ranh giới, đổi ô nhập,
-reset. Ranh giới câu vẫn do nền tảng quyết định như tài liệu bigram đã chốt.
+| Bench | Trước trigram | Sau trigram |
+|---|---|---|
+| `predict/speaks` (một chữ ngữ cảnh) | 3,92 µs | 3,92 µs |
+| `lookup/with-context/exact-medium` | 2,92 µs | 2,77 µs |
+| `predict/trigram` (hai chữ ngữ cảnh) | không có | 7,86 µs |
+
+Đường học: `learn/chained` (bậc 2) 8,17 µs, `learn/trigram` (bậc 3) 8,19 µs, tức bảng trigram gần
+như không tốn gì thêm khi học. Ngữ cảnh hai chữ tốn thêm đúng một lượt quét `words`. Toàn bộ chạy trên worker nền của nền tảng,
+không trên luồng gõ, và không cấp phát.
+
+**C ABI.** Thêm `funput_suggestion_query_in`, nhận một mảng `{ptr, len}` UTF-32 cũ → mới. Hàm hiện
+có giữ nguyên ABI. Tạo lại `funput.h` và bản header trong `FunputCore.xcframework`.
+
+**JNI.** `nativeQueryIn(handle, context: Array<String>, prefix)`. Phía Kotlin giữ sẵn mảng, không
+tạo mảng mới mỗi phím.
+
+**Nền tảng.** `AuthoredTokenTracker` ở iOS và Android giữ một vòng `MAX_CONTEXT` chữ thay vì một chữ
+**cho truy vấn**, cắt ở đúng các ranh giới đang có: dấu câu không phải dấu cách, xoá lùi qua ranh
+giới, đổi ô nhập, reset. Đường học giữ nguyên. Ranh giới câu vẫn do nền tảng quyết định như tài
+liệu bigram đã chốt.
 
 ## Bố cục mã
 
 `scripts/check-loc.sh`: tối đa 150 dòng mỗi tệp, tối đa 5 tệp mỗi thư mục.
 
-- `src/ngram/`: `key.rs` (`WordRef`, băm), `table.rs` (`NgramTable`, dò và chọn ô), `learning.rs`,
-  `query.rs` (predict và rerank theo bậc), `mod.rs`.
-- `src/bigram/query/mod.rs` thành chỗ chạy vòng backoff, gọi sang `ngram::query`.
+**Đã đổi khi hiện thực**:
+
+- `src/ngram/`: `key.rs` (`WordRef`, băm), `context.rs` (tìm chữ ngữ cảnh một lượt), `chain.rs`
+  (`JournalChain`), `table/` (`mod.rs` dò và chọn ô, `entry.rs`, `relocate.rs`).
+- Học và truy vấn ở lại `src/bigram/`: `learning.rs` ghi cả hai bậc; `query/predict.rs` có `judge`
+  dùng chung cho mọi bậc và vòng lùi bậc; `query/rerank.rs` gộp follower theo bậc.
 - `src/persistence/codec/snapshot/ngram.rs`: khối bảng.
 - `src/dictionary/edit/removal.rs`: thêm lượt quét bảng.
+- `src/engine/capacity.rs`: chính sách nhường chỗ, tách khỏi `engine/mod.rs` để giữ dưới 150 dòng.
 
 ## Kiểm thử và cổng gác
 
@@ -226,17 +265,16 @@ reset. Ranh giới câu vẫn do nền tảng quyết định như tài liệu b
 - **Cấu hình:** `context_order = 2` cho đúng hành vi hôm nay (chạy lại toàn bộ test bigram).
 - **`tests/alloc_budget.rs`:** truy vấn có ngữ cảnh hai chữ, cả Predict lẫn Rerank, 0 cấp phát khi
   ấm.
-- **Bench:** `suggestions/predict` thêm ngữ cảnh hai chữ, `suggestions/learn` thêm học có trigram,
-  `suggestions/persistence/compact_5000` với bảng đầy. So xen kẽ với `main` như các PR trước.
+- **Bench:** `suggestions/predict/trigram` (ngữ cảnh hai chữ, trigram nói) và
+  `suggestions/learn/trigram` (mỗi lần học đều ghi một trigram). So với nhánh nền như các PR trước.
 
 ## Thứ tự hiện thực
 
 Mỗi bước một PR, xếp chồng:
 
 1. #664: snapshot bỏ cạnh chết (đã mở).
-2. Engine Rust: `Context`, `NgramTable`, học, xoá, snapshot v4, replay, backoff, cấu hình, test và
-   bench. `context_order` mặc định 3 chỉ bật ở PR này khi bench đã sạch.
-3. C ABI và JNI.
+2. Engine Rust: `NgramTable`, học, xoá, snapshot v4, backoff, cấu hình, test và bench.
+3. C ABI và JNI (chỉ đường truy vấn).
 4. Android: tracker giữ vòng hai chữ, worker truyền ngữ cảnh.
 5. iOS: như Android.
 6. Đo trên máy thật: bộ nhớ extension iOS, tỉ lệ đoán, `ngram_contexts`, `PROBE_WINDOW`.

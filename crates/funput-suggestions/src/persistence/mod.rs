@@ -18,6 +18,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
+use crate::ngram::{Entry, TrigramTable};
 use crate::types::WordRecord;
 use codec::{journal, snapshot};
 
@@ -36,6 +37,7 @@ pub(crate) struct Store {
 pub(crate) struct Loaded {
     pub(crate) words: Vec<WordRecord>,
     pub(crate) blocked: Vec<String>,
+    pub(crate) trigrams: Vec<Entry<2>>,
     pub(crate) sequence: u64,
     pub(crate) journal: Vec<JournalEntry>,
     pub(crate) journal_bytes: u64,
@@ -72,9 +74,10 @@ impl Store {
         &self,
         words: &[WordRecord],
         blocked: &[String],
+        trigrams: &TrigramTable,
         sequence: u64,
     ) -> io::Result<u64> {
-        let bytes = snapshot::encode(words, blocked, sequence);
+        let bytes = snapshot::encode(words, blocked, trigrams, sequence);
         let temporary = self.root.join("personal-lexicon.snapshot.tmp");
         let mut file = File::create(&temporary)?;
         file.write_all(&bytes)?;

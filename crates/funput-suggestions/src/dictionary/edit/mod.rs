@@ -90,7 +90,7 @@ impl SuggestionEngine {
             }
         }
         // Whatever comes next in the journal no longer follows the last token.
-        self.journalled_previous = None;
+        self.journal_chain.clear();
         outcome
     }
 }

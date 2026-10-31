@@ -1,7 +1,12 @@
+use crate::ngram::{MAX_CONTEXT, PROBE_WINDOW};
+
 /// The longest token the engine will look at, and so the size of any fixed
 /// buffer that has to hold one. `sanitize` clamps to it, which is what lets a
 /// caller-supplied word be normalized onto the stack.
 pub(crate) const MAX_TOKEN_SCALARS: usize = 32;
+
+/// The largest trigram table a caller may ask for: about 3.4 MiB.
+const MAX_NGRAM_CONTEXTS: usize = 1 << 16;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SuggestionConfig {
@@ -29,6 +34,12 @@ pub struct SuggestionConfig {
     /// either way and shipped data may speak for them; past it, a Predict that
     /// says nothing means what follows is spread out, and nothing fills the slot.
     pub context_evidence_seen: u16,
+    /// How many words of context Predict and Rerank read, plus one: 2 is the word
+    /// before only, 3 adds the two words before. Clamped to what the engine holds.
+    pub context_order: u8,
+    /// How many two-word contexts the trigram table holds. Rounded up to a power
+    /// of two; about 52 bytes each, allocated the first time one is learned.
+    pub ngram_contexts: usize,
     /// How many promoted words carrying Vietnamese marks make the store a
     /// Vietnamese one. From then on, a prefix whose personal answer holds such a
     /// word is Vietnamese typing, and the English lexicon stays out of its empty
@@ -52,6 +63,8 @@ impl Default for SuggestionConfig {
             context_predict_uses: 2,
             context_dominance_percent: 40,
             context_evidence_seen: 3,
+            context_order: 3,
+            ngram_contexts: 4_096,
             lexicon_yield_after_words: 200,
             max_added_words: 1_000,
             max_blocked_words: 1_000,
@@ -73,6 +86,11 @@ pub(crate) fn sanitize(config: SuggestionConfig) -> SuggestionConfig {
         context_predict_uses: config.context_predict_uses.max(1),
         context_dominance_percent: config.context_dominance_percent.min(100),
         context_evidence_seen: config.context_evidence_seen.max(1),
+        context_order: config.context_order.clamp(2, MAX_CONTEXT as u8 + 1),
+        ngram_contexts: config
+            .ngram_contexts
+            .clamp(PROBE_WINDOW, MAX_NGRAM_CONTEXTS)
+            .next_power_of_two(),
         lexicon_yield_after_words: config.lexicon_yield_after_words,
         max_added_words: config.max_added_words.min(max_words - 1),
         max_blocked_words: config.max_blocked_words,

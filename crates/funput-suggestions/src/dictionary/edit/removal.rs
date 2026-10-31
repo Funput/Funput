@@ -3,7 +3,7 @@
 //! Words live in a dense `Vec` and everything else refers to them by index: the
 //! tries, and every other word's follower edges. `swap_remove` keeps the list dense
 //! by moving the last word into the hole, so removal is a matter of telling the
-//! edges where that word went. The tries are left stale on purpose — the caller
+//! edges, and the trigram table's contexts, where that word went. The tries are left stale on purpose — the caller
 //! rebuilds them once for a whole batch, which is all a rebuild costs either way.
 
 use crate::bigram::follower::Follower;
@@ -44,8 +44,9 @@ impl SuggestionEngine {
                 moved,
             );
         }
+        self.trigrams.relocate(removed, vacated, moved, &self.words);
         // Adjacency in the journal is by slot, and the slots just changed.
-        self.journalled_previous = None;
+        self.journal_chain.clear();
     }
 
     /// The slot holding `word`, if the store has it.

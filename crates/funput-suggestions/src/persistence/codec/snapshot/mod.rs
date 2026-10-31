@@ -1,19 +1,23 @@
 //! The snapshot record: the whole store in one checksummed frame.
 //!
-//! `magic · version · sequence · word count · words · [blocked] · crc32`
+//! `magic · version · sequence · word count · words · [blocked] · [tables] · crc32`
 //!
 //! - `words` — one word record, and the parts each version added to it.
 //! - `blocked` — the blocked list that follows the words from v3.
+//! - `ngram` — the higher-order tables that follow the blocked list from v4.
 //!
 //! v1 is the word list alone. v2 appends each word's context count and follower
-//! edges. v3 adds each word's origin and the blocked list.
+//! edges. v3 adds each word's origin and the blocked list. v4 adds the trigram
+//! table.
 
 mod blocked;
+mod ngram;
 mod words;
 
 use std::io;
 
 use crate::binary::{Cursor, checksum, put_u16, put_u32, put_u64};
+use crate::ngram::{Entry, TrigramTable};
 use crate::persistence::schema::{self, SNAPSHOT_MAGIC, SNAPSHOT_WRITE_VERSION, Version};
 use crate::types::WordRecord;
 
@@ -22,10 +26,16 @@ use crate::types::WordRecord;
 pub(crate) struct Snapshot {
     pub(crate) words: Vec<WordRecord>,
     pub(crate) blocked: Vec<String>,
+    pub(crate) trigrams: Vec<Entry<2>>,
     pub(crate) sequence: u64,
 }
 
-pub(crate) fn encode(words: &[WordRecord], blocked: &[String], sequence: u64) -> Vec<u8> {
+pub(crate) fn encode(
+    words: &[WordRecord],
+    blocked: &[String],
+    trigrams: &TrigramTable,
+    sequence: u64,
+) -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.extend_from_slice(SNAPSHOT_MAGIC);
     put_u16(&mut bytes, SNAPSHOT_WRITE_VERSION);
@@ -35,6 +45,7 @@ pub(crate) fn encode(words: &[WordRecord], blocked: &[String], sequence: u64) ->
         words::encode(&mut bytes, word, words);
     }
     blocked::encode(&mut bytes, blocked);
+    ngram::encode(&mut bytes, trigrams, words);
     let sum = checksum(&bytes);
     put_u32(&mut bytes, sum);
     bytes
@@ -78,9 +89,15 @@ pub(crate) fn decode(bytes: &[u8]) -> io::Result<Option<Snapshot>> {
     } else {
         Vec::new()
     };
+    let trigrams = if version >= 4 {
+        ngram::decode(&mut cursor, records.len())?
+    } else {
+        Vec::new()
+    };
     Ok(cursor.is_empty().then_some(Snapshot {
         words: records,
         blocked,
+        trigrams,
         sequence,
     }))
 }

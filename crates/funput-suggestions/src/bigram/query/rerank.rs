@@ -6,20 +6,34 @@
 //! to *add* a candidate, not only to move one. Everything it adds still matches
 //! the prefix, so it is still a completion of what the user is typing.
 
+use super::Contexts;
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
 use crate::index::{NONE, TOP_K, marks, normalize};
+use crate::ngram::MAX_CONTEXT;
 
 impl SuggestionEngine {
+    /// The prefix results, behind the followers of every context that the prefix
+    /// could still become: the two words before first, then the word before.
     pub(super) fn with_context(
         &self,
-        context: u32,
+        contexts: &Contexts<'_>,
         prefix: &str,
         ids: [u32; TOP_K],
         len: usize,
     ) -> ([u32; TOP_K], usize) {
-        let mut ranked = [NONE; FOLLOWER_SLOTS];
-        let ranked_len = self.matching_followers(context, prefix, &mut ranked);
+        if contexts.iter().all(Option::is_none) {
+            return (ids, len);
+        }
+        let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
+        let Some(typed) = normalize::exact_into(prefix, &mut buffer) else {
+            return (ids, len);
+        };
+        let mut ranked = [NONE; FOLLOWER_SLOTS * MAX_CONTEXT];
+        let mut ranked_len = 0;
+        for (followers, _) in contexts.iter().flatten() {
+            ranked_len += self.matching_followers(followers, typed, &mut ranked[ranked_len..]);
+        }
         if ranked_len == 0 {
             return (ids, len);
         }
@@ -35,23 +49,15 @@ impl SuggestionEngine {
         (merged, merged_len)
     }
 
-    /// The live followers of `context` that `prefix` could still become, most
-    /// used first. Four slots, so the ordering is done in place.
+    /// The live followers that `typed` could still become, most used first.
+    /// Four slots, so the ordering is done in place.
     fn matching_followers(
         &self,
-        context: u32,
-        prefix: &str,
-        out: &mut [u32; FOLLOWER_SLOTS],
+        followers: &[Follower; FOLLOWER_SLOTS],
+        typed: &str,
+        out: &mut [u32],
     ) -> usize {
-        let Some(word) = self.words.get(context as usize) else {
-            return 0;
-        };
-        let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
-        let Some(typed) = normalize::exact_into(prefix, &mut buffer) else {
-            return 0;
-        };
-
-        let mut slots = word.followers;
+        let mut slots = *followers;
         let mut len = 0;
         for index in 0..FOLLOWER_SLOTS {
             let Some(strongest) = (index..FOLLOWER_SLOTS).max_by_key(|&at| slots[at].uses) else {

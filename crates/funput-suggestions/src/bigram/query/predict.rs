@@ -8,13 +8,16 @@
 //! syllables that come up most. No amount of memory helps the second group, so
 //! the value of this mode is in staying quiet for it.
 //!
-//! Staying quiet comes in two kinds, and the difference is what lets shipped data
-//! speak without arguing with the user: [`Prediction::Unsure`] is the user's own
-//! answer, [`Prediction::NoEvidence`] is the absence of one.
+//! Staying quiet comes in two kinds, and the difference is what lets a shorter
+//! context, and then shipped data, speak without arguing with the user:
+//! [`Prediction::Unsure`] is the user's own answer, [`Prediction::NoEvidence`] is
+//! the absence of one.
 
+use super::Contexts;
+use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::engine::SuggestionEngine;
 
-/// What the user's own pairs say about the word after a context.
+/// What the user's own data says about the word after a context.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Prediction {
     /// One follower dominates: offer it.
@@ -23,33 +26,41 @@ pub(crate) enum Prediction {
     /// spread out. Silence is the answer; nothing else should fill it.
     Unsure,
     /// Too few sightings to say anything, or a context the store does not hold.
-    /// Another source may answer.
+    /// A shorter context, or another source, may answer.
     NoEvidence,
 }
 
 impl SuggestionEngine {
-    /// What the user's pairs say about the word after `context`, the slot of the
-    /// previous word if the store holds it.
+    /// Longest context first. Only `NoEvidence` steps down: a long context that
+    /// is `Unsure` has seen enough to know what follows it is spread out, which is
+    /// more specific than anything the word before alone could say.
+    pub(super) fn predict(&self, contexts: &Contexts<'_>) -> Prediction {
+        for (followers, seen) in contexts.iter().flatten() {
+            match self.judge(followers, *seen) {
+                Prediction::NoEvidence => continue,
+                said => return said,
+            }
+        }
+        Prediction::NoEvidence
+    }
+
+    /// What one context's followers say.
     ///
     /// Only the leader is ever offered. The dominance test below is a statement
     /// that the rest of the distribution is noise, so filling the other two slots
     /// with it would contradict the reason this spoke at all.
-    pub(crate) fn predict(&self, context: Option<u32>) -> Prediction {
-        let Some(word) = context.and_then(|index| self.words.get(index as usize)) else {
-            return Prediction::NoEvidence;
-        };
-        let leader = word
-            .followers
+    fn judge(&self, followers: &[Follower; FOLLOWER_SLOTS], seen: u16) -> Prediction {
+        let leader = followers
             .iter()
             .filter(|slot| slot.word(&self.words).is_some())
             .max_by_key(|slot| slot.uses);
         if let Some(leader) = leader
             && leader.uses >= self.config.context_predict_uses
-            && self.dominates(leader.uses, word.context_seen)
+            && self.dominates(leader.uses, seen)
         {
             return Prediction::Speaks(leader.word);
         }
-        if word.context_seen < self.config.context_evidence_seen {
+        if seen < self.config.context_evidence_seen {
             Prediction::NoEvidence
         } else {
             Prediction::Unsure

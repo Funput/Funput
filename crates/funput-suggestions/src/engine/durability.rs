@@ -38,7 +38,7 @@ impl SuggestionEngine {
     pub fn compact(&mut self) -> io::Result<u64> {
         // The journal is replaced wholesale below, so nothing already written is
         // adjacent to whatever is learned next.
-        self.journalled_previous = None;
+        self.journal_chain.clear();
         let Some(store) = &self.store else {
             self.pending.clear();
             self.pending_overflow = false;
@@ -46,7 +46,12 @@ impl SuggestionEngine {
             self.journal_bytes = 0;
             return Ok(0);
         };
-        let bytes = store.compact(&self.words, self.blocked.as_slice(), self.sequence)?;
+        let bytes = store.compact(
+            &self.words,
+            self.blocked.as_slice(),
+            &self.trigrams,
+            self.sequence,
+        )?;
         self.pending.clear();
         self.pending_overflow = false;
         self.last_snapshot_bytes = bytes;
@@ -58,8 +63,9 @@ impl SuggestionEngine {
     /// the user made about what never to see, not something the store learned.
     pub fn reset(&mut self) -> io::Result<()> {
         self.words.clear();
+        self.trigrams.clear();
         self.evictions_since_rebuild = 0;
-        self.journalled_previous = None;
+        self.journal_chain.clear();
         self.exact.clear();
         self.folded.clear();
         self.lexicon.vietnamese_words = 0;

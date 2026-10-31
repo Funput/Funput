@@ -20,8 +20,9 @@ pub(crate) const MAX_INBOX_FILES: usize = 256;
 // contains context breaks it does not have.
 
 /// v2 carries each word's follower edges; v1 is the word list alone. v3 adds each
-/// word's origin and, after the words, the blocked list.
-pub(super) const SNAPSHOT_WRITE_VERSION: u16 = 3;
+/// word's origin and, after the words, the blocked list. v4 adds the trigram
+/// table after that.
+pub(super) const SNAPSHOT_WRITE_VERSION: u16 = 4;
 pub(super) const SNAPSHOT_MIN_READ_VERSION: u16 = 1;
 
 /// v1 is a flat token list; v2 marks which tokens followed which; v3 records the
