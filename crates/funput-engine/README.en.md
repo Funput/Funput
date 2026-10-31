@@ -159,6 +159,19 @@ lists from `en.tsv`, scanning with eager restore both on and off (off, `class` l
 `smart_restore`). Details:
 [docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
 
+### Collisions (`compose/collision/`)
+
+Some composition rules turn an English word into a real Vietnamese syllable, which the syllable-based
+English restore then keeps: plain Telex holds a `w` typed after the onset back for the vowel behind
+it, so `two` comes out `tơ` (#661). Each such rule is a `Collision` variant with a gate (the method
+and `funput_core::telex_defers_w`) and an embedded list, `data/collision/<rule>/words.txt`. At the
+word boundary the engine writes the raw keys back when the rule shaped the word and the list holds
+it: `two ` → `two `, `swan ` → `swan `. Vietnamese typed through the same rule is unchanged (`cwon`
+→ `cơn`, `tow` → `tơ`). Nothing switches mid-word, and Flip and gõ tắt still win.
+`funput-lexicon-tool collision` generates the lists from `en.tsv`. The switch is
+`EngineConfig.restore_collisions` (on by default, rides on `smart_restore`). Details:
+[docs/features/english-collision-restore.md](../../docs/features/english-collision-restore.md).
+
 ## Flip VN ⇄ raw keys
 
 `flip_composing()` flips the **composing word** between its Vietnamese form and its raw keystrokes

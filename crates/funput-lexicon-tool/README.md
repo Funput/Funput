@@ -36,8 +36,9 @@ with the counts already in `WORK`, the script goes straight to the rank step.
 | `rank` | `allowed.txt`, `supplement.tsv`, `blocklist.txt`, every count file | `en.tsv` |
 | `pack` | `en.tsv` on stdin | `en.lex` on stdout, checked by the library's own validation first |
 | `doubled` | `en.tsv` on stdin, `--overrides`, `--out DIR` | `words.txt` and `decisive.txt` in `DIR` |
+| `collision` | `en.tsv` on stdin, `--data DIR`, `--out DIR` | `<class>/words.txt` in `DIR` |
 
-`doubled` types every word through `funput-engine` under eight setups (`scan::SETUPS`:
+`doubled` types every word through `funput-engine` under eight setups (`wordlist::setup::SETUPS`:
 Telex and Telex nâng cao, with and without the z/f/w/j onsets, with eager restore on
 and off) and writes two lists from that one scan:
 
@@ -74,6 +75,23 @@ cargo run -p funput-lexicon-tool -- doubled \
 
 `overrides.txt` holds `+word` / `-word` lines with the reason in a comment; one
 that changes nothing is an error, so a stale line cannot linger.
+
+`collision` lists, for each composition rule (`collision::Class`), the words the
+rule's gate admits and that some setup of its method leaves a Vietnamese syllable at
+the word boundary with collision restore off (`two` → `tơ` in Telex). It writes
+`<class>/words.txt` under `--out` and reads hand corrections from
+`<class>/overrides.txt` under `--data`, in the same `+word` / `-word` format. The
+overrides parser, the setups and the rank/write helpers live in `wordlist/`, shared
+with `doubled`. `refresh.sh` rebuilds the lists after `doubled`; after a core change,
+rebuild them by hand (the `collision_table` test says so):
+
+```bash
+cargo run -p funput-lexicon-tool -- collision \
+    --data crates/funput-engine/data/collision \
+    --out crates/funput-engine/data/collision < crates/funput-suggestions/data/lexicon/en.tsv
+```
+
+See [english-collision-restore.md](../../docs/features/english-collision-restore.md).
 
 `refresh.sh` ends with `pack` into `WORK` purely as a check; the shells build
 the `en.lex` they ship.
