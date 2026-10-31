@@ -400,6 +400,10 @@ fn the_seed_language_turns_shipped_predictions_on_in_either_tone_style() {
     });
     assert_eq!(predicted(engine, "sức"), ["khỏe"]);
 
+    // Clearing the user's data keeps the shipped data and the host's setting.
+    assert!(unsafe { funput_suggestion_reset(engine) });
+    assert_eq!(predicted(engine, "cảm"), ["ơn"], "reset leaves the seed on");
+
     for off in [FUNPUT_SEED_LANGUAGE_OFF, 7] {
         assert!(unsafe { funput_suggestion_set_seed_language(engine, off, modern) });
         assert!(predicted(engine, "cảm").is_empty(), "language {off} is off");

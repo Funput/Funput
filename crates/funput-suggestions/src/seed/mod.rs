@@ -28,6 +28,24 @@ pub enum SeedLanguage {
     Vietnamese(ToneStyle),
 }
 
+impl SeedLanguage {
+    /// The wire code for [`SeedLanguage::Off`], the one every binding sends.
+    pub const WIRE_OFF: u8 = 0;
+    /// The wire code for [`SeedLanguage::Vietnamese`].
+    pub const WIRE_VIETNAMESE: u8 = 1;
+
+    /// Decodes a binding's language code, with the tone style the binding has
+    /// already decoded its own way. Any code not named above is off: staying
+    /// silent is never wrong, and an older library meeting a newer host's code
+    /// must not guess.
+    pub fn from_wire(code: u8, style: ToneStyle) -> Self {
+        match code {
+            Self::WIRE_VIETNAMESE => Self::Vietnamese(style),
+            _ => Self::Off,
+        }
+    }
+}
+
 /// What an engine holds of the shipped Vietnamese data: nothing, or the style to
 /// write in together with every table that style reads. One value, so there is
 /// no state in which the data is on but its tables were never built.
@@ -56,5 +74,31 @@ impl SuggestionEngine {
                 pairs: pairs::shipped(),
             },
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use funput_core::ToneStyle::{Modern, Traditional};
+
+    use super::SeedLanguage;
+
+    #[test]
+    fn the_wire_codes_decode_and_anything_unknown_is_off() {
+        assert_eq!(
+            SeedLanguage::from_wire(SeedLanguage::WIRE_VIETNAMESE, Modern),
+            SeedLanguage::Vietnamese(Modern)
+        );
+        assert_eq!(
+            SeedLanguage::from_wire(SeedLanguage::WIRE_VIETNAMESE, Traditional),
+            SeedLanguage::Vietnamese(Traditional)
+        );
+        for code in [SeedLanguage::WIRE_OFF, 2, 7, u8::MAX] {
+            assert_eq!(
+                SeedLanguage::from_wire(code, Modern),
+                SeedLanguage::Off,
+                "{code}"
+            );
+        }
     }
 }

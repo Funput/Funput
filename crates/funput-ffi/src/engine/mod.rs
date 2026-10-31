@@ -14,13 +14,14 @@
 
 mod compose;
 mod config;
-pub(crate) use config::decode_tone_style;
 mod correction;
 mod result;
 mod shortcut_undo;
 mod shortcuts;
 
 use funput_engine::Engine;
+
+pub(crate) use config::decode_tone_style;
 
 pub use compose::{
     SOURCE_NUMPAD, SOURCE_STANDARD, funput_adopt, funput_arm_capitalization, funput_backspace,

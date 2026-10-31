@@ -18,5 +18,6 @@ mod correction;
 mod lifecycle;
 mod registry;
 mod settings;
-pub(crate) use settings::decode_tone_style;
 mod shortcuts;
+
+pub(crate) use settings::decode_tone_style;

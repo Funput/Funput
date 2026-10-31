@@ -1600,12 +1600,18 @@ bool funput_suggestion_is_known_word(const FunputSuggestionEngine *engine,
  * `language` is a `FUNPUT_SEED_LANGUAGE_*` value; any other value means off, since
  * staying silent is never wrong. `tone_style` is the composer's wire byte
  * (`0 = Traditional`, `1 = Modern`, as in `FunputConfig`), and decides how the
- * bar spells `hòa` / `hoà`. Call it when the handle is created and whenever the
- * user switches between Vietnamese and English or changes the tone style: it is
- * cheap, and the first switch to Vietnamese builds the tables here rather than on
- * a keystroke. `funput_suggestion_reset` leaves it alone.
+ * bar spells `hòa` / `hoà`.
  *
- * Returns false only for a null handle.
+ * The handle keeps its own copy of both, apart from the composition engine's
+ * config, so the host must call this whenever the active input language or the
+ * tone style changes, whatever changed it: the user's toggle, a settings change,
+ * or per-app VI/EN memory switching on focus. Route those through the same place
+ * that calls `funput_configure`, so the two handles cannot disagree. It is cheap;
+ * the first switch to Vietnamese builds the tables here rather than on a
+ * keystroke. `funput_suggestion_reset` leaves it alone.
+ *
+ * Returns false for a null handle, or when the call panicked and the boundary
+ * abandoned it; the engine then keeps the setting it had.
  *
  * # Safety
  * `engine` must be a live suggestion handle or null and may not be used

@@ -31,7 +31,10 @@ empty result. Platforms drive this handle serially on a worker, never from the c
 keeps the lexicon already attached. `funput_suggestion_set_seed_language`
 (`FUNPUT_SEED_LANGUAGE_OFF/VIETNAMESE`, plus the tone-style byte of `FunputConfig`) lets the shipped
 Vietnamese data predict the word after a space while the personal store has nothing to say. Off by
-default; the host calls it when it creates the handle and whenever VI/EN or the tone style changes.
+default. The suggestion handle keeps its own copy of the language and tone style, apart from
+`FunputConfig`, so the host calls it when it creates the handle and whenever the active input
+language or the tone style changes, whatever changed it (the toggle, settings, per-app VI/EN
+memory), from the same place that calls `funput_configure`.
 
 The personal dictionary goes through the same handle. The keyboard, which owns the store, edits one
 word at a time with `funput_suggestion_apply_edit` (`FUNPUT_DICTIONARY_EDIT_ADD/FORGET/BLOCK/UNBLOCK`)

@@ -11,10 +11,6 @@ use super::registry;
 use crate::abi::{JavaObject, neutral, safe};
 use crate::engine::decode_tone_style;
 
-/// `nativeSetSeedLanguage`: the user is typing Vietnamese. `0` means off (English,
-/// or the host has not said), and so does any value this does not name.
-const SEED_LANGUAGE_VIETNAMESE: jint = 1;
-
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeCreate(
     _env: EnvUnowned<'_>,
@@ -72,10 +68,15 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     })
 }
 
-/// Says what the shipped Vietnamese data may say: `language` is 0 (off) or 1
-/// (Vietnamese), anything else off; `toneStyle` is the composer's (`0` traditional,
-/// `1` modern). Call it on create and on every VI/EN or tone-style switch. `false`
-/// only for an unknown handle.
+/// Says what the shipped Vietnamese data may say. `language` is one of
+/// `SeedLanguage`'s wire codes (`0` off, `1` Vietnamese; anything else, including
+/// a value outside a byte, is off); `toneStyle` is the composer's (`0` traditional,
+/// `1` modern).
+///
+/// The handle keeps its own copy of both, apart from the composition engine, so
+/// call this on create and whenever the active input language or the tone style
+/// changes, whatever changed it, from the same place that configures the composer.
+/// `false` for an unknown handle, or a call the boundary had to abandon.
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeSetSeedLanguage(
     _env: EnvUnowned<'_>,
@@ -89,11 +90,12 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     })
 }
 
+/// A Java `int` narrowed to the byte the codes live in; one that does not fit is no
+/// code at all, so off.
 fn decode_seed_language(language: jint, tone_style: jint) -> SeedLanguage {
-    match language {
-        SEED_LANGUAGE_VIETNAMESE => SeedLanguage::Vietnamese(decode_tone_style(tone_style)),
-        _ => SeedLanguage::Off,
-    }
+    u8::try_from(language).map_or(SeedLanguage::Off, |code| {
+        SeedLanguage::from_wire(code, decode_tone_style(tone_style))
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -110,19 +112,18 @@ mod tests {
     use funput_core::ToneStyle;
     use funput_suggestions::SeedLanguage;
 
-    use super::{SEED_LANGUAGE_VIETNAMESE, decode_seed_language};
+    use super::decode_seed_language;
 
+    /// The codes themselves are `SeedLanguage::from_wire`'s, tested there; what is
+    /// this binding's own is narrowing an `int` that may not fit a byte.
     #[test]
-    fn the_wire_ints_decode_and_anything_unknown_is_off() {
+    fn an_int_outside_a_byte_is_off_not_truncated() {
+        let vietnamese = i32::from(SeedLanguage::WIRE_VIETNAMESE);
         assert_eq!(
-            decode_seed_language(SEED_LANGUAGE_VIETNAMESE, 1),
+            decode_seed_language(vietnamese, 1),
             SeedLanguage::Vietnamese(ToneStyle::Modern)
         );
-        assert_eq!(
-            decode_seed_language(SEED_LANGUAGE_VIETNAMESE, 0),
-            SeedLanguage::Vietnamese(ToneStyle::Traditional)
-        );
-        for language in [0, -1, 2, i32::MAX] {
+        for language in [-1, 256 + vietnamese, i32::MAX] {
             assert_eq!(
                 decode_seed_language(language, 1),
                 SeedLanguage::Off,

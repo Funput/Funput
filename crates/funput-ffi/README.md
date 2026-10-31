@@ -30,7 +30,9 @@ Handle này chỉ được gọi tuần tự trên worker của platform và kh�
 `engine_open`) để query lấp những ô từ cá nhân để trống; lỗi trả `false` và giữ nguyên từ điển
 đang gắn. `funput_suggestion_set_seed_language` (`FUNPUT_SEED_LANGUAGE_OFF/VIETNAMESE`, kèm byte
 kiểu dấu như `FunputConfig`) cho phép dữ liệu tiếng Việt kèm app đoán chữ sau dấu cách khi kho cá
-nhân chưa có dữ liệu. Mặc định tắt; host gọi khi tạo handle và mỗi lần đổi VI/EN hoặc kiểu dấu.
+nhân chưa có dữ liệu. Mặc định tắt. Handle gợi ý giữ bản sao riêng của ngôn ngữ và kiểu dấu, tách
+khỏi `FunputConfig`, nên host gọi nó khi tạo handle và mỗi lần ngôn ngữ đang gõ hoặc kiểu dấu đổi,
+bất kể do đâu (nút chuyển, cài đặt, bộ nhớ VI/EN theo app), từ cùng chỗ gọi `funput_configure`.
 
 Từ điển cá nhân đi qua cùng handle. Bàn phím (tiến trình sở hữu kho) sửa từng từ bằng
 `funput_suggestion_apply_edit` (`FUNPUT_DICTIONARY_EDIT_ADD/FORGET/BLOCK/UNBLOCK`) và rút các

@@ -356,7 +356,16 @@ không merge.
 | `language` | `0` tắt (`FUNPUT_SEED_LANGUAGE_OFF`), `1` tiếng Việt (`FUNPUT_SEED_LANGUAGE_VIETNAMESE`); giá trị khác coi như tắt |
 | `tone_style` | Byte của bộ gõ: `0` kiểu cũ, `1` kiểu mới (như `FunputConfig.tone_style`), giải mã bằng chính `decode_tone_style` của tầng đó |
 
-Trả `false` chỉ khi handle null (C) hoặc không còn (JNI).
+Trả `false` khi handle null (C) hoặc không còn (JNI), hoặc khi biên ABI phải bỏ một lời gọi bị
+panic; engine giữ nguyên cài đặt cũ. Mã và hàm giải mã nằm một chỗ,
+`SeedLanguage::{WIRE_OFF, WIRE_VIETNAMESE, from_wire}`; FFI viết lại hai hằng bằng số cho
+cbindgen và `const assert` chúng bằng mã của thư viện, JNI thu `int` về byte rồi gọi `from_wire`.
+
+**Một nơi đặt trạng thái gõ.** Handle gợi ý giữ bản sao riêng của ngôn ngữ và kiểu dấu, tách khỏi
+cấu hình bộ gõ. Ở bước 4, mỗi nền tảng phải gọi setter từ **cùng một chỗ** đang đẩy cấu hình cho bộ
+gõ, cho mọi nguyên nhân đổi: nút VI/EN, đổi kiểu dấu trong cài đặt, và bộ nhớ VI/EN theo app tự
+chuyển khi đổi ô nhập. Nếu hai lời gọi tách nhau, bộ gõ có thể ra `hòa` trong khi thanh gợi ý ra
+`khoẻ`, hoặc vẫn đoán tiếng Việt khi bàn phím đã sang tiếng Anh, mà không tầng nào phát hiện.
 
 Shell nào chưa gọi setter thì vẫn `Off`, nên các PR Rust merge được trước PR nền tảng mà
 không đổi hành vi.
