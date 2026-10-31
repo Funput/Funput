@@ -145,6 +145,40 @@ fn warm_prediction_from_the_shipped_pairs_does_not_allocate() {
     }
 }
 
+/// Completing a prefix from the shipped syllables and pairs runs on every keystroke,
+/// so it holds the same budget: the index is built when the data is turned on, and a
+/// lookup binary-searches it and compares characters on the stack.
+#[test]
+fn warm_lookup_from_the_shipped_syllables_does_not_allocate() {
+    let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
+    engine.set_seed_language(SeedLanguage::Vietnamese(ToneStyle::Modern));
+    assert!(
+        engine.suggest_with(None, "đươ").len() >= 2,
+        "the hit must be real"
+    );
+
+    let allocations = measure(|| {
+        for _ in 0..20_000 {
+            for (previous, prefix) in [
+                (None, "đươ"),
+                (None, "th"),
+                (Some("tuy"), "nh"),
+                (None, "zzzz"),
+            ] {
+                std::hint::black_box(
+                    engine
+                        .suggest_with(std::hint::black_box(previous), std::hint::black_box(prefix)),
+                );
+            }
+        }
+    });
+
+    assert_eq!(
+        allocations, 0,
+        "a seeded prefix lookup allocated {allocations} times"
+    );
+}
+
 /// Typo correction asks this once per candidate at a word boundary, so it holds the
 /// same promise the lookup path does: `context_slot` normalizes onto the stack and
 /// compares out of the records themselves, without building a key.

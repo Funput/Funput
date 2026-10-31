@@ -36,8 +36,17 @@ pub(crate) fn is_marked(exact: &str) -> bool {
 /// not allocate. `None` when the word does not fit, which for a buffer sized to
 /// `MAX_TOKEN_SCALARS` means a word no list could hold.
 pub(crate) fn exact_into<'b>(input: &str, buffer: &'b mut [u8]) -> Option<&'b str> {
+    collect_into(exact_chars(input), buffer)
+}
+
+/// [`folded`] written onto `buffer`, as [`exact_into`] does for [`exact`].
+pub(crate) fn folded_into<'b>(input: &str, buffer: &'b mut [u8]) -> Option<&'b str> {
+    collect_into(folded_chars(input), buffer)
+}
+
+fn collect_into(scalars: impl Iterator<Item = char>, buffer: &mut [u8]) -> Option<&str> {
     let mut len = 0;
-    for scalar in exact_chars(input) {
+    for scalar in scalars {
         if len + scalar.len_utf8() > buffer.len() {
             return None;
         }

@@ -6,7 +6,8 @@
 `SeedLanguage`, bảng cặp với 69 cặp đầu tiên, Predict có dữ liệu kèm app. **Bước 3 đã hiện
 thực** (PR xếp chồng): setter qua C ABI và JNI. **Bước 4 đã hiện thực** trên cả Android và iOS
 (hai PR riêng, cùng xếp chồng lên bước 3): người mới cài gõ `cảm` rồi dấu cách là có `ơn`, đã thử
-trên simulator iOS và bằng instrumented test trên emulator Android. Còn bước 5–7.
+trên simulator iOS và bằng instrumented test trên emulator Android. **Bước 6 (Phần B, #561) đã
+hiện thực**, chỉ trong `funput-suggestions`: gõ dở `đươ` là có `được · đường`. Còn bước 5 và 7.
 
 Giải quyết [#560](https://github.com/Funput/Funput/issues/560)
 (đoán từ tiếp theo sau dấu cách) và [#561](https://github.com/Funput/Funput/issues/561)
@@ -229,7 +230,7 @@ Thứ tự lấp ba ô khi `seed_language` là `Vietnamese`:
 ```text
 suggest_with(prev, prefix):
     P = như hôm nay (trie cá nhân, rerank theo ngữ cảnh)
-    S = [seed_pair(prev)] nếu nó khớp prefix          // ví dụ `cảm` + `ơ` → `ơn`
+    S = [seed_pair(prev)] nếu nó khớp prefix          // ví dụ `tuy` + `nh` → `nhiên`
     V = seed_syllables(prefix), bỏ trùng P và S, bỏ từ bị chặn
     E = en.lex như hôm nay
     lấp: P, rồi S, rồi V, rồi E
@@ -278,6 +279,28 @@ tự:
   phần tử. Đo bằng bench criterion có sẵn trong `benches/suggestions`; nếu vượt ngân sách
   thì thêm bảng "prefix nặng" như `en.lex`.
 - Không cấp phát trên đường truy vấn.
+
+### Đã đổi khi hiện thực (Phần B)
+
+- **Mã nằm ở đâu.** `seed/marks.rs` (luật khớp từng ký tự), `seed/syllables/` (chỉ mục: `mod.rs`
+  tra, `build.rs` dựng), `seed/complete.rs` (thứ tự lấp). `crate::syllables::listed()` là chỗ đọc
+  `vi.txt` duy nhất, dùng chung cho prior của sửa lỗi gõ và cho chỉ mục này.
+- **Tra một lần, lấp hai lượt.** `seed_words` tính cặp tĩnh và tối đa ba âm tiết một lần cho mỗi
+  phím; `fill_before_english` lấp (chừa một ô nếu prefix không dấu), `complete_from_lexicon` lấp
+  phần tiếng Anh, rồi `fill_rest` lấp nốt. Bản đầu tra hai lần và chuẩn hoá lại prefix cho từng mục
+  trong dải, mất 30 µs với `th`.
+- **Luật nhường của `en.lex` tính trên từ cá nhân P**, trước khi lấp gì. Tính trên tập đã lấp thì âm
+  tiết có dấu kèm app luôn làm tiếng Anh nhường, mất ô dành cho `the`.
+- **Chỉ mục:** mỗi mục giữ chuỗi `&'static`, thứ hạng (vị trí trong tệp, vì tệp đã xếp theo bậc rồi
+  độ phổ biến), kiểu dấu, và chỉ số cách viết kiểu còn lại để từ bị chặn ở kiểu này cũng bị chặn ở kiểu
+  kia. 24 byte mỗi mục, khoảng 50 KiB cho 2.100 âm tiết, gác bằng test ≤ 64 KiB. `skip` (tra từ bị
+  chặn) chỉ chạy cho âm tiết đủ tốt để vào top 3.
+- **Đo (release, kho 5.000 từ):** `đươ` 1,4 µs, `th` 2,85 µs, `tuy` + `nh` khoảng 4 µs (phần lớn là tìm chữ
+  đứng trước trong kho), không khớp 0,5 µs. Nhóm `lookup` và `predict` ở `Off` không đổi so với
+  `main` (đo xen kẽ hai nhánh).
+- `vi.txt` không có `đương`, nên bảng ví dụ ở trên thực tế ra `được · đường`.
+- Kho cá nhân vẫn khớp chính xác (câu hỏi mở 1): `đươ` chưa tìm ra `đường` đã học, nhưng âm tiết
+  kèm app thì có.
 
 ## Không đổi
 
@@ -398,7 +421,7 @@ không đổi hành vi.
 | 3 | `funput-ffi` + `funput-jni`: setter | #560 |
 | 4 | iOS + Android gọi setter (hai PR riêng) | #560 |
 | 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả đánh giá offline | #560 |
-| 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu) | #561 |
+| 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu); xong | #561 |
 | 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |
 
 Bước 6 không phụ thuộc bước 5, nên có thể chạy song song khi danh sách cặp đang được viết.

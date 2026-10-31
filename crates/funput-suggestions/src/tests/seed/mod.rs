@@ -3,6 +3,8 @@
 //! These lean on three pairs of the shipped list (`cảm ơn`, `sức khoẻ`,
 //! `tuy nhiên`). Dropping one from `data/pairs/vi.txt` means picking another here.
 
+mod prefix;
+
 use funput_core::ToneStyle::{Modern, Traditional};
 
 use crate::{Edit, EditKind, SeedLanguage, SuggestionConfig, SuggestionEngine};
@@ -128,12 +130,8 @@ fn the_bar_writes_the_tone_style_the_user_chose() {
 }
 
 #[test]
-fn a_typed_prefix_is_left_to_the_prefix_path() {
+fn no_context_and_no_prefix_offers_nothing() {
     let engine = engine(SeedLanguage::Vietnamese(Modern));
-    assert!(
-        engine.suggest_with(Some("cảm"), "ơ").is_empty(),
-        "the list only answers an empty prefix in this version"
-    );
     assert!(
         engine.suggest_with(None, "").is_empty(),
         "no context, nothing to follow"
