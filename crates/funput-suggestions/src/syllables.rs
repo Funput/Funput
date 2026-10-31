@@ -46,18 +46,26 @@ static TABLE: OnceLock<Box<[(&'static str, u8)]>> = OnceLock::new();
 /// no entry needs normalizing here and the table borrows straight from the source.
 fn table() -> &'static [(&'static str, u8)] {
     TABLE.get_or_init(|| {
-        let mut tier = 0u8;
-        let mut entries = Vec::new();
-        for line in LIST.lines().map(str::trim) {
-            if let Some(band) = line.strip_prefix("## tier ") {
-                tier = band.trim().parse().unwrap_or(0);
-            } else if !line.is_empty() && !line.starts_with('#') && (1..=4).contains(&tier) {
-                entries.push((line, tier));
-            }
-        }
+        let mut entries: Vec<_> = listed().collect();
         entries.sort_unstable_by(|left, right| left.0.as_bytes().cmp(right.0.as_bytes()));
         entries.dedup_by(|left, right| left.0 == right.0);
         entries.into_boxed_slice()
+    })
+}
+
+/// Every listed syllable with its band, in file order: band 1 first, and within a
+/// band roughly most common first. Also what prefix completion ranks by.
+pub(crate) fn listed() -> impl Iterator<Item = (&'static str, u8)> {
+    let mut tier = 0u8;
+    LIST.lines().map(str::trim).filter_map(move |line| {
+        if let Some(band) = line.strip_prefix("## tier ") {
+            tier = band.trim().parse().unwrap_or(0);
+            None
+        } else if !line.is_empty() && !line.starts_with('#') && (1..=4).contains(&tier) {
+            Some((line, tier))
+        } else {
+            None
+        }
     })
 }
 

@@ -15,9 +15,10 @@ use crate::types::SuggestionSet;
 
 impl SuggestionEngine {
     /// The words `prefix` could become, with the ones that have followed
-    /// `previous` before moved to the front, and any slot still empty filled
-    /// from the attached English lexicon. With no prefix, the word most likely
-    /// to follow `previous`, from the user's own pairs or the shipped ones.
+    /// `previous` before moved to the front, and any slot still empty filled from
+    /// the shipped Vietnamese data and the attached English lexicon. With no
+    /// prefix, the word most likely to follow `previous`, from the user's own
+    /// pairs or the shipped ones.
     ///
     /// `previous` is the caller's business, as it is for `learn_after`: a
     /// platform that cannot vouch for what came before passes `None` and gets
@@ -46,6 +47,12 @@ impl SuggestionEngine {
             Some((context, _)) => self.with_context(context, prefix, ids, len),
             None => (ids, len),
         };
-        self.complete_from_lexicon(prefix, self.assemble(ids, len))
+        let mut set = self.assemble(ids, len);
+        let yields = self.yields_to(&set);
+        let mut seeds = self.seed_words(previous, prefix, &set);
+        seeds.fill_before_english(&mut set);
+        let mut set = self.complete_from_lexicon(prefix, set, yields);
+        seeds.fill_rest(&mut set);
+        set
     }
 }

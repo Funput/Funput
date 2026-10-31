@@ -14,7 +14,7 @@ impl SuggestionEngine {
     /// or a word the user blocked in either tone style.
     pub(crate) fn seed_after(&self, previous: Option<&str>) -> SuggestionSet<'_> {
         let mut set = SuggestionSet::EMPTY;
-        if let SeedSlot::Vietnamese { style, pairs } = self.seed
+        if let SeedSlot::Vietnamese { style, pairs, .. } = self.seed
             && let Some(next) = previous.and_then(|text| pairs.next_after(text))
             && !next
                 .spellings()

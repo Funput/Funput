@@ -45,6 +45,16 @@ impl<'a> SuggestionSet<'a> {
     pub fn iter(&self) -> impl Iterator<Item = &'a str> + '_ {
         self.items[..self.len].iter().filter_map(|item| *item)
     }
+
+    /// Adds `word` to the first empty slot. False when there is none.
+    pub(crate) fn push(&mut self, word: &'a str) -> bool {
+        let Some(slot) = self.items.get_mut(self.len) else {
+            return false;
+        };
+        *slot = Some(word);
+        self.len += 1;
+        true
+    }
 }
 
 #[derive(Debug, Clone)]

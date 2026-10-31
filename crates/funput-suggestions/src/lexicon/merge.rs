@@ -42,38 +42,41 @@ impl SuggestionEngine {
         Ok(())
     }
 
-    /// `personal`, with any slot it left empty filled from the lexicon.
+    /// `set`, with any slot still empty filled from the lexicon, unless `yields`
+    /// (see [`Self::yields_to`], asked of the user's own words before anything else
+    /// filled the set).
     pub(crate) fn complete_from_lexicon<'a>(
         &'a self,
         prefix: &str,
-        personal: SuggestionSet<'a>,
+        set: SuggestionSet<'a>,
+        yields: bool,
     ) -> SuggestionSet<'a> {
         let Some(file) = &self.lexicon.file else {
-            return personal;
+            return set;
         };
-        if personal.len >= TOP_K || self.yields_to(&personal) {
-            return personal;
+        if set.len >= TOP_K || yields {
+            return set;
         }
-        let mut merged = personal;
+        let mut merged = set;
         for word in file.top3(prefix).iter() {
             // A learned word is stored lowercase and the lexicon keeps its own
             // case, so `iphone` and `iPhone` are the same suggestion.
-            if personal.iter().any(|mine| mine.eq_ignore_ascii_case(word))
+            if merged.iter().any(|kept| kept.eq_ignore_ascii_case(word))
                 || self.blocked.contains(word)
             {
                 continue;
             }
-            let Some(slot) = merged.items.get_mut(merged.len) else {
+            if !merged.push(word) {
                 break;
-            };
-            *slot = Some(word);
-            merged.len += 1;
+            }
         }
         merged
     }
 
-    /// Whether `personal` is Vietnamese typing in a Vietnamese store.
-    fn yields_to(&self, personal: &SuggestionSet<'_>) -> bool {
+    /// Whether `personal` is Vietnamese typing in a Vietnamese store. Asked of the
+    /// user's own words only: shipped syllables are marked too, and would otherwise
+    /// make the lexicon give up the slot left for English.
+    pub(crate) fn yields_to(&self, personal: &SuggestionSet<'_>) -> bool {
         self.lexicon.vietnamese_words >= self.config.lexicon_yield_after_words
             && personal.iter().any(normalize::is_marked)
     }

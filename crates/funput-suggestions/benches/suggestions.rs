@@ -2,7 +2,8 @@ use std::fmt::Write;
 use std::hint::black_box;
 
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use funput_suggestions::{SuggestionConfig, SuggestionEngine};
+use funput_core::ToneStyle;
+use funput_suggestions::{SeedLanguage, SuggestionConfig, SuggestionEngine};
 use tempfile::TempDir;
 
 /// Two words from the middle of `populated`, so resolving them costs what
@@ -96,6 +97,30 @@ fn bench_predict(c: &mut Criterion) {
             b.iter(|| {
                 black_box(engine.suggest_with(black_box(Some(context)), black_box(""))).len()
             });
+        });
+    }
+    group.finish();
+}
+
+/// The shipped Vietnamese data on a full store: what a keystroke costs once the
+/// pairs and syllables fill what the store left empty.
+fn bench_seed(c: &mut Criterion) {
+    let mut engine = populated();
+    engine.set_seed_language(SeedLanguage::Vietnamese(ToneStyle::Modern));
+    let engine = engine;
+    assert!(engine.suggest_with(None, "đươ").len() >= 2);
+
+    let mut group = c.benchmark_group("suggestions/seed");
+    group.throughput(Throughput::Elements(1));
+    for (name, previous, prefix) in [
+        ("marked", None, "đươ"),
+        ("unmarked", None, "th"),
+        ("pair", Some("cảm"), "ơ"),
+        ("predict", Some("cảm"), ""),
+        ("miss", None, "zzzz"),
+    ] {
+        group.bench_function(name, |b| {
+            b.iter(|| black_box(engine.suggest_with(black_box(previous), black_box(prefix))).len());
         });
     }
     group.finish();
@@ -229,6 +254,7 @@ criterion_group!(
     benches,
     bench_lookup,
     bench_predict,
+    bench_seed,
     bench_learning,
     bench_persistence,
     bench_lexicon
