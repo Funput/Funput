@@ -4,7 +4,8 @@
 //!
 //! The generation is never written: it means something only within one run, and
 //! every record comes back at zero, so the edges written against it come back
-//! matching.
+//! matching. That is why only live edges go out: a dead one names a slot that
+//! another word has since taken, and at generation zero it would point at it.
 
 use std::io;
 
@@ -21,7 +22,7 @@ pub(super) const MIN_RECORD_BYTES: usize = 2 + 4 + 8;
 /// defined yet are ignored on read, so a later flag needs no version of its own.
 const ADDED: u8 = 1;
 
-pub(super) fn encode(bytes: &mut Vec<u8>, word: &WordRecord) {
+pub(super) fn encode(bytes: &mut Vec<u8>, word: &WordRecord, words: &[WordRecord]) {
     put_u16(bytes, word.text.len() as u16);
     bytes.extend_from_slice(word.text.as_bytes());
     put_u32(bytes, word.uses);
@@ -31,7 +32,7 @@ pub(super) fn encode(bytes: &mut Vec<u8>, word: &WordRecord) {
     } else {
         0
     });
-    encode_followers(bytes, word);
+    encode_followers(bytes, word, words);
 }
 
 pub(super) fn decode(cursor: &mut Cursor<'_>, version: u16) -> io::Result<WordRecord> {
@@ -49,11 +50,14 @@ pub(super) fn decode(cursor: &mut Cursor<'_>, version: u16) -> io::Result<WordRe
     Ok(word)
 }
 
-/// Only the occupied slots go out, so a word nobody has followed costs three
-/// bytes rather than twenty-seven.
-fn encode_followers(bytes: &mut Vec<u8>, word: &WordRecord) {
+/// Only the slots still pointing at their word go out, so a word nobody has
+/// followed costs three bytes rather than twenty-seven.
+fn encode_followers(bytes: &mut Vec<u8>, word: &WordRecord, words: &[WordRecord]) {
     put_u16(bytes, word.context_seen);
-    let live = word.followers.iter().filter(|slot| !slot.is_free());
+    let live = word
+        .followers
+        .iter()
+        .filter(|slot| slot.word(words).is_some());
     bytes.push(live.clone().count() as u8);
     for follower in live {
         put_u32(bytes, follower.word);
