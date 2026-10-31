@@ -2,12 +2,18 @@
 
 use std::path::Path;
 
+use funput_suggestions::SeedLanguage;
 use jni::EnvUnowned;
 use jni::objects::JString;
-use jni::sys::{jboolean, jlong};
+use jni::sys::{jboolean, jint, jlong};
 
 use super::registry;
 use crate::abi::{JavaObject, neutral, safe};
+use crate::engine::decode_tone_style;
+
+/// `nativeSetSeedLanguage`: the user is typing Vietnamese. `0` means off (English,
+/// or the host has not said), and so does any value this does not name.
+const SEED_LANGUAGE_VIETNAMESE: jint = 1;
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeCreate(
@@ -66,6 +72,30 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     })
 }
 
+/// Says what the shipped Vietnamese data may say: `language` is 0 (off) or 1
+/// (Vietnamese), anything else off; `toneStyle` is the composer's (`0` traditional,
+/// `1` modern). Call it on create and on every VI/EN or tone-style switch. `false`
+/// only for an unknown handle.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeSetSeedLanguage(
+    _env: EnvUnowned<'_>,
+    _this: JavaObject<'_>,
+    handle: jlong,
+    language: jint,
+    tone_style: jint,
+) -> jboolean {
+    safe(false, || {
+        registry::set_seed_language(handle, decode_seed_language(language, tone_style))
+    })
+}
+
+fn decode_seed_language(language: jint, tone_style: jint) -> SeedLanguage {
+    match language {
+        SEED_LANGUAGE_VIETNAMESE => SeedLanguage::Vietnamese(decode_tone_style(tone_style)),
+        _ => SeedLanguage::Off,
+    }
+}
+
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestionNative_nativeDestroy(
     _env: EnvUnowned<'_>,
@@ -73,4 +103,31 @@ pub extern "system" fn Java_app_funput_funput_ime_nativebridge_PersonalSuggestio
     handle: jlong,
 ) {
     safe((), || registry::destroy(handle));
+}
+
+#[cfg(test)]
+mod tests {
+    use funput_core::ToneStyle;
+    use funput_suggestions::SeedLanguage;
+
+    use super::{SEED_LANGUAGE_VIETNAMESE, decode_seed_language};
+
+    #[test]
+    fn the_wire_ints_decode_and_anything_unknown_is_off() {
+        assert_eq!(
+            decode_seed_language(SEED_LANGUAGE_VIETNAMESE, 1),
+            SeedLanguage::Vietnamese(ToneStyle::Modern)
+        );
+        assert_eq!(
+            decode_seed_language(SEED_LANGUAGE_VIETNAMESE, 0),
+            SeedLanguage::Vietnamese(ToneStyle::Traditional)
+        );
+        for language in [0, -1, 2, i32::MAX] {
+            assert_eq!(
+                decode_seed_language(language, 1),
+                SeedLanguage::Off,
+                "{language}"
+            );
+        }
+    }
 }

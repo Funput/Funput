@@ -14,6 +14,7 @@
 
 mod compose;
 mod config;
+pub(crate) use config::decode_tone_style;
 mod correction;
 mod result;
 mod shortcut_undo;

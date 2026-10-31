@@ -28,7 +28,9 @@ candidate UTF-32 bằng POD; open/learn/flush/compact/reset lỗi đều trả n
 Handle này chỉ được gọi tuần tự trên worker của platform và không tham gia đường compose.
 `funput_suggestion_attach_lexicon` gắn từ điển tiếng Anh `en.lex` (đường dẫn UTF-8, như
 `engine_open`) để query lấp những ô từ cá nhân để trống; lỗi trả `false` và giữ nguyên từ điển
-đang gắn.
+đang gắn. `funput_suggestion_set_seed_language` (`FUNPUT_SEED_LANGUAGE_OFF/VIETNAMESE`, kèm byte
+kiểu dấu như `FunputConfig`) cho phép dữ liệu tiếng Việt kèm app đoán chữ sau dấu cách khi kho cá
+nhân chưa có dữ liệu. Mặc định tắt; host gọi khi tạo handle và mỗi lần đổi VI/EN hoặc kiểu dấu.
 
 Từ điển cá nhân đi qua cùng handle. Bàn phím (tiến trình sở hữu kho) sửa từng từ bằng
 `funput_suggestion_apply_edit` (`FUNPUT_DICTIONARY_EDIT_ADD/FORGET/BLOCK/UNBLOCK`) và rút các
@@ -164,6 +166,7 @@ src/engine/         # C API composition (FunputEngine)
                     #   result.rs   #[repr(C)] FunputResult + from_ime() + CHARS_CAP/ACTION_*
 src/suggestion/     # C API personal suggestions (FunputSuggestionEngine)
                     #   engine.rs (handle new/open/free, attach_lexicon), query.rs (learn/query),
+                    #   seed.rs (set_seed_language: dữ liệu tiếng Việt kèm app),
                     #   store.rs (flush/compact/reset/stats), types.rs (POD candidate/stats),
                     #   dictionary/ (edit, view: open_snapshot/post_edit, list, types)
 src/app_language/   # C API per-app VI/EN memory (FunputAppLanguage), độc lập FunputEngine

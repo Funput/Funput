@@ -1,12 +1,13 @@
 use std::io::Write;
 
 use funput_ffi::{
-    FunputSuggestionResult, funput_suggestion_attach_lexicon, funput_suggestion_engine_free,
+    FUNPUT_SEED_LANGUAGE_OFF, FUNPUT_SEED_LANGUAGE_VIETNAMESE, FunputSuggestionResult,
+    funput_suggestion_attach_lexicon, funput_suggestion_engine_free,
     funput_suggestion_engine_new_in_memory, funput_suggestion_engine_open, funput_suggestion_flush,
     funput_suggestion_frequency, funput_suggestion_is_known_word, funput_suggestion_learn,
     funput_suggestion_learn_after, funput_suggestion_query, funput_suggestion_query_with,
-    funput_suggestion_reset, funput_suggestion_stats, funput_suggestion_syllable_tier,
-    funput_suggestion_syllable_weight,
+    funput_suggestion_reset, funput_suggestion_set_seed_language, funput_suggestion_stats,
+    funput_suggestion_syllable_tier, funput_suggestion_syllable_weight,
 };
 use funput_suggestions::lexicon_build::encode;
 
@@ -369,4 +370,51 @@ fn reading_the_syllable_bands_is_null_safe() {
         0,
         "longer than any syllable, and must not overflow the stack buffer"
     );
+}
+
+/// What the bar offers after `previous` and a space, as strings.
+fn predicted(engine: *const funput_ffi::FunputSuggestionEngine, previous: &str) -> Vec<String> {
+    let result = query_with(engine, previous, "");
+    (0..result.count as usize)
+        .map(|index| candidate(&result, index))
+        .collect()
+}
+
+#[test]
+fn the_seed_language_turns_shipped_predictions_on_in_either_tone_style() {
+    let engine = funput_suggestion_engine_new_in_memory();
+    assert!(
+        predicted(engine, "cảm").is_empty(),
+        "off until the host says"
+    );
+
+    let modern = 1;
+    let traditional = 0;
+    assert!(unsafe {
+        funput_suggestion_set_seed_language(engine, FUNPUT_SEED_LANGUAGE_VIETNAMESE, modern)
+    });
+    assert_eq!(predicted(engine, "cảm"), ["ơn"]);
+    assert_eq!(predicted(engine, "sức"), ["khoẻ"]);
+    assert!(unsafe {
+        funput_suggestion_set_seed_language(engine, FUNPUT_SEED_LANGUAGE_VIETNAMESE, traditional)
+    });
+    assert_eq!(predicted(engine, "sức"), ["khỏe"]);
+
+    for off in [FUNPUT_SEED_LANGUAGE_OFF, 7] {
+        assert!(unsafe { funput_suggestion_set_seed_language(engine, off, modern) });
+        assert!(predicted(engine, "cảm").is_empty(), "language {off} is off");
+    }
+
+    unsafe { funput_suggestion_engine_free(engine) };
+}
+
+#[test]
+fn setting_the_seed_language_on_a_null_handle_reports_failure() {
+    assert!(!unsafe {
+        funput_suggestion_set_seed_language(
+            std::ptr::null_mut(),
+            FUNPUT_SEED_LANGUAGE_VIETNAMESE,
+            1,
+        )
+    });
 }

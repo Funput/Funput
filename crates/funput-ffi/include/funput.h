@@ -175,6 +175,18 @@
  */
 #define FUNPUT_DICTIONARY_ORIGIN_BLOCKED 2
 
+/**
+ * [`funput_suggestion_set_seed_language`]: the user is typing English, or the
+ * host has not said. Nothing shipped is offered.
+ */
+#define FUNPUT_SEED_LANGUAGE_OFF 0
+
+/**
+ * [`funput_suggestion_set_seed_language`]: the user is typing Vietnamese, so the
+ * shipped pairs may predict the word after a space.
+ */
+#define FUNPUT_SEED_LANGUAGE_VIETNAMESE 1
+
 #define SUGGESTION_CAP 3
 
 #define SUGGESTION_CHARS_CAP 32
@@ -1581,6 +1593,27 @@ uint32_t funput_suggestion_frequency(const FunputSuggestionEngine *engine,
 bool funput_suggestion_is_known_word(const FunputSuggestionEngine *engine,
                                      const uint32_t *word,
                                      uintptr_t word_len);
+
+/**
+ * Say what the shipped Vietnamese data may say from now on.
+ *
+ * `language` is a `FUNPUT_SEED_LANGUAGE_*` value; any other value means off, since
+ * staying silent is never wrong. `tone_style` is the composer's wire byte
+ * (`0 = Traditional`, `1 = Modern`, as in `FunputConfig`), and decides how the
+ * bar spells `hòa` / `hoà`. Call it when the handle is created and whenever the
+ * user switches between Vietnamese and English or changes the tone style: it is
+ * cheap, and the first switch to Vietnamese builds the tables here rather than on
+ * a keystroke. `funput_suggestion_reset` leaves it alone.
+ *
+ * Returns false only for a null handle.
+ *
+ * # Safety
+ * `engine` must be a live suggestion handle or null and may not be used
+ * concurrently.
+ */
+bool funput_suggestion_set_seed_language(FunputSuggestionEngine *engine,
+                                         uint8_t language,
+                                         uint8_t tone_style);
 
 /**
  * Flush pending learned tokens to the journal.

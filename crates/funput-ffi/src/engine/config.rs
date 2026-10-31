@@ -47,7 +47,7 @@ fn decode_onsets(letters: u8) -> ExtraOnsets {
 }
 
 /// Decode the wire tone-style byte (`1 = Modern`, anything else = Traditional).
-fn decode_tone_style(style: u8) -> ToneStyle {
+pub(crate) fn decode_tone_style(style: u8) -> ToneStyle {
     if style == TONE_STYLE_MODERN {
         ToneStyle::Modern
     } else {
