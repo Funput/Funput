@@ -1,7 +1,7 @@
 //! The edge a word keeps to a word that followed it.
 
 use crate::index::NONE;
-use crate::types::WordRecord;
+use crate::types::{WordRecord, WordRef};
 
 /// How many following words one word remembers.
 ///
@@ -49,6 +49,20 @@ impl Follower {
 
     pub(crate) fn is_free(&self) -> bool {
         self.uses == 0
+    }
+
+    /// An edge to `word`, seen once.
+    pub(crate) fn to(word: WordRef) -> Self {
+        Self {
+            word: word.index,
+            generation: word.generation,
+            uses: 1,
+        }
+    }
+
+    /// Whether this edge names exactly `word`, slot and generation.
+    pub(crate) fn names(&self, word: WordRef) -> bool {
+        !self.is_free() && self.word == word.index && self.generation == word.generation
     }
 
     pub(crate) fn points_at(&self, other: Self) -> bool {

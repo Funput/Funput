@@ -1,8 +1,8 @@
 //! Which word makes room when the store is full, and trimming a store loaded
 //! under a smaller `max_words`.
 
-use super::SuggestionEngine;
 use crate::dictionary::Origin;
+use crate::engine::SuggestionEngine;
 
 impl SuggestionEngine {
     /// The learned word that should make room next. Words added by hand never do.
@@ -27,7 +27,7 @@ impl SuggestionEngine {
     /// a store only shrinks when a build lowers `max_words`, and walking the table
     /// for each of a thousand removals would turn that one load into seconds. The
     /// trigrams are relearned from typing; the words and pairs are kept.
-    pub(super) fn enforce_capacity(&mut self) {
+    pub(in crate::engine) fn enforce_capacity(&mut self) {
         if self.words.len() > self.config.max_words {
             self.trigrams.clear();
         }

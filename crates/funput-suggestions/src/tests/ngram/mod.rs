@@ -1,12 +1,12 @@
-//! The trigram table: what typing teaches it in `learning`, how Predict and
-//! Rerank read it in `query`, the store round trip in `persistence`, removal in
-//! `removal`, and the memory it may take in `memory`.
+//! The trigram table: what typing and editing do to it in `learning`, how Predict
+//! and Rerank read it in `query`, the store round trip in `persistence`, and the
+//! memory it may take in `memory`. The table on its own is tested beside it, in
+//! `ngram/table`.
 
 mod learning;
 mod memory;
 mod persistence;
 mod query;
-mod removal;
 
 use crate::{SuggestionConfig, SuggestionEngine};
 

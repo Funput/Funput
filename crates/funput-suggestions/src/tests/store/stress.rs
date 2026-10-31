@@ -1,6 +1,6 @@
 use tempfile::tempdir;
 
-use super::*;
+use crate::tests::*;
 
 #[test]
 fn stress_is_bounded_after_one_hundred_thousand_operations() {

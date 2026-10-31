@@ -1,4 +1,4 @@
-use crate::ngram::{MAX_CONTEXT, PROBE_WINDOW};
+use crate::ngram::{MAX_CONTEXT, PROBE_WINDOW, TRIGRAM};
 
 /// The longest token the engine will look at, and so the size of any fixed
 /// buffer that has to hold one. `sanitize` clamps to it, which is what lets a
@@ -14,7 +14,7 @@ pub struct SuggestionConfig {
     pub max_token_scalars: usize,
     pub promotion_uses: u32,
     /// The same, for a token that is not a Vietnamese syllable — a mistype, a name, a
-    /// foreign word. See [`super::admission`].
+    /// foreign word. See [`super::policy::admission`].
     pub unrecognized_promotion_uses: u32,
     /// How often a pair must have been seen before the context may reorder the
     /// prefix results. One is deliberate: the prefix has already filtered the
@@ -69,6 +69,13 @@ impl Default for SuggestionConfig {
             max_added_words: 1_000,
             max_blocked_words: 1_000,
         }
+    }
+}
+
+impl SuggestionConfig {
+    /// Whether the trigram table is learned and read at all.
+    pub(crate) fn reads_trigrams(&self) -> bool {
+        self.context_order >= TRIGRAM
     }
 }
 

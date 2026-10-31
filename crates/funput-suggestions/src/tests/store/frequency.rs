@@ -3,8 +3,8 @@
 
 use std::io::Write;
 
-use super::*;
 use crate::lexicon::encode::encode;
+use crate::tests::*;
 
 fn engine() -> SuggestionEngine {
     SuggestionEngine::in_memory(SuggestionConfig::default())

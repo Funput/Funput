@@ -12,29 +12,41 @@ use std::io;
 
 use super::words::{decode_edges, encode_edges};
 use crate::binary::{Cursor, invalid_data, put_u32};
-use crate::ngram::{Entry, TRIGRAM, TrigramTable, WordRef};
-use crate::types::WordRecord;
+use crate::ngram::{Entry, TRIGRAM, TrigramTable};
+use crate::types::{WordRecord, WordRef};
 
 /// Two key words, a context count and an empty follower list.
 const MIN_ENTRY_BYTES: usize = 4 + 4 + 2 + 1;
 
+/// Writes nothing at all for a table with no live entry, which is also what lets
+/// a v4 file with no trigrams read as a v3 one.
 pub(super) fn encode(bytes: &mut Vec<u8>, table: &TrigramTable, words: &[WordRecord]) {
-    let live: Vec<&Entry<2>> = table.entries().filter(|e| e.is_live(words)).collect();
-    if live.is_empty() {
+    let mut live = table
+        .entries()
+        .filter(|entry| entry.is_live(words))
+        .peekable();
+    if live.peek().is_none() {
         return;
     }
     bytes.push(TRIGRAM);
     let length_at = bytes.len();
     put_u32(bytes, 0);
-    put_u32(bytes, live.len() as u32);
+    put_u32(bytes, 0);
+    let mut count = 0u32;
     for entry in live {
         for word in entry.key {
             put_u32(bytes, word.index);
         }
         encode_edges(bytes, entry.context_seen, &entry.followers, words);
+        count += 1;
     }
     let length = (bytes.len() - length_at - 4) as u32;
-    bytes[length_at..length_at + 4].copy_from_slice(&length.to_le_bytes());
+    patch_u32(bytes, length_at, length);
+    patch_u32(bytes, length_at + 4, count);
+}
+
+fn patch_u32(bytes: &mut [u8], at: usize, value: u32) {
+    bytes[at..at + 4].copy_from_slice(&value.to_le_bytes());
 }
 
 /// The trigram entries, at generation zero like every record they point at.
@@ -58,9 +70,9 @@ pub(super) fn decode(cursor: &mut Cursor<'_>, words: usize) -> io::Result<Vec<En
             let (context_seen, followers) = decode_edges(&mut block)?;
             if key.iter().all(|word| (word.index as usize) < words) {
                 entries.push(Entry {
-                    key,
                     context_seen,
                     followers,
+                    ..Entry::new(key)
                 });
             }
         }

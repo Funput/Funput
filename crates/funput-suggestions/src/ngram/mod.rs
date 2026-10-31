@@ -5,7 +5,7 @@
 //! words. So each higher order is an [`NgramTable`], fixed in size and filled the
 //! same way a word's followers are.
 //!
-//! - `key` — a word of a context, held the way an edge holds its target.
+//! - `key` — where a context lands in the table.
 //! - `context` — finding the words of a context in the store, in one pass.
 //! - `chain` — the words the journal just wrote, which is what a trigram is
 //!   learned from.
@@ -18,14 +18,14 @@ mod key;
 mod table;
 
 pub(crate) use chain::JournalChain;
-pub(crate) use key::WordRef;
 pub(crate) use table::{Entry, NgramTable, PROBE_WINDOW};
 
 /// The most words of context the engine reads. Two is a trigram; raising it to
 /// three is the 4-gram, one more table and one more step down the backoff.
 pub(crate) const MAX_CONTEXT: usize = 2;
 
-/// The order of the one higher-order table there is today, as the snapshot
+/// The order of the one higher-order table there is today: what
+/// `SuggestionConfig::context_order` must reach to read it, and how the snapshot
 /// labels its block.
 pub(crate) const TRIGRAM: u8 = 3;
 

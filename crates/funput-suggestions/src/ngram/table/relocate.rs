@@ -5,10 +5,8 @@
 //! so this may walk the whole table and set a few entries aside.
 
 use super::{Entry, NgramTable};
-use crate::bigram::follower::Follower;
 use crate::bigram::slots;
-use crate::ngram::key::WordRef;
-use crate::types::WordRecord;
+use crate::types::{WordRecord, WordRef};
 
 impl<const K: usize> NgramTable<K> {
     /// After `words.swap_remove`: entries whose context names the removed word or
@@ -19,9 +17,9 @@ impl<const K: usize> NgramTable<K> {
     /// back once the walk is done.
     pub(crate) fn relocate(
         &mut self,
-        removed: Follower,
+        removed: WordRef,
         vacated: u32,
-        moved: Option<(Follower, Follower)>,
+        moved: Option<(WordRef, WordRef)>,
         words: &[WordRecord],
     ) {
         let mut lifted: Vec<Entry<K>> = Vec::new();
@@ -58,22 +56,19 @@ enum Rekey<const K: usize> {
 /// edge: the moved word first, since it may have come from the vacated slot.
 fn rekey<const K: usize>(
     key: &[WordRef; K],
-    removed: Follower,
+    removed: WordRef,
     vacated: u32,
-    moved: Option<(Follower, Follower)>,
+    moved: Option<(WordRef, WordRef)>,
 ) -> Rekey<K> {
     let mut next = *key;
     let mut changed = false;
     for word in &mut next {
         if let Some((from, to)) = moved
-            && word.is(from)
+            && *word == from
         {
-            *word = WordRef {
-                index: to.word,
-                generation: to.generation,
-            };
+            *word = to;
             changed = true;
-        } else if word.is(removed) || word.index == vacated {
+        } else if *word == removed || word.index == vacated {
             return Rekey::Drop;
         }
     }

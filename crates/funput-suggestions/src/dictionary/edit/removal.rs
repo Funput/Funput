@@ -1,14 +1,15 @@
 //! Taking one word out of the store.
 //!
 //! Words live in a dense `Vec` and everything else refers to them by index: the
-//! tries, and every other word's follower edges. `swap_remove` keeps the list dense
-//! by moving the last word into the hole, so removal is a matter of telling the
-//! edges, and the trigram table's contexts, where that word went. The tries are left stale on purpose — the caller
-//! rebuilds them once for a whole batch, which is all a rebuild costs either way.
+//! tries, every other word's follower edges, and the trigram table. `swap_remove`
+//! keeps the list dense by moving the last word into the hole, so removal is a
+//! matter of telling the edges and the table where that word went. The tries are
+//! left stale on purpose — the caller rebuilds them once for a whole batch, which
+//! is all a rebuild costs either way.
 
-use crate::bigram::follower::Follower;
 use crate::bigram::slots;
 use crate::engine::SuggestionEngine;
+use crate::types::WordRef;
 
 impl SuggestionEngine {
     /// Removes the word at `index`. The tries are stale until the next
@@ -55,11 +56,9 @@ impl SuggestionEngine {
     }
 }
 
-/// A slot and generation, in the shape edges are compared in.
-fn key(index: usize, generation: u16) -> Follower {
-    Follower {
-        word: index as u32,
+fn key(index: usize, generation: u16) -> WordRef {
+    WordRef {
+        index: index as u32,
         generation,
-        uses: 1,
     }
 }

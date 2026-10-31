@@ -65,6 +65,7 @@ pub(crate) struct WordRef { index: u32, generation: u16 }
 pub(crate) struct Entry<const K: usize> {
     key: [WordRef; K],                       // cũ → mới
     context_seen: u16,
+    challenges: u16,                         // xem "Bảng đầy"; nằm trong phần padding
     followers: [Follower; FOLLOWER_SLOTS],   // FOLLOWER_SLOTS = 4, như bigram
 }
 
@@ -73,8 +74,9 @@ pub(crate) struct NgramTable<const K: usize> {
 }
 ```
 
-- **Băm địa chỉ mở, dung lượng cố định.** Băm trên `(index, generation)` của các chữ trong khoá.
-  Tra là băm rồi dò tuyến tính trong một cửa sổ có giới hạn (`PROBE_WINDOW`, khởi điểm 8). Không cấp
+- **Băm địa chỉ mở, dung lượng cố định.** Băm nhân trên `(index, generation)` của các chữ trong
+  khoá, lấy **các bit cao** làm ô bắt đầu (bit thấp của một tích chỉ thấy bit thấp của đầu vào,
+  nên generation ở bit 32 trở lên sẽ không bao giờ tới được). Tra là băm rồi dò tuyến tính trong một cửa sổ có giới hạn (`PROBE_WINDOW`, khởi điểm 8). Không cấp
   phát khi tra, không cấp phát khi học.
 - **Cấp lười.** Bảng chỉ cấp ở lần ghi trigram đầu tiên, nên người dùng mới hoặc tắt trigram không
   tốn byte nào.
@@ -83,6 +85,12 @@ pub(crate) struct NgramTable<const K: usize> {
   thẳng vào được. Luật Misra-Gries, `AGING_AFTER = 256` và giới hạn `u16` giữ y nguyên.
 - **Bảng đầy.** Trong cửa sổ dò, lấy theo thứ tự: ô trống, rồi ô chết (một chữ trong khoá lệch
   generation), rồi ô có `context_seen` thấp nhất. O(`PROBE_WINDOW`), không quét toàn bảng.
+  **Đã đổi khi hiện thực: ô yếu nhất không nhường ngay.** Bản đầu cho cụm mới chiếm ngay ô ít gặp
+  nhất, nên khi cửa sổ toàn thói quen thì một câu gõ một lần cũng đẩy được thói quen ra. Giờ dùng
+  đúng luật thách đấu của follower: mỗi cụm mới cộng một vào `challenges` của ô yếu nhất, và chỉ
+  chiếm chỗ khi `challenges` bằng `context_seen` của ô đó; ô đó được gặp lại thì `challenges` về 0.
+  `challenges` không ghi xuống đĩa. Nạp từ snapshot hay chèn lại sau khi xoá từ thì chỉ đẩy được ô
+  ít gặp hơn chính nó.
 - **Đuổi từ trên đường học không quét bảng.** Giống bigram: `upsert_word` tăng generation, và mọi
   ô có chữ đó trong khoá hay trong follower tự thành chết. Lý do y như bigram: quét dọn giữa luồng gõ
   là thứ tài liệu bigram đã cam kết không làm.
@@ -116,8 +124,11 @@ token)` giữ nguyên chữ ký. `JournalChain` (`src/ngram/chain.rs`, thay `jou
 chữ vừa ghi journal liền mạch. Trigram `[a, b] → c` được học **đúng khi** `c` nối với `b` và `b` đã
 nối với `a` trong journal, tức đúng khi replay dựng lại được nó. Nhờ vậy:
 
-- bảng đọc lại từ journal sau một lần crash **bằng đúng** bảng trong bộ nhớ (proptest
-  `the_table_on_disk_is_the_table_in_memory`), không chỉ "bỏ sót chứ không bịa";
+- replay **không bao giờ bịa** một trigram, và khi bảng còn dư chỗ thì bảng đọc lại sau một lần
+  crash **bằng đúng** bảng trong bộ nhớ (proptest `the_table_on_disk_is_the_table_in_memory`).
+  Khi bảng đầy, bảng nạp lại xếp ô theo chỗ mới, nên cụm mới sau đó có thể thách đấu một ô khác
+  với trước khi crash: khác nhau ở chỗ trigram nào còn được giữ, không bao giờ ở chỗ có bịa ra
+  trigram hay không (proptest `a_full_table_only_ever_holds_typed_trigrams`);
 - nền tảng không phải đổi đường học, chỉ đường truy vấn cần hai chữ;
 - cái giá: sau mỗi `compact` chuỗi bắt đầu lại, nên mất một hai trigram ở chỗ đó.
 
@@ -223,7 +234,8 @@ chỉ khi chữ cuối có trong kho. Một lượt quét gộp cả hai chữ �
 | `predict/trigram` (hai chữ ngữ cảnh) | không có | 7,86 µs |
 
 Đường học: `learn/chained` (bậc 2) 8,17 µs, `learn/trigram` (bậc 3) 8,19 µs, tức bảng trigram gần
-như không tốn gì thêm khi học. Ngữ cảnh hai chữ tốn thêm đúng một lượt quét `words`. Toàn bộ chạy trên worker nền của nền tảng,
+như không tốn gì thêm khi học. Ngữ cảnh hai chữ tốn thêm đúng một lượt quét `words`, và chỉ khi bậc 3 đang bật: với
+`context_order = 2` chữ trước chữ cuối không được tìm. Toàn bộ chạy trên worker nền của nền tảng,
 không trên luồng gõ, và không cấp phát.
 
 **C ABI.** Thêm `funput_suggestion_query_in`, nhận một mảng `{ptr, len}` UTF-32 cũ → mới. Hàm hiện
@@ -243,13 +255,18 @@ liệu bigram đã chốt.
 
 **Đã đổi khi hiện thực**:
 
-- `src/ngram/`: `key.rs` (`WordRef`, băm), `context.rs` (tìm chữ ngữ cảnh một lượt), `chain.rs`
-  (`JournalChain`), `table/` (`mod.rs` dò và chọn ô, `entry.rs`, `relocate.rs`).
+- `src/types.rs`: `WordRef`, dùng chung cho cạnh bigram, khoá trigram và việc xoá từ.
+- `src/ngram/`: `key.rs` (băm), `context.rs` (tìm chữ ngữ cảnh), `chain.rs` (`JournalChain`),
+  `table/` (`mod.rs` ghi và luật thách đấu, `probe.rs` dò cửa sổ, `entry.rs`, `relocate.rs`).
 - Học và truy vấn ở lại `src/bigram/`: `learning.rs` ghi cả hai bậc; `query/predict.rs` có `judge`
   dùng chung cho mọi bậc và vòng lùi bậc; `query/rerank.rs` gộp follower theo bậc.
 - `src/persistence/codec/snapshot/ngram.rs`: khối bảng.
 - `src/dictionary/edit/removal.rs`: thêm lượt quét bảng.
-- `src/engine/capacity.rs`: chính sách nhường chỗ, tách khỏi `engine/mod.rs` để giữ dưới 150 dòng.
+- `src/engine/policy/`: `admission.rs` (có sẵn) và `capacity.rs` (chính sách nhường chỗ, tách khỏi
+  `engine/mod.rs` để giữ dưới 150 dòng), để `engine/` giữ đúng 5 tệp.
+- Test: `src/tests/ngram/` (5 tệp); test của bảng nằm ngay trong `ngram/table/mod.rs`. Để mọi thư
+  mục test giữ tối đa 5 tệp, test của kho cá nhân chuyển vào `src/tests/store/` và test lexicon gắn
+  vào engine chuyển vào `src/tests/lexicon/attached/`.
 
 ## Kiểm thử và cổng gác
 

@@ -15,8 +15,9 @@ use predict::Prediction;
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
 use crate::engine::SuggestionEngine;
 use crate::index::{NONE, TOP_K};
-use crate::ngram::{MAX_CONTEXT, WordRef};
+use crate::ngram::MAX_CONTEXT;
 use crate::types::SuggestionSet;
+use crate::types::WordRef;
 
 /// The follower sets a context offers, longest context first.
 type Contexts<'a> = [Option<(&'a [Follower; FOLLOWER_SLOTS], u16)>; MAX_CONTEXT];
@@ -72,9 +73,16 @@ impl SuggestionEngine {
     /// words when the order allows and the table has one, then the last word's
     /// own followers.
     fn contexts(&self, context: &[&str]) -> Contexts<'_> {
-        let [older, previous] = self.context_slots(context);
+        // Without trigrams the word before the last is never read, so it is not
+        // looked up either: that would be a second scan of the store for nothing.
+        let read = if self.config.reads_trigrams() {
+            context
+        } else {
+            &context[context.len().saturating_sub(1)..]
+        };
+        let [older, previous] = self.context_slots(read);
         let trigram = match (older, previous) {
-            (Some(older), Some(previous)) if self.config.context_order >= 3 => self
+            (Some(older), Some(previous)) => self
                 .trigrams
                 .find(&[older, previous])
                 .map(|entry| (&entry.followers, entry.context_seen)),

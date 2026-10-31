@@ -4,6 +4,7 @@
 //! liveness a caller knows, it passes in.
 
 use super::follower::{FOLLOWER_SLOTS, Follower};
+use crate::types::WordRef;
 
 /// After this many sightings of one context word, every count it holds is halved.
 ///
@@ -40,17 +41,17 @@ pub(crate) fn record(
 pub(crate) fn relocate(
     followers: &mut [Follower; FOLLOWER_SLOTS],
     seen: &mut u16,
-    removed: Follower,
+    removed: WordRef,
     vacated: u32,
-    moved: Option<(Follower, Follower)>,
+    moved: Option<(WordRef, WordRef)>,
 ) {
     for slot in followers.iter_mut().filter(|slot| !slot.is_free()) {
         if let Some((from, to)) = moved
-            && slot.points_at(from)
+            && slot.names(from)
         {
-            slot.word = to.word;
+            slot.word = to.index;
             slot.generation = to.generation;
-        } else if slot.points_at(removed) {
+        } else if slot.names(removed) {
             *seen = seen.saturating_sub(slot.uses);
             *slot = Follower::EMPTY;
         } else if slot.word == vacated {

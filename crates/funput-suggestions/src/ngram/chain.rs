@@ -2,12 +2,16 @@
 //!
 //! Replay rebuilds pairs from adjacency: a token marked chained followed the one
 //! written before it. Two chained links in a row are therefore a trigram replay
-//! can rebuild, and that is exactly when one is learned. The table on disk after
-//! a crash then holds what the table in memory held, and no caller has to pass
-//! two words to `learn_after` for it.
+//! can rebuild, and that is exactly when one is learned. So replay never invents
+//! a trigram, and while the table has room to spare it rebuilds exactly the one
+//! memory held; no caller has to pass two words to `learn_after` for it.
+//!
+//! Under pressure the two can drift: a reloaded table places its entries afresh,
+//! so a later newcomer may challenge a different entry than it did before the
+//! crash. What drifts is which typed trigram survives, never whether one was typed.
 
 use super::MAX_CONTEXT;
-use super::key::WordRef;
+use crate::types::WordRef;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct JournalChain {

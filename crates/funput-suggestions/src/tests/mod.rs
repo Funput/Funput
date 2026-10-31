@@ -1,14 +1,11 @@
 mod bigram;
 mod dictionary;
-mod eviction;
-mod frequency;
-mod learning;
 mod lexicon;
 mod marks;
 mod ngram;
 mod persistence;
 mod seed;
-mod stress;
+mod store;
 
 use super::*;
 

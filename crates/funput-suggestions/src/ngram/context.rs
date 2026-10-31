@@ -1,9 +1,9 @@
 //! Finding the words of a context in the store.
 
 use super::MAX_CONTEXT;
-use super::key::WordRef;
 use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
 use crate::index::normalize;
+use crate::types::WordRef;
 
 impl SuggestionEngine {
     /// The slot `previous` sits in, and the generation it sits there at.

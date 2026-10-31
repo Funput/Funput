@@ -3,9 +3,9 @@
 use super::follower::{FOLLOWER_SLOTS, Follower};
 use super::slots;
 use crate::engine::SuggestionEngine;
-use crate::ngram::WordRef;
 use crate::persistence::JournalEntry;
 use crate::types::LearnOutcome;
+use crate::types::WordRef;
 
 impl SuggestionEngine {
     /// Learn `token`, and record that it followed `previous`.
@@ -78,7 +78,7 @@ impl SuggestionEngine {
 
     /// Learning `next` may have evicted the older word, so it is checked here.
     fn record_trigram(&mut self, key: [WordRef; 2], next: WordRef) {
-        if self.config.context_order >= 3 && key[0].is_live(&self.words) {
+        if self.config.reads_trigrams() && key[0].is_live(&self.words) {
             self.trigrams.record(key, next, &self.words);
         }
     }
