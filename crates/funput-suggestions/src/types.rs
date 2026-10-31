@@ -29,6 +29,11 @@ pub struct SuggestionSet<'a> {
 }
 
 impl<'a> SuggestionSet<'a> {
+    pub(crate) const EMPTY: Self = Self {
+        items: [None; TOP_K],
+        len: 0,
+    };
+
     pub fn len(&self) -> usize {
         self.len
     }

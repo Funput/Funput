@@ -5,6 +5,7 @@ mod frequency;
 mod learning;
 mod lexicon;
 mod persistence;
+mod seed;
 mod stress;
 
 use super::*;

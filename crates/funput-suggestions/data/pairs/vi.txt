@@ -1,0 +1,100 @@
+# Vietnamese pairs whose second syllable a reader would bet on.
+#
+# Built by hand for Funput, from no external word list or corpus — which is why it
+# carries the project's own licence and can be shipped (see NOTICE.md). Predict
+# reads it when the user's own pairs have nothing to say yet: after the first
+# syllable of a pair and a space, the bar offers the second.
+#
+# Layout: one pair per line, the two syllables separated by one space, lowercase
+# NFC, tone marks placed the modern way (`khoẻ`, not `khỏe`; the engine respells
+# for the traditional style). Any `#` line is a comment.
+#
+# What belongs here: a first syllable that, in everyday chat, is followed by this
+# second syllable most of the time. Predict only ever offers one word, so a first
+# syllable with two strong continuations (`xin` → `chào` / `lỗi` / `phép`) does
+# not belong, and neither do the syllables anything can follow (`của`, `và`, `là`).
+# Offering a wrong word is worse than offering none. No proper nouns: Predict
+# cannot capitalise `nội` after `Hà`.
+#
+# Every line is checked by `funput-lexicon-tool/tests/vi_pairs.rs`. That check
+# cannot tell whether a pair is sharp enough, so additions want a second pair of
+# eyes.
+
+# --- words people type every day
+cảm ơn
+cám ơn
+tuy nhiên
+bởi vì
+thậm chí
+tất cả
+mọi người
+gia đình
+dạo này
+lát nữa
+sức khoẻ
+ví dụ
+hy vọng
+khả năng
+sẵn sàng
+suy nghĩ
+quyết định
+đảm bảo
+kiểm tra
+hướng dẫn
+trách nhiệm
+nhiệm vụ
+cẩn thận
+vệ sinh
+thoải mái
+hạnh phúc
+phức tạp
+thỉnh thoảng
+thắc mắc
+rắc rối
+
+# --- `nhiên` endings
+dĩ nhiên
+đương nhiên
+ngẫu nhiên
+ngạc nhiên
+
+# --- things and services
+điện thoại
+ứng dụng
+ngân hàng
+bưu điện
+mật khẩu
+chương trình
+
+# --- describing people and moods
+dũng cảm
+siêng năng
+tử tế
+dịu dàng
+háo hức
+băn khoăn
+lăn tăn
+bâng khuâng
+tò mò
+thấp thỏm
+dằn vặt
+trằn trọc
+phũ phàng
+nhõng nhẽo
+nghịch ngợm
+ngơ ngác
+lề mề
+
+# --- describing things
+loay hoay
+nguệch ngoạc
+lẩm bẩm
+loáng thoáng
+lấp lánh
+long lanh
+hoành tráng
+lộng lẫy
+rực rỡ
+tưng bừng
+náo nhiệt
+loè loẹt

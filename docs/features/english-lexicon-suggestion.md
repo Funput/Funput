@@ -41,6 +41,10 @@ Ràng buộc kế thừa nguyên từ gợi ý theo ngữ cảnh, không thươn
 - Đoán từ tiếp theo bằng dữ liệu tĩnh · autocorrect · sửa chính tả · từ điển ngôn ngữ
   khác · tải từ điển qua mạng · từ điển tiếng Việt.
 
+  **Đã đổi sau đó**: âm tiết tiếng Việt kèm app được thiết kế riêng, lấp ô trống trước
+  `en.lex` khi đang ở chế độ VI; xem
+  [vietnamese-seed-suggestion.md](vietnamese-seed-suggestion.md).
+
 ## Hai kho, trộn khi truy vấn
 
 Từ điển là **tệp chỉ đọc** `en.lex`, tách hẳn khỏi kho cá nhân (`words`, trie,

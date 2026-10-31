@@ -17,7 +17,7 @@ impl SuggestionEngine {
     /// Only the leader is ever offered. The dominance test below is a statement
     /// that the rest of the distribution is noise, so filling the other two slots
     /// with it would contradict the reason this spoke at all.
-    pub(super) fn predict(&self, context: u32) -> ([u32; TOP_K], usize) {
+    pub(crate) fn predict(&self, context: u32) -> ([u32; TOP_K], usize) {
         let silent = ([NONE; TOP_K], 0);
         let Some(word) = self.words.get(context as usize) else {
             return silent;
