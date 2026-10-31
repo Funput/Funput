@@ -297,7 +297,8 @@ Mỗi bước một PR, xếp chồng:
 1. #664: snapshot bỏ cạnh chết (đã mở).
 2. Engine Rust: `NgramTable`, học, xoá, snapshot v4, backoff, cấu hình, test và bench.
 3. C ABI và JNI (chỉ đường truy vấn), `funput_suggestion_query_in` và `nativeQueryIn`.
-4. Android: tracker giữ vòng hai chữ, worker truyền ngữ cảnh.
+4. Android: tracker giữ vòng hai chữ (`older` và `queryContext` trên `AuthoredSuggestionUpdate`), service
+   giữ bản cập nhật cuối của tracker, engine truy vấn qua `nativeQueryIn`.
 5. iOS: như Android.
 6. Đo trên máy thật: bộ nhớ extension iOS, tỉ lệ đoán, `ngram_contexts`, `PROBE_WINDOW`.
 

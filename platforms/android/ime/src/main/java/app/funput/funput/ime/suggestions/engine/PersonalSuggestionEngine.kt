@@ -13,8 +13,9 @@ internal class PersonalSuggestionEngine private constructor(private var handle: 
     fun learn(token: String, after: String? = null): Boolean = call(false) {
         PersonalSuggestionNative.nativeLearnAfter(it, after.orEmpty(), token)
     }
-    fun query(prefix: String, after: String? = null): List<String> = call(emptyList()) { value ->
-        PersonalSuggestionNative.nativeQueryWith(value, after.orEmpty(), prefix)
+    /** [context] is the words before, oldest first and space separated; the engine reads the last two. */
+    fun query(prefix: String, context: String? = null): List<String> = call(emptyList()) { value ->
+        PersonalSuggestionNative.nativeQueryIn(value, context.orEmpty(), prefix)
             ?.take(MaxCandidates)
             .orEmpty()
     }

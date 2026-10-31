@@ -25,8 +25,8 @@ internal class PersonalSuggestionService(
     private var session = 0L
     private var generation = 0L
     private var prefix = ""
-    /** The word the next one follows, when the tracker can vouch for one. */
-    private var previousWord: String? = null
+    /** The tracker's last word: what the next one follows, and the words the bar asks after. */
+    private var latest = AuthoredSuggestionUpdate.Empty
     /** Whether the bar is currently answering a context rather than a prefix. */
     private var predicting = false
     private val candidates = PersonalSuggestionCandidates(show, shift)
@@ -69,11 +69,11 @@ internal class PersonalSuggestionService(
     fun consume(update: AuthoredSuggestionUpdate) {
         update.completedToken
             ?.takeIf { eligible() && policy.allowsPersonalizedLearning }
-            ?.let { worker?.learn(it, previousWord) }
-        previousWord = update.context
+            ?.let { worker?.learn(it, latest.context) }
+        latest = update
         // A prediction answers a context with no prefix at all. One character is
         // neither a prefix worth completing nor a word boundary, and stays out.
-        val predicts = eligible() && update.prefix.isEmpty() && previousWord != null
+        val predicts = eligible() && update.prefix.isEmpty() && latest.context != null
         if (update.completedToken == null && update.prefix == prefix && predicts == predicting) {
             // Shift arrives here: same words, new shape, nothing to ask the engine.
             return draw()
@@ -124,7 +124,7 @@ internal class PersonalSuggestionService(
     private fun requery() {
         generation += 1
         candidates.clear()
-        worker?.query(PersonalSuggestionRequest(prefix, generation, session, previousWord))
+        worker?.query(PersonalSuggestionRequest(prefix, generation, session, latest.queryContext))
     }
 
     private fun eligible() = preferences.enabled && policy.allowsPersonalSuggestions &&
@@ -136,7 +136,7 @@ internal class PersonalSuggestionService(
     private fun clear() {
         generation += 1
         prefix = ""
-        previousWord = null
+        latest = AuthoredSuggestionUpdate.Empty
         predicting = false
         worker?.clearQueries()
         candidates.clear()
