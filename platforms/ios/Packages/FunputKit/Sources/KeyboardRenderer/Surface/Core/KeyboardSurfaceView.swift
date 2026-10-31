@@ -28,6 +28,10 @@ public final class KeyboardSurfaceView: UIView {
     }
     public var onKeyEvent: ((KeyboardKeyEvent) -> Void)?
     public var onSuggestionSelected: ((KeyboardSuggestionCandidate) -> Void)?
+    /// A long-press edit on a suggested word. While `nil`, the bar offers no menu.
+    public var onSuggestionEdit: ((KeyboardSuggestionCandidate, KeyboardSuggestionAction) -> Void)? {
+        didSet { toolbarView.suggestionBar.onEdit = onSuggestionEdit }
+    }
     public var onClipboardPaste: ((KeyboardClipboardPaste) -> Void)?
     var keyboardSize: CGSize { bounds.size }
     var keyboardBounds: CGRect { CGRect(origin: .zero, size: keyboardSize) }

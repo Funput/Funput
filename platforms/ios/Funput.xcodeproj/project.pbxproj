@@ -29,6 +29,9 @@
 		FA2600000000000000000212 /* ThemeSchema in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000126 /* ThemeSchema */; };
 		FA2600000000000000000213 /* PersonalSuggestions in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000119 /* PersonalSuggestions */; };
 		FA2600000000000000000214 /* PersonalSuggestions in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000127 /* PersonalSuggestions */; };
+		FA2600000000000000000215 /* PersonalDictionary in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000128 /* PersonalDictionary */; };
+		FA2600000000000000000216 /* PersonalDictionary in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000129 /* PersonalDictionary */; };
+		FA2600000000000000000217 /* PersonalDictionary in Frameworks */ = {isa = PBXBuildFile; productRef = FA2600000000000000000130 /* PersonalDictionary */; };
 		FE3860000000000000000201 /* ../../crates/funput-suggestions/data/lexicon/NOTICE.md in Resources */ = {isa = PBXBuildFile; fileRef = FE3860000000000000000101 /* ../../crates/funput-suggestions/data/lexicon/NOTICE.md */; };
 /* End PBXBuildFile section */
 
@@ -89,6 +92,7 @@
 		FE3860000000000000000401 /* Exceptions for "Keyboard" folder in "FunputTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Suggestions/Dictionary/PersonalSuggestionWorker+Dictionary.swift",
 				Suggestions/PersonalSuggestionSignposts.swift,
 				Suggestions/PersonalSuggestionWorker.swift,
 				"Suggestions/PersonalSuggestionWorker+Store.swift",
@@ -129,6 +133,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA2600000000000000000215 /* PersonalDictionary in Frameworks */,
 				FA260000000000000000020D /* KeyboardConfiguration in Frameworks */,
 				FA260000000000000000020C /* FunputShared in Frameworks */,
 				FA2600000000000000000203 /* KeyboardRenderer in Frameworks */,
@@ -142,6 +147,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA2600000000000000000214 /* PersonalSuggestions in Frameworks */,
+				FA2600000000000000000217 /* PersonalDictionary in Frameworks */,
 				5FEF3E313009341000B5155D /* KeyboardInput in Frameworks */,
 				FA260000000000000000020E /* KeyboardLayout in Frameworks */,
 				FA260000000000000000020F /* KeyboardRenderer in Frameworks */,
@@ -163,6 +169,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA2600000000000000000213 /* PersonalSuggestions in Frameworks */,
+				FA2600000000000000000216 /* PersonalDictionary in Frameworks */,
 				FA2600000000000000000208 /* KeyboardInput in Frameworks */,
 				FA2600000000000000000207 /* FunputEngine in Frameworks */,
 				FA2600000000000000000206 /* KeyboardRenderer in Frameworks */,
@@ -235,6 +242,7 @@
 				FA2600000000000000000103 /* KeyboardRenderer */,
 				FA2600000000000000000104 /* FunputShared */,
 				FA2600000000000000000105 /* KeyboardConfiguration */,
+				FA2600000000000000000128 /* PersonalDictionary */,
 			);
 			productName = Funput;
 			productReference = 5FB3C7B73001F78300CE4906 /* Funput.app */;
@@ -259,6 +267,7 @@
 			name = FunputTests;
 			packageProductDependencies = (
 				FA2600000000000000000127 /* PersonalSuggestions */,
+				FA2600000000000000000130 /* PersonalDictionary */,
 				FA2600000000000000000121 /* KeyboardInput */,
 				FA2600000000000000000122 /* KeyboardLayout */,
 				FA2600000000000000000123 /* KeyboardRenderer */,
@@ -312,6 +321,7 @@
 			name = Keyboard;
 			packageProductDependencies = (
 				FA2600000000000000000119 /* PersonalSuggestions */,
+				FA2600000000000000000129 /* PersonalDictionary */,
 				FA2600000000000000000115 /* KeyboardInput */,
 				FA2600000000000000000114 /* FunputEngine */,
 				FA2600000000000000000111 /* KeyboardLayout */,
@@ -990,6 +1000,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
 			productName = PersonalSuggestions;
+		};
+		FA2600000000000000000128 /* PersonalDictionary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = PersonalDictionary;
+		};
+		FA2600000000000000000129 /* PersonalDictionary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = PersonalDictionary;
+		};
+		FA2600000000000000000130 /* PersonalDictionary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA2600000000000000000001 /* XCLocalSwiftPackageReference "Packages/FunputKit" */;
+			productName = PersonalDictionary;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

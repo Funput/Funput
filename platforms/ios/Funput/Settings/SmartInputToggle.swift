@@ -12,6 +12,16 @@ struct SmartInputToggle: Identifiable {
 
     var id: String { title }
 
+    /// The switches that shape the suggestion bar, shown together on the page.
+    static var suggestions: [SmartInputToggle] {
+        all.filter { $0.keyPath == \.personalSuggestionsEnabled || $0.keyPath == \.typoCorrection }
+    }
+
+    /// Everything else, which acts while typing.
+    static var typing: [SmartInputToggle] {
+        all.filter { toggle in !suggestions.contains { $0.id == toggle.id } }
+    }
+
     static let all: [SmartInputToggle] = [
         .init(
             title: "Khôi phục từ thông minh", summary: "Giữ từ gốc khi sửa hoặc xóa dấu.",

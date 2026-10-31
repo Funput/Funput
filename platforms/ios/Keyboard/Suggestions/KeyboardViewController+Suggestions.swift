@@ -45,6 +45,7 @@ extension KeyboardViewController {
             resetToken: configuration.personalSuggestionResetToken,
             activationGeneration: activationGeneration
         )
+        configureSuggestionMenu(hasFullAccess: hasFullAccess)
         publishPersonalSuggestionUpdate()
     }
 

@@ -11,7 +11,7 @@ extension SettingsModel {
         case .smartInput: smartInputSummary
         case .feedback: feedbackSummary
         case .clipboard: clipboardSummary
-        case .data: nil
+        case .data, .personalDictionary: nil
         }
     }
 

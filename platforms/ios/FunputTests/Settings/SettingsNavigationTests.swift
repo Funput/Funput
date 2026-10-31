@@ -10,9 +10,11 @@ struct SettingsNavigationTests {
     func everyPageHasOneHome() {
         let hub = SettingsDestination.hubRows
         #expect(Set(hub).count == hub.count)
-        // "Dữ liệu và khôi phục" lives under "Tôi"; everything else under "Bàn phím".
-        #expect(Set(hub).union([.data]) == Set(SettingsDestination.allCases))
-        #expect(!hub.contains(.data))
+        // "Dữ liệu và khôi phục" lives under "Tôi", and "Từ điển cá nhân" inside
+        // "Thông minh"; everything else is a row of "Bàn phím".
+        let nested: Set<SettingsDestination> = [.data, .personalDictionary]
+        #expect(Set(hub).union(nested) == Set(SettingsDestination.allCases))
+        #expect(nested.isDisjoint(with: hub))
         #expect(Set(SettingsDestination.allCases.map(\.title)).count == SettingsDestination.allCases.count)
     }
 

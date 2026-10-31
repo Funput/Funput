@@ -1,7 +1,10 @@
 import SwiftUI
 
+/// The empty state of a list page: a tinted symbol, a title, a line of help and its
+/// actions. The in-house stand-in for `ContentUnavailableView`, which needs iOS 17.
+///
 /// Uses intrinsic height so a List row cannot stretch the empty-state action.
-struct ShortcutsEmptyState<Actions: View>: View {
+struct EmptyStateView<Actions: View>: View {
     let title: String
     let systemImage: String
     let summary: String
@@ -24,6 +27,7 @@ struct ShortcutsEmptyState<Actions: View>: View {
                 .controlSize(.regular)
         }
         .multilineTextAlignment(.center)
+        .accessibilityElement(children: .contain)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 20)
         .padding(.vertical, 28)
@@ -33,12 +37,14 @@ struct ShortcutsEmptyState<Actions: View>: View {
     }
 }
 
-struct ShortcutsAddButton: View {
+/// The add button a list page offers in its empty state: glass on iOS 26.
+struct GlassAddButton: View {
+    let title: String
     let action: () -> Void
 
     var body: some View {
         let button = Button(action: action) {
-            Label("Thêm gõ tắt", systemImage: "plus")
+            Label(title, systemImage: "plus")
         }
         .labelStyle(.titleAndIcon)
         .controlSize(.regular)
@@ -51,7 +57,8 @@ struct ShortcutsAddButton: View {
     }
 }
 
-struct ShortcutsListSpacing: ViewModifier {
+/// The section spacing every list page shares.
+struct ListSectionSpacing: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 17, *) {
             content.listSectionSpacing(16).contentMargins(.top, 12, for: .scrollContent)

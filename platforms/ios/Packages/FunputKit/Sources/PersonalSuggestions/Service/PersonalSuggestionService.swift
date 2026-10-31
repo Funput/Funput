@@ -73,9 +73,14 @@ public final class PersonalSuggestionService {
         // neither a prefix worth completing nor a word boundary, and stays out.
         let predicts = allowed && update.prefix.isEmpty && context != nil
         if update.completedToken == nil, next == prefix, predicts == predicting { return }
-        generation &+= 1
         prefix = next
         predicting = predicts
+        requery()
+    }
+
+    /// Asks again for what the bar is answering, dropping whatever it showed.
+    func requery() {
+        generation &+= 1
         received = []
         publish([])
         guard !prefix.isEmpty || predicting else { return }
@@ -85,7 +90,7 @@ public final class PersonalSuggestionService {
     public func clear() { invalidateAndPublish() }
     public func flush() { worker?.flush() }
 
-    private func ensureWorker() -> (any PersonalSuggestionWorking)? {
+    func ensureWorker() -> (any PersonalSuggestionWorking)? {
         guard workerConfiguration.enabled else { return nil }
         if let worker { return worker }
         let created = workerFactory { [weak self] request, candidates in

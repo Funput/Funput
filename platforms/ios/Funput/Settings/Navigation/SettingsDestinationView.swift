@@ -8,8 +8,12 @@ struct SettingsDestinationView: View {
     @ObservedObject var model: SettingsModel
 
     var body: some View {
-        SettingsPage(destination, model: model) { select in
-            content(select)
+        if destination == .personalDictionary {
+            PersonalDictionaryScreen(settings: model)
+        } else {
+            SettingsPage(destination, model: model) { select in
+                content(select)
+            }
         }
     }
 
@@ -37,6 +41,9 @@ struct SettingsDestinationView: View {
                 clearClipboard: { model.clearClipboardHistory() },
                 resetSettings: { model.reset() }
             )
+        case .personalDictionary:
+            // A list page of its own; `body` never frames it in `SettingsPage`.
+            EmptyView()
         }
     }
 }
