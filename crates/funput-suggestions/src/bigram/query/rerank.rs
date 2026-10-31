@@ -7,8 +7,7 @@
 //! the prefix, so it is still a completion of what the user is typing.
 
 use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
-use crate::engine::MAX_TOKEN_SCALARS;
-use crate::engine::SuggestionEngine;
+use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
 use crate::index::{NONE, TOP_K, marks, normalize};
 
 impl SuggestionEngine {

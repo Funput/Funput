@@ -37,6 +37,8 @@ fn bench_lookup(c: &mut Criterion) {
         ("exact-medium", "word1"),
         ("exact-long", "word1234"),
         ("folded", "ho"),
+        // Marked but the tone not typed yet: the marks walk through the exact trie.
+        ("marks", "khô"),
         ("miss", "zzzz"),
     ] {
         group.bench_with_input(BenchmarkId::new("top3", name), prefix, |b, prefix| {

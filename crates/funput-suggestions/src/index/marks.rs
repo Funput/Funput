@@ -25,7 +25,9 @@ pub(crate) fn completes(typed: &str, word: &str) -> bool {
         .all(|mark| letters.next().is_some_and(|c| matches(mark, c)))
 }
 
-fn matches(typed: char, listed: char) -> bool {
+/// Whether a typed letter may stand for a stored one: the same letter, or it without
+/// its tone, or without any mark.
+pub(crate) fn matches(typed: char, listed: char) -> bool {
     if typed == listed {
         return true;
     }
@@ -80,6 +82,24 @@ mod tests {
             ("được", "đư"),
         ] {
             assert!(!completes(prefix, syllable), "{prefix} ↛ {syllable}");
+        }
+    }
+
+    proptest::proptest! {
+        /// For an unmarked prefix, matching by marks is exactly the folded-prefix
+        /// test the folded trie and the old rerank used. Every user typing without
+        /// diacritics depends on that staying true.
+        #[test]
+        fn an_unmarked_prefix_matches_exactly_what_folding_matches(
+            pick in 0usize..2_100,
+            prefix in "[a-z]{1,4}",
+        ) {
+            let words: Vec<&str> = crate::syllables::listed().map(|(word, _)| word).collect();
+            let word = words[pick % words.len()];
+            let folded = crate::index::normalize::folded(word);
+            proptest::prop_assert_eq!(completes(&prefix, word), folded.starts_with(&prefix));
+            let own = &folded[..folded.len().min(prefix.len())];
+            proptest::prop_assert!(completes(own, word), "{} should reach {}", own, word);
         }
     }
 }

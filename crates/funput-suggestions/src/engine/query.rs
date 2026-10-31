@@ -12,29 +12,29 @@ impl SuggestionEngine {
     /// The words the prefix alone would offer, best first. Split out so the
     /// context-aware path can reorder and extend the same set.
     ///
-    /// Exact prefix matches first, then the folded trie's words that the marks typed
-    /// still allow (`marks::completes`): `đươ` reaches a learned `đường` before its
-    /// tone is typed. The folded trie keeps its best three per node, so this finds the
-    /// best of those, not every word that would match.
+    /// Exact prefix matches first. Then, for an unmarked prefix, the folded trie, as
+    /// always; for a marked one, every word the marks typed still allow
+    /// (`marks::matches`, letter by letter through the exact trie): `đươ` reaches a
+    /// learned `đường` before its tone is typed, and the walk finds the true best
+    /// three of all such words, not a filtered remnant of some node's three.
     #[inline]
     pub(crate) fn prefix_candidates(&self, prefix: &str) -> ([u32; TOP_K], usize) {
         let none = ([NONE; TOP_K], 0);
-        let scalar_count = normalize::exact_chars(prefix).count();
-        if scalar_count == 0 || scalar_count > self.config.max_token_scalars {
-            return none;
-        }
+        // Normalized once: the count, both lookups and the filter all read `typed`.
         let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
         let Some(typed) = normalize::exact_into(prefix, &mut buffer) else {
             return none;
         };
+        let scalar_count = typed.chars().count();
+        if scalar_count == 0 || scalar_count > self.config.max_token_scalars {
+            return none;
+        }
         let exact = self.exact.find(typed.chars(), &self.words);
-        let folded = self
-            .folded
-            .find(normalize::folded_chars(prefix), &self.words)
-            .map(|id| match self.words.get(id as usize) {
-                Some(word) if marks::completes(typed, &word.text) => id,
-                _ => NONE,
-            });
+        let folded = if normalize::folded_chars(typed).eq(typed.chars()) {
+            self.folded.find(typed.chars(), &self.words)
+        } else {
+            self.exact.find_matching(typed, &self.words, marks::matches)
+        };
 
         let mut ids = [NONE; TOP_K];
         let mut len = 0;

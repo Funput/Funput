@@ -3,7 +3,10 @@
 //!
 //! - `node` — the arena node and its sizing constants.
 //! - `ranking` — the order a node keeps its top-3 in.
+//! - `filtered` — a lookup that follows every path a prefix could become, by a
+//!   per-letter rule (marks typed so far).
 
+mod filtered;
 mod node;
 mod ranking;
 
@@ -64,22 +67,22 @@ impl ArenaTrie {
         chars: impl Iterator<Item = char>,
         words: &[WordRecord],
     ) -> [u32; TOP_K] {
+        self.walk(chars).map_or([NONE; TOP_K], |node| {
+            self.nodes[node as usize]
+                .top
+                .map(|entry| entry.live_id(words))
+        })
+    }
+
+    /// The node `chars` leads to, or `None` for no characters or no such path.
+    fn walk(&self, chars: impl Iterator<Item = char>) -> Option<u32> {
         let mut node = 0u32;
         let mut consumed = false;
         for ch in chars {
             consumed = true;
-            let Some(next) = self.child(node, ch) else {
-                return [NONE; TOP_K];
-            };
-            node = next;
+            node = self.child(node, ch)?;
         }
-        if consumed {
-            self.nodes[node as usize]
-                .top
-                .map(|entry| entry.live_id(words))
-        } else {
-            [NONE; TOP_K]
-        }
+        consumed.then_some(node)
     }
 
     fn child(&self, parent: u32, label: char) -> Option<u32> {

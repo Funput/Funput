@@ -430,11 +430,14 @@ Bước 6 không phụ thuộc bước 5, nên có thể chạy song song khi da
 1. ~~**Kho cá nhân có nên dùng luật khớp mới không?**~~ **Đã giải quyết** (cùng PR Phần B):
    nếu chỉ dữ liệu kèm app khớp theo dấu đã gõ, `đươ` sẽ đưa âm tiết kèm app ra trong khi
    `đường` người dùng đã học không hiện, ngược với "cá nhân luôn đứng trước".
-   `prefix_candidates` giờ luôn hỏi trie `folded` và lọc bằng `marks::completes`; rerank theo
-   ngữ cảnh dùng cùng hàm đó. Với prefix không dấu, kết quả y như trước (luật trùng với so khớp
-   `folded`). Với prefix có dấu, trước chỉ khớp chính xác, giờ khớp thêm cả từ chưa gõ thanh.
-   Giới hạn: trie giữ ba từ tốt nhất mỗi nút, nên đây là ba từ tốt nhất của nút `folded` sau khi
-   lọc, không phải mọi từ khớp.
+   `prefix_candidates` giờ: khớp chính xác trước; prefix không dấu đi trie `folded` như cũ
+   (luật dấu trùng với so khớp bỏ dấu, có proptest giữ); prefix có dấu đi trie chính xác theo
+   từng chữ (`ArenaTrie::find_matching` với `marks::matches`), rẽ vào mọi nhánh mà chữ đã gõ
+   có thể đứng thay, rồi gộp ba từ tốt nhất của mỗi nút cuối. Mỗi từ khớp đi qua đúng một nút
+   cuối, nên đây là ba từ tốt nhất thật trong mọi từ khớp, kể cả từ kết thúc ngay ở prefix
+   (`phô` ra `phố` dù `phòng · phóng · phỏng` dùng nhiều hơn). Tối đa 64 nút mỗi lần tra,
+   không cấp phát. Rerank theo ngữ cảnh dùng `marks::completes`. Đo: `khô` 152 ns; các ca tra
+   cũ nhanh hơn `main` 15–44% vì prefix chỉ chuẩn hoá một lần.
 2. **`context_evidence_seen = 3` có đúng không?** Thấp quá thì bảng rút lui trước khi người
    dùng kịp chấp nhận gợi ý; cao quá thì bảng cãi dữ liệu cá nhân lâu hơn. Chốt ở bước 7.
 3. **Có cần công tắc riêng "Gợi ý có sẵn" không?** Bản này nói không, dùng chung "Gợi ý từ".
