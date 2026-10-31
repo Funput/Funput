@@ -20,7 +20,9 @@ internal class SeedLanguageReportingEngine(
 ) : VietnameseEngine by inner {
     private var composesVietnamese: Boolean? = null
     private var toneStyle: ToneStyle? = null
-    private var reported: SeedLanguage? = null
+    /** The last report, null until both halves are known. */
+    var reported: SeedLanguage? = null
+        private set
 
     override fun configure(configuration: EngineConfiguration) {
         inner.configure(configuration)

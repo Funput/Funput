@@ -28,6 +28,8 @@ internal class PersonalSuggestionWorker(
     /** Set on the main thread, taken on the worker; see [setSeedLanguage]. */
     private val pendingSeed = AtomicReference<SeedLanguage?>()
     private val applySeed = Runnable(::applyPendingSeed)
+    /** Set by [close]: the service tears the composer down after it, and that may report. */
+    @Volatile private var closed = false
 
     init {
         worker.post(::openEngine)
@@ -69,6 +71,7 @@ internal class PersonalSuggestionWorker(
      * a change with no query behind it; [openEngine] always runs first, as `init` posts it.
      */
     fun setSeedLanguage(language: SeedLanguage) {
+        if (closed) return
         pendingSeed.set(language)
         worker.post(applySeed)
     }
@@ -76,6 +79,7 @@ internal class PersonalSuggestionWorker(
     fun clearQueries() = requests.clear()
 
     fun close(onClosed: () -> Unit = {}) {
+        closed = true
         requests.clear()
         worker.removeCallbacks(idleFlush)
         worker.post {

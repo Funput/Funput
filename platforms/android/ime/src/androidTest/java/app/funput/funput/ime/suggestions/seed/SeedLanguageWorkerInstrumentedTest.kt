@@ -14,7 +14,7 @@ class SeedLanguageWorkerInstrumentedTest {
     private var generation = 0L
 
     @Test fun theSettingReachesTheEngineAndFollowsEveryChange() = withWorker { worker ->
-        assertEquals(emptyList<String>(), predicted(worker, "cảm"), "off until the composer says")
+        assertEquals("off until the composer says", emptyList<String>(), predicted(worker, "cảm"))
 
         worker.setSeedLanguage(SeedLanguage.Vietnamese(ToneStyle.MODERN))
         assertEquals(listOf("ơn"), predicted(worker, "cảm"))
@@ -31,9 +31,6 @@ class SeedLanguageWorkerInstrumentedTest {
         worker.query(PersonalSuggestionRequest("", generation++, 1, context = previous))
         return results.poll(20, TimeUnit.SECONDS)
     }
-
-    private fun assertEquals(expected: List<String>, actual: List<String>?, message: String) =
-        assertEquals(message, expected, actual)
 
     private fun withWorker(body: (PersonalSuggestionWorker) -> Unit) {
         // An unavailable store keeps the test off disk: the worker falls back to memory.

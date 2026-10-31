@@ -1,14 +1,14 @@
 package app.funput.funput.ime.suggestions
 
 import app.funput.funput.ime.nativebridge.EngineConfiguration
-import app.funput.funput.ime.nativebridge.VietnameseEngine
+import app.funput.funput.ime.nativebridge.RecordingVietnameseEngine
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class SeedLanguageReportingEngineTest {
-    private val inner = RecordingEngine()
+    private val inner = RecordingVietnameseEngine()
     private val reports = mutableListOf<SeedLanguage>()
     private val engine = SeedLanguageReportingEngine(inner) { reports += it }
 
@@ -16,7 +16,7 @@ class SeedLanguageReportingEngineTest {
         engine.configure(configuration(ToneStyle.MODERN))
         engine.setEnabled(false)
         assertEquals(listOf(ToneStyle.MODERN), inner.configurations.map { it.toneStyle })
-        assertEquals(listOf(false), inner.enabled)
+        assertEquals(listOf(false), inner.enabledCalls)
     }
 
     @Test fun nothingIsReportedUntilBothHalvesAreKnown() {
@@ -77,24 +77,4 @@ class SeedLanguageReportingEngineTest {
         eagerRestore = true,
         spellCheck = true,
     )
-}
-
-private class RecordingEngine : VietnameseEngine {
-    val configurations = mutableListOf<EngineConfiguration>()
-    val enabled = mutableListOf<Boolean>()
-
-    override fun configure(configuration: EngineConfiguration) {
-        configurations += configuration
-    }
-
-    override fun setEnabled(enabled: Boolean) {
-        this.enabled += enabled
-    }
-
-    override fun adopt(word: String): Boolean = false
-    override fun process(codePoint: Int): String = ""
-    override fun processBoundary(codePoint: Int): String? = null
-    override fun backspace(): String = ""
-    override fun clear() = Unit
-    override fun close() = Unit
 }
