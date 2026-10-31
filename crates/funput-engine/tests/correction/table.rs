@@ -77,6 +77,15 @@ const CASES: &[Case] = &[
         shown: "minhg",
         corrected: "mình",
     },
+    // `đuợ` is no syllable: the open `uơ` follows only ∅, `h`, `kh` and `th`
+    // (`thuở`), so the `x` that landed where `c` was meant is correctable.
+    Case {
+        method: InputMethod::Telex,
+        keys: "dduowxj",
+        slip: (5, 'c'),
+        shown: "đuợ",
+        corrected: "được",
+    },
     Case {
         method: InputMethod::Vni,
         keys: "d9u7o7nh2",
@@ -93,12 +102,6 @@ const UNTOUCHED: &[(InputMethod, &str, (usize, char))] = &[
     (InputMethod::Telex, "banj", (3, 'k')),
     (InputMethod::Vni, "d9u7o7ng3", (8, '2')),
     (InputMethod::Telex, "nhaf", (3, 's')),
-    // `dduowxj ` is in the design doc's table, but it composes to `đuợ`, which
-    // `funput_core::is_complete_syllable` accepts. Correcting it would mean
-    // correcting words that are structurally valid — the context-sensitive extension
-    // the design defers, and the one place this feature could rewrite a word the user
-    // meant. It stays untouched until that arrives.
-    (InputMethod::Telex, "dduowxj", (5, 'c')),
 ];
 
 #[test]

@@ -15,7 +15,7 @@ use crate::validation::parse::parse_syllable;
 use crate::validation::rhyme::{is_valid_rhyme, matches_deshaped};
 use crate::validation::rules::SyllableRules;
 
-use super::spelling::violates_ckg_spelling;
+use super::spelling::{onset_admits_rhyme, violates_ckg_spelling};
 
 /// How a finished buffer sits against Vietnamese syllable structure.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -28,7 +28,7 @@ pub(crate) enum SyllableStatus {
     /// finishing it. Three ways that happens:
     /// - a **stop coda** (`p t c ch`) with no tone, where Vietnamese requires sắc
     ///   or nặng: `chuc` → `chúc`, `tich` → `tích`;
-    /// - a rhyme that only exists shaped: `dien` → `diên`, `thuo` → `thuơ`;
+    /// - a rhyme that only exists shaped: `dien` → `diên`, `ruou` → `rượu`;
     /// - both at once: `nuoc` → `nước`.
     AwaitingDiacritic,
     /// A real Vietnamese syllable as it stands: `chào`, `việt`, `ma`, `tét`.
@@ -59,8 +59,17 @@ pub(crate) fn classify(buffer: &str, rules: SyllableRules) -> SyllableStatus {
     // Tây Nguyên name spells it (`Kpă`, `Dliê`). A rhyme that exists only *shaped*
     // is that same rhyme with its shape keys still to come — `ien` is `iên` minus
     // the circumflex — so it is unfinished, not wrong.
+    //
+    // A real rhyme behind an onset that never takes it is wrong outright, not
+    // unfinished: no diacritic can fix the onset, and reading it as awaiting one
+    // would let `adopt` reopen `tuớ` as a word in progress.
     let rhyme = toneless_rhyme(&parts, coda);
-    let status = if is_valid_rhyme(&rhyme) || ethnic::admits(parts.onset) {
+    let status = if ethnic::admits(parts.onset) {
+        SyllableStatus::Complete
+    } else if is_valid_rhyme(&rhyme) {
+        if !onset_admits_rhyme(parts.onset, &rhyme) {
+            return SyllableStatus::Invalid;
+        }
         SyllableStatus::Complete
     } else if matches_deshaped(&rhyme) {
         SyllableStatus::AwaitingDiacritic

@@ -91,7 +91,7 @@ Vần `ươ` — nhóm lớn nhất — vẫn về đích nhờ chuẩn hoá `ư
 | `dwduocj` | `được` | `được` |
 | `cwon` | `cơn` | `cươn` |
 | `lwams` | `lắm` | `lứam` |
-| `giwof` | `giờ` | `giuờ` |
+| `giwof` | `giờ` | `giwof` (`giuờ` khi đang gõ) |
 
 Chênh lệch còn lại chỉ xảy ra khi `w` gõ **ngay sau onset** và nhắm tới trần/móc
 của một nguyên âm phía sau **không** thuộc cặp `uo`: `cwon`, `lwams`, `nwux`,
@@ -99,6 +99,11 @@ của một nguyên âm phía sau **không** thuộc cặp `uo`: `cwon`, `lwams`
 âm tiết hợp lệ, nên không phân biệt được với `lắm`/`cơn`/`giặt`. Các từ này vẫn gõ
 được ở mọi vị trí tự do khác (`conw`, `lamws`, `nuwx`, `giowf`, `giatwj`), bằng
 shortcut (`gi[f`) và bằng cách gõ canonical.
+
+Riêng `giwof` kết thúc trên vần mở `uơ` (`giuờ`). Vần này chỉ đứng sau ∅, `h`, `kh`, `th`
+(`thuở`, `huơ`, `khuơ`, `uở`), nên ranh giới từ trả lại phím thô `giwof` thay vì để lại một
+chữ không có thật. Cùng luật đó sửa `twos` → `tuớ` (#661): Telex nâng cao đọc `tw` là `tư`, và
+`tưo` + `s` từng thành `tuớ`. Giờ nó về `twos`.
 
 `q` được loại khỏi luật: không có âm tiết `qư`, nên `w` sau `q` đứng một mình vẫn
 là trần thường (`qwuangj` → `quặng`).

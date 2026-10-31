@@ -65,6 +65,13 @@ const MUST_ACCEPT: &[&str] = &[
     "ngoém",
     "héc",
     "véc",
+    // The open `uơ`, with every onset Viet74K gives it, and `qu` + `ơ` beside it.
+    "thuở",
+    "huơ",
+    "khuơ",
+    "khuờ",
+    "uở",
+    "quở",
 ];
 
 /// Toned forms that are NOT valid Vietnamese but are structurally close enough to
@@ -77,6 +84,9 @@ const MUST_REJECT: &[&str] = &[
     // A consonant between onset and vowel, which an order-blind parse reads as
     // the coda (`cno` → rhyme `on`).
     "cno", "cna", "cnu", "tnó", "ctá", "ona",
+    // The open `uơ` behind an onset no word gives it: what `ưo` + a tone leaves on
+    // the way to `ường`, or English typed in Telex (`twos` → `tuớ`).
+    "tuớ", "nuớ", "giuờ", "truờ", "luơ",
 ];
 
 #[test]

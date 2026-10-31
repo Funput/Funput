@@ -270,3 +270,16 @@ fn ckg_spelling() {
         ModifierValidation::Allow
     );
 }
+
+#[test]
+fn open_uo_is_a_syllable_only_after_its_attested_onsets() {
+    for ok in ["thuở", "huơ", "khuơ", "khuờ", "uở", "THUỞ", "quơ", "quở"] {
+        assert!(is_complete_syllable(ok), "{ok} should be complete");
+    }
+    // Wrong, not unfinished: no diacritic fixes the onset, so `adopt` must not
+    // reopen these either.
+    for bad in ["tuớ", "nuớ", "giuờ", "truờ", "luơ", "TUỚ"] {
+        assert!(!is_complete_syllable(bad), "{bad} should not be complete");
+        assert!(!is_reopenable_syllable(bad), "{bad} should not reopen");
+    }
+}
