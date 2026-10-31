@@ -7,7 +7,10 @@
 thực** (PR xếp chồng): setter qua C ABI và JNI. **Bước 4 đã hiện thực** trên cả Android và iOS
 (hai PR riêng, cùng xếp chồng lên bước 3): người mới cài gõ `cảm` rồi dấu cách là có `ơn`, đã thử
 trên simulator iOS và bằng instrumented test trên emulator Android. **Bước 6 (Phần B, #561) đã
-hiện thực**, chỉ trong `funput-suggestions`: gõ dở `đươ` là có `được · đường`. Còn bước 5 và 7.
+hiện thực**, chỉ trong `funput-suggestions`: gõ dở `đươ` là có `được · đường`, và kho cá nhân
+khớp theo cùng luật dấu. **Cặp tiếng Anh ở chế độ VI** (một danh sách nhỏ viết tay, xem
+[Cặp tiếng Anh](#cặp-tiếng-anh-ở-chế-độ-vi)) đã hiện thực. Còn bước 5 và 7, cùng các hướng ở
+[Mở rộng sau này](#mở-rộng-sau-này).
 
 Giải quyết [#560](https://github.com/Funput/Funput/issues/560)
 (đoán từ tiếp theo sau dấu cách) và [#561](https://github.com/Funput/Funput/issues/561)
@@ -58,9 +61,10 @@ Ràng buộc kế thừa nguyên từ hai tài liệu trước, không thương 
 
 ## Không thuộc phạm vi
 
-- **Dự đoán từ tiếp theo bằng dữ liệu tĩnh cho tiếng Anh** (comment trong #560). Không
-  viết tay được ở quy mô có ích; phải lấy từ corpus (Google Books 2-grams), kéo theo giấy
-  phép và dung lượng tải. Tài liệu riêng, làm sau.
+- ~~**Dự đoán từ tiếp theo bằng dữ liệu tĩnh cho tiếng Anh**~~ (comment trong #560).
+  **Đã đổi khi hiện thực**: làm một phần, bằng danh sách nhỏ viết tay chỉ dùng ở chế độ VI (xem
+  [Cặp tiếng Anh](#cặp-tiếng-anh-ở-chế-độ-vi)). Chế độ EN và dữ liệu từ corpus nằm ở
+  [Mở rộng sau này](#mở-rộng-sau-này). Funput tập trung vào tiếng Việt; tiếng Anh là phần thêm.
 - **Từ ghép nhiều âm tiết trên một ô** (`cảm ơn` hiện thành một gợi ý). Engine học và gợi
   ý theo âm tiết (`learn` loại token có khoảng trắng); đổi điều đó là đổi mô hình.
 - ~~Đổi cách kho cá nhân khớp prefix.~~ **Đã đổi khi hiện thực**: làm luôn cùng Phần B, vì
@@ -300,6 +304,47 @@ tự:
   `main` (đo xen kẽ hai nhánh).
 - `vi.txt` không có `đương`, nên bảng ví dụ ở trên thực tế ra `được · đường`.
 - Luật khớp chuyển về `index/marks.rs`, là luật duy nhất cho cả kho cá nhân lẫn dữ liệu kèm app.
+
+## Cặp tiếng Anh ở chế độ VI
+
+Nhiều người gõ tiếng Anh ngay trong chế độ VI, nhờ bàn phím tự khôi phục chữ gốc. Bigram cá
+nhân vốn đã học cặp tiếng Anh của họ; phần thiếu chỉ là dữ liệu cho người mới cài.
+
+- **Dữ liệu:** `data/pairs/en.txt`, khoảng 45 cặp viết tay (MIT) theo đúng tiêu chí "nhọn" của
+  `vi.txt` (`thank you`, `according to`, `instead of`, `depends on`...). Không chữ có nhiều hướng
+  (`as`, `in`, `make`), không chữ phải viết hoa (`i`, tên riêng).
+- **Một bảng, một luật:** `seed/pairs.rs` dựng một `PairTable` từ cả hai danh sách (tiếng Việt
+  trước). Chữ tiếng Anh là ASCII nên `respell_tone` không đổi gì. Predict, đường prefix
+  (`thank` + `yo` → `you`), luật rút lui, luật chặn từ và "cá nhân trước" giữ nguyên, không thêm
+  nhánh nào.
+- **Hai ngôn ngữ không chạm nhau**, gác bằng `funput-lexicon-tool/tests/en_pairs.rs`: chữ đứng
+  trước không phải âm tiết tiếng Việt hoàn chỉnh (người gõ tiếng Việt không bao giờ nhận dự đoán
+  tiếng Anh vì vô tình), không chữ đứng trước nào có ở cả hai danh sách, mọi chữ đều có trong
+  `en.tsv` (từ thật, đã qua blocklist), và engine thật đưa đúng chữ đi sau của từng dòng.
+- **Chỉ chế độ VI:** ở chế độ EN và ô không ghép, dữ liệu kèm app vẫn `Off`. Không phải sửa nền tảng.
+
+## Mở rộng sau này
+
+Những hướng đã cân nhắc nhưng chưa làm, mỗi hướng ghi cần gì và đụng vào đâu, để không phải
+tìm lại:
+
+1. **Dự đoán tiếng Anh ở chế độ EN.** Thêm mã wire (`SeedLanguage::WIRE_ENGLISH`, giải mã ở
+   `from_wire`, nên FFI/JNI không đổi logic) và một biến thể `SeedSlot` chỉ dùng bảng tiếng Anh.
+   iOS lấy được ngay từ `KeyboardInputCoordinator` (`state.language` và `editorMode`). Android
+   khó hơn: `SeedLanguageReportingEngine` chỉ thấy `setEnabled(bool)`, không phân biệt "đang gõ EN"
+   với "ô mật khẩu", nên cần đưa thêm tín hiệu ngôn ngữ từ `ImeKeyActionHandler`.
+2. **Cặp tiếng Anh từ corpus.** Google Books 2-grams (CC BY 3.0, cùng nguồn với `en.tsv`, đã có
+   `NOTICE.md`), thêm một bước trong `funput-lexicon-tool` giống `count`/`rank`. Dung lượng tải lớn
+   hơn bộ 1-grams (~13 GB) nhiều lần, nên chỉ đáng làm khi danh sách viết tay tỏ ra quá ngắn.
+3. **Mở rộng cặp tiếng Việt (bước 5)** từ 69 lên vài trăm, kèm công cụ đánh giá offline
+   (`funput dev`) đo số phím tiết kiệm và tỉ lệ đoán sai trên văn bản tự viết; một đợt làm tỉ lệ
+   sai tăng rõ thì không merge.
+4. **Đo và chỉnh trên máy thật (bước 7):** `context_evidence_seen` (3), trần 2 ô cho prefix không
+   dấu, `MAX_VISITS` (64) của `ArenaTrie::find_matching`, bộ nhớ extension iOS.
+5. **Ngữ cảnh dài hơn một chữ** (trigram, cụm cố định như `by the way`, `cảm ơn bạn`): engine chỉ
+   nhìn một chữ đứng trước; đổi điều đó là đổi mô hình bigram cá nhân.
+6. **Công tắc riêng "Gợi ý có sẵn"**, nếu có phản hồi rằng dữ liệu kèm app gây nhiễu; hôm nay dùng
+   chung công tắc "Gợi ý từ".
 
 ## Không đổi
 

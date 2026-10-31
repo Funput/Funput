@@ -1,4 +1,10 @@
-//! The shipped pair list, parsed once into a table sorted by first syllable.
+//! The shipped pair lists, parsed once into one table sorted by first word.
+//!
+//! Two lists share it: `data/pairs/vi.txt`, the point of the feature, and
+//! `data/pairs/en.txt`, a short English list for people who type English in
+//! Vietnamese mode. Their tests keep the two apart: no English first word is a
+//! Vietnamese syllable, and no first word is listed in both. The English words are
+//! ASCII, so everything below about tone styles leaves them as they are.
 //!
 //! `data/pairs/vi.txt` is written in the modern tone style. Building the table
 //! adds the traditional spelling of every first syllable the styles disagree on,
@@ -16,13 +22,18 @@ use funput_core::{ToneStyle, respell_tone};
 use crate::engine::MAX_TOKEN_SCALARS;
 use crate::index::normalize;
 
-const LIST: &str = include_str!("../../data/pairs/vi.txt");
+/// Vietnamese first, so a first word listed in both (which the tests forbid) would
+/// keep its Vietnamese pair.
+const LISTS: [&str; 2] = [
+    include_str!("../../data/pairs/vi.txt"),
+    include_str!("../../data/pairs/en.txt"),
+];
 
 static SHIPPED: OnceLock<PairTable> = OnceLock::new();
 
-/// The table built from the shipped list, built on first use.
+/// The table built from the shipped lists, built on first use.
 pub(crate) fn shipped() -> &'static PairTable {
-    SHIPPED.get_or_init(|| PairTable::parse(LIST))
+    SHIPPED.get_or_init(|| PairTable::parse(LISTS))
 }
 
 pub(crate) struct PairTable {
@@ -67,12 +78,13 @@ impl Next {
 }
 
 impl PairTable {
-    /// Trusts `list` to be lowercase NFC, modern style, with one second syllable
-    /// per first one — `funput-lexicon-tool/tests/vi_pairs.rs` checks the shipped
-    /// file. A first syllable listed twice keeps the line that came first.
-    pub(crate) fn parse(list: &'static str) -> Self {
+    /// Trusts each list to be lowercase NFC, modern style, with one second word per
+    /// first one — `funput-lexicon-tool/tests/{vi,en}_pairs.rs` check the shipped
+    /// files. A first word listed twice keeps the line that came first, earlier lists
+    /// before later ones.
+    pub(crate) fn parse(lists: impl IntoIterator<Item = &'static str>) -> Self {
         let mut entries = Vec::new();
-        for line in list.lines().map(str::trim) {
+        for line in lists.into_iter().flat_map(str::lines).map(str::trim) {
             if line.starts_with('#') {
                 continue;
             }
@@ -145,7 +157,7 @@ mod tests {
 
     #[test]
     fn a_first_syllable_finds_its_pair_in_any_case_or_form() {
-        let table = PairTable::parse(LIST);
+        let table = PairTable::parse([LIST]);
         assert_eq!(after(&table, "cảm", Modern).as_deref(), Some("ơn"));
         assert_eq!(after(&table, "Cảm", Modern).as_deref(), Some("ơn"));
         assert_eq!(after(&table, "CA\u{0309}M", Modern).as_deref(), Some("ơn"));
@@ -156,13 +168,20 @@ mod tests {
 
     #[test]
     fn the_earlier_line_wins_a_repeated_first_syllable() {
-        let table = PairTable::parse(LIST);
+        let table = PairTable::parse([LIST]);
         assert_eq!(after(&table, "cảm", Modern).as_deref(), Some("ơn"));
     }
 
     #[test]
+    fn an_earlier_list_wins_a_first_word_both_list() {
+        let table = PairTable::parse(["thank you\n", "thank god\nsuch as\n"]);
+        assert_eq!(after(&table, "thank", Modern).as_deref(), Some("you"));
+        assert_eq!(after(&table, "such", Modern).as_deref(), Some("as"));
+    }
+
+    #[test]
     fn both_tone_styles_are_read_and_written() {
-        let table = PairTable::parse(LIST);
+        let table = PairTable::parse([LIST]);
         assert_eq!(after(&table, "hoà", Modern).as_deref(), Some("bình"));
         assert_eq!(after(&table, "hòa", Modern).as_deref(), Some("bình"));
         assert_eq!(after(&table, "sức", Modern).as_deref(), Some("khoẻ"));
