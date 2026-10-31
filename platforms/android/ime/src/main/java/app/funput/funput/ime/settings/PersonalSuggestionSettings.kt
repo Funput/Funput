@@ -17,6 +17,9 @@ data class PersonalSuggestionPreferences(
     val resetToken: String?,
     val appliedResetToken: String?,
 ) {
+    /** A wipe the app asked for that the keyboard has not carried out yet. */
+    val isResetPending: Boolean get() = resetToken != null && resetToken != appliedResetToken
+
     companion object {
         val Default = PersonalSuggestionPreferences(true, null, null)
     }

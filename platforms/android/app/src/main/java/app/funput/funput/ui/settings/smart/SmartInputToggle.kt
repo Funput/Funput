@@ -61,4 +61,12 @@ internal enum class SmartInputToggle(
 
     /** Sends [enabled] to whatever [state] saves this switch through. */
     fun set(state: SettingsScreenState, enabled: Boolean) = write(state)(enabled)
+
+    companion object {
+        /** The suggestion bar's switches, which share a card with the way into its words. */
+        val suggestionBar: List<SmartInputToggle> = listOf(SUGGESTIONS, TYPO_CORRECTION)
+
+        /** Everything else, which acts while typing. */
+        val typing: List<SmartInputToggle> = entries - suggestionBar.toSet()
+    }
 }

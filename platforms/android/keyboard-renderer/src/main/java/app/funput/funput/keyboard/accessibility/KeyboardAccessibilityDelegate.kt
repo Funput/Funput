@@ -19,7 +19,7 @@ internal class KeyboardAccessibilityDelegate(
     private val snapshot: () -> KeyboardAccessibilitySnapshot?,
     private val activate: (keyId: String) -> Unit,
     private val activateAlternate: (keyId: String, index: Int) -> Unit,
-    private val activateCustom: (actionId: Int) -> Unit,
+    private val activateCustom: (keyId: String, actionId: Int) -> Unit,
 ) : ExploreByTouchHelper(host) {
     init {
         ViewCompat.setAccessibilityDelegate(host, this)
@@ -78,7 +78,7 @@ internal class KeyboardAccessibilityDelegate(
         when {
             action == AccessibilityNodeInfo.ACTION_CLICK -> activate(key.keyId)
             alternate != null -> activateAlternate(key.keyId, alternate.index)
-            custom != null -> activateCustom(custom.actionId)
+            custom != null -> activateCustom(key.keyId, custom.actionId)
             else -> return false
         }
         sendEventForVirtualView(virtualViewId, AccessibilityEvent.TYPE_VIEW_CLICKED)

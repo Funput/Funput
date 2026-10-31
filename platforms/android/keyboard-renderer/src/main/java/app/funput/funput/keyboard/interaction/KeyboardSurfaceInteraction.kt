@@ -11,6 +11,10 @@ import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.popover.interaction.AlternateSelectionPreview
+import app.funput.funput.keyboard.suggestion.SuggestionBandSegment
+import app.funput.funput.keyboard.suggestion.SuggestionChip
+import app.funput.funput.keyboard.suggestion.actions.SuggestionAction
+import app.funput.funput.keyboard.suggestion.actions.SuggestionActions
 import app.funput.funput.keyboard.touch.KeyTouchRecorder
 
 /** Wires Android touch routing to renderer-independent keyboard interaction state. */
@@ -18,10 +22,12 @@ internal class KeyboardSurfaceInteraction(
     keyAt: (x: Float, y: Float) -> String?,
     keyboard: () -> ResolvedKeyboard?,
     keySpec: (keyId: String) -> KeySpec?,
-    suggestionSelection: (targetId: String) -> SuggestionSelection?,
+    suggestions: () -> List<SuggestionChip>,
     onAction: (KeyAction) -> Unit,
     utilities: KeyboardUtilityDispatcher,
     onSuggestionSelected: (SuggestionSelection) -> Unit,
+    suggestionEditable: (SuggestionSelection) -> Boolean,
+    onSuggestionAction: (SuggestionSelection, SuggestionAction) -> Unit,
     onHapticFeedback: (KeyboardHapticType) -> Unit,
     onVisualStateChanged: () -> Unit,
     onSemanticStateChanged: () -> Unit,
@@ -36,9 +42,15 @@ internal class KeyboardSurfaceInteraction(
 ) : PressedKeyState {
     private lateinit var touchHandler: KeyboardTouchHandler
     private val touches = KeyTouchRecorder(keyboard)
+    private val suggestionActions = SuggestionActions(
+        suggestions, schedule, cancel, touchSlop, suggestionEditable, onSuggestionAction,
+        onFeedback = { onHapticFeedback(KeyboardHapticType.CONTROL) },
+        capture = { pointerId -> touchHandler.capture(pointerId) },
+        onChanged = { onVisualStateChanged(); onSemanticStateChanged() },
+    )
     private val controller = KeyboardInteractionController(
         keySpec = keySpec,
-        suggestionSelection = suggestionSelection,
+        suggestionSelection = { id -> suggestions().selectionForTarget(id) },
         onAction = { onAction(touches.attach(it)) },
         utilities = utilities,
         onPointersCancelled = { touchHandler.cancelGesture() },
@@ -57,16 +69,23 @@ internal class KeyboardSurfaceInteraction(
     )
     init {
         touchHandler = KeyboardTouchHandler(
-            keyAt = keyAt,
+            keyAt = { x, y -> suggestionActions.targetAt(x, y, keyboard()) ?: keyAt(x, y) },
             onPressedStateChanged = onVisualStateChanged,
-            onPointerStarted = { id, key, x, y -> touches.down(id, x, y); controller.onPointerStarted(id, key, x, y) },
-            onPointerKeyChanged = controller::onPointerKeyChanged,
-            onPointerMoved = controller::onPointerMoved,
-            onKeyReleased = { id, key, x, y, time ->
-                touches.releasing(id, key) { controller.onKeyReleased(id, key, x, y, time) }
+            onPointerStarted = { id, key, x, y ->
+                touches.down(id, x, y)
+                suggestionActions.started(id, key, x, y)
+                controller.onPointerStarted(id, key, x, y)
             },
-            isPointerCaptured = controller::isPointerCaptured,
-            onCancelled = controller::cancel,
+            onPointerKeyChanged = controller::onPointerKeyChanged,
+            onPointerMoved = { id, key, x, y -> suggestionActions.moved(id, x, y); controller.onPointerMoved(id, key, x, y) },
+            onKeyReleased = { id, key, x, y, time ->
+                // A held word or a slot of the strip is spent here; the controller still
+                // hears the release, keyless, so its own per-pointer state is let go.
+                val target = suggestionActions.released(id, key)
+                touches.releasing(id, target) { controller.onKeyReleased(id, target, x, y, time) }
+            },
+            isPointerCaptured = { id -> controller.isPointerCaptured(id) || suggestionActions.isCaptured(id) },
+            onCancelled = { suggestionActions.cancel(); controller.cancel() },
             requestParentIntercept = requestParentIntercept,
         )
     }
@@ -78,6 +97,12 @@ internal class KeyboardSurfaceInteraction(
     var areSmartGesturesEnabled by controller::areSmartGesturesEnabled
     var breaksLineOnEnterHold by controller::breaksLineOnEnterHold
     val alternatePreview: AlternateSelectionPreview? get() = controller.alternatePreview
+
+    /** The actions a long press opened, drawn in place of the candidates; empty while closed. */
+    fun suggestionActionSegments(keyboard: ResolvedKeyboard): List<SuggestionBandSegment> =
+        suggestionActions.segments(keyboard)
+
+    fun isSuggestionEditable(selection: SuggestionSelection): Boolean = suggestionActions.isEditable(selection)
 
     fun setShiftState(value: ShiftState) = controller.setShiftState(value)
 
@@ -94,9 +119,13 @@ internal class KeyboardSurfaceInteraction(
 
     fun performAccessibilityAction(action: KeyAction) = controller.emitAction(action)
 
+    fun performAccessibilitySuggestionAction(targetId: String, action: SuggestionAction) =
+        suggestionActions.perform(targetId, action)
+
     fun clear() {
         touchHandler.clear()
         touches.clear()
+        suggestionActions.close()
     }
 
     fun reset() {

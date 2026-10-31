@@ -25,13 +25,14 @@ internal fun SettingsPageScreen(
     state: SettingsScreenState,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenDictionary: () -> Unit = {},
 ) {
     // Per destination, so the navigation host forgets it once the page is popped.
     var picker by rememberSaveable { mutableStateOf<SettingsPicker?>(null) }
     val title = stringResource(page.title)
     CompositionLocalProvider(LocalSettingsPageTitle provides title) {
         FunputScreen(title = title, modifier = modifier, onBack = onBack) {
-            settingsPageItems(page = page, state = state, onOpenPicker = { picker = it })
+            settingsPageItems(page = page, state = state, onOpenPicker = { picker = it }, onOpenDictionary = onOpenDictionary)
         }
     }
     SettingsPickerSheet(picker = picker, state = state, onDismiss = { picker = null })

@@ -30,10 +30,9 @@ use funput_engine::{Action, ImeResult, KeyTouch};
 use jni::EnvUnowned;
 use jni::sys::{jfloat, jint, jintArray, jlong};
 
-use self::arrays::int_array;
 use super::composition::to_char;
 use super::registry;
-use crate::abi::{JavaObject, safe};
+use crate::abi::{JavaObject, int_array, safe};
 
 /// Report where the finger landed for the key about to be sent.
 ///

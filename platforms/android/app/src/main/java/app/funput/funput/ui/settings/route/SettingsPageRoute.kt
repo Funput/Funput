@@ -13,10 +13,12 @@ internal fun SettingsPageRoute(
     settings: FunputSettingsState,
     keyboardTheme: KeyboardThemeDescriptor,
     onBack: () -> Unit,
+    onOpenDictionary: () -> Unit = {},
 ) {
     SettingsPageScreen(
         page = page,
         state = rememberSettingsScreenState(settings, keyboardTheme, onOpenAppearance = {}),
         onBack = onBack,
+        onOpenDictionary = onOpenDictionary,
     )
 }

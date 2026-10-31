@@ -19,6 +19,7 @@ import app.funput.funput.ime.settings.PersonalSuggestionSettings
 import app.funput.funput.ime.shortcuts.undo.ShortcutUndo
 import app.funput.funput.ime.suggestions.PersonalSuggestionService
 import app.funput.funput.ime.suggestions.bar.SuggestionBarState
+import app.funput.funput.ime.suggestions.dictionary.DictionaryEditKind
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.model.SuggestionSelection
@@ -69,6 +70,16 @@ internal class ImeEditingSession(
             }
         }
         refreshBars()
+    }
+
+    /** Whether a long press on the slot may block or forget the word: only the store's own words. */
+    fun canEdit(selection: SuggestionSelection): Boolean =
+        selection.kind == SuggestionChipKind.SUGGESTION &&
+            bar.personalSelection(selection)?.let(suggestionService::isEditable) == true
+
+    fun edit(selection: SuggestionSelection, kind: DictionaryEditKind) {
+        if (selection.kind != SuggestionChipKind.SUGGESTION) return
+        bar.personalSelection(selection)?.let { suggestionService.edit(it, kind) }
     }
 
     private fun refreshBars() {

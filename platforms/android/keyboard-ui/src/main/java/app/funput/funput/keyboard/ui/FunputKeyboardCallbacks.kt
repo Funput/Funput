@@ -1,9 +1,11 @@
 package app.funput.funput.keyboard.ui
 
 import app.funput.funput.keyboard.ui.speech.SpeechPanelAction
+import app.funput.funput.keyboard.KeyboardCallbacks
 import app.funput.funput.keyboard.model.KeyAction
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
+import app.funput.funput.keyboard.suggestion.actions.SuggestionAction
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 
 /** Host callbacks emitted by the complete Funput keyboard UI. */
@@ -25,6 +27,10 @@ class FunputKeyboardCallbacks {
     var onClipboardEntryRemoved: ((KeyboardClipboardEntry) -> Unit)? = null
     var onClipboardClearRequested: (() -> Unit)? = null
     var onSuggestionSelected: ((SuggestionSelection) -> Unit)? = null
+
+    /** Whether a long press on the suggestion may offer [SuggestionAction]s; none when unset. */
+    var suggestionEditable: ((SuggestionSelection) -> Boolean)? = null
+    var onSuggestionAction: ((SuggestionSelection, SuggestionAction) -> Unit)? = null
     var onPlacementChanged: ((KeyboardPlacementPreferences) -> Unit)? = null
 
     internal fun dispatchSpeechRequest() { onSpeechRequested?.invoke() }
@@ -64,8 +70,11 @@ class FunputKeyboardCallbacks {
     internal fun dispatchClipboardRemove(entry: KeyboardClipboardEntry) { onClipboardEntryRemoved?.invoke(entry) }
     internal fun dispatchClipboardClear() { onClipboardClearRequested?.invoke() }
 
-    internal fun dispatchSuggestion(selection: SuggestionSelection) {
-        onSuggestionSelected?.invoke(selection)
+    /** Forwards the keyboard surface's suggestion taps and long-press actions to the host. */
+    internal fun bindSuggestions(surface: KeyboardCallbacks) {
+        surface.onSuggestionSelected = { onSuggestionSelected?.invoke(it) }
+        surface.suggestionEditable = { suggestionEditable?.invoke(it) == true }
+        surface.onSuggestionAction = { selection, action -> onSuggestionAction?.invoke(selection, action) }
     }
 
     internal fun dispatchPlacement(preferences: KeyboardPlacementPreferences) {

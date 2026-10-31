@@ -1,6 +1,8 @@
 package app.funput.funput.ime
 
+import app.funput.funput.ime.suggestions.dictionary.DictionaryEditKind
 import app.funput.funput.keyboard.model.KeyAction
+import app.funput.funput.keyboard.suggestion.actions.SuggestionAction
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 
 internal object ImeKeyboardCallbackBinder {
@@ -35,5 +37,13 @@ internal object ImeKeyboardCallbackBinder {
             editing.editorRuntime.updateCapitalization()
         }
         onSuggestionSelected = editing::select
+        suggestionEditable = editing::canEdit
+        onSuggestionAction = { selection, action -> editing.edit(selection, action.editKind) }
     }
+
+    private val SuggestionAction.editKind: DictionaryEditKind
+        get() = when (this) {
+            SuggestionAction.BLOCK -> DictionaryEditKind.BLOCK
+            SuggestionAction.FORGET -> DictionaryEditKind.FORGET
+        }
 }

@@ -112,7 +112,7 @@ class FunputKeyboardView @JvmOverloads constructor(
         addView(contentHost, matchParentLayoutParams())
         contentHost.addView(keyboardSurface, matchParentLayoutParams())
         keyboardSurface.callbacks.onKeyAction = ::routeKeyAction
-        keyboardSurface.callbacks.onSuggestionSelected = callbacks::dispatchSuggestion
+        callbacks.bindSuggestions(keyboardSurface.callbacks)
         bindKeyboardToolbar(keyboardSurface, callbacks, ::openEmojiFromKeyboard,
             ::showClipboardPanel, placement::showPicker)
         setBackgroundColor(keyboardTheme.backgroundEndColor)

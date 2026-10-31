@@ -20,6 +20,7 @@ internal fun LazyListScope.settingsPageItems(
     page: SettingsPage,
     state: SettingsScreenState,
     onOpenPicker: (SettingsPicker) -> Unit,
+    onOpenDictionary: () -> Unit = {},
 ) {
     when (page) {
         SettingsPage.TYPING -> {
@@ -47,7 +48,7 @@ internal fun LazyListScope.settingsPageItems(
                 onOneHandedSideSelected = state.onOneHandedSideSelected,
             )
         }
-        SettingsPage.SMART_INPUT -> item(key = "smart") { SmartSection(state) }
+        SettingsPage.SMART_INPUT -> item(key = "smart") { SmartSection(state, onOpenDictionary) }
         SettingsPage.FEEDBACK -> item(key = "feedback") {
             FeedbackSection(
                 hapticStrength = state.activeHapticStrength,

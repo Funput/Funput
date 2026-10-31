@@ -51,6 +51,14 @@ pub(crate) fn open(path: &Path) -> Option<i64> {
         .map(insert)
 }
 
+/// A read-only view of the store at `path`, for the app while the keyboard owns
+/// it: writes nothing, and includes the edits still waiting in the inbox.
+pub(crate) fn open_snapshot(path: &Path) -> Option<i64> {
+    SuggestionEngine::open_snapshot(path, SuggestionConfig::default())
+        .ok()
+        .map(insert)
+}
+
 pub(crate) fn destroy(handle: i64) {
     engines().remove(&handle);
 }

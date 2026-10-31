@@ -1,6 +1,9 @@
 package app.funput.funput.ime.suggestions
 
 import app.funput.funput.ime.nativebridge.PersonalSuggestionNative
+import app.funput.funput.ime.suggestions.dictionary.DictionaryCodes
+import app.funput.funput.ime.suggestions.dictionary.DictionaryEditKind
+import app.funput.funput.ime.suggestions.dictionary.DictionaryEditOutcome
 import java.io.Closeable
 import java.io.File
 
@@ -21,6 +24,17 @@ internal class PersonalSuggestionEngine private constructor(private var handle: 
     fun flush(): Boolean = call(false, PersonalSuggestionNative::nativeFlush)
     fun compact(): Boolean = call(false, PersonalSuggestionNative::nativeCompact)
     fun reset(): Boolean = call(false, PersonalSuggestionNative::nativeReset)
+
+    /** Durable on the next [flush], like anything learned. */
+    fun applyEdit(kind: DictionaryEditKind, word: String): DictionaryEditOutcome =
+        call(DictionaryEditOutcome.INVALID) {
+            DictionaryCodes.outcome(PersonalSuggestionNative.nativeApplyEdit(it, DictionaryCodes.of(kind), word))
+        }
+
+    /** How many edits the app posted were applied, or null when the inbox could not be read. */
+    fun applyPendingEdits(): Int? = call(null) { value ->
+        PersonalSuggestionNative.nativeApplyPendingEdits(value).takeIf { it >= 0 }
+    }
     fun stats(): PersonalSuggestionStats = call(PersonalSuggestionStats.Empty) { value ->
         PersonalSuggestionStats.decode(PersonalSuggestionNative.nativeStats(value))
     }

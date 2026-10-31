@@ -6,9 +6,9 @@ use jni::EnvUnowned;
 use jni::objects::{JBooleanArray, JIntArray};
 use jni::sys::{jboolean, jint, jintArray, jlong, jobjectArray};
 
-use super::arrays::{int_array, read_bools, read_ints, string_array};
+use super::arrays::{read_bools, read_ints};
 use super::registry;
-use crate::abi::{JavaObject, neutral, safe};
+use crate::abi::{JavaObject, int_array, neutral, safe, string_array};
 
 /// Whether the last keystroke ended a word on a correction still waiting for an
 /// answer.
