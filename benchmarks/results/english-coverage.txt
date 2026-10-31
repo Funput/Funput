@@ -2,12 +2,12 @@
 # Telex, each followed by a space, with eager restore on and off. Every count
 # must match; lower one only together with the change that earns it.
 telex.eager.total 25979
-telex.eager.wrong 587
+telex.eager.wrong 578
 telex.eager.lost_key 10
-telex.eager.vietnamese 577
+telex.eager.vietnamese 568
 telex.eager.other 0
 telex.lazy.total 25979
-telex.lazy.wrong 1243
+telex.lazy.wrong 1234
 telex.lazy.lost_key 13
-telex.lazy.vietnamese 1230
+telex.lazy.vietnamese 1221
 telex.lazy.other 0

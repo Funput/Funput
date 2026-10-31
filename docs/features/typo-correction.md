@@ -37,9 +37,10 @@ Kiểm chứng bằng `funput dev run` (bản `target/release/funput`, 18/09/202
 | `dduowxj ` | `đuợ ` | được |
 | `minhg ` | `minhg ` | mình |
 
-Trong số này **`dduowxj ` nằm ngoài tầm với của bản đầu**: nó ra `đuợ`, mà
-`funput_core::is_complete_syllable` nhận là âm tiết hoàn chỉnh. Sửa nó nghĩa là sửa cả những từ
-hợp lệ — đúng thứ §11 xếp cuối vì rủi ro cao nhất. Xem §3.4.
+`dduowxj ` từng nằm ngoài tầm với của bản đầu: nó ra `đuợ`, mà
+`funput_core::is_complete_syllable` từng nhận là âm tiết hoàn chỉnh. Từ #661, vần mở `uơ` chỉ
+đứng sau ∅, `h`, `kh`, `th` (`thuở`, `huơ`, `khuơ`, `uở`), nên `đuợ` không còn hợp lệ và được
+sửa như các ca khác. Xem §3.4.
 
 Vì âm tiết không hợp lệ, `should_restore` trong
 [boundary/mod.rs](../../crates/funput-engine/src/compose/boundary/mod.rs) trả chuỗi phím thô
@@ -154,10 +155,11 @@ về `s` chọn nhá, chạm giữa `d` thì **không sửa** và đưa cả hai
 
 **Không đụng** — `bans ` → bán, `banj ` → bạn, `d9u7o7ng3 ` → đưởng: đều hợp lệ.
 
-**`dduowxj ` không sửa được ở bản đầu.** Nó ra `đuợ`, và `is_complete_syllable("đuợ")` là
-`true`, nên luật cứng "không bao giờ sửa một từ hợp lệ" (§2) chặn lại. Muốn sửa phải mở sang
-"sửa từ hợp lệ theo ngữ cảnh" — mục rủi ro nhất ở §11 — nên nó ở lại danh sách không đụng cho
-tới lúc đó.
+**`dduowxj ` giờ sửa được.** Nó ra `đuợ`. Bản đầu để nó ở danh sách không đụng vì
+`is_complete_syllable("đuợ")` khi đó là `true`. Từ #661, luật khớp onset với vần
+(`validation/syllable/spelling.rs`) chỉ cho vần mở `uơ` đứng sau ∅, `h`, `kh`, `th`, nên `đuợ`
+không còn là âm tiết và luật cứng ở §2 không chặn nữa. Ca này nằm trong bảng sửa của
+`tests/correction/table.rs`.
 
 ## 4. Kiến trúc
 

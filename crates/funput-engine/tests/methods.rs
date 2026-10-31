@@ -2,6 +2,8 @@
 
 mod support;
 
+#[path = "methods/open_uo.rs"]
+mod open_uo;
 #[path = "methods/telex.rs"]
 mod telex;
 #[path = "methods/telex_advanced.rs"]

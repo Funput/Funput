@@ -15,17 +15,18 @@
 
 mod decisive;
 mod habit;
-mod overrides;
 mod scan;
 
 use std::collections::{BTreeSet, HashMap};
 use std::fs;
 use std::io::{self, Read};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use crate::{MIN_LEN, forms, rank};
+use crate::wordlist::overrides::Overrides;
+use crate::wordlist::setup::SETUPS;
+use crate::wordlist::{invalid, ranks, write};
+use crate::{MIN_LEN, rank};
 use decisive::Words;
-use overrides::Overrides;
 
 pub(crate) struct Options {
     overrides: Option<PathBuf>,
@@ -94,22 +95,10 @@ fn generate(tsv: &str, overrides: &str) -> Result<Lists, String> {
     Ok(Lists { words, decisive })
 }
 
-/// Each listable word, lowercase, with its place in the frequency order. The first
-/// spelling of a word wins, as `en.tsv` already keeps one per lowercase key.
-fn ranks(tsv: &str) -> HashMap<String, usize> {
-    let mut ranks = HashMap::new();
-    let words = forms::entries(tsv).filter_map(|line| line.split('\t').next());
-    for word in words.filter(|word| forms::admissible(word)) {
-        let next = ranks.len();
-        ranks.entry(word.to_ascii_lowercase()).or_insert(next);
-    }
-    ranks
-}
-
 /// `None` when no setup shortens `word`. Otherwise whether to list it: not when
 /// some setup shortens it to what a doubled key may well have been typed for.
 fn verdict(word: &str, rank: usize, ranks: &HashMap<String, usize>) -> Option<bool> {
-    let shortened: Vec<String> = scan::SETUPS
+    let shortened: Vec<String> = SETUPS
         .iter()
         .filter_map(|&setup| scan::shortened(word, setup))
         .collect();
@@ -123,19 +112,6 @@ fn verdict(word: &str, rank: usize, ranks: &HashMap<String, usize>) -> Option<bo
 fn vetoes(word: &str, rank: usize, form: &str, ranks: &HashMap<String, usize>) -> bool {
     habit::collapses_doubled_keys(word, form)
         && (form.len() < MIN_LEN || ranks.get(form).is_some_and(|&other| other < rank))
-}
-
-fn write(path: &Path, list: &BTreeSet<String>) -> io::Result<()> {
-    let mut text = String::new();
-    for entry in list {
-        text.push_str(entry);
-        text.push('\n');
-    }
-    fs::write(path, text)
-}
-
-fn invalid(message: String) -> io::Error {
-    io::Error::new(io::ErrorKind::InvalidData, message)
 }
 
 #[cfg(test)]

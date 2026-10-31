@@ -19,6 +19,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use funput_core::{ExtraOnsets, SyllableRules};
 use funput_engine::Engine;
 
+#[path = "alloc_budget/collision.rs"]
+mod collision;
 #[path = "alloc_budget/pairs.rs"]
 mod pairs;
 #[path = "alloc_budget/shortcut.rs"]
@@ -164,4 +166,5 @@ fn keystroke_alloc_budget() {
     assert_adopt_within_budget(&mut engine);
     pairs::assert_paired_allocations(&mut engine);
     shortcut::assert_shortcut_expansion_within_budget(&mut engine);
+    collision::assert_collision_check_is_free(&mut engine);
 }

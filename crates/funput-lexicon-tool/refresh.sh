@@ -69,3 +69,15 @@ echo "wrote $data/en.tsv ($(grep -vc '^#' "$data/en.tsv") words)" >&2
 doubled=$app/crates/funput-engine/data/doubled
 "$tool" doubled --overrides "$doubled/overrides.txt" --out "$work/doubled" < "$data/en.tsv"
 mv "$work/doubled/words.txt" "$work/doubled/decisive.txt" "$doubled/"
+
+# 6. The engine's collision lists follow the lexicon too: one directory per rule,
+#    each rebuilt into WORK first and moved over its shipped list. WORK is reused
+#    across runs, so its old lists go first: a rule since removed must not come back.
+collision=$app/crates/funput-engine/data/collision
+rm -rf "$work/collision"
+"$tool" collision --data "$collision" --out "$work/collision" < "$data/en.tsv"
+for list in "$work"/collision/*/words.txt; do
+    class=$(basename "$(dirname "$list")")
+    mkdir -p "$collision/$class"
+    mv "$list" "$collision/$class/words.txt"
+done

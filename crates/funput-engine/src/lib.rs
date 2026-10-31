@@ -21,6 +21,7 @@ mod correction;
 mod engine;
 mod model;
 
+pub use compose::collision::Collision;
 pub use correction::{
     CorrectionCandidate, CorrectionMetrics, CorrectionRanking, CorrectionVerdict, KeyTouch,
     MAX_ALTERNATES,

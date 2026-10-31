@@ -13,10 +13,10 @@ và không nuốt phím. Tiện lợi khi gõ song ngữ."
 
 | Thành phần | Ở đâu |
 |---|---|
-| Logic | `crates/funput-engine/src/compose/doubled/` (`mod.rs`, `literal.rs`, `lookup.rs`); chọn dạng hiển thị ở `compose/pipeline/display.rs` |
+| Logic | `crates/funput-engine/src/compose/doubled/` (`mod.rs`, `literal.rs`); tra bảng bằng `compose/sorted_lines.rs` (dùng chung với [collision restore](english-collision-restore.md)); chọn dạng hiển thị ở `compose/pipeline/display.rs` |
 | Trạng thái, công tắc | `Session.literal` (kiểu `Literal`), `EngineConfig.restore_doubled_keys` (mặc định bật, chỉ Rust) |
 | Bảng từ | `crates/funput-engine/data/doubled/words.txt` (3 244 từ, 31 889 byte), `decisive.txt` (480 phần đầu, 3 207 byte), `overrides.txt`. Mục dài nhất 18 chữ |
-| Bộ sinh | `funput-lexicon-tool doubled` (`crates/funput-lexicon-tool/src/doubled/`, luật thói quen gõ lặp ở `habit.rs`) |
+| Bộ sinh | `funput-lexicon-tool doubled` (`crates/funput-lexicon-tool/src/doubled/`, luật thói quen gõ lặp ở `habit.rs`; `overrides`, `SETUPS` và các hàm rank/ghi nằm ở `src/wordlist/`, dùng chung với `collision`) |
 | Test | `compose/doubled/tests.rs`, `tests/restore/doubled/`, `funput-lexicon-tool/tests/doubled_table.rs` |
 
 Tài liệu này viết đủ chi tiết để lập kế hoạch hiện thực mà không cần đọc lại điều tra: mọi điểm
@@ -1002,7 +1002,7 @@ kèm dấu cách. "Trước" và "sau" dùng **cùng một bản build**, chỉ 
 
 | Nhóm | Số từ | Vì sao để nguyên |
 |---|---|---|
-| Không có lần hủy dấu nào: chữ tự ghép thành tiếng Việt hợp lệ (`is` → `í`, `this` → `thí`, `been` → `bên`, `too` → `tô`, `terms` → `tém`) | 577 | Ngoài phạm vi (§3). Không có tín hiệu nào, và sửa thì phá tiếng Việt thật (`há`, `bên`, `tô`) |
+| Không có lần hủy dấu nào: chữ tự ghép thành tiếng Việt hợp lệ (`is` → `í`, `this` → `thí`, `been` → `bên`, `too` → `tô`, `terms` → `tém`) | 577 | Ngoài phạm vi (§3). Không có tín hiệu nào, và sửa thì phá tiếng Việt thật (`há`, `bên`, `tô`). 9 từ trong số này do luật `w` được giữ lại của Telex (`two` → `tơ`) đã được sửa bằng [collision restore](english-collision-restore.md), còn 568 |
 | Có hủy dấu, nhưng dạng rút gọn là từ tiếng Anh phổ biến hơn (§5.5) | 20 | Giữ có chủ đích theo quyết định §13.1 |
 
 20 từ của nhóm thứ hai: `off`, `marry`, `doses`, `dessert`, `desserts`, `casts`, `nests`, `pests`,

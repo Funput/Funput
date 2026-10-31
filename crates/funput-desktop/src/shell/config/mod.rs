@@ -33,6 +33,7 @@ impl ShellState {
             eager_restore: self.settings.eager_restore,
             // No desktop setting yet: follow the engine rather than restating its default.
             restore_doubled_keys: EngineConfig::default().restore_doubled_keys,
+            restore_collisions: EngineConfig::default().restore_collisions,
             spell_check: self.settings.spell_check,
             syllable_rules: SyllableRules::STANDARD
                 .with_extra_onsets(self.settings.extra_onsets.core()),

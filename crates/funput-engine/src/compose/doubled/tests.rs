@@ -1,13 +1,9 @@
 use funput_core::InputMethod;
 
 use super::literal::CAPACITY;
-use super::lookup::SortedLines;
 use super::*;
 use crate::compose::pipeline;
-
-const FRUIT: SortedLines = SortedLines::new("apple\nbanana\ncherry\ndate\nfig\n");
-/// The same list as a Windows checkout without `.gitattributes` used to embed it.
-const FRUIT_CRLF: SortedLines = SortedLines::new("apple\r\nbanana\r\ncherry\r\ndate\r\nfig\r\n");
+use crate::compose::sorted_lines::{self, SortedLines};
 
 /// Feed `keys` the way `Engine::compose_key` does: raw key first, then the pipeline.
 fn typed_in(mut session: Session, keys: &str) -> Session {
@@ -24,62 +20,14 @@ fn typed(method: InputMethod, keys: &str) -> Session {
     typed_in(session, keys)
 }
 
-#[test]
-fn finds_every_line_and_nothing_between() {
-    for word in ["apple", "banana", "cherry", "date", "fig"] {
-        assert!(FRUIT.contains(word), "{word}");
-    }
-    for word in ["", "a", "app", "apples", "blueberry", "egg", "zebra"] {
-        assert!(!FRUIT.contains(word), "{word}");
-    }
-}
-
-#[test]
-fn finds_every_line_of_a_crlf_list() {
-    for word in ["apple", "banana", "cherry", "date", "fig"] {
-        assert!(FRUIT_CRLF.contains(word), "{word}");
-    }
-    for word in ["", "a", "app", "apples", "blueberry", "egg", "zebra"] {
-        assert!(!FRUIT_CRLF.contains(word), "{word}");
-    }
-}
-
-#[test]
-fn ignores_ascii_case_and_refuses_non_ascii() {
-    assert!(FRUIT.contains("Banana"));
-    assert!(FRUIT.contains("FIG"));
-    assert!(!FRUIT.contains("bánana"));
-}
-
-#[test]
-fn a_single_line_and_an_empty_list() {
-    assert!(SortedLines::new("pass\n").contains("pass"));
-    assert!(!SortedLines::new("pass\n").contains("past"));
-    assert!(!SortedLines::new("").contains("pass"));
-}
-
-/// What the binary search relies on: sorted, unique, lowercase ASCII, `\n`-ended.
-/// And what the literal's reserved capacity relies on: no entry longer than it.
+/// The shared shape check, plus what the literal's reserved capacity relies on: no
+/// entry longer than it.
 fn assert_well_formed(list: SortedLines) {
-    assert!(list.text().ends_with('\n'));
-    let entries: Vec<&str> = list.lines().collect();
-    assert!(!entries.is_empty());
-    for entry in &entries {
-        assert!(
-            !entry.is_empty() && entry.bytes().all(|byte| byte.is_ascii_lowercase()),
-            "{entry:?} is not a lowercase ASCII word"
-        );
+    sorted_lines::assert_well_formed(list);
+    for entry in list.lines() {
         assert!(
             entry.len() <= CAPACITY,
             "{entry:?} would outgrow the literal's reserved capacity"
-        );
-    }
-    for pair in entries.windows(2) {
-        assert!(
-            pair[0] < pair[1],
-            "{:?} is not before {:?}",
-            pair[0],
-            pair[1]
         );
     }
 }

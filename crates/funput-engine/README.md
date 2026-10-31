@@ -153,6 +153,18 @@ Flip và gõ tắt đọc chuỗi phím đã gõ (`doubled::typed_keys`), nên `
 định bật, đi chung `smart_restore`). Chi tiết:
 [docs/features/doubled-key-restore.md](../../docs/features/doubled-key-restore.md).
 
+### Va chạm (`compose/collision/`)
+
+Một số luật ghép chữ biến từ tiếng Anh thành âm tiết tiếng Việt có thật, nên English restore theo âm
+tiết không đụng tới: Telex thường giữ `w` gõ sau phụ âm đầu cho nguyên âm phía sau, nên `two` ra `tơ`
+(#661). Mỗi luật như vậy là một biến thể `Collision`, gồm cổng (kiểu gõ và
+`funput_core::telex_defers_w`) và bảng từ nhúng sẵn `data/collision/<luật>/words.txt`. Ở ranh giới
+từ, engine trả phím thô khi luật đã ghép từ và bảng có từ đó: `two ` → `two `, `swan ` → `swan `.
+Tiếng Việt gõ qua cùng luật không đổi (`cwon` → `cơn`, `tow` → `tơ`). Không đổi giữa từ, Flip và gõ
+tắt vẫn thắng. Bảng do `funput-lexicon-tool collision` sinh từ `en.tsv`. Công tắc là
+`EngineConfig.restore_collisions` (mặc định bật, đi chung `smart_restore`). Chi tiết:
+[docs/features/english-collision-restore.md](../../docs/features/english-collision-restore.md).
+
 ## Lật VN ⇄ phím thô (flip)
 
 `flip_composing()` lật **từ đang soạn** giữa dạng tiếng Việt và chuỗi phím thô (`card` ⇄ `cải`), lật

@@ -6,8 +6,9 @@ fn type_keys(keys: &str) -> String {
 
 #[test]
 fn snapshots_leading_w_and_latin_collisions() {
-    // V2 target: leading w remains literal; post-onset swan becomes Vietnamese
-    // and relies on engine flip as the explicit Latin escape.
+    // Leading w remains literal; post-onset `swan` composes to `săn` here in the
+    // core. The engine gives listed English words like it back at the word
+    // boundary (collision restore, #661); Flip stays the escape for the rest.
     for literal in ["was", "wow", "win"] {
         assert_eq!(type_keys(literal), literal);
     }
