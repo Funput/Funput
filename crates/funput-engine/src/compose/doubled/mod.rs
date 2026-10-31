@@ -23,11 +23,10 @@
 //! `funput-lexicon-tool doubled`. Regenerate them when `en.tsv` or the core changes.
 
 mod literal;
-mod lookup;
 
 pub(crate) use literal::Literal;
-use lookup::SortedLines;
 
+use crate::compose::sorted_lines::SortedLines;
 use crate::model::{EngineConfig, Session};
 
 /// English words a Telex revert would shorten, lowercase, sorted.
