@@ -18,5 +18,7 @@ internal class MlKitResponseMapper {
         is SpeechRecognizerResponse.CompletedResponse ->
             if (finalSeen) null else SpeechEvent.Failure(Platform.ERROR_NO_MATCH)
         is SpeechRecognizerResponse.ErrorResponse -> SpeechEvent.Failure(MlKitSpeech.errorCode(response.e))
+        // Added in 1.0.0-alpha2. The mic UI does not react to input level, so it is dropped here.
+        is SpeechRecognizerResponse.AudioLevelResponse -> null
     }
 }
