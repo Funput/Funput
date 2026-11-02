@@ -228,11 +228,18 @@ fn a_context_with_two_habits_waits_for_one_to_lead() {
     for word in ["nay", "nay", "qua"] {
         engine.learn_after(Some("hôm"), word);
     }
-    assert!(predicted(&engine, "hôm").is_empty(), "2 of 3 is no habit yet");
+    assert!(
+        predicted(&engine, "hôm").is_empty(),
+        "2 of 3 is no habit yet"
+    );
 
     engine.learn_after(Some("hôm"), "nay");
     engine.learn_after(Some("hôm"), "qua");
-    assert_eq!(predicted(&engine, "hôm"), ["nay"], "3 of 5 is 60%: it leads");
+    assert_eq!(
+        predicted(&engine, "hôm"),
+        ["nay"],
+        "3 of 5 is 60%: it leads"
+    );
 
     engine.learn_after(Some("hôm"), "qua");
     assert!(
