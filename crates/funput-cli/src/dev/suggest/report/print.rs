@@ -86,12 +86,11 @@ fn samples(tally: &Tally, show: usize) {
 }
 
 fn by_source(tally: &Tally) -> String {
-    [Source::Shipped, Source::Personal]
+    Source::ALL
         .iter()
         .map(|&source| {
-            let i = source as usize;
-            let shown = tally.predict_right[i] + tally.predict_wrong[i];
-            format!("{} {}/{}", source.name(), tally.predict_right[i], shown)
+            let (right, shown) = tally.by_source(source);
+            format!("{} {right}/{shown}", source.name())
         })
         .collect::<Vec<_>>()
         .join("  ")

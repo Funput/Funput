@@ -11,7 +11,7 @@ use std::{fs, io};
 
 use unicode_normalization::UnicodeNormalization;
 
-/// Read `path` and split it into runs. Lines starting with `#` are comments.
+/// Read `path` and split it into runs. See [`is_comment`] for the lines skipped.
 pub(super) fn load(path: &Path) -> io::Result<Vec<Vec<String>>> {
     Ok(runs(&fs::read_to_string(path)?))
 }
@@ -24,10 +24,7 @@ pub(super) fn load(path: &Path) -> io::Result<Vec<Vec<String>>> {
 /// should not cost the next word its context.
 pub(super) fn runs(text: &str) -> Vec<Vec<String>> {
     let mut runs = Vec::new();
-    for line in text
-        .lines()
-        .filter(|line| !line.trim_start().starts_with('#'))
-    {
+    for line in text.lines().filter(|line| !is_comment(line)) {
         let mut run = Vec::new();
         let mut word = String::new();
         for ch in line.nfc().flat_map(char::to_lowercase) {
@@ -48,6 +45,13 @@ pub(super) fn runs(text: &str) -> Vec<Vec<String>> {
         close(&mut runs, &mut run);
     }
     runs
+}
+
+/// A line that is `#` alone or starts with `# `. A chat message that opens
+/// with a hashtag (`#throwback hôm qua...`) is text, not a comment.
+fn is_comment(line: &str) -> bool {
+    let line = line.trim();
+    line == "#" || line.starts_with("# ")
 }
 
 fn close(runs: &mut Vec<Vec<String>>, run: &mut Vec<String>) {
