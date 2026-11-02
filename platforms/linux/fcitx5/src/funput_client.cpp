@@ -27,28 +27,6 @@ std::string textBeforeCaret(fcitx::InputContext *context) {
     return out;
 }
 
-// Who this client is, for the non-preedit verdict to be remembered against — or empty
-// when nothing names one app.
-//
-// `program()` when it names one app, so a verdict survives clicking away and back. It
-// is documented as possibly empty, and on GNOME/Wayland it is worse than empty: every
-// client answers `gnome-shell`, the proxy they all speak through (see the measurements
-// in README Linux). Remembering that name would stand the mode down for every app at
-// once — curing one broken client by breaking the feature for everyone, which is the
-// mistake this whole mechanism is built to avoid. Excluded by name rather than guessed
-// at, the same way hidden_preedit.cpp names the clients it is about.
-//
-// The input context's uuid is not a way out. It used to stand in, as the narrower
-// name, and it is not narrower: Fcitx5's own debug info on that desktop reads
-// `Group [wayland:] has 1 InputContext(s)`, because gnome-shell holds one context for
-// every app and refocuses it. A verdict filed under that uuid disabled the mode for
-// Chrome too, until Fcitx5 restarted. Empty means a fresh question at every focus,
-// the way IBus has it, and a verdict then lasts as long as the focus it was reached in.
-std::string clientId(fcitx::InputContext *context) {
-    const std::string &program = context->program();
-    return program == "gnome-shell" ? std::string() : program;
-}
-
 // Is the client holding a selection? Backspace must not take that key over, and
 // a highlight that is not a suffix after the caret is the user's own text.
 bool hasSelection(fcitx::InputContext *context) {

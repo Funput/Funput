@@ -8,7 +8,7 @@
 
 #include <doctest/doctest.h>
 
-#include "compose/composer/nonpreedit/refusal.h"
+#include "compose/composer/nonpreedit/verdicts/refusal.h"
 #include "support.h"
 
 using namespace funput;
@@ -19,7 +19,7 @@ namespace {
 // A composer that has already caught `client` dropping a delete.
 Composer refusedBy(const char *client) {
     Composer composer = composerFor(Method::Telex);
-    composer.onFocusChanged(client);
+    composer.onFocusChanged({client});
     composer.setNonPreedit(true);
     typeUntilRefused(composer, "tieengs", applyIgnoringDeletes);
     REQUIRE_FALSE(composer.nonPreedit());
@@ -28,7 +28,7 @@ Composer refusedBy(const char *client) {
 
 // Re-focus `client` and ask for the mode back, as every shell does after an activate.
 bool modeAfterFocusing(Composer &composer, const char *client) {
-    composer.onFocusChanged(client);
+    composer.onFocusChanged({client});
     composer.setNonPreedit(true);
     return composer.nonPreedit();
 }

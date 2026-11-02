@@ -18,7 +18,6 @@
 #define FUNPUT_COMPOSE_COMPOSER_H
 
 #include <string>
-#include <string_view>
 
 #include "compose/composer/nonpreedit.h"
 #include "compose/composer/state/applied.h"
@@ -64,9 +63,15 @@ public:
     void setNonPreedit(bool on);
     bool nonPreedit() const { return nonPreedit_.on; }
 
-    // A client took focus. `client` is the shell's name for it (empty: unnamed, a
-    // fresh question); a client caught dropping a delete keeps that verdict.
-    void onFocusChanged(std::string_view client = {});
+    // A client took focus: who it is (an empty name is a fresh question; a client
+    // caught dropping a delete keeps that verdict) and what the writes travel
+    // through. See compose/transport.h.
+    void onFocusChanged(ClientIdentity client = {});
+
+    // Whether the bridge this client sits behind is certain to drop the next repair,
+    // so a word started now must not be typed straight. For the shell's mode decision
+    // between words only; it accuses nobody. See transport/guard.h.
+    bool bridgeBlocksRepairs(bool spokeSinceReset, const std::string &textBeforeCaret) const;
 
     // The document before the caret as it stands now, before this keystroke: checks
     // that the previous repair landed. `answered` is whether the client sent

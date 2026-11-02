@@ -115,11 +115,16 @@ một.
 
 | File | Dòng | Việc |
 |---|---|---|
-| [`src/funput_engine.h`](src/funput_engine.h) | 113 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
-| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 119 | Vòng đời: watcher, nạp lại settings, bật/tắt chế độ |
-| [`src/funput_input.cpp`](src/funput_input.cpp) | 75 | Một phím: chuẩn hoá, hỏi composer |
-| [`src/funput_client.cpp`](src/funput_client.cpp) | 123 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc và định danh nó |
+| [`src/funput_engine.h`](src/funput_engine.h) | 123 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
+| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 107 | Vòng đời: watcher, nạp lại settings, chọn chế độ giữa hai từ |
+| [`src/engine/focus.cpp`](src/engine/focus.cpp) | 67 | Focus vào/ra, reset, đổi bộ gõ: định danh client, đếm lại câu trả lời |
+| [`src/funput_input.cpp`](src/funput_input.cpp) | 91 | Một phím: chuẩn hoá, hỏi composer |
+| [`src/funput_client.cpp`](src/funput_client.cpp) | 101 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc tài liệu |
 | [`src/hidden_preedit.cpp`](src/hidden_preedit.cpp) | 53 | Allowlist client tự giấu preedit, và không bao giờ gõ thẳng |
+
+Định danh client — tên app để nhớ phán quyết, và đường truyền (`Transport`) — nằm ở
+[`common/compose/transport.h`](../common/compose/transport.h) (`identifyProgram()`), dùng chung với
+IBus để hai shell không hiểu `gnome-shell` theo hai cách.
 
 ### Một phím đi qua đâu
 
@@ -194,12 +199,19 @@ shell này:
   thứ đọc ra cùng một chuỗi. Mỗi phím tiêu thụ rồi xoá nó.
 - **Phán quyết "client này bỏ lệnh xoá" đi theo client, không theo lần focus.** `activate()`
   chạy cả khi capability đổi, nên nó chỉ gọi `Composer::onFocusChanged()` ở focus-in thật
-  (`event.type() == InputContextFocusIn`), với `clientId()`: `program()` nếu tên đó chỉ đúng một
-  app, không thì rỗng. Trên GNOME/Wayland `program()` luôn là `gnome-shell` — đo được, không
-  đoán — và uuid của input context cũng **không** đứng thay được: gnome-shell giữ đúng một
-  context cho mọi app. Rỗng nghĩa là mỗi lần focus là một câu hỏi mới, và phán quyết chỉ sống
-  trong lần focus nó được đưa ra. Không có chốt capability-đổi này, một client hay đổi
-  capability được tha thứ mỗi phím.
+  (`event.type() == InputContextFocusIn`), với `identifyProgram(program())`: tên là `program()`
+  nếu tên đó chỉ đúng một app, không thì rỗng. Trên GNOME/Wayland `program()` luôn là
+  `gnome-shell` — đo được, không đoán — và uuid của input context cũng **không** đứng thay
+  được: gnome-shell giữ đúng một context cho mọi app. Rỗng nghĩa là mỗi lần focus là một câu
+  hỏi mới, và phán quyết chỉ sống trong lần focus nó được đưa ra. Không có chốt
+  capability-đổi này, một client hay đổi capability được tha thứ mỗi phím. Cái tên không nói
+  app nào đang gõ, nhưng nói đúng đường truyền: `Transport::GnomeShell`, thứ cổng gác bên dưới
+  cần.
+- **`spokeSinceReset_`: client đã trả lời kể từ focus-in hay `reset()` gần nhất chưa.** Trên
+  cầu nối gnome-shell, `reset()` là một cú nhấp chuột vào ô đang focus, sau đó cầu nối không còn
+  bản surrounding text nào cho tới khi client trả lời lại. `applyNonPreeditMode()` hỏi
+  `Composer::bridgeBlocksRepairs()` với bit này và `textBeforeCaret()`, và nếu cầu nối chắc
+  chắn bỏ lệnh sửa thì từ đó soạn bằng preedit — xem "Cầu nối gnome-shell" trong README Linux.
 - **`applyNonPreeditMode()` không bao giờ lật giữa từ.** Hai chế độ bất đồng về chỗ từ đang gõ
   nằm ở đâu, nên lật khi đang soạn dở sẽ để engine và client mô tả hai thứ khác nhau. Cùng một
   cổng gác với `applyNonPreeditMode()` bên IBus.

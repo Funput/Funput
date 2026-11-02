@@ -47,14 +47,22 @@ void applyNonPreeditMode(IBusEngine *engine) {
     // has spoken — which is why this is re-evaluated on every keystroke rather than
     // settled once at focus-in the way the Fcitx5 shell can.
     const bool wasNonPreedit = state->composer.nonPreedit();
-    state->composer.setNonPreedit(state->sawSurroundingText);
+    // And the path to it must be able to carry a repair right now: on the gnome-shell
+    // bridge the first word in an empty field, or the first after a click, would lose
+    // its repairs for certain (transport/guard.h), so that one word is composed in a
+    // preedit. Inert on this shell until it names the transport at focus-in (a later
+    // PR): the composer holds `Transport::Direct` until then. Same place as Fcitx5's.
+    const bool bridge =
+        state->composer.bridgeBlocksRepairs(state->spokeSinceReset, textBeforeCaret(engine));
+    state->composer.setNonPreedit(state->sawSurroundingText && !bridge);
     funput::Trace &trace = funput::Trace::shared();
     if (trace.enabled() && state->composer.nonPreedit() != wasNonPreedit) {
         // Off although the client has spoken is the composer's own latch: it was
         // caught dropping a delete, and that verdict already stands in the trace.
         const char *reason = state->composer.nonPreedit() ? "surrounding"
-                             : state->sawSurroundingText   ? "refused"
-                                                           : "silent";
+                             : !state->sawSurroundingText  ? "silent"
+                             : bridge                      ? "bridge"
+                                                           : "refused";
         trace.mode(state->composer.nonPreedit(), reason);
     }
 }

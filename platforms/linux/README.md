@@ -178,6 +178,11 @@ trường hợp sau:
 - App bỏ lệnh xoá đi kèm lúc sửa chữ. Funput nhận ra điều đó sau một từ hỏng, hoặc sớm hơn nếu
   app trả lời văn bản rỗng hai lần liên tiếp, rồi giữ app đó ở kiểu gạch chân cho tới hết lần
   focus. Chuyển sang app khác thì gõ thẳng trở lại ngay.
+- Trên GNOME Wayland: từ đầu tiên trong một ô **trống**, và từ đầu tiên sau khi **nhấp chuột**
+  vào ô cho tới khi app gửi lại văn bản. Ở đó lệnh gõ đi qua gnome-shell và mutter, và hai lớp
+  này chuyển lệnh sửa chữ dựa trên bản văn bản chúng đang giữ: bản đó rỗng thì lệnh xoá bị bỏ
+  mà không ai được báo, chữ ra thành `ơ[` hay `sôổ`. Funput biết trước điều đó nên soạn đúng
+  một từ bằng gạch chân thay vì gõ hỏng; từ kế tiếp gõ thẳng như thường.
 
 Nếu một app ra sai chữ ở từ đầu rồi mới chuyển sang gạch chân, đó là cách Funput nhận ra app
 không nhận được gõ thẳng. Hãy báo lỗi kèm tên tiến trình của app. Với Fcitx5, thêm một app vào
@@ -327,6 +332,8 @@ về kế hoạch, shell thi hành”.
 common/                 C++ thuần, không framework, dùng chung cho cả hai shell
   compose/                Luật gõ: một bản, không ký hiệu Fcitx5/IBus
     plan.h                  ComposePlan — shell được yêu cầu làm gì
+    transport.h             Client là ai và lệnh ghi đi qua đâu (Direct / GnomeShell)
+    transport/guard.h       Khi nào cầu nối gnome-shell chắc chắn bỏ lệnh sửa kế tiếp
     key/
       event.h                 Mods / KeyEvent / hằng keysym (không phụ thuộc gì)
       classify.h/.cpp         KeyKind + ý nghĩa của một phím
@@ -334,9 +341,11 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
     composer/
       composer.h              Máy trạng thái (engine + settings + VI/EN)
       keys.cpp                onKey(): cây quyết định cho mỗi phím
+      keys/boundary.cpp       Từ kết thúc ở đâu: ký tự ranh giới và mọi lối thoát commit từ đang gõ
       state.cpp               Settings, VI/EN, và các lối thoát không phải phím
       nonpreedit.h            Chế độ commit-khi-gõ, và cách đánh giá một client
       nonpreedit.cpp          Composer làm gì với đánh giá đó
+      nonpreedit/appedits.cpp   Ghi journal cho thay đổi app tự làm (space, Backspace app xoá)
       nonpreedit/backspace.cpp  Ai xoá một ký tự đã nằm trong tài liệu, và mở lại từ đã xong
       nonpreedit/clients.h    Phán quyết đó thuộc về client nào
       nonpreedit/verdict.h    Verdict, Observation trả cho shell, và client không bao giờ cho xem tài liệu
@@ -344,6 +353,8 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       nonpreedit/document/
         predicted.h             Journal các thay đổi dự đoán: k trên n lần ghi đã xác nhận
         dropped.h               Phép so "lệnh xoá bị bỏ", cho từng mục và cho cả chuỗi mục
+        match.h                 Khớp một bản đọc với journal: mức bỏ qua khả dĩ, ít mục nhất thắng
+        trust.h                 Khi nào journal được tin gốc của mình (Reset::Focus / CaretKey)
         observe.h               Một lần đọc đáng giá gì với chế độ (inSync, onTrack)
   trace/                  Trace chẩn đoán, mặc định tắt — xem "Gửi trace khi báo lỗi"
     trace.h/.cpp            Công tắc, ring buffer và giới hạn kích thước
@@ -363,9 +374,13 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
     handle.h                Bọc RAII quanh handle của engine
     onsets.h                Bộ chữ phụ âm đầu -> mặt nạ `ONSET_*`
     utf8.h                  Chuyển đổi UTF-8 <-> UTF-32
-  tests/                  doctest, cây thư mục soi gương phần trên
+  tests/                  doctest, cây thư mục soi gương phần trên; nonpreedit/ chia thêm
+                          verdicts/ (phán quyết, bộ nhớ client), appedits/ (app tự sửa), backspace/,
+                          document/, fuzz/ (client trung thực và hỏng, ngẫu nhiên có giới hạn),
+                          sim/ (ClientSim; sim/bridge/ là BridgeSim, cầu nối gnome-shell)
 fcitx5/src/             Addon Fcitx5 -> libfunput.so
   funput_input.cpp        Một phím: chuẩn hoá, hỏi composer
+  engine/focus.cpp        Focus vào/ra, reset, đổi bộ gõ
   funput_client.cpp       Nói chuyện với client, cả hai chiều
   hidden_preedit.cpp      Danh sách client tự giấu preedit (allowlist)
 ibus/src/               IBus engine -> ibus-engine-funput
@@ -499,8 +514,8 @@ tự nối tay. Nút thì không cần: `clicked` không bao giờ nổ vì mộ
 **Luôn bật**, không còn là một thiết lập: app Cài đặt không có công tắc cho nó và `settings.json`
 không còn khoá nào. Thay vào đó mỗi client được quyết định riêng — chế độ bật khi client đã gửi
 surrounding text, và **tự lùi về preedit** khi không: client chưa lên tiếng, client nằm trong
-danh sách biết là không chạy được, hay client bị bắt quả tang bỏ lệnh xoá. **Cả hai shell đều
-thi hành nó.**
+danh sách biết là không chạy được, client bị bắt quả tang bỏ lệnh xoá, hay — đúng một từ — khi
+cầu nối gnome-shell chắc chắn bỏ lệnh sửa kế tiếp. **Cả hai shell đều thi hành nó.**
 
 Khoá `"nonPreedit"` còn sót trong một `settings.json` cũ bị bỏ qua, kể cả khi là `false`; app Cài
 đặt và addon đều xoá nó ở lần lưu kế tiếp. Bỏ công tắc cũng là bỏ lối thoát cho một app mà chế
@@ -768,10 +783,15 @@ dbus-send --session --print-reply --dest=org.fcitx.Fcitx5 /controller \
 ```
 
 Một phán quyết ghi dưới uuid đó tắt chế độ cho cả Chrome cho tới khi khởi động lại Fcitx5, và
-nhìn từ ngoài là "bị gạch chân rồi không bao giờ trở lại". Giờ `clientId()` trả rỗng, và
-`activate()` chỉ gọi `onFocusChanged()` ở **focus-in thật** (`InputContextFocusIn`), không phải ở
-mỗi lần capability đổi. Hai việc đó cùng giữ được cả hai điều cần: phán quyết sống sót qua việc
-Cursor đổi capability liên tục, và chết cùng lần focus nó được đưa ra.
+nhìn từ ngoài là "bị gạch chân rồi không bao giờ trở lại". Giờ `identifyProgram()`
+(`compose/transport.h`) trả tên rỗng cho `gnome-shell`, và `activate()` chỉ gọi `onFocusChanged()`
+ở **focus-in thật** (`InputContextFocusIn`), không phải ở mỗi lần capability đổi. Hai việc đó cùng
+giữ được cả hai điều cần: phán quyết sống sót qua việc Cursor đổi capability liên tục, và chết
+cùng lần focus nó được đưa ra. Cái tên `gnome-shell` không nói app nào đang gõ, nhưng nói đúng
+**đường truyền**, và `ClientIdentity` mang cả hai: tên để nhớ phán quyết, `Transport` để biết lệnh
+ghi đi qua đâu. Đó cũng là chỗ nối cho một nguồn định danh khác sau này (một focus bridge biết app
+thật phía sau gnome-shell, hay hồ sơ client theo dữ liệu): chỉ thêm một nơi sinh ra `ClientIdentity`,
+không đổi gì phía sau.
 
 Cái giá là việc phát hiện chậm một nhịp, nên từ đầu tiên vẫn bị hỏng trước khi chế độ rút lui.
 Bắt sớm hơn nghĩa là phải ghi chữ dò vào tài liệu của người dùng, và điều đó không nằm trên bàn.
@@ -784,6 +804,51 @@ Shell Fcitx5 đã có danh sách client tự giấu preedit (`hidden_preedit.cpp
 tên tiến trình, không bao giờ cờ capability hay việc thiếu surrounding text — cả hai nói dối, và
 sẽ kéo cả những client đang chạy tốt vào. IBus không biết tên client nên không có đường tương
 đương.
+
+#### Cầu nối gnome-shell
+
+Trên GNOME Wayland, cả hai shell đều với tới app qua gnome-shell (Fcitx5 qua frontend ibus), và
+từ đó lệnh sửa chữ đi qua **ba bản sao** của surrounding text — gnome-shell, mutter, rồi module
+IM của toolkit trong app — thay vì tới thẳng app (RFC #640, mục 4.1 và 4.3). IBus đếm độ dài xoá
+bằng ký tự, text-input-v3 đếm bằng byte, nên mỗi lớp chuyển đổi trên bản sao của mình:
+
+- `_onDeleteSurroundingText` trong `js/misc/inputMethod.js` của gnome-shell `return` ngay khi
+  `_surroundingText === null`. Nó là null cho tới khi client trả lời lần đầu, và `vfunc_reset` —
+  mutter gọi khi **nhấp chuột** vào bề mặt đang focus — đặt lại null cho tới lần trả lời kế tiếp.
+- `meta_wayland_text_input_focus_delete_surrounding` trong mutter đổi N ký tự sang byte bằng
+  `g_utf8_offset_to_pointer (cursor, -N)` trên bản cache của nó rồi `g_return_if_fail (before >=
+  start)`: bản cache **rỗng** — đầu một ô nhập — thì mọi N ≥ 1 đều thất bại.
+
+Cả hai chỉ ghi log rồi bỏ lệnh xoá; lệnh commit theo sau vẫn tới nơi, không exception nào ném,
+nhánh `catch` thử lại của gnome-shell không chạy, và engine không được báo. Đó là `[[` ra `ơ[` và
+`soor` ra `sôổ` ở từ đầu tiên của #640. Phép so ba chuỗi bắt được nó, nhưng sau khi chữ đã hỏng.
+
+Vì thế có một **cổng gác** (`transport/guard.h`, `bridgeBlocksRepairs()`): khi đường truyền là
+`Transport::GnomeShell` **và** (client chưa gửi surrounding text kể từ lần focus hoặc reset gần
+nhất **hoặc** bản đọc trước caret rỗng), từ sắp gõ được soạn bằng preedit. Hai điều phải rõ để nó
+không phá những bất biến ở trên:
+
+- **Không phải phán quyết, không nhớ gì.** Nó không buộc tội client và không phải cổng gác theo
+  nội dung mà đoạn cảnh báo ở trên đã revert: nó chỉ đọc *mã nguồn của cầu nối*, trên đúng một
+  đường truyền, cho đúng hai trạng thái mà kết quả đã biết trước khi phát lệnh. Trên mọi đường
+  truyền khác nó luôn trả `false`.
+- **Chỉ được hỏi giữa hai từ.** Chỗ duy nhất gọi nó là `applyNonPreeditMode()` của hai shell, vốn
+  trả về sớm khi đang soạn dở, nên chế độ không bao giờ lật giữa từ (bất biến 5). Phép thử "bản đọc
+  ngắn hơn `deleteChars`" theo từng phím không được dùng vì lý do đó. Prefix không rỗng dài L ký tự
+  thì không gác, kể cả khi client trễ một phím: mọi lệnh sửa chỉ xoá trong từ đang gõ, ngắn hơn bất
+  kỳ prefix nào đủ chứa từ trước nó, nên N ≤ L và phép đổi ký tự→byte→ký tự là đồng nhất (RFC mục
+  4.5).
+
+Shell cung cấp bit `spokeSinceReset`: xoá ở focus-in thật và ở `reset()`, đặt khi surrounding text
+tới. Chế độ được chọn lại ở đầu mỗi từ, nên từ kế tiếp quay về gõ thẳng ngay khi client đã trả lời
+với một prefix không rỗng — thường là chính từ vừa commit. Khi chế độ đổi vì lý do này, trace ghi
+`mode` với `reason: "bridge"`. Phía IBus mọi thứ đã nối sẵn nhưng còn **trơ**: shell chưa đặt tên
+client nên `Transport` luôn là `Direct` cho tới khi có `focus-in-id` (PR 5 của RFC).
+
+Mô hình cầu nối nằm trong test (`tests/.../nonpreedit/sim/bridge/bridge.h`): một bản cache null cho tới
+câu trả lời đầu và sau một cú nhấp, phép đổi ký tự→byte trên cache rồi byte→ký tự trên cùng
+snapshot như GTK, và daemon IBus không chuyển tiếp hai câu trả lời giống nhau. Không có cổng gác,
+mô hình cho ra đúng `ơ[`; có nó, `[[` ra `[` và `soor` ra `sổ`.
 
 #### Về phía IBus
 

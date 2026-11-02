@@ -32,7 +32,7 @@ public:
     // is what keeps a re-activation of the same client from reopening a settled
     // question. An unnamed client is always a fresh question — the IBus shell has no
     // name to give — and it is the shell's job never to pass a name that stands for
-    // more than one app. Fcitx5's `clientId()` gives none for `gnome-shell`, and not the
+    // more than one app. compose/transport.h gives none for `gnome-shell`, and not the
     // input context's uuid either: on GNOME/Wayland one context serves every app.
     bool focus(std::string_view id) {
         current_.assign(id);

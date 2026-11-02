@@ -1,3 +1,6 @@
+// The engine object: construction, the mode decision between words, settings and
+// status. The focus, reset and switch callbacks: engine/focus.cpp.
+
 #include "funput_engine.h"
 
 #include <fcitx/event.h>
@@ -26,6 +29,7 @@ FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
             // after a write, by BlindWrites, not before one.
             lastSurroundingOk_ = ic->surroundingText().isValid();
             surroundingFresh_ = true;
+            spokeSinceReset_ = true;
         });
     // The file itself is read at the first activate() and reaches the trace through
     // settingsReloaded(); until then the trace is whatever FUNPUT_TRACE says, which
@@ -45,7 +49,15 @@ void FunputEngine::applyNonPreeditMode() {
     // `nguyen64` into `nguyenênễn`), and with no setting to switch the mode off there
     // is nobody left to spare them the first mangled word.
     const bool hidden = context && hidesClientPreedit(context);
-    composer_.setNonPreedit(lastSurroundingOk_ && !hidden);
+    // And the path to it must be able to carry a repair right now: on the gnome-shell
+    // bridge the first word in an empty field, or the first after a click, would lose
+    // its repairs for certain (transport/guard.h). That word is composed in a preedit
+    // instead; the question is asked again at the next word, by which time the client
+    // has answered with the word before it. Asked here and nowhere else, so the mode
+    // still never changes under a word.
+    const bool bridge = context && composer_.bridgeBlocksRepairs(
+                                       spokeSinceReset_, textBeforeCaret(context));
+    composer_.setNonPreedit(lastSurroundingOk_ && !hidden && !bridge);
     funput::Trace &trace = funput::Trace::shared();
     if (trace.enabled() && composer_.nonPreedit() != wasNonPreedit) {
         // Off although the client qualifies means the composer's own latch: it was
@@ -53,6 +65,7 @@ void FunputEngine::applyNonPreeditMode() {
         const char *reason = composer_.nonPreedit() ? "surrounding"
                              : !lastSurroundingOk_  ? "silent"
                              : hidden               ? "hidden-preedit"
+                             : bridge               ? "bridge"
                                                     : "refused";
         trace.mode(composer_.nonPreedit(), reason);
     }
@@ -89,56 +102,6 @@ std::string FunputEngine::subModeIconImpl(const fcitx::InputMethodEntry &,
 void FunputEngine::refreshStatus(fcitx::InputContext *ic) {
     if (!ic) return;
     ic->updateUserInterface(fcitx::UserInterfaceComponent::StatusArea, true);
-}
-
-void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
-    funput::Trace::shared().note("reset");
-    applyPlan(event.inputContext(), composer_.flush());
-}
-
-void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
-    if (composer_.reloadSettingsIfChanged()) settingsReloaded();
-    if (composer_.settings().autoCapitalize) composer_.armCapitalization();
-    toggleChord_.reset();
-    // This also runs on a capability change, and then it is the same client carrying
-    // on: Cursor's editor toggles capabilities constantly. Only a real focus-in starts a
-    // new one, so only then forget whether the last could be trusted with a repair — a
-    // verdict has to survive the churn, and must not survive the focus, or on GNOME/Wayland
-    // (one input context for every app) a client that broke the mode takes Chrome's with it.
-    if (event.type() == fcitx::EventType::InputContextFocusIn) {
-        // The program as Fcitx5 reports it, not clientId(): on GNOME/Wayland that is
-        // `gnome-shell`, and seeing the bridge in the trace is the point.
-        funput::Trace::shared().focus(event.inputContext()->program());
-        composer_.onFocusChanged(clientId(event.inputContext()));
-        // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`
-        // here can be leftover from the previous focus, so do not snapshot it — and the
-        // last client's answer must not be credited to this one's first keystroke.
-        lastSurroundingOk_ = false;
-        surroundingFresh_ = false;
-    }
-    applyNonPreeditMode();
-}
-
-void FunputEngine::deactivate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
-    auto *context = event.inputContext();
-    if (event.type() == fcitx::EventType::InputContextFocusOut) {
-        // The composing word is already on its way to the client: Fcitx5 commits
-        // clientPreedit() in its ReservedFirst focus-out watcher, which runs before
-        // this one, or the client commits it itself when it advertises
-        // ClientUnfocusCommit. A second commit here would duplicate the word.
-        //
-        // Non-preedit needs no special case: there is no preedit for anyone to
-        // commit, and the word is already in the document one keystroke at a time —
-        // which is the whole point of the mode. Dropping the engine state is all
-        // that is left to do either way.
-        funput::Trace::shared().note("focus-out");
-        composer_.discard();
-        clearPreedit(context);
-        return;
-    }
-    // Input-method switch (group change, capability change): nothing else flushes
-    // the preedit, so commit it ourselves.
-    applyPlan(context, composer_.flush());
 }
 
 FCITX_ADDON_FACTORY(FunputEngineFactory)

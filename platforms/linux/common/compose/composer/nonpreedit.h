@@ -51,11 +51,11 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 
 #include "compose/composer/nonpreedit/clients.h"
 #include "compose/composer/nonpreedit/document/predicted.h"
 #include "compose/composer/nonpreedit/verdict.h"
+#include "compose/transport.h"
 
 namespace funput {
 
@@ -69,9 +69,9 @@ struct NonPreeditState {
     bool on = true;
     bool refused = false;
     // Which clients that latch has already been spent on — see clients.h. Kept across
-    // `reset()`, since a client is the same client whether it was re-focused or merely
-    // re-activated by a capability change.
+    // `reset()`: a client re-activated by a capability change is the same client.
     ClientMemory clients;
+    Transport transport = Transport::Direct; // what the writes cross (transport/guard.h)
     // How often this client has answered with nothing while being written into.
     BlindWrites blind;
     bool retoneAllowed = true;
@@ -107,10 +107,10 @@ struct NonPreeditState {
 
     // A client took focus: whatever the last one did says nothing about this one —
     // unless it *is* this one, in which case a verdict already reached still stands.
-    // `on` survives either way; that is the shell's decision, not something learned
-    // here.
-    void reset(std::string_view client) {
-        refused = clients.focus(client);
+    // `on` survives either way: that is the shell's decision, not something learned.
+    void reset(const ClientIdentity &client) {
+        refused = clients.focus(client.name);
+        transport = client.transport;
         blind.reset();
         answered = false;
         retoneAllowed = true;
@@ -124,10 +124,10 @@ struct NonPreeditState {
 
     // The caret may have moved on its own: a caret key, Enter, a shortcut, a VI/EN
     // toggle, a flush. The journal describes a document the caret has left, so it
-    // goes, and with it every bit of evidence it had earned; the next answered
-    // reading restarts it from wherever the caret turns out to be. What Windows'
-    // `CommittedTail::clear` does for the same events (retone.rs). A modifier press
-    // is not one of them: Shift goes down before every capital letter.
+    // goes, and with it every bit of evidence it had earned; the next answered reading
+    // restarts it from wherever the caret turns out to be. What Windows' `CommittedTail
+    // ::clear` does for the same events (retone.rs). A modifier press is not one of
+    // them: Shift goes down before every capital letter.
     void forget() {
         inSync = onTrack = backspaceJournaled = justAdopted = false;
         document.reset(PredictedDocument::Reset::CaretKey);
