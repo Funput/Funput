@@ -65,6 +65,14 @@ struct Settings {
     // Whether the table also expands while Vietnamese is off ("Gõ tắt cả khi ở
     // chế độ tiếng Anh"). Same default-on rule as the two switches above.
     bool shortcutsInEnglish = true;
+    // The diagnostic trace (common/trace/). Hidden keys — the Settings app has no
+    // page for them and drops them when it saves — read live like everything else,
+    // because the engines are daemon-spawned and an environment variable would not
+    // reach them. `trace` writes lengths and salted hashes; `traceRaw` adds the text
+    // itself. Absent means off: a switch nobody can see must not stay on by itself.
+    // Neither shapes a word (`sameTyping`) nor is written back by `save()`.
+    bool trace = false;
+    bool traceRaw = false;
 
     // Absolute path to ~/.config/Funput/settings.json (XDG-aware).
     static std::string path();

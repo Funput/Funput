@@ -43,6 +43,7 @@ add_executable(ibus-engine-funput
     src/main.cpp
     src/engine/object.cpp
     src/engine/callbacks.cpp
+    src/engine/focus.cpp
     src/engine/client.cpp)
 # So src/engine/*.cpp can reach the public "engine.h" one level up.
 target_include_directories(ibus-engine-funput PRIVATE src)

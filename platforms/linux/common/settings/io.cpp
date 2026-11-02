@@ -55,6 +55,10 @@ bool Settings::reload() {
     shortcutsInEnglish = data.value("shortcutsInEnglish", shortcutsInEnglish);
     toggleHotkey = parseHotkey(data.value("toggleHotkey", std::string(hotkeyString(toggleHotkey))));
     flipHotkey = parseFlip(data.value("flipHotkey", std::string(flipString(flipHotkey))));
+    // Not `data.value(..., trace)`: the Settings app rewrites the file without these
+    // keys, and that rewrite has to read as "off" rather than keep a trace running.
+    trace = data.value("trace", false);
+    traceRaw = data.value("traceRaw", false);
     shortcuts.clear();
     if (const auto items = data.find("shortcuts"); items != data.end() && items->is_array()) {
         for (const auto &item : *items) {
@@ -72,7 +76,8 @@ bool Settings::reload() {
            toggleHotkey != previous.toggleHotkey || flipHotkey != previous.flipHotkey ||
            shortcuts != previous.shortcuts || shortcutsEnabled != previous.shortcutsEnabled ||
            shortcutSmartCase != previous.shortcutSmartCase ||
-           shortcutsInEnglish != previous.shortcutsInEnglish;
+           shortcutsInEnglish != previous.shortcutsInEnglish || trace != previous.trace ||
+           traceRaw != previous.traceRaw;
 }
 
 bool Settings::sameTyping(const Settings &other) const {
@@ -103,6 +108,9 @@ void Settings::save() const {
     // The key that used to switch direct typing off. Nothing reads it any more, and a
     // stale `false` in the file would only suggest that it still does something.
     data.erase("nonPreedit");
+    // Nor `trace` / `traceRaw`: they are switched by editing the file, so the file is
+    // their only owner. The merge keeps whatever it says; the struct's copy is never
+    // written, so a VI/EN toggle can neither start a trace nor stop one.
     data["shortcutsEnabled"] = shortcutsEnabled;
     data["shortcutSmartCase"] = shortcutSmartCase;
     data["shortcutsInEnglish"] = shortcutsInEnglish;

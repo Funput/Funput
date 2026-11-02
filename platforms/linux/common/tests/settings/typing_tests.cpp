@@ -63,3 +63,12 @@ TEST_CASE("the gõ tắt table, its switches and the hotkeys are not a differenc
 
     CHECK(base.sameTyping(other));
 }
+
+// Switching the trace on to catch a bug must not itself drop the word being typed.
+TEST_CASE("the trace switches are not a difference") {
+    const Settings base;
+    Settings other = base;
+    other.trace = true;
+    other.traceRaw = true;
+    CHECK(base.sameTyping(other));
+}

@@ -101,6 +101,27 @@ TEST_CASE("save never writes extraOnsets back over the file's") {
     CHECK_FALSE(reloaded.enabled);
 }
 
+// The trace switches are owned by whoever edits the file. The struct's copy is never
+// written: a VI/EN toggle can neither add the keys nor take away ones the file has.
+TEST_CASE("save never writes the trace keys, and keeps the file's own") {
+    writeSettingsFile(R"({"method": "telex"})");
+    Settings settings;
+    REQUIRE(settings.reload());
+    settings.trace = true;
+    settings.traceRaw = true;
+    settings.save();
+    CHECK(readSettingsFile().find("trace") == std::string::npos);
+
+    writeSettingsFile(R"({"method": "telex", "trace": true})");
+    REQUIRE(settings.reload());
+    settings.enabled = false;
+    settings.save();
+    Settings reloaded;
+    REQUIRE(reloaded.reload());
+    CHECK(reloaded.trace);
+    CHECK_FALSE(reloaded.enabled);
+}
+
 // A file without the key, or with anything but a string there, reads as none —
 // the pre-feature spelling — instead of failing the rest of the file.
 TEST_CASE("extraOnsets reads as none when absent or not a string") {

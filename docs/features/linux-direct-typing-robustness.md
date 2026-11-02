@@ -8,7 +8,7 @@
 
 | Thuộc tính | Nội dung |
 | :--- | :--- |
-| Trạng thái | **Đang triển khai** — PR 1/5 |
+| Trạng thái | **Đang triển khai** — PR 2/5 |
 | Cập nhật | 02/11/2026 |
 | Phạm vi | `platforms/linux` (composer dùng chung và hai shell Fcitx5, IBus). Không đụng engine Rust |
 | Đối tượng | Maintainer, contributor và người dùng quan tâm kiến trúc |
@@ -303,8 +303,13 @@ trường hợp này, rồi quyết định tiếp dựa trên dữ liệu.
 
 ### 6.5. `FUNPUT_TRACE` — chẩn đoán dựa trên dữ liệu
 
-- Bật bằng biến môi trường `FUNPUT_TRACE=1`, hoặc một khoá ẩn trong `settings.json`. **Mặc
-  định tắt.**
+- Bật bằng một khoá ẩn trong `settings.json` (`"trace": true`), hoặc biến môi trường
+  `FUNPUT_TRACE=1`. **Mặc định tắt.**
+- **Khoá trong `settings.json` là công tắc chính**, không phải biến môi trường: engine do
+  `fcitx5`/`ibus-daemon` sinh ra nên không thừa kế shell của người dùng, còn watcher `inotify` thì
+  nạp khoá lại ngay giữa phiên. `FUNPUT_TRACE` chỉ là đường phụ cho engine chạy tay từ terminal, và
+  chỉ bật thêm. Khoá không tính là thay đổi cách gõ (`sameTyping`) nên bật/tắt không làm rơi từ
+  đang gõ dở, và `save()` không bao giờ ghi nó lại.
 - Ghi ring buffer ra `~/.cache/funput/trace.jsonl`, mỗi dòng là một sự kiện: phím (đã phân
   loại), plan, surrounding nhận được, cờ `answered`, phán quyết, timestamp đơn điệu.
 - **Quyền riêng tư:** mặc định chỉ ghi độ dài, số ký tự và hash của nội dung. Nội dung gốc
@@ -402,6 +407,10 @@ Test cần thêm:
 - Toàn bộ test hiện có vẫn pass.
 
 ### PR 2 — Trace và hướng dẫn thu thập
+
+**Trạng thái:** Đã triển khai trong PR này (`common/trace/`, `Observation` trả về từ
+`Composer::observeDocument()`, test `tests/trace/`; mục "Gửi trace khi báo lỗi" trong README
+Linux).
 
 - Hiện thực [mục 6.5](#65-funput_trace--chẩn-đoán-dựa-trên-dữ-liệu) ở cả hai shell.
 - Bổ sung mục "Gửi trace khi báo lỗi" vào README Linux.

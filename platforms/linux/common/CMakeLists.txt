@@ -44,7 +44,9 @@ add_library(funput_linux_common STATIC
     compose/composer/keys.cpp
     compose/composer/state.cpp
     compose/composer/nonpreedit.cpp
-    compose/composer/nonpreedit/backspace.cpp)
+    compose/composer/nonpreedit/backspace.cpp
+    trace/trace.cpp
+    trace/events.cpp)
 target_compile_features(funput_linux_common PUBLIC cxx_std_17)
 # An enum `switch` that misses an enumerator is an error, not a silent fallthrough:
 # it is how a value added to one of the settings enums (an `OnsetLetter`, a hotkey)

@@ -35,6 +35,7 @@
 #include "compose/composer/composer.h"
 #include "compose/key/chord.h"
 #include "settings/watch.h"
+#include "trace/trace.h"
 
 // The only Fcitx5-native config: a button that opens the GTK Settings app.
 // Real preferences stay in ~/.config/Funput/settings.json — settings-gtk
@@ -80,6 +81,9 @@ private:
     void applyNonPreeditMode();
     // Reload settings live when the watcher fires (Settings app wrote the file).
     void onSettingsChanged();
+    // The file was re-read and something moved: push it into the engine, and into the
+    // trace, whose switches are hidden keys in the same file.
+    void settingsReloaded();
     // Ask the tray (NotificationItem) to re-read subModeIcon after VI/EN flips.
     void refreshStatus(fcitx::InputContext *ic);
 

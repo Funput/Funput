@@ -43,7 +43,10 @@ add_executable(funput_linux_tests
     settings/io_tests.cpp
     settings/save_tests.cpp
     settings/typing_tests.cpp
-    settings/onsets/letters_tests.cpp)
+    settings/onsets/letters_tests.cpp
+    trace/summary_tests.cpp
+    trace/ring_tests.cpp
+    trace/events_tests.cpp)
 
 target_link_libraries(funput_linux_tests PRIVATE funput_linux_common doctest::doctest)
 # So the nested test files can reach support.h by its bare name.

@@ -114,6 +114,21 @@ TEST_CASE("unknown wire values fall back to the current setting") {
     CHECK(settings.toggleHotkey == Hotkey::CtrlBacktick);
 }
 
+// The trace switches are hidden keys: read like any other, counted as a change so the
+// watcher's reload reaches the trace, and absent means off — the Settings app drops
+// them when it saves, and that must not keep a trace running.
+TEST_CASE("the hidden trace keys are read, count as a change, and read absent as off") {
+    writeSettingsFile(R"({"method": "vni", "trace": true, "traceRaw": true})");
+    Settings settings;
+    REQUIRE(settings.reload());
+    CHECK(settings.trace);
+    CHECK(settings.traceRaw);
+    writeSettingsFile(R"({"method": "vni"})");
+    REQUIRE(settings.reload()); // only the trace keys moved, and that is a change
+    CHECK_FALSE(settings.trace);
+    CHECK_FALSE(settings.traceRaw);
+}
+
 TEST_CASE("toggleHotkey parses the extra presets") {
     writeSettingsFile(R"({"toggleHotkey": "super_space"})");
     Settings settings;

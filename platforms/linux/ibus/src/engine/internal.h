@@ -75,6 +75,11 @@ void applyNonPreeditMode(IBusEngine *engine);
 // engine, so it has to be re-asked on every focus.
 void requestSurroundingText(IBusEngine *engine);
 
+// The file was re-read and something moved: push it into the engine, and into the
+// trace, whose switches are hidden keys in the same file (object.cpp).
+void settingsReloaded(EngineState *state);
+
+// One keystroke: callbacks.cpp. Everything around it: focus.cpp.
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint keycode, guint modifiers);
 void focusIn(IBusEngine *engine);
 void focusOut(IBusEngine *engine);
