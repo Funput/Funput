@@ -412,6 +412,21 @@ tin do người duy trì tự viết (MIT, không lấy từ corpus) với kho t
 Tỉ lệ sai là thước đo chính khi mở rộng bảng cặp: một đợt thêm cặp làm nó tăng rõ rệt thì
 không merge.
 
+**Đã hiện thực** bằng `funput dev suggest` (`crates/funput-cli/src/dev/suggest/`), cách dùng ở
+`benchmarks/README.md`. **Đã đổi khi hiện thực:**
+
+- Công cụ gõ lại như hai bàn phím thật: Predict sau dấu cách theo sau một từ, gợi ý hoàn thành từ
+  chữ thứ hai, học từng từ cùng chữ đứng trước (`--no-learn` để đo đúng "kho trống"). Ranh giới
+  ngữ cảnh lấy theo `AuthoredTokenTracker` của hai shell.
+- Lần Predict nói được gán nguồn bằng một engine sinh đôi tắt dữ liệu kèm app, học y hệt: bản sinh
+  đôi im mà engine thật nói thì chữ đó đến từ bảng cặp. Không thêm API công khai nào cho
+  `funput-suggestions`.
+- Văn bản mặc định `benchmarks/chat-vi.txt` (MIT, nhỏ, cố ý không dựng từ `pairs/vi.txt`) chỉ để
+  test. Số liệu thật đo trên văn bản riêng đặt trong `benchmarks/.corpus/` (gitignored).
+- Lần đo đầu (`chat-vi.txt`, Telex, có dữ liệu kèm app, có học): Predict chỉ nói ở 6,2% số lần
+  có thể nói, gợi ý hoàn thành tìm thấy 84,8% số từ, tiết kiệm 26,1% số phím. Chỗ thưa là Predict,
+  không phải lúc gõ dở.
+
 ## Nền tảng
 
 | Tầng | Việc |
@@ -468,7 +483,7 @@ không đổi hành vi.
 | 2 | Rust: `SeedLanguage`, đổi kiểu dấu, bảng cặp với danh sách nhỏ (69 cặp), Predict có dữ liệu kèm app, test dữ liệu và engine | #560 |
 | 3 | `funput-ffi` + `funput-jni`: setter | #560 |
 | 4 | iOS + Android gọi setter (hai PR riêng) | #560 |
-| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả đánh giá offline | #560 |
+| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả `funput dev suggest` | #560 |
 | 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu); xong | #561 |
 | 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |
 

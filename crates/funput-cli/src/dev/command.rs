@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use super::render::steps_table;
-use super::{DevArgs, DevCommand, coverage, repl, sim, typos};
+use super::{DevArgs, DevCommand, coverage, repl, sim, suggest, typos};
 use crate::cli::{CliError, CliResult};
 
 /// Run `funput dev`: dispatch to the selected engine tool.
@@ -104,6 +104,9 @@ pub fn run(args: DevArgs) -> CliResult {
                     path.display()
                 ))
             })?;
+        }
+        DevCommand::Suggest(args) => {
+            suggest::run(&args).map_err(|e| CliError::Msg(format!("suggest: {e}")))?;
         }
     }
     Ok(ExitCode::SUCCESS)

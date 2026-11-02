@@ -138,7 +138,7 @@ accepted (see `validation/ethnic` in funput-core).
 
 Malformed corpus entries (two tone marks in one syllable, or a tone on the wrong
 vowel) are **not counted** — they are not valid Vietnamese, and the engine correctly
-declines to reproduce them (see `CORPUS_NOISE` in `crates/funput-cli/src/coverage.rs`).
+declines to reproduce them (see `CORPUS_NOISE` in `crates/funput-cli/src/dev/coverage/corpus.rs`).
 
 ## English coverage
 
@@ -161,9 +161,52 @@ The lost doubled keys left are ambiguous pairs kept on purpose (`off` → `of`).
 committed in `results/english-coverage.txt`, and a test in `cargo test --workspace` fails when
 any of them moves, up or down. See `docs/features/doubled-key-restore.md` §11.3.
 
+## Word suggestions (`dev suggest`)
+
+How much the iOS and Android suggestion bar helps, measured offline. `dev suggest` types a
+chat-style text back through `funput-suggestions` the way both keyboards drive it: Predict is
+asked after a space that followed a word, completions from the second letter of a word on,
+and each word is learned with the one before it. Punctuation, digits and line ends drop the
+context, as the keyboards' token trackers do. Words are compared in lowercase.
+
+```sh
+cargo run --release -p funput-cli -- dev suggest                     # benchmarks/chat-vi.txt
+cargo run --release -p funput-cli -- dev suggest --no-learn          # a new install's first day
+cargo run --release -p funput-cli -- dev suggest benchmarks/.corpus/my-chat.txt --json
+```
+
+It reports how often Predict spoke and how often it was wrong, split by where the guess came
+from (the shipped pairs, or what was learned: a twin engine with the shipped data off tells
+them apart), how full the bar was while typing, and the share of keystrokes a user who always
+took a right suggestion would skip. `--show N` lists the most frequent wrong Predicts and the
+word pairs Predict had nothing for. `--lexicon PATH` attaches a packed `en.lex`.
+
+Predict's three thresholds can be overridden for one run (`--predict-uses`, `--dominance`,
+`--evidence`), or swept: `--sweep` replays the text once per combination (uses 2 to 4,
+dominance 40 to 80%, evidence 3 to 5) and prints one line each, marking today's defaults and
+the rows where personal Predict was right in at least 70% of the times it spoke. Defaults are
+picked from a sweep over a real text, never from `chat-vi.txt`, which is far too small:
+
+```sh
+cargo run --release -p funput-cli -- dev suggest benchmarks/.corpus/my-chat.txt --sweep
+```
+
+| Setup (`chat-vi.txt`, Telex) | Predict shown | Predict wrong | Completion found | Keys saved |
+|---|---:|---:|---:|---:|
+| Shipped data on, learning on | 6.2% | 52.2% | 84.8% | 26.1% |
+| Shipped data off, learning on | 4.6% | 64.7% | 27.8% | 10.2% |
+| Shipped data on, learning off | 1.9% | 14.3% | 80.9% | 24.2% |
+
+`chat-vi.txt` is small (450 words) and only keeps the tests honest. Measure real changes on
+a larger text of your own in `.corpus/` (gitignored). To judge a change to
+`data/pairs/vi.txt`, run `--json` on `main` and on the branch (two worktrees, separate
+`CARGO_TARGET_DIR`) and compare: per `docs/features/vietnamese-seed-suggestion.md`, a batch
+that clearly raises the shipped wrong rate does not merge. The silent pairs are hints for the
+person writing pairs, not a source: every pair is still written and reviewed by hand.
+
 ## Data & licensing
 
-`sample.txt` is our own, MIT-licensed. We **do not vendor** the large word list —
+`sample.txt` and `chat-vi.txt` are our own, MIT-licensed. We **do not vendor** the large word list —
 its license differs from Funput's MIT — so `fetch-corpus.sh` downloads
 [Viet74K](https://github.com/duyet/vietnamese-wordlist) into `.corpus/`
 (gitignored). This keeps the third-party corpus separate from the MIT repository.

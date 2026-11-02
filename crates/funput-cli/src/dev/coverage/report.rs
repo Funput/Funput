@@ -71,20 +71,4 @@ fn pct(covered: usize, total: usize) -> f64 {
     }
 }
 
-/// Escape a string for embedding in a JSON double-quoted value. No dependency: it
-/// handles exactly what JSON requires — `"`, `\`, and control characters below 0x20.
-pub(super) fn json_escape(s: &str) -> String {
-    let mut out = String::with_capacity(s.len() + 2);
-    for c in s.chars() {
-        match c {
-            '"' => out.push_str("\\\""),
-            '\\' => out.push_str("\\\\"),
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c if (c as u32) < 0x20 => out.push_str(&format!("\\u{:04x}", c as u32)),
-            c => out.push(c),
-        }
-    }
-    out
-}
+pub(super) use crate::dev::render::json_escape;

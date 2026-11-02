@@ -8,6 +8,7 @@ mod encode;
 mod render;
 mod repl;
 mod sim;
+mod suggest;
 mod typos;
 
 use std::path::PathBuf;
@@ -48,9 +49,8 @@ pub enum DevCommand {
         /// Input method to encode and type with.
         #[arg(short, long, value_enum, default_value_t = MethodArg::Telex)]
         method: MethodArg,
-        /// How far the finger really lands from a key centre, in key pitches. Not
-        /// the engine's scoring σ — that is its belief about the same spread, and
-        /// the interesting runs are the ones where the two differ.
+        /// How far the finger really lands from a key centre, in key pitches (not the
+        /// engine's scoring σ, its belief about the same spread).
         #[arg(long, default_value_t = 0.25)]
         noise: f32,
         /// Seed for the touch noise, so a run is reproducible.
@@ -84,9 +84,8 @@ pub enum DevCommand {
         /// Print up to N sample words that were not typed cleanly.
         #[arg(long, default_value_t = 0)]
         show: usize,
-        /// Type a list of words that must stay as typed (chat abbreviations, brand
-        /// names) instead of a corpus, and count how many correction rewrites.
-        /// Defaults to `crates/funput-suggestions/data/correction/keep.txt`.
+        /// Type `data/correction/keep.txt` (words that must stay as typed) instead
+        /// of a corpus, and count how many correction rewrites.
         #[arg(long)]
         keep: bool,
         /// Emit machine-readable JSON instead of a human report.
@@ -102,8 +101,7 @@ pub enum DevCommand {
         /// Type the English lexicon and sort the words that come out wrong.
         #[arg(long)]
         english: bool,
-        /// With `--english`: compare the counts with this baseline file, and exit
-        /// non-zero when any of them moved.
+        /// With `--english`: exit non-zero when a count moved from this baseline.
         #[arg(long, requires = "english")]
         baseline: Option<PathBuf>,
         /// With `--baseline`: overwrite the file with the counts instead of checking.
@@ -119,6 +117,8 @@ pub enum DevCommand {
         #[arg(long)]
         limit: Option<usize>,
     },
+    /// Replay a chat text through the suggestion bar: keystrokes saved, wrong Predicts.
+    Suggest(suggest::SuggestArgs),
 }
 
 #[derive(Debug, Args)]
