@@ -77,8 +77,9 @@ fn a_full_personal_answer_and_a_prediction_are_left_alone() {
     assert_eq!(texts(&engine, None, "wo"), ["work", "world", "would"]);
 
     engine.learn_after(None, "xin");
-    engine.learn_after(Some("xin"), "chào");
-    engine.learn_after(Some("xin"), "chào");
+    for _ in 0..3 {
+        engine.learn_after(Some("xin"), "chào");
+    }
     assert_eq!(texts(&engine, Some("xin"), ""), ["chào"]);
     assert!(engine.suggest("thà").is_empty());
 }

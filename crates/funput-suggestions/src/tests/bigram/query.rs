@@ -161,8 +161,9 @@ fn predicted(engine: &SuggestionEngine, previous: &str) -> Vec<String> {
 fn a_dominant_pair_speaks_after_a_space() {
     let mut engine = engine(SuggestionConfig::default());
     engine.learn_after(None, "cảm");
-    engine.learn_after(Some("cảm"), "ơn");
-    engine.learn_after(Some("cảm"), "ơn");
+    for _ in 0..3 {
+        engine.learn_after(Some("cảm"), "ơn");
+    }
     assert_eq!(predicted(&engine, "cảm"), ["ơn"]);
 }
 
@@ -207,8 +208,37 @@ fn a_pair_below_the_use_threshold_stays_silent() {
         "seen once is not a habit"
     );
 
+    // Twice is 2 of 2, a share no dominance test can question: `hôm nay` twice
+    // must not make every later `hôm` say `nay`.
+    engine.learn_after(Some("xin"), "chào");
+    assert!(
+        predicted(&engine, "xin").is_empty(),
+        "seen twice is not a habit yet"
+    );
+
     engine.learn_after(Some("xin"), "chào");
     assert_eq!(predicted(&engine, "xin"), ["chào"]);
+}
+
+#[test]
+fn a_context_with_two_habits_waits_for_one_to_lead() {
+    // The case `funput dev suggest` caught: `hôm nay` twice, then `hôm qua`.
+    let mut engine = engine(SuggestionConfig::default());
+    engine.learn_after(None, "hôm");
+    for word in ["nay", "nay", "qua"] {
+        engine.learn_after(Some("hôm"), word);
+    }
+    assert!(predicted(&engine, "hôm").is_empty(), "2 of 3 is no habit yet");
+
+    engine.learn_after(Some("hôm"), "nay");
+    engine.learn_after(Some("hôm"), "qua");
+    assert_eq!(predicted(&engine, "hôm"), ["nay"], "3 of 5 is 60%: it leads");
+
+    engine.learn_after(Some("hôm"), "qua");
+    assert!(
+        predicted(&engine, "hôm").is_empty(),
+        "3 of 6 is a coin toss, and a wrong guess is worse than silence"
+    );
 }
 
 #[test]
@@ -230,8 +260,9 @@ fn a_dead_leader_does_not_speak() {
     });
     engine.learn_after(None, "xin");
     engine.learn_after(None, "xin");
-    engine.learn_after(Some("xin"), "chào");
-    engine.learn_after(Some("xin"), "chào");
+    for _ in 0..3 {
+        engine.learn_after(Some("xin"), "chào");
+    }
     assert_eq!(predicted(&engine, "xin"), ["chào"]);
 
     // "chào" is the weakest, so filling the lexicon pushes it out.

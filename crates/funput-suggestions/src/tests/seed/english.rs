@@ -39,7 +39,7 @@ fn nothing_shipped_speaks_while_the_data_is_off() {
 fn the_users_own_english_pair_wins() {
     let mut engine = engine(SeedLanguage::Vietnamese(Modern));
     engine.learn_after(None, "thank");
-    for _ in 0..2 {
+    for _ in 0..3 {
         engine.learn_after(Some("thank"), "god");
     }
     assert_eq!(offered(&engine, "thank", ""), ["god"]);

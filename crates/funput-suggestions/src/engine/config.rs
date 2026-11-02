@@ -22,12 +22,17 @@ pub struct SuggestionConfig {
     pub context_rerank_uses: u16,
     /// How often a pair must have been seen before it may be offered with no
     /// prefix at all. Higher than the rerank threshold, because here being wrong
-    /// costs a slot rather than an order.
+    /// costs a slot rather than an order. Three, not two: a context seen twice
+    /// with the same follower is 2 of 2, a share no dominance test can question,
+    /// and `hôm nay` twice made every later `hôm` say `nay` (`funput dev suggest`).
     pub context_predict_uses: u16,
     /// What share of a context word's sightings its strongest follower has to
     /// account for before the bar says anything. This is the whole of the
     /// feature's judgement: "cảm" is nearly always followed by "ơn" and clears it
-    /// at once, while "của" can be followed by anything and never will.
+    /// at once, while "của" can be followed by anything and never will. The
+    /// share is the leader's own hit rate so far, so it is set near the hit rate
+    /// Predict should keep (70%), a little under to leave room for a word the
+    /// user's habits are still settling on.
     pub context_dominance_percent: u8,
     /// How often a word must have been seen as a context before Predict's silence
     /// counts as the user's answer. Below it, the user's pairs have no evidence
@@ -60,8 +65,8 @@ impl Default for SuggestionConfig {
             promotion_uses: 2,
             unrecognized_promotion_uses: 4,
             context_rerank_uses: 1,
-            context_predict_uses: 2,
-            context_dominance_percent: 40,
+            context_predict_uses: 3,
+            context_dominance_percent: 60,
             context_evidence_seen: 3,
             context_order: 3,
             ngram_contexts: 4_096,
