@@ -130,6 +130,23 @@ fn no_first_syllable_ends_another_listed_word() {
     );
 }
 
+/// An exception outlives its reason when its pair changes: a stale entry would
+/// quietly let the next clash on that syllable through.
+#[test]
+fn every_exception_is_still_a_clash() {
+    let firsts: BTreeSet<&str> = pairs().into_iter().map(|(first, _)| first).collect();
+    let seconds: BTreeSet<&str> = pairs().into_iter().map(|(_, next)| next).collect();
+    let stale: Vec<&str> = ALSO_SECOND
+        .iter()
+        .copied()
+        .filter(|syllable| !(firsts.contains(syllable) && seconds.contains(syllable)))
+        .collect();
+    assert!(
+        stale.is_empty(),
+        "no longer both a first and a second syllable, drop from ALSO_SECOND: {stale:?}"
+    );
+}
+
 #[test]
 fn the_list_is_worth_shipping() {
     // The floor stops the list quietly shrinking to nothing; the ceiling is the
