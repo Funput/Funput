@@ -184,7 +184,7 @@ predict_with_seed(prev):
 |---|---|---|
 | `Speaks(word)` | Ứng viên dẫn đầu qua `context_predict_uses` và ngưỡng áp đảo | Ứng viên đó |
 | `Unsure` | Chữ đứng trước đã gặp ≥ `context_evidence_seen` lần mà vẫn bẹt | Im, không nguồn nào được lấp |
-| `NoEvidence` | Chưa có trong kho, hoặc gặp quá ít lần | Hỏi dữ liệu kèm app (`seed/query.rs::seed_after`) |
+| `NoEvidence` | Chưa có trong kho, gặp quá ít lần, hoặc ứng viên dẫn đầu áp đảo nhưng chưa qua `context_predict_uses` | Hỏi dữ liệu kèm app (`seed/query.rs::seed_after`) |
 
 `suggest_with` ghép ba nhánh đó. Bằng cách này, nguồn nào sau này muốn lấp chỗ im lặng
 (Phần B, bảng tĩnh tiếng Anh) chỉ cần trả lời nhánh `NoEvidence`, không phải tự đọc

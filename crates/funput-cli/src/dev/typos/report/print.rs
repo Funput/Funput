@@ -91,9 +91,4 @@ fn seeds(options: &Options) -> String {
     }
 }
 
-pub(super) fn pct(part: usize, whole: usize) -> f64 {
-    if whole == 0 {
-        return 0.0;
-    }
-    part as f64 * 100.0 / whole as f64
-}
+pub(super) use crate::dev::render::pct;

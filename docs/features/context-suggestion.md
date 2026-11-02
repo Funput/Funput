@@ -99,6 +99,13 @@ dùng gõ `hôm qua`. Hai lý do:
   sai tới 60%. Mục tiêu là Predict đúng ít nhất 70% số lần nó nói (gợi ý sai tệ hơn im lặng),
   nên ngưỡng đặt ở 60%, thấp hơn mục tiêu một chút để còn chỗ cho thói quen đang hình thành.
 
+- **Chữ dẫn đầu còn non không phải là "không chắc".** Khi `context_predict_uses` (3) bằng
+  `context_evidence_seen` (3), người mới gõ `cảm ơn`, `cảm ơn`, `cảm thấy` sẽ có `ơn` dẫn đầu 2/3
+  (67%, vượt 60%) nhưng mới gặp 2 lần; luật cũ gọi đó là `Unsure` và chặn luôn cặp kèm app `cảm ơn`
+  mà người dùng đang đồng ý. Giờ `judge` trả `NoEvidence` khi chữ dẫn đầu áp đảo nhưng chưa đủ số
+  lần, và chỉ trả `Unsure` khi phân bố thật sự bẹt, đúng với ý ban đầu của `Unsure`. Luật này đúng
+  với mọi cấu hình, không chỉ bộ mặc định.
+
 Chưa có văn bản tin nhắn thật đủ dài để quét ngưỡng (`dev suggest --sweep`), nên hai con số này
 chọn theo lý lẽ trên, không phải theo số đo. Trên văn bản mẫu: Predict cá nhân không còn nói lần
 nào (mẫu quá ngắn để cặp nào gặp đủ 3 lần), dữ liệu kèm app đúng 6/7 thay vì 5/6 vì được nói thay

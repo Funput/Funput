@@ -6,6 +6,7 @@ mod sweep;
 
 use std::collections::HashMap;
 
+pub(super) use crate::dev::render::pct;
 pub(super) use json::print_json;
 pub(super) use print::print_human;
 pub(super) use sweep::{print_sweep_header, print_sweep_row};
@@ -20,6 +21,9 @@ pub(super) enum Source {
 }
 
 impl Source {
+    /// Every source, in the order reports list them.
+    pub(super) const ALL: [Source; 2] = [Source::Shipped, Source::Personal];
+
     pub(super) fn name(self) -> &'static str {
         match self {
             Self::Shipped => "shipped",
@@ -89,6 +93,13 @@ impl Tally {
             .or_default() += 1;
     }
 
+    /// (right, shown) for the Predicts that came from `source`.
+    pub(super) fn by_source(&self, source: Source) -> (usize, usize) {
+        let i = source.index();
+        let right = self.predict_right[i];
+        (right, right + self.predict_wrong[i])
+    }
+
     pub(super) fn predict_shown(&self) -> usize {
         self.predict_right.iter().sum::<usize>() + self.predict_wrong.iter().sum::<usize>()
     }
@@ -118,13 +129,4 @@ fn top<K: Ord>(counts: &HashMap<K, usize>, limit: usize) -> Vec<(&K, usize)> {
     rows.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
     rows.truncate(limit);
     rows
-}
-
-/// `part` as a percentage of `whole`, 0 when there is no whole.
-pub(super) fn pct(part: usize, whole: usize) -> f64 {
-    if whole == 0 {
-        0.0
-    } else {
-        part as f64 * 100.0 / whole as f64
-    }
 }

@@ -1,5 +1,7 @@
+use funput_core::ToneStyle;
+
 use crate::tests::texts;
-use crate::{SuggestionConfig, SuggestionEngine};
+use crate::{SeedLanguage, SuggestionConfig, SuggestionEngine};
 
 fn engine(config: SuggestionConfig) -> SuggestionEngine {
     SuggestionEngine::in_memory(config)
@@ -249,6 +251,19 @@ fn a_context_with_two_habits_waits_for_one_to_lead() {
 }
 
 #[test]
+fn a_young_leader_leaves_room_for_shipped_data_that_agrees() {
+    // Seen three times, `ơn` leads with 2 of 3: not yet trusted on its own, but
+    // not a spread-out answer either, so shipped data may still speak.
+    let mut engine = engine(SuggestionConfig::default());
+    engine.set_seed_language(SeedLanguage::Vietnamese(ToneStyle::Modern));
+    engine.learn_after(None, "cảm");
+    for word in ["ơn", "ơn", "thấy"] {
+        engine.learn_after(Some("cảm"), word);
+    }
+    assert_eq!(predicted(&engine, "cảm"), ["ơn"]);
+}
+
+#[test]
 fn without_a_context_nothing_is_predicted() {
     let mut engine = engine(SuggestionConfig::default());
     engine.learn_after(None, "xin");
@@ -265,17 +280,22 @@ fn a_dead_leader_does_not_speak() {
         max_words: 3,
         ..SuggestionConfig::default()
     });
-    engine.learn_after(None, "xin");
-    engine.learn_after(None, "xin");
+    for _ in 0..6 {
+        engine.learn_after(None, "xin");
+    }
     for _ in 0..3 {
         engine.learn_after(Some("xin"), "chào");
     }
     assert_eq!(predicted(&engine, "xin"), ["chào"]);
 
-    // "chào" is the weakest, so filling the lexicon pushes it out.
-    engine.learn_after(None, "aaa");
-    engine.learn_after(None, "aaa");
-    engine.learn_after(None, "bbb");
-    engine.learn_after(None, "bbb");
+    // "chào" is the weakest, so filling the store pushes it out while "xin"
+    // stays: the context survives and only its leader is dead.
+    for word in ["ăn", "ngủ"] {
+        for _ in 0..5 {
+            engine.learn_after(None, word);
+        }
+    }
+    assert_eq!(texts(&engine, "xi"), ["xin"], "the context must survive");
+    assert!(texts(&engine, "ch").is_empty(), "the leader must be gone");
     assert!(predicted(&engine, "xin").is_empty());
 }
