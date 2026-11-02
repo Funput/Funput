@@ -104,6 +104,14 @@ thoải mái
 - **Tiêu chí vào bảng:** người viết tin rằng trong văn nhắn tin thường ngày, chữ đứng
   trước được theo sau bởi chữ đó **trong phần lớn trường hợp**. Chặt hơn ngưỡng áp đảo
   của bigram cá nhân (60%, ban đầu 40%), vì ở đây không có bằng chứng nào từ người dùng.
+- **Chữ đứng trước không được là chữ cuối của một từ khác.** Predict chỉ nhìn chữ ngay trước,
+  nên nó nói sau chữ đó ở bất cứ đâu: `nhiệm vụ` làm `trách nhiệm` + dấu cách ra `vụ`, `xã hội`
+  làm `bà xã` ra `hội`. **Đã đổi khi hiện thực** (đợt mở rộng đầu): test
+  `no_first_syllable_ends_another_listed_word` chặn trường hợp này bên trong bảng. Test tìm ra ba
+  chỗ có sẵn: bỏ `dũng cảm` (để `cảm ơn` không bật sau nó) và `nhiệm vụ` (vì `trách nhiệm`); giữ
+  `điện thoại` vì `bưu điện` hiếm, ghi lý do trong `ALSO_SECOND`. Trường hợp
+  chữ cuối của một từ **không** có trong bảng (`thế giới` làm hỏng `giới thiệu`) thì không test nào
+  bắt được; người viết cặp dò bằng Viet74K (xem bước 5 bên dưới).
 - **Ví dụ bị loại:** `xin` (`chào`, `lỗi`, `phép` ngang nhau), `của`, `và`, `là`, `vì`,
   `nhưng`, `thật` (`sự`, `là`). Đây là các chữ "bẹt" trong context-suggestion.md; bảng
   tĩnh không cứu được chúng, và cố cứu là gợi ý bừa.
@@ -339,7 +347,16 @@ tìm lại:
 2. **Cặp tiếng Anh từ corpus.** Google Books 2-grams (CC BY 3.0, cùng nguồn với `en.tsv`, đã có
    `NOTICE.md`), thêm một bước trong `funput-lexicon-tool` giống `count`/`rank`. Dung lượng tải lớn
    hơn bộ 1-grams (~13 GB) nhiều lần, nên chỉ đáng làm khi danh sách viết tay tỏ ra quá ngắn.
-3. **Mở rộng cặp tiếng Việt (bước 5)** từ 69 lên vài trăm, kèm công cụ đánh giá offline
+3. **Mở rộng cặp tiếng Việt (bước 5)**. **Đợt 1 đã làm:** 69 → 115 cặp (thêm 48 cặp viết tay; bỏ `dũng cảm` vì nó làm `cảm ơn` bật
+   sau `dũng cảm`, và `nhiệm vụ` vì nó bật sau `trách nhiệm`).
+   Mỗi ứng viên được dò bằng Viet74K (chỉ đọc trên máy, không ship): chữ đứng trước còn mở đầu
+   những từ ghép nào khác, và đứng cuối những từ nào. 8 ứng viên bị loại vì đứng cuối một từ hay
+   gặp khi nhắn tin: `giới thiệu` (`thế giới`), `xã hội` (`bà xã`), `nhộn nhịp` (`vui nhộn`),
+   `thẹn thùng` (`e thẹn`), `hãnh diện` (`kiêu hãnh`), `nức nở` (`náo nức`), `rạo rực` và
+   `tươm tất` (đụng `rực rỡ`, `tất cả` có sẵn). Đo trên `chat-vi.txt` (Telex, có học): Predict nói
+   9 lần thay vì 7, đúng 8 thay vì 6, số lần sai giữ nguyên 1; phím tiết kiệm 25,5% → 25,8%. Văn
+   bản mẫu nhỏ nên con số chỉ cho thấy đợt này không làm tăng đoán sai. Bản gốc của mục này:
+   mở rộng từ 69 lên vài trăm, kèm công cụ đánh giá offline
    (`funput dev`) đo số phím tiết kiệm và tỉ lệ đoán sai trên văn bản tự viết; một đợt làm tỉ lệ
    sai tăng rõ thì không merge.
 4. **Đo và chỉnh trên máy thật (bước 7):** `context_evidence_seen` (3), trần 2 ô cho prefix không
@@ -483,7 +500,7 @@ không đổi hành vi.
 | 2 | Rust: `SeedLanguage`, đổi kiểu dấu, bảng cặp với danh sách nhỏ (69 cặp), Predict có dữ liệu kèm app, test dữ liệu và engine | #560 |
 | 3 | `funput-ffi` + `funput-jni`: setter | #560 |
 | 4 | iOS + Android gọi setter (hai PR riêng) | #560 |
-| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả `funput dev suggest` | #560 |
+| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả `funput dev suggest`; đợt 1 xong (69 → 115) | #560 |
 | 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu); xong | #561 |
 | 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |
 
