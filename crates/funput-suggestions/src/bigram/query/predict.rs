@@ -25,8 +25,9 @@ pub(crate) enum Prediction {
     /// The user has typed this context often enough, and what follows it is
     /// spread out. Silence is the answer; nothing else should fill it.
     Unsure,
-    /// Too few sightings to say anything, or a context the store does not hold.
-    /// A shorter context, or another source, may answer.
+    /// Too few sightings to say anything, a context the store does not hold, or
+    /// a leader that dominates but has not been seen `context_predict_uses`
+    /// times yet. A shorter context, or another source, may answer.
     NoEvidence,
 }
 
@@ -55,10 +56,15 @@ impl SuggestionEngine {
             .filter(|slot| slot.word(&self.words).is_some())
             .max_by_key(|slot| slot.uses);
         if let Some(leader) = leader
-            && leader.uses >= self.config.context_predict_uses
             && self.dominates(leader.uses, seen)
         {
-            return Prediction::Speaks(leader.word);
+            // A leader too young to trust is too little evidence, not a spread-out
+            // answer: ruling it `Unsure` would silence shipped data that agrees
+            // with it (`cảm ơn`, `cảm ơn`, `cảm thấy` must still offer `ơn`).
+            if leader.uses >= self.config.context_predict_uses {
+                return Prediction::Speaks(leader.word);
+            }
+            return Prediction::NoEvidence;
         }
         if seen < self.config.context_evidence_seen {
             Prediction::NoEvidence

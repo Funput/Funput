@@ -57,8 +57,9 @@ fn the_word_typed_after_the_context_learns_as_before() {
         ["ơn"],
         "a recorded context still asks the list"
     );
-    engine.learn_after(Some("cảm"), "ơn");
-    engine.learn_after(Some("cảm"), "ơn");
+    for _ in 0..3 {
+        engine.learn_after(Some("cảm"), "ơn");
+    }
     assert_eq!(
         predicted(&engine, "cảm"),
         ["ơn"],
@@ -70,7 +71,7 @@ fn the_word_typed_after_the_context_learns_as_before() {
 fn the_users_own_pair_beats_the_list() {
     let mut engine = engine(SeedLanguage::Vietnamese(Modern));
     engine.learn_after(None, "cảm");
-    for _ in 0..2 {
+    for _ in 0..3 {
         engine.learn_after(Some("cảm"), "thấy");
     }
     assert_eq!(predicted(&engine, "cảm"), ["thấy"]);

@@ -64,7 +64,7 @@ ngưỡng khác nhau:
 | Chế độ | Khi nào | Rủi ro khi sai | Ngưỡng |
 |---|---|---|---|
 | **Rerank** | Đang gõ, prefix ≥ 1 ký tự | Thấp — prefix đã lọc, sai chỉ là đổi thứ tự khe | thấy cặp **≥ 1 lần** |
-| **Predict** | Prefix rỗng, vừa xong một từ | Cao — chiếm khe, gợi bừa thì gây bực | **≥ 2 lần** *và* vượt ngưỡng áp đảo |
+| **Predict** | Prefix rỗng, vừa xong một từ | Cao — chiếm khe, gợi bừa thì gây bực | **≥ 3 lần** *và* vượt ngưỡng áp đảo |
 
 Rerank là phần đáng giá nhất trên mỗi byte: nó chạy ở **mọi** lần gõ có ngữ cảnh, và
 nó **không làm tăng số lần cập nhật thanh gợi ý** so với hôm nay — thanh đó vốn đã
@@ -84,9 +84,33 @@ Tiếng Việt đơn âm, nên `P(next | prev)` chia làm hai lớp rất khác 
   được, và đây lại là các âm tiết xuất hiện nhiều nhất.
 
 Nên Predict chỉ hiện khi ứng viên dẫn đầu **áp đảo**: `top.uses * 100 >= context_seen
-* context_dominance_percent` (mặc định 40). `cảm` vượt ngay; `của` không bao giờ vượt
+* context_dominance_percent` (mặc định 60). `cảm` vượt ngay; `của` không bao giờ vượt
 và tự im. Người dùng cảm nhận "nó chỉ nói khi nó chắc" — đó chính là cảm giác thông
 minh, và nó cũng cắt phần lớn số lần cập nhật UI.
+
+**Đã đổi khi hiện thực** (chỉnh ngưỡng sau khi có `funput dev suggest`): ban đầu là 2 lần và
+40%. Công cụ đo cho thấy Predict cá nhân chỉ đúng 6/17 lần trên `benchmarks/chat-vi.txt`, và các
+lần sai đều cùng một kiểu: gõ `hôm nay` hai lần là mọi `hôm` sau đó đều ra `nay`, kể cả khi người
+dùng gõ `hôm qua`. Hai lý do:
+
+- **Mẫu 2/2 là 100%**, không ngưỡng áp đảo nào chặn được. Cần 3 lần thì một thói quen mới
+  được tính là thói quen.
+- **Tỉ lệ của chữ dẫn đầu chính là tỉ lệ đoán đúng của nó cho tới giờ.** 40% nghĩa là chấp nhận
+  sai tới 60%. Mục tiêu là Predict đúng ít nhất 70% số lần nó nói (gợi ý sai tệ hơn im lặng),
+  nên ngưỡng đặt ở 60%, thấp hơn mục tiêu một chút để còn chỗ cho thói quen đang hình thành.
+
+- **Chữ dẫn đầu còn non không phải là "không chắc".** Khi `context_predict_uses` (3) bằng
+  `context_evidence_seen` (3), người mới gõ `cảm ơn`, `cảm ơn`, `cảm thấy` sẽ có `ơn` dẫn đầu 2/3
+  (67%, vượt 60%) nhưng mới gặp 2 lần; luật cũ gọi đó là `Unsure` và chặn luôn cặp kèm app `cảm ơn`
+  mà người dùng đang đồng ý. Giờ `judge` trả `NoEvidence` khi chữ dẫn đầu áp đảo nhưng chưa đủ số
+  lần, và chỉ trả `Unsure` khi phân bố thật sự bẹt, đúng với ý ban đầu của `Unsure`. Luật này đúng
+  với mọi cấu hình, không chỉ bộ mặc định.
+
+Chưa có văn bản tin nhắn thật đủ dài để quét ngưỡng (`dev suggest --sweep`), nên hai con số này
+chọn theo lý lẽ trên, không phải theo số đo. Trên văn bản mẫu: Predict cá nhân không còn nói lần
+nào (mẫu quá ngắn để cặp nào gặp đủ 3 lần), dữ liệu kèm app đúng 6/7 thay vì 5/6 vì được nói thay
+lâu hơn, tổng số lần đoán sai giảm từ 12 xuống 1, phím tiết kiệm giảm từ 26,1% xuống 25,5%. Kiểm
+lại bằng cảm giác trên máy thật ở bước 7.
 
 ## Follower nằm trong `WordRecord`, không có bảng cạnh riêng
 
@@ -196,8 +220,8 @@ Cấu hình thêm ba khoá, và `engine/config.rs::sanitize` phải kẹp cả b
 
 ```rust
 context_rerank_uses: u16,        // mặc định 1
-context_predict_uses: u16,       // mặc định 2
-context_dominance_percent: u8,   // mặc định 40, kẹp 0..=100
+context_predict_uses: u16,       // mặc định 3 (ban đầu 2)
+context_dominance_percent: u8,   // mặc định 60 (ban đầu 40), kẹp 0..=100
 ```
 
 ## Ranh giới ngữ cảnh do platform quyết định
@@ -381,12 +405,13 @@ Viết ra để thành test, không phải để làm khẩu hiệu:
    công tắc "Gợi ý từ" hiện có, không thêm preference nào.
 7. Đo trên máy thật. **Tiêu chí dừng: nếu bước 6 làm p99 độ trễ phím xấu đi, giữ vĩnh
    viễn ở bước 5.** Tính năng này không đáng đánh đổi cảm giác gõ.
-   → **Chưa làm.** Ba con số dưới đây đều là phỏng đoán và chờ hiệu chỉnh:
+   → **Chưa làm.** Ba con số dưới đây chờ hiệu chỉnh trên máy thật; hai số đầu đã chỉnh một lần
+   theo `funput dev suggest` (xem [Ngưỡng áp đảo](#ngưỡng-áp-đảo-im-lặng-khi-không-chắc)):
 
    | Hằng | Hiện tại | Quyết định điều gì |
    |---|---:|---|
-   | `context_dominance_percent` | 40 | Follower dẫn đầu phải chiếm bao nhiêu phần thì bar mới nói |
-   | `context_predict_uses` | 2 | Thấy cặp mấy lần mới được đoán |
+   | `context_dominance_percent` | 60 (ban đầu 40) | Follower dẫn đầu phải chiếm bao nhiêu phần thì bar mới nói |
+   | `context_predict_uses` | 3 (ban đầu 2) | Thấy cặp mấy lần mới được đoán |
    | `AGING_AFTER` | 256 | Bao lâu thì chia đôi điểm để thói quen mới chen lên được |
 
    Chỗ đáng ngờ nhất không phải Rust — truy vấn có ngữ cảnh 444 ns, 0 cấp phát — mà là

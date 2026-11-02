@@ -34,7 +34,7 @@ trống:
 | Nguồn | Khi nào nói | Người mới cài |
 |---|---|---|
 | Kho cá nhân (trie) | Đang gõ dở một từ | Trống |
-| Bigram cá nhân (Predict) | Ngay sau dấu cách | Trống: cần `context_slot(prev)` có trong kho và cặp đã gặp ≥ 2 lần |
+| Bigram cá nhân (Predict) | Ngay sau dấu cách | Trống: cần `context_slot(prev)` có trong kho và cặp đã gặp ≥ `context_predict_uses` lần (3) |
 | `en.lex` | Đang gõ dở, prefix ASCII | Có, nhưng chỉ tiếng Anh |
 
 Người dùng so với Laban thấy ngay: gõ xong `cảm` không có `ơn`, gõ `đươ` không có
@@ -103,7 +103,7 @@ thoải mái
   nhau thì không thuộc bảng này. Đó chính là điều kiện để vào bảng.
 - **Tiêu chí vào bảng:** người viết tin rằng trong văn nhắn tin thường ngày, chữ đứng
   trước được theo sau bởi chữ đó **trong phần lớn trường hợp**. Chặt hơn ngưỡng áp đảo
-  40% của bigram cá nhân, vì ở đây không có bằng chứng nào từ người dùng.
+  của bigram cá nhân (60%, ban đầu 40%), vì ở đây không có bằng chứng nào từ người dùng.
 - **Ví dụ bị loại:** `xin` (`chào`, `lỗi`, `phép` ngang nhau), `của`, `và`, `là`, `vì`,
   `nhưng`, `thật` (`sự`, `là`). Đây là các chữ "bẹt" trong context-suggestion.md; bảng
   tĩnh không cứu được chúng, và cố cứu là gợi ý bừa.
@@ -176,7 +176,7 @@ predict_with_seed(prev):
 |---|---|---|
 | `Speaks(word)` | Ứng viên dẫn đầu qua `context_predict_uses` và ngưỡng áp đảo | Ứng viên đó |
 | `Unsure` | Chữ đứng trước đã gặp ≥ `context_evidence_seen` lần mà vẫn bẹt | Im, không nguồn nào được lấp |
-| `NoEvidence` | Chưa có trong kho, hoặc gặp quá ít lần | Hỏi dữ liệu kèm app (`seed/query.rs::seed_after`) |
+| `NoEvidence` | Chưa có trong kho, gặp quá ít lần, hoặc ứng viên dẫn đầu áp đảo nhưng chưa qua `context_predict_uses` | Hỏi dữ liệu kèm app (`seed/query.rs::seed_after`) |
 
 `suggest_with` ghép ba nhánh đó. Bằng cách này, nguồn nào sau này muốn lấp chỗ im lặng
 (Phần B, bảng tĩnh tiếng Anh) chỉ cần trả lời nhánh `NoEvidence`, không phải tự đọc
@@ -423,7 +423,7 @@ không merge.
   `funput-suggestions`.
 - Văn bản mặc định `benchmarks/chat-vi.txt` (MIT, nhỏ, cố ý không dựng từ `pairs/vi.txt`) chỉ để
   test. Số liệu thật đo trên văn bản riêng đặt trong `benchmarks/.corpus/` (gitignored).
-- Lần đo đầu (`chat-vi.txt`, Telex, có dữ liệu kèm app, có học): Predict chỉ nói ở 6,2% số lần
+- Lần đo đầu (`chat-vi.txt`, Telex, có dữ liệu kèm app, có học, ngưỡng Predict ban đầu 2 lần và 40%): Predict chỉ nói ở 6,2% số lần
   có thể nói, gợi ý hoàn thành tìm thấy 84,8% số từ, tiết kiệm 26,1% số phím. Chỗ thưa là Predict,
   không phải lúc gõ dở.
 

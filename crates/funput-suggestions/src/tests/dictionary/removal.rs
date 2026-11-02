@@ -57,7 +57,7 @@ fn a_context_speaks_again_once_its_forgotten_follower_is_replaced() {
     let mut engine = engine();
     pair(&mut engine, "xin", "chào", 8);
     apply(&mut engine, EditKind::Forget, "chào");
-    pair(&mut engine, "xin", "lỗi", 2);
+    pair(&mut engine, "xin", "lỗi", 3);
     let predicted: Vec<String> = engine
         .suggest_with(Some("xin"), "")
         .iter()
