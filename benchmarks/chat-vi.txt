@@ -1,0 +1,55 @@
+# Chat-style Vietnamese for `funput dev suggest`. Written for Funput, MIT (same as the repo).
+# Everyday messages, one per line. Not drawn from any corpus and deliberately not built from
+# crates/funput-suggestions/data/pairs/vi.txt, so the shipped pairs are not graded on their own
+# list. It is small on purpose: it keeps the tests honest and fast. Real measurements should run
+# on a larger text of your own in benchmarks/.corpus/ (gitignored).
+Chào anh, tối nay anh có rảnh không?
+Em đang trên đường về, khoảng nửa tiếng nữa là tới.
+Mai mình đi ăn trưa với nhau nhé, chỗ quán cũ.
+Anh gửi em cái file hôm qua được không?
+Cảm ơn anh nhiều nha.
+Không sao đâu, có gì cứ nhắn anh.
+Hôm nay trời mưa to quá, em không đi làm được.
+Mẹ ơi con về muộn, mẹ ăn cơm trước đi.
+Tuần sau công ty có buổi họp quan trọng.
+Bạn nhớ mang theo áo khoác, trên đó lạnh lắm.
+Mình vừa đặt vé xem phim lúc bảy giờ tối.
+Chị ơi cho em hỏi đơn hàng của em giao chưa ạ?
+Đơn của chị đang được giao, chiều nay chị nhận được nhé.
+Sáng mai anh đón em lúc mấy giờ?
+Tầm tám giờ nhé, em chuẩn bị sẵn đồ đi.
+Hôm qua mình đi chơi vui quá, lần sau lại đi nữa nha.
+Cuối tuần này cả nhà về quê thăm ông bà.
+Em xin lỗi, em quên mất cuộc hẹn hôm nay.
+Không sao, mình hẹn lại hôm khác cũng được.
+Anh ơi tối nay ăn gì?
+Ăn bún bò đi, lâu rồi chưa ăn.
+Mình đang kẹt xe, chắc tới trễ mười phút.
+Cậu làm xong bài tập chưa?
+Chưa xong, còn hai câu cuối khó quá.
+Để tối mình gọi cho cậu rồi làm chung.
+Chúc mừng sinh nhật em, chúc em luôn vui vẻ.
+Cảm ơn mọi người đã nhớ tới em.
+Thứ bảy này có ai đi đá bóng không?
+Mình đi, nhớ gọi thêm vài người nữa.
+Bên mình đã nhận được thông tin, sẽ phản hồi trong hôm nay.
+Anh kiểm tra lại giúp em số tài khoản với.
+Em gửi lại rồi đó, anh xem thử nhé.
+Dạo này công việc bận quá, không có thời gian nghỉ.
+Cố lên, xong đợt này mình đi du lịch.
+Con ăn sáng chưa?
+Con ăn rồi, mẹ đừng lo.
+Hôm nay em đi khám, bác sĩ bảo không sao.
+Vậy thì tốt quá, nhớ nghỉ ngơi nhiều vào.
+Anh có biết quán cà phê nào yên tĩnh không?
+Có một quán gần nhà anh, để anh gửi địa chỉ.
+Mai em nghỉ học một hôm vì bị ốm.
+Em nhớ uống thuốc rồi ngủ sớm nha.
+Tối nay có trận bóng, về sớm xem chung không?
+Có chứ, để mình mua đồ ăn mang qua.
+Mình nhận được tiền rồi, cảm ơn bạn nhé.
+Lần sau có gì cần thì cứ nói mình.
+Anh đang ở đâu đó?
+Anh đang ở nhà, em qua đi.
+Chiều nay đi siêu thị với em không?
+Ừ, đợi anh làm xong việc đã.
