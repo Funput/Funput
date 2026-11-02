@@ -8,7 +8,7 @@
 
 | Thuộc tính | Nội dung |
 | :--- | :--- |
-| Trạng thái | **Đang triển khai** — PR 4/5 |
+| Trạng thái | **Đã triển khai** — PR 1–5 |
 | Cập nhật | 03/11/2026 |
 | Phạm vi | `platforms/linux` (composer dùng chung và hai shell Fcitx5, IBus). Không đụng engine Rust |
 | Đối tượng | Maintainer, contributor và người dùng quan tâm kiến trúc |
@@ -212,7 +212,7 @@ và không giải thích được tần suất trong #640.
 | Không phân biệt "client bỏ lệnh xoá" với "cầu nối không thể chuyển lệnh xoá" | Phát những lệnh xoá chắc chắn bị bỏ (đầu ô nhập, sau reset), rồi mới phát hiện khi chữ đã hỏng |
 | Không có trace | Chẩn đoán phải dựa vào mô tả của người dùng. Bản thân README ghi `g_debug` của engine IBus đi vào `/dev/null` |
 | Pipeline mỗi phím lặp ở hai shell | `fcitx5/src/funput_input.cpp` và `ibus/src/engine/callbacks.cpp` gần như giống hệt (chọn chế độ, observe, reopen, adopt), dễ lệch nhau theo thời gian |
-| IBus coi là "không có tên client" | IBus có tín hiệu `focus-in-id(object_path, client)` với chuỗi như `gtk3-im:firefox`, `xim`, `gnome-shell`. Trên GNOME Wayland nó vẫn chỉ trả `gnome-shell`, nhưng với client X11/XWayland thì có tên thật |
+| IBus coi là "không có tên client" | IBus có tín hiệu `focus-in-id(object_path, client)` với chuỗi như `gtk3-im:firefox`, `xim`, `gnome-shell`. Trên GNOME Wayland nó vẫn chỉ trả `gnome-shell`, nhưng với client X11/XWayland thì có tên thật. PR 5 đã nối (mục 6.7) |
 
 ## 6. Kiến trúc đề xuất
 
@@ -356,12 +356,12 @@ textBeforeCaret)`): `transport == GnomeShell` **và** (`!spokeSinceReset` **ho�
   được dùng: nó chỉ đánh giá được giữa từ, và gác ở đó là phá bất biến 5. Prefix không rỗng dài L
   ký tự thì không gác: lệnh sửa chỉ xoá trong từ đang gõ, ngắn hơn prefix đủ chứa từ trước nó.
 - Transport đến từ `compose/transport.h`: `identifyProgram()` cho Fcitx5 (`gnome-shell` → tên
-  rỗng + `GnomeShell`), `identifyIBusClient()` cho IBus (đã định nghĩa và có test, PR 5 mới nối).
-  Hai hàm dùng chung một danh sách `namesAToolkit()` cho các tên đứng cho toolkit chứ không phải
-  app (`fake*` theo prefix như `bus/inputcontext.c` của ibus-daemon, `xim`, `Qt`,
+  rỗng + `GnomeShell`), `identifyIBusClient()` cho IBus, nối ở PR 5 qua `focus-in-id`. Hai hàm
+  dùng chung một danh sách `namesAToolkit()` cho các tên đứng cho toolkit chứ không phải app
+  (`fake*` theo prefix như `bus/inputcontext.c` của ibus-daemon, `xim`, `Qt`,
   `QIBusInputContext`, `gtk-im`): frontend ibus của Fcitx5 chuyển chuỗi client đó nguyên vẹn vào
-  `program()`, nên Fcitx5 cũng gặp chúng. Trên IBus guard còn **trơ** cho tới PR 5: `Transport`
-  luôn là `Direct`.
+  `program()`, nên Fcitx5 cũng gặp chúng. Với daemon IBus cũ hơn 1.5.27 không có tín hiệu đó,
+  focus không tên, `Transport` là `Direct` và guard đứng yên — đúng hành vi trước PR 5.
 - Shell chỉ giải mã `textBeforeCaret` cho guard khi `Composer::transport()` là cầu nối; trên
   đường truyền khác câu trả lời luôn là "không", và câu hỏi được đặt ở mỗi phím.
 - **`reset()` của Fcitx5 trên cầu nối không được flush.** Mutter commit preedit ngay trong
@@ -432,13 +432,33 @@ Mỗi triệu chứng của #640 trở thành một regression test.
 
 ### 6.7. Tên client cho IBus
 
-Đăng ký `has-focus-id` và xử lý `focus-in-id` khi phiên bản IBus hỗ trợ (kiểm tra lúc chạy, có
-đường lùi về `focus-in` như hiện tại). Truyền chuỗi `client` vào `Composer::onFocusChanged()`.
-Các chuỗi `gnome-shell` và `fake` phải được coi là rỗng, cùng lý do như `identifyProgram()` của
-Fcitx5; quy tắc đã nằm sẵn ở `identifyIBusClient()` trong `compose/transport.h` (PR 4).
+Đăng ký `has-focus-id` và xử lý `focus-in-id` khi phiên bản IBus hỗ trợ, có đường lùi về
+`focus-in` như trước. Truyền chuỗi `client` vào `Composer::onFocusChanged()`. Các chuỗi
+`gnome-shell` và `fake` phải được coi là rỗng, cùng lý do như `identifyProgram()` của Fcitx5; quy
+tắc nằm ở `identifyIBusClient()` trong `compose/transport.h` (PR 4).
 
-Lợi ích: client X11/XWayland trên IBus được nhớ phán quyết qua các lần focus, đóng một hạn chế
-README đang ghi. `DeleteGuard` cũng biết được khi nào đường truyền đi qua gnome-shell.
+**Đã triển khai (PR 5)**, với mấy điều upstream quyết định hộ:
+
+- `focus-in-id`, `focus-out-id` và thuộc tính `has-focus-id` có từ **libibus 1.5.27**
+  (`src/ibusengine.h` ở tag 1.5.27 có hai vfunc; 1.5.26 chưa). Kiểm tra là lúc **biên dịch**,
+  không phải lúc chạy: `FUNPUT_IBUS_FOCUS_ID = IBUS_CHECK_VERSION(1, 5, 27)` trong `engine.h`.
+  Phần chạy cũng tự lùi: daemon đọc thuộc tính D-Bus `FocusId` của engine rồi chọn gọi cặp nào,
+  nên engine build với libibus mới mà chạy dưới daemon cũ vẫn nhận `focus-in` không tên.
+- `has-focus-id` là construct-only và handler mặc định của factory không đặt nó, nên `main.cpp`
+  nối tín hiệu `create-engine` và tự `g_object_new` engine (chi tiết và tham chiếu floating ở
+  README Linux, "Về phía IBus").
+- Daemon không bao giờ gọi cả `FocusIn` lẫn `FocusInId` cho một lần focus — trừ bản ibus main,
+  gửi lại `FocusInId` khi `FocusId` trả lời trễ. `focus.cpp` giữ bit `focused` giữa focus-in và
+  focus-out: lần gọi thứ hai chỉ đặt tên lại, không xoá `sawSurroundingText` (daemon không lặp
+  lại câu trả lời của client).
+- Đo bằng `ibus-daemon` 1.5.29 trong container: `FocusId = true` trên object engine; trace ghi
+  `gtk3-im:<app>`, `gnome-shell`, `fake-gtk-im`, `gtk4-im:gnome-text-editor` đúng như gửi, và
+  `fake` khi daemon trao focus cho context của chính nó. Lần focus đầu tiên sau khi daemon khởi
+  động không tên, vì phép đọc `FocusId` là bất đồng bộ.
+
+Lợi ích: client X11/XWayland/`GTK_IM_MODULE=ibus` trên IBus được nhớ phán quyết qua các lần
+focus, đóng hạn chế README từng ghi. `DeleteGuard` biết được khi nào đường truyền đi qua
+gnome-shell, nên mục 6.4 hoạt động trên cả hai shell.
 
 ### 6.8. Hướng dài hạn (ngoài phạm vi RFC này)
 
@@ -570,7 +590,7 @@ trống.
 
 - Hiện thực [mục 6.4](#64-deleteguard--không-phát-lệnh-xoá-vô-vọng) ở cả hai shell: bit
   `spokeSinceReset` và guard AND vào `applyNonPreeditMode()`, với trace `mode` lý do `"bridge"`.
-  Trên IBus guard còn trơ cho tới PR 5 (transport chưa được đặt tên).
+  Trên IBus guard trơ cho tới khi PR 5 đặt tên transport.
 - `ClientIdentity {name, transport}` thay cho chuỗi tên ở `Composer::onFocusChanged()`;
   `clientId()` của Fcitx5 bỏ, thay bằng `identifyProgram()` dùng chung.
 - `BridgeSim` mô phỏng gnome-shell + mutter + GTK3 imwayland + app: cache null trước câu trả
@@ -594,8 +614,20 @@ trống.
 
 ### PR 5 — Tên client cho IBus
 
-- Hiện thực [mục 6.7](#67-tên-client-cho-ibus).
-- Cập nhật mục "IBus không biết tên client" trong README Linux.
+**Trạng thái:** Đã triển khai trong PR này (`ibus/src/main.cpp`, `engine.h`,
+`engine/object.cpp`, `engine/focus.cpp`; test `transport_tests.cpp`).
+
+- Hiện thực [mục 6.7](#67-tên-client-cho-ibus): `create-engine` dựng engine với `has-focus-id`;
+  vfunc `focus_in_id`/`focus_out_id` bên cạnh `focus_in`/`focus_out`; `focusInWith()` chung cho
+  hai đường, gọi `onFocusChanged(identifyIBusClient(client))` và ghi chuỗi client thô vào trace.
+  Tất cả sau `FUNPUT_IBUS_FOCUS_ID` (libibus ≥ 1.5.27), có thể ép `0` từ dòng lệnh biên dịch để
+  kiểm tra đường lùi.
+- Test bổ sung: `gtk3-im:(1234)` (GTK lùi về pid khi tiến trình không tên — vẫn là một app, nhớ
+  được trong đời tiến trình đó), `gtk3-im:` rỗng → không tên, app có dấu hai chấm trong tên.
+- README Linux: hạn chế "IBus không biết tên client" viết lại; "Về phía IBus" thêm sự thật thứ
+  năm; "Cầu nối gnome-shell" ghi cổng gác đã hoạt động trên IBus.
+- Còn lại cho người kiểm tra: trace hiện `gtk3-im:firefox` trong phiên X11 hoặc với
+  `GTK_IM_MODULE=ibus`, và `gnome-shell` trên GNOME Wayland; cột IBus của bảng ở mục 6.4.
 
 ## 8. Phương án đã cân nhắc và loại bỏ
 
@@ -630,8 +662,12 @@ bằng chuột, Cursor).
    định hành vi của PR 4.
 3. Ở contenteditable, Firefox trả lời trễ bao nhiêu phím? Câu trả lời quyết định độ dài journal
    ở PR 3.
-4. Phiên bản IBus tối thiểu có `focus-in-id` là bao nhiêu, và các distro mục tiêu đang ship bản
-   nào?
+4. ~~Phiên bản IBus tối thiểu có `focus-in-id` là bao nhiêu, và các distro mục tiêu đang ship
+   bản nào?~~ **Đã trả lời (PR 5):** 1.5.27 (2022). Theo kho gói các distro mục tiêu (chưa kiểm
+   tra lại từ container build): Debian 12 ship 1.5.27, Ubuntu 24.04 ship 1.5.29, Fedora 38 trở
+   lên 1.5.28+; Ubuntu 22.04 còn 1.5.26, nên ở đó engine đi đường lùi không tên. Gói build trên
+   runner mới mà chạy với daemon 1.5.26 cũng không hỏng: daemon đó không hỏi `FocusId` và chỉ
+   gọi `FocusIn`.
 
 ## 11. Tài liệu tham khảo
 

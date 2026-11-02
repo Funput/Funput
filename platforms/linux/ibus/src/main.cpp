@@ -55,6 +55,32 @@ void onDisconnected(IBusBus * /*bus*/, gpointer /*user_data*/) {
     ibus_quit();
 }
 
+#if FUNPUT_IBUS_FOCUS_ID
+// The daemon's CreateEngine, one per input context. The factory's own handler
+// (`ibus_factory_real_create_engine`) builds the engine with
+// `ibus_engine_new_with_type`, which never sets `has-focus-id`; the property is
+// construct-only, so the only way to ask for `focus-in-id` is to construct the engine
+// here, with the same three properties that function passes plus that one. Run before
+// the class handler (G_SIGNAL_RUN_LAST), and the accumulator stops at the first
+// non-null engine. A name that is not ours is left to the class handler, which answers
+// the daemon "Cannot find engine" the way it always has.
+//
+// Returned floating, as `g_object_new` on an IBusObject makes it: the signal copies
+// the value out, and the factory then `g_object_ref_sink`s what it receives, so an
+// owned reference here would be one too many. The path only has to be unique on this
+// connection, like the factory's own `/org/freedesktop/IBus/Engine/<n>`.
+IBusEngine *createEngine(IBusFactory *factory, const gchar *name, gpointer /*user_data*/) {
+    if (g_strcmp0(name, "funput") != 0) return nullptr;
+    static guint serial = 0;
+    gchar *path = g_strdup_printf("/org/freedesktop/IBus/Engine/Funput/%u", ++serial);
+    auto *engine = static_cast<IBusEngine *>(g_object_new(
+        FUNPUT_TYPE_ENGINE, "engine-name", name, "object-path", path, "connection",
+        ibus_service_get_connection(IBUS_SERVICE(factory)), "has-focus-id", TRUE, nullptr));
+    g_free(path);
+    return engine;
+}
+#endif
+
 // Register the factory and either request our well-known name (when started by
 // ibus-daemon) or register the component on the fly (standalone debugging).
 void startEngine(gboolean execByIbus) {
@@ -66,7 +92,13 @@ void startEngine(gboolean execByIbus) {
 
     g_factory = ibus_factory_new(ibus_bus_get_connection(g_bus));
     g_object_ref_sink(g_factory);
+    // The table of names this factory answers to. With `createEngine` connected it is
+    // consulted only for a name that handler declines; without it, it is how the
+    // engine gets built at all.
     ibus_factory_add_engine(g_factory, "funput", FUNPUT_TYPE_ENGINE);
+#if FUNPUT_IBUS_FOCUS_ID
+    g_signal_connect(g_factory, "create-engine", G_CALLBACK(createEngine), nullptr);
+#endif
 
     if (execByIbus) {
         ibus_bus_request_name(g_bus, "org.freedesktop.IBus.Funput", 0);

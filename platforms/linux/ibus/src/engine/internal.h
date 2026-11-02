@@ -41,10 +41,16 @@ struct EngineState {
     bool surroundingFresh = false;
     // Whether the client has answered since the last focus-in or `reset`. The
     // gnome-shell bridge drops every delete between a reset and the client's next
-    // answer (compose/transport/guard.h). Inert until the shell names the
-    // transport — `focus-in-id` is a later PR — but counted from here on, so the
-    // guard turns on with the name and not with a second change to this file.
+    // answer (compose/transport/guard.h); the guard reads this once the
+    // focus is named `gnome-shell` (focus.cpp), and is inert while the focus is
+    // unnamed, as it is on a daemon older than 1.5.27.
     bool spokeSinceReset = false;
+    // Between a focus-in and its focus-out. The daemon can name a focus late — send
+    // `FocusInId` for a focus it has already sent as `FocusIn`, once the engine's
+    // FocusId property answers (bus/engineproxy.c on ibus main) — and that second
+    // call must not pass as a new client, which would clear the flags above while the
+    // daemon, which never repeats itself, keeps the client's answer.
+    bool focused = false;
     // The client's last surrounding text, kept rather than read back on demand.
     // `ibus_engine_get_surrounding_text` hands out null here even right after the
     // client has sent a perfectly good string, so the only reliable copy is the one
@@ -85,10 +91,14 @@ void requestSurroundingText(IBusEngine *engine);
 // trace, whose switches are hidden keys in the same file (object.cpp).
 void settingsReloaded(EngineState *state);
 
-// One keystroke: callbacks.cpp. Everything around it: focus.cpp.
+// One keystroke: callbacks.cpp. Everything around it: focus.cpp. The `Id` pair is
+// what a daemon of 1.5.27 or later calls when the engine was built with
+// `has-focus-id` (main.cpp); `client` is the string compose/transport.h reads.
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint keycode, guint modifiers);
 void focusIn(IBusEngine *engine);
+void focusInId(IBusEngine *engine, const gchar *objectPath, const gchar *client);
 void focusOut(IBusEngine *engine);
+void focusOutId(IBusEngine *engine, const gchar *objectPath);
 void enable(IBusEngine *engine);
 void disable(IBusEngine *engine);
 void reset(IBusEngine *engine);
