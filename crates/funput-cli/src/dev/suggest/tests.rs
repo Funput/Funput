@@ -45,6 +45,20 @@ fn runs_break_where_the_trackers_drop_context() {
 }
 
 #[test]
+fn a_hashtag_opens_a_message_not_a_comment() {
+    let runs = text::runs("# a comment\n#\n#throwback hôm qua\n");
+    assert_eq!(runs, [vec!["throwback", "hôm", "qua"]]);
+}
+
+#[test]
+fn json_strings_are_escaped_the_json_way() {
+    use crate::dev::render::json_escape;
+    // Debug formatting would print `\u{300}` and `\u{1b}`, which JSON rejects.
+    assert_eq!(json_escape("\u{300}a"), "\u{300}a");
+    assert_eq!(json_escape("a\u{1b}\"\\"), "a\\u001b\\\"\\\\");
+}
+
+#[test]
 fn a_shipped_pair_is_a_right_predict_from_the_shipped_data() {
     let tally = replay("Cảm Ơn", true, false);
     assert_eq!(tally.predict_chances, 1);
@@ -70,11 +84,8 @@ fn without_shipped_data_predict_is_silent_on_a_new_install() {
 fn a_learned_pair_is_credited_to_personal_data() {
     let text = "mua rau\n".repeat(5);
     let tally = replay(&text, true, true);
-    assert!(
-        tally.predict_right[Source::Personal as usize] > 0,
-        "{tally:?}"
-    );
-    assert_eq!(tally.predict_right[Source::Shipped as usize], 0);
+    assert!(tally.by_source(Source::Personal).0 > 0, "{tally:?}");
+    assert_eq!(tally.by_source(Source::Shipped).0, 0);
     let tally = replay(&text, true, false);
     assert_eq!(tally.predict_shown(), 0, "nothing learned, nothing shipped");
 }
@@ -140,11 +151,7 @@ fn personal(text: &str, config: SuggestionConfig) -> (usize, usize) {
         ..options(false, true)
     };
     let tally = measure(&text::runs(text), &options).expect("no lexicon");
-    let i = Source::Personal as usize;
-    (
-        tally.predict_right[i],
-        tally.predict_right[i] + tally.predict_wrong[i],
-    )
+    tally.by_source(Source::Personal)
 }
 
 #[test]

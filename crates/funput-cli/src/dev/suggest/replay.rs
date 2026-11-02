@@ -83,9 +83,9 @@ fn type_word(
             tally.saved += keys;
             return;
         }
-        complete(word, &context, engines, method, tally);
+        complete(word, keys, &context, engines, method, tally);
     } else {
-        complete(word, "", engines, method, tally);
+        complete(word, keys, "", engines, method, tally);
     }
 }
 

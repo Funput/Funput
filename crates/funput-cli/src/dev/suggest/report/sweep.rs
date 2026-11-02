@@ -30,8 +30,8 @@ pub(in crate::dev::suggest) fn print_sweep_header(text: &Path, options: &Options
 }
 
 pub(in crate::dev::suggest) fn print_sweep_row(config: &SuggestionConfig, tally: &Tally) {
-    let (right, shown) = source(tally, Source::Personal);
-    let (shipped_right, shipped_shown) = source(tally, Source::Shipped);
+    let (right, shown) = tally.by_source(Source::Personal);
+    let (shipped_right, shipped_shown) = tally.by_source(Source::Shipped);
     let share = pct(right, shown);
     let mark = if shown > 0 && share >= TARGET_RIGHT_PCT {
         '*'
@@ -56,13 +56,4 @@ pub(in crate::dev::suggest) fn print_sweep_row(config: &SuggestionConfig, tally:
         shipped_shown,
         pct(tally.saved, tally.keys),
     );
-}
-
-/// (right, shown) for the Predicts that came from `source`.
-fn source(tally: &Tally, source: Source) -> (usize, usize) {
-    let i = source as usize;
-    (
-        tally.predict_right[i],
-        tally.predict_right[i] + tally.predict_wrong[i],
-    )
 }

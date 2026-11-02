@@ -7,10 +7,11 @@ use super::replay::{Engines, MIN_LETTERS};
 use super::report::Tally;
 use crate::dev::encode::encode;
 
-/// Type `word` a letter at a time from the second letter on, and stop at the
-/// first prefix whose bar holds it.
+/// Type `word` (`word_keys` keystrokes in full) a letter at a time from the
+/// second letter on, and stop at the first prefix whose bar holds it.
 pub(super) fn complete(
     word: &str,
+    word_keys: usize,
     context: &str,
     engines: &Engines,
     method: InputMethod,
@@ -28,7 +29,7 @@ pub(super) fn complete(
         if bar.iter().any(|offered| offered == word) {
             tally.completion_found += 1;
             tally.completion_prefix_letters += typed;
-            tally.saved += keys(word, method).saturating_sub(keys(prefix, method));
+            tally.saved += word_keys.saturating_sub(keys(prefix, method));
             return;
         }
     }

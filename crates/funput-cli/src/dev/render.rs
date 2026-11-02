@@ -1,4 +1,5 @@
-//! Human-readable rendering of a simulation's per-keystroke steps.
+//! Rendering shared by the dev tools: a simulation's per-keystroke steps, and the
+//! small number and JSON helpers every report needs.
 
 use std::fmt::Write as _;
 
@@ -53,6 +54,32 @@ fn show_str(s: &str) -> String {
     } else {
         s.replace(' ', "␣")
     }
+}
+
+/// `part` as a percentage of `whole`, 0 when there is no whole.
+pub(in crate::dev) fn pct(part: usize, whole: usize) -> f64 {
+    if whole == 0 {
+        return 0.0;
+    }
+    part as f64 * 100.0 / whole as f64
+}
+
+/// Escape a string for embedding in a JSON double-quoted value. No dependency: it
+/// handles exactly what JSON requires — `"`, `\`, and control characters below 0x20.
+pub(in crate::dev) fn json_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if (c as u32) < 0x20 => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 #[cfg(test)]
