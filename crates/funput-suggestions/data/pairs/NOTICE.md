@@ -27,7 +27,8 @@ cargo test -p funput-lexicon-tool --test vi_pairs --test en_pairs
 ```
 
 For `vi.txt` that checks every side composes to a real syllable, that no first syllable
-is listed twice, that none of the syllables anything can follow sneaks in, and that the
+is listed twice, that no first syllable ends another listed word (Predict would fire
+after that word too), that none of the syllables anything can follow sneaks in, and that the
 engine offers exactly what the file says. For `en.txt` it checks two lowercase ASCII
 words per line, both in the English lexicon, no first word listed twice or shared with
 `vi.txt`, no first word that is a Vietnamese syllable, and the same engine round trip.

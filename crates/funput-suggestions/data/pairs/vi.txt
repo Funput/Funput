@@ -42,7 +42,6 @@ quyết định
 kiểm tra
 hướng dẫn
 trách nhiệm
-nhiệm vụ
 cẩn thận
 vệ sinh
 thoải mái
@@ -51,6 +50,20 @@ phức tạp
 thỉnh thoảng
 thắc mắc
 rắc rối
+bây giờ
+cà phê
+nghiên cứu
+đặc biệt
+vất vả
+tóm lại
+dường như
+ngược lại
+du lịch
+rủi ro
+uy tín
+đàng hoàng
+vớ vẩn
+tào lao
 
 # --- `nhiên` endings
 dĩ nhiên
@@ -65,9 +78,9 @@ ngân hàng
 bưu điện
 mật khẩu
 chương trình
+vắc xin
 
 # --- describing people and moods
-dũng cảm
 siêng năng
 tử tế
 dịu dàng
@@ -84,6 +97,31 @@ nhõng nhẽo
 nghịch ngợm
 ngơ ngác
 lề mề
+thong thả
+chần chừ
+lúng túng
+luống cuống
+khiêm tốn
+quyến rũ
+hóm hỉnh
+lém lỉnh
+bủn xỉn
+tằn tiện
+càu nhàu
+lải nhải
+hậm hực
+rề rà
+bịn rịn
+bẽn lẽn
+chỉn chu
+cẩu thả
+lóng ngóng
+thút thít
+tủm tỉm
+rón rén
+phấp phỏng
+chững chạc
+tíu tít
 
 # --- describing things
 loay hoay
@@ -98,3 +136,11 @@ rực rỡ
 tưng bừng
 náo nhiệt
 loè loẹt
+lằng nhằng
+loanh quanh
+khập khiễng
+lẹt đẹt
+lạch bạch
+lộp độp
+lủng củng
+ngoằn ngoèo

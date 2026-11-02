@@ -102,6 +102,51 @@ fn no_pair_starts_with_a_syllable_anything_can_follow() {
     assert!(flat.is_empty(), "these predict nothing well: {flat:?}");
 }
 
+/// First syllables that are also the second syllable of another line, kept on
+/// purpose. Each one makes Predict fire after that other word too: `bưu điện`
+/// then a space offers `thoại`. Listed so the cost is a decision, not an accident.
+/// (`dũng cảm` and `nhiệm vụ` were dropped for this: `cảm ơn` and `trách nhiệm`
+/// are the words people type.)
+const ALSO_SECOND: &[&str] = &[
+    // `bưu điện` is rare next to `điện thoại`.
+    "điện",
+];
+
+/// Predict reads only the word before, so it fires after a syllable wherever it
+/// sits: at the end of `trách nhiệm` as much as at the start of `nhiệm vụ`. A
+/// first syllable that ends another listed word is a wrong guess built into the
+/// list itself.
+#[test]
+fn no_first_syllable_ends_another_listed_word() {
+    let seconds: BTreeSet<&str> = pairs().into_iter().map(|(_, next)| next).collect();
+    let clashing: Vec<&str> = pairs()
+        .into_iter()
+        .map(|(first, _)| first)
+        .filter(|first| seconds.contains(first) && !ALSO_SECOND.contains(first))
+        .collect();
+    assert!(
+        clashing.is_empty(),
+        "these also end another listed word, so Predict fires after it too: {clashing:?}"
+    );
+}
+
+/// An exception outlives its reason when its pair changes: a stale entry would
+/// quietly let the next clash on that syllable through.
+#[test]
+fn every_exception_is_still_a_clash() {
+    let firsts: BTreeSet<&str> = pairs().into_iter().map(|(first, _)| first).collect();
+    let seconds: BTreeSet<&str> = pairs().into_iter().map(|(_, next)| next).collect();
+    let stale: Vec<&str> = ALSO_SECOND
+        .iter()
+        .copied()
+        .filter(|syllable| !(firsts.contains(syllable) && seconds.contains(syllable)))
+        .collect();
+    assert!(
+        stale.is_empty(),
+        "no longer both a first and a second syllable, drop from ALSO_SECOND: {stale:?}"
+    );
+}
+
 #[test]
 fn the_list_is_worth_shipping() {
     // The floor stops the list quietly shrinking to nothing; the ceiling is the
