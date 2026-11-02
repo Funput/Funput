@@ -8,7 +8,7 @@
 
 | Thuộc tính | Nội dung |
 | :--- | :--- |
-| Trạng thái | **Đề xuất thiết kế — chưa triển khai** |
+| Trạng thái | **Đang triển khai** — PR 1/5 |
 | Cập nhật | 02/11/2026 |
 | Phạm vi | `platforms/linux` (composer dùng chung và hai shell Fcitx5, IBus). Không đụng engine Rust |
 | Đối tượng | Maintainer, contributor và người dùng quan tâm kiến trúc |
@@ -362,6 +362,9 @@ Mỗi bước là **một PR độc lập**, có test, và không phụ thuộc 
 
 ### PR 1 — Ghi nhận thay đổi do app tự làm
 
+**Trạng thái:** Đã triển khai trong PR này (`Composer::appPerforms()`, test
+`nonpreedit/appedits_tests.cpp`).
+
 - `Composer::onBoundary()`, nhánh không có từ đang soạn: khi gõ thẳng đang bật, ghi
   `noteRepair(0, <ký tự ranh giới>)` trước khi trả `passThrough()`.
 - `Composer::backspaceOutsideWord()`, nhánh nhường cho app: khi gõ thẳng đang bật và không có
@@ -375,7 +378,7 @@ bỏ" là cùng một chuỗi. Bản ghi chỉ xoá mà không ghi gì thì đã
 Test cần thêm:
 
 - `phur␣␣⌫⌫s` → `phú` với client đúng hạn.
-- Biến thể dấu câu: `phur,␣⌫⌫s` dừng ở dấu phẩy (đúng quy tắc tách từ hiện có).
+- Biến thể dấu câu: `phur,␣⌫s` → `phủ,s`, dừng ở dấu phẩy (đúng quy tắc tách từ hiện có).
 - Vùng chọn đang có thì Backspace vẫn đi thẳng qua và không ghi nhận gì.
 - Toàn bộ test hiện có vẫn pass.
 

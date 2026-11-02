@@ -26,10 +26,11 @@ ComposePlan Composer::commitBuffer(bool consumed) {
 ComposePlan Composer::onBoundary(char32_t scalar, KeySource source) {
     const std::string before = handle_.buffer();
     if (before.empty()) {
-        // Nothing composing: the boundary is just a character. It still reaches the
-        // engine when auto-capitalize is on, which tracks sentence ends.
+        // Nothing composing: the boundary is just a character the app types itself.
+        // It still reaches the engine when auto-capitalize is on, which tracks
+        // sentence ends — and non-preedit journals it (see `appPerforms`).
         if (settings_.autoCapitalize) handle_.process(static_cast<uint32_t>(scalar), source);
-        return ComposePlan::passThrough();
+        return appPerforms(0, scalar);
     }
     const FunputResult result = handle_.process(static_cast<uint32_t>(scalar), source);
     // The engine's output already ends with the boundary character, and the word in
@@ -106,9 +107,10 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         if (handle_.buffer().empty()) return backspaceOutsideWord();
         handle_.backspace();
         // Non-preedit: the character stands in the document, so the key passes
-        // through and the app deletes its own — the engine is only kept in step.
-        // Same division of labour as `ShellState::on_backspace` on Windows.
-        if (nonPreedit_.on) return ComposePlan::passThrough();
+        // through and the app deletes its own — the engine is only kept in step, and
+        // the deletion journaled. Same division of labour as `ShellState::on_backspace`
+        // on Windows.
+        if (nonPreedit_.on) return appPerforms(1, 0);
         return ComposePlan::preedit(handle_.buffer());
 
     case KeyKind::NonText:

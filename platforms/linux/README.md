@@ -511,6 +511,15 @@ kế tiếp. Việc tiếp quản chỉ xảy ra khi **có bằng chứng dươn
 một thay đổi ta dự đoán rồi thấy nó xảy ra thật. Không có bằng chứng đó thì phím đi thẳng qua, và
 chính điều này giữ cho một vùng bôi đen bằng chuột vẫn xoá được.
 
+Bằng chứng đó phải sống sót qua cả những thay đổi mà **app tự làm**: dấu cách gõ khi không có gì
+đang soạn, Backspace được nhường cho app, và Backspace rút ngắn một từ đang đứng trong tài liệu. Cả
+ba đều đoán trước được, nên composer ghi nhận chúng y như một sửa chữa của chính mình
+(`Composer::appPerforms()`) để lần đọc kế tiếp xác nhận tài liệu vẫn đang được theo dõi. Nhờ vậy
+`phủ` ␣ ␣ ⌫ ⌫ `s` vẫn ra `phú`; trước đây dấu cách thứ hai làm đứt chuỗi bằng chứng và `s` được gõ
+như chữ thường. Những bản ghi này không bao giờ buộc tội được client: bản ghi không xoá gì thì "đã
+áp dụng" và "bị bỏ" là cùng một chuỗi, còn bản ghi không ghi gì thì phép so ba chuỗi bên dưới đã
+loại khỏi phán quyết từ trước.
+
 #### Đo được gì, và suy ra gì
 
 Trên GNOME/Wayland, nơi Fcitx5 được với tới qua frontend **ibus** và GNOME Shell là client của

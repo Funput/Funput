@@ -36,7 +36,12 @@ ComposePlan Composer::backspaceOutsideWord() {
     // after it, and re-toning `go` wrote `goõ`.
     if (!nonPreedit_.on || !nonPreedit_.inSync || nonPreedit_.selectionLive ||
         nonPreedit_.lastDoc.empty()) {
-        return ComposePlan::passThrough();
+        // Handed to the app, but still journaled: the one-character deletion it is
+        // about to make is as predictable as our own, and seeing it land is what
+        // brings `inSync` back. `appPerforms` itself skips the record outside the
+        // mode or over a selection; a record made while out of sync, or against an
+        // empty reading, can only ever confirm — see its comment.
+        return appPerforms(1, 0);
     }
     nonPreedit_.noteRepair(1, {});
     return ComposePlan::replace(1, {});
@@ -44,6 +49,10 @@ ComposePlan Composer::backspaceOutsideWord() {
 
 bool Composer::adoptWordBeforeBackspace(const std::string &textBeforeCaret) {
     if (!nonPreedit_.on || !nonPreedit_.retoneAllowed || !effectiveEnabled_) return false;
+    // The key deletes the selection, not the last character: a double-click on
+    // `tiếng ` and Backspace take the whole word, and adopting the `tiến` that popping
+    // one character offers would aim the next repair at text that is gone.
+    if (nonPreedit_.selectionLive) return false;
     // Only a document seen to be current: Chrome can report `gox ` a keystroke late as
     // `gox`, and adopting the `go` that leaves would make the next `x` write `goõ`.
     if (!nonPreedit_.inSync) return false;
