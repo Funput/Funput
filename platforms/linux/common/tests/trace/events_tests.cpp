@@ -116,11 +116,13 @@ TEST_CASE("a reading carries the composer's observation and the shell's bits") {
     const std::string path = tracePath("observation.jsonl");
     Trace trace(path);
     trace.configure(tracing());
-    trace.reading("", false, true, 1, {Verdict::RefuseMode, false});
+    trace.reading("", false, true, 1, {Verdict::RefuseMode, false, 1, 2});
 
     const auto reading = lastEvent(readLines(path), "reading");
     CHECK(reading["verdict"] == "RefuseMode");
     CHECK(reading["inSync"] == false);
+    CHECK(reading["acked"] == 1);
+    CHECK(reading["pending"] == 2);
     CHECK(reading["answered"] == false);
     CHECK(reading["selection"] == true);
     CHECK(reading["selectedAfter"] == 1);

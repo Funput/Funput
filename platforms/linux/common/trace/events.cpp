@@ -108,6 +108,7 @@ void Trace::reading(const std::string &before, bool answered, bool selection,
     out["selectedAfter"] = selectedAfter;
     out["verdict"] = verdictName(seen.verdict);
     out["inSync"] = seen.inSync;
+    out.update({{"acked", seen.acked}, {"pending", seen.pending}});
     emit(std::move(out));
 }
 

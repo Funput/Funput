@@ -23,7 +23,7 @@ TEST_CASE("consecutive Backspaces all stay on Funput's channel") {
     const ComposePlan first = composer.onKey(bare(keysym::BackSpace));
     CHECK(first.consumed);
     popChars(document, first.deleteChars);
-    CHECK_FALSE(composer.adoptWordBeforeBackspace("gox ")); // `gox` is not a syllable
+    CHECK_FALSE(composer.adoptWordBeforeBackspace()); // `gox` is not a syllable
     composer.observeDocument(document);
     REQUIRE(document == "gox");
 
@@ -33,7 +33,7 @@ TEST_CASE("consecutive Backspaces all stay on Funput's channel") {
     CHECK(second.deleteChars == 1);
     CHECK(second.consumed);
     popChars(document, 1);
-    REQUIRE(composer.adoptWordBeforeBackspace("gox"));
+    REQUIRE(composer.adoptWordBeforeBackspace());
     composer.observeDocument(document);
     REQUIRE(document == "go");
 
@@ -42,10 +42,12 @@ TEST_CASE("consecutive Backspaces all stay on Funput's channel") {
 }
 
 // Chrome reports surrounding text late, so the reading a Backspace gets can be the
-// document from a keystroke ago. After Space the stale copy still reads `gox`, and
-// dropping the character the app "is about to delete" offered `go` — a word the
-// document no longer ends with. The next `x` then wrote `goõ`.
-TEST_CASE("a stale reading of the document re-opens nothing") {
+// document from a keystroke ago. After Space the stale copy still reads `gox`: one
+// edit confirmed of two, which is not the proof a takeover needs, so the app
+// deletes. The word offered comes from the prediction, `gox ` less the space, and
+// the engine refuses it; offered from the reading it was `go`, and the next `x`
+// wrote `goõ` (retone/scan_tests.cpp).
+TEST_CASE("a stale reading of the document is not current enough to take over") {
     Composer composer = composerFor(Method::Telex);
     composer.setNonPreedit(true);
 
@@ -63,7 +65,7 @@ TEST_CASE("a stale reading of the document re-opens nothing") {
     const ComposePlan plan = composer.onKey(bare(keysym::BackSpace));
     CHECK_FALSE(plan.consumed); // no proof the reading is current, so the app deletes
     popChars(document, 1);
-    CHECK_FALSE(composer.adoptWordBeforeBackspace(reading));
+    CHECK_FALSE(composer.adoptWordBeforeBackspace());
 
     composer.observeDocument(reading);
     applyPlan(document, composer.onKey(ascii('x')), 'x');

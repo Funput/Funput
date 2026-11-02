@@ -50,10 +50,13 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // so unlike the old focus-in snapshot there is no single moment early enough.
     applyNonPreeditMode();
 
-    // One read of the document, used twice. It lets the composer check that its last
-    // repair actually landed — a client that takes commits but drops deletes turns
-    // the mode off rather than appending to the user's text forever — and it is the
-    // same text a Backspace needs below.
+    // One read of the document, before the key. It lets the composer check that its
+    // last repairs actually landed — a client that takes commits but drops deletes
+    // turns the mode off rather than appending to the user's text forever — and it
+    // is all the composer needs: the word a Backspace may re-open below comes from
+    // the document as the composer predicts it, since this reading can be a
+    // keystroke old. tests/compose/composer/nonpreedit/sim/client.h mirrors this
+    // sequence step for step; a change here is a change there.
     const bool nonPreedit = composer_.nonPreedit();
     const std::string before = nonPreedit ? textBeforeCaret(event.inputContext()) : std::string();
     const bool answered = std::exchange(surroundingFresh_, false);
@@ -78,11 +81,11 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     if (trace.enabled()) trace.plan(plan);
     if (plan.consumed) event.filterAndAccept();
 
-    // After the plan, and never writing anything itself: the key passes through, the
-    // app deletes its own character, and the engine simply takes ownership of what is
-    // left so the next keystroke can edit it.
+    // After the plan, and never writing anything itself: the character is deleted on
+    // whichever channel the plan chose, and the engine simply takes ownership of what
+    // the composer predicts is left so the next keystroke can edit it.
     if (reopen) {
-        const bool taken = composer_.adoptWordBeforeBackspace(before);
+        const bool taken = composer_.adoptWordBeforeBackspace();
         if (trace.enabled()) trace.adopt(taken);
     }
 }

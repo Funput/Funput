@@ -1,66 +1,80 @@
-// A record of an edit the app performs may keep the evidence that the document is
-// current, never create it. Journaled while out of sync it would vouch for a stale
-// reading, Funput would take a Backspace over against a document one edit behind the
-// real one, and the word adopted from that reading re-toned the wrong text.
+// What a record of an edit the app performs must never claim, and which app edits
+// are never recorded. A record journaled out of sync vouches for nothing on its own:
+// a client one keystroke late reads the document as it stood before the previous
+// key, and two identical edits in a row make that stale reading equal what the
+// newest record predicts. With one record that marked the document current one
+// edit early and the word adopted from it was one character too long; the journal
+// reads the same reading as prefix n−1 of n, so the app still deletes and the word,
+// when there is one, is the one the document really ends with.
 
 #include <doctest/doctest.h>
 
-#include "appedits.h"
+#include "compose/composer/nonpreedit/sim/client.h"
 
 using namespace funput;
 using namespace funput::test;
 
-TEST_CASE("a Backspace handed to the app proves nothing") {
-    Shell shell;
-    shell.document = "xin chào"; // typed before Funput was watching
-    shell.composer.onFocusChanged();
-    // No repair confirmed this reading, so the app deletes — and that is not
-    // journaled, since a record made out of sync can only vouch for a stale reading.
-    // The next Backspace is the app's too; sync is earned back by a repair Funput
-    // writes, which the next word brings.
-    CHECK_FALSE(shell.backspace().consumed);
-    CHECK_FALSE(shell.backspace().consumed);
-    CHECK_FALSE(shell.adopted);
-    REQUIRE(shell.document == "xin ch");
+TEST_CASE("a Backspace handed to the app proves nothing to a late client") {
+    ClientSim shell(1);
+    shell.seed("xin chào"); // typed before Funput was watching
+    // Both readings are the field as typing found it: the app deletes twice, and
+    // nothing is re-opened, since no record was seen to land. The next word earns
+    // the evidence back, and the Backspace after it — still the app's, a key late —
+    // re-opens `chao` from the prediction.
+    CHECK_FALSE(shell.pressBackspace());
+    CHECK_FALSE(shell.adopted());
+    CHECK_FALSE(shell.pressBackspace());
+    CHECK_FALSE(shell.adopted());
+    REQUIRE(shell.document() == "xin ch");
     shell.type("ao ");
-    CHECK(shell.backspace().consumed);
-    CHECK(shell.adopted); // `chao`
-    shell.type("f");
-    CHECK(shell.document == "xin chào");
+    CHECK_FALSE(shell.pressBackspace());
+    CHECK(shell.adopted());
+    CHECK(shell.type("f") == "xin chào");
 }
 
-TEST_CASE("adoption is refused while a selection is live") {
-    Shell shell;
-    shell.type("tieengs ");
-    REQUIRE(shell.document == "tiếng ");
-    // Select-all leaves the caret at the end: the reading is unchanged and confirms
-    // the last repair, so only the selection flag stands between Backspace and the
-    // `tiếng` that popping one character offers — a word the key is about to delete.
-    shell.selectionLive = true;
-    CHECK(shell.backspace().isNoop()); // the app deletes the selection
-    CHECK_FALSE(shell.adopted);
-    CHECK_FALSE(shell.composer.isComposing());
-}
-
-// A client one keystroke late reads the document as it stood before the previous
-// key. Two identical edits in a row make that stale reading equal what a record of
-// the second would predict, so a record made out of sync would mark the document
-// current one edit early — and the word adopted from it one character too long.
 TEST_CASE("the app's own edits never catch a late client up") {
-    Shell shell;
-    shell.lag = true;
+    ClientSim late(1);
     SUBCASE("a space after a space") {
-        shell.type("phur  ");
-        CHECK_FALSE(shell.backspace().consumed); // reads `phủ `: not current, the app's
-        CHECK_FALSE(shell.adopted); // journaled out of sync, `phủ` was: `phủú`
-        shell.type("s");
-        CHECK(shell.document == "phủ s");
+        late.type("phur  ");
+        CHECK_FALSE(late.pressBackspace()); // reads `phủ `: not current, the app's
+        CHECK_FALSE(late.adopted()); // from a reading one character too long: `phủ`
+        CHECK(late.type("s") == "phủ s");
     }
     SUBCASE("a Backspace after a Backspace") {
-        shell.type("phur ab");
-        for (int i = 0; i < 4; ++i) CHECK_FALSE(shell.backspace().consumed);
-        CHECK_FALSE(shell.adopted); // journaled out of sync, `phủ` was: `pú`
-        shell.type("s");
-        CHECK(shell.document == "phs");
+        late.type("phur ab");
+        for (int i = 0; i < 4; ++i) CHECK_FALSE(late.pressBackspace());
+        REQUIRE(late.document() == "ph");
+        // The same keys on time, which is the document the user is looking at.
+        ClientSim onTime(0);
+        onTime.type("phur ab");
+        for (int i = 0; i < 4; ++i) onTime.pressBackspace();
+        REQUIRE(onTime.document() == "ph");
+        CHECK(late.type("s") == onTime.type("s"));
+        CHECK(late.document() != "pú"); // adopted from the stale reading: `phủ`
     }
+}
+
+TEST_CASE("a boundary that is not a space passes through unrecorded") {
+    ClientSim shell;
+    shell.type("xin (");
+    // The editor paired it: `(` before the caret, `)` after. A record of the `(`
+    // would have been confirmed, and the next ⌫ taken over, stranding the `)`.
+    CHECK_FALSE(shell.pressBackspace()); // the app removes the pair
+    CHECK(shell.document() == "xin ");
+}
+
+TEST_CASE("a space typed over a selection is not journaled") {
+    ClientSim shell;
+    shell.type("xin ");
+    // A suffix the app filled in after the caret and selected, with nothing
+    // composing. The space replaces it, so the text before the caret then reads
+    // exactly what a journaled space would predict: the one selection the guard in
+    // `appPerforms` decides, since a highlight before the caret moves the reading.
+    shell.selectionLive = true;
+    shell.selectedAfter = 1;
+    shell.type(" ");
+    shell.selectionLive = false;
+    shell.selectedAfter = 0;
+    REQUIRE(shell.document() == "xin  ");
+    CHECK_FALSE(shell.pressBackspace()); // no prediction, no proof: the app's
 }
