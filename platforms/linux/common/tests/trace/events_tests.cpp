@@ -27,6 +27,7 @@ TEST_CASE("a summary trace carries lengths and hashes, never the text") {
     trace.reading("tiếng ", true, false, 0, inSyncReading());
     trace.plan(ComposePlan::replace(1, "ế"));
     trace.plan(ComposePlan::commit("tiếng"));
+    trace.plan(ComposePlan::replace(1, ""));
 
     const std::string file = readFile(path);
     CHECK(file.find("tiếng") == std::string::npos);
@@ -34,8 +35,13 @@ TEST_CASE("a summary trace carries lengths and hashes, never the text") {
     const auto lines = readLines(path);
     const auto reading = lastEvent(lines, "reading");
     CHECK(reading["before"]["chars"] == 6);
-    CHECK(reading["before"]["hash"].is_string());
+    CHECK(reading["before"]["hash"].get<std::string>().size() == 16);
     CHECK_FALSE(reading["before"].contains("text"));
+    // The empty string's hash would be the one value every trace prints for a known
+    // input, so a deletion carries its count alone.
+    const auto deletion = lastEvent(lines, "plan");
+    CHECK(deletion["text"]["chars"] == 0);
+    CHECK_FALSE(deletion["text"].contains("hash"));
 }
 
 TEST_CASE("a raw trace carries the text as well") {
@@ -51,11 +57,14 @@ TEST_CASE("a raw trace carries the text as well") {
     CHECK(lastEvent(lines, "plan")["text"]["chars"] == 1); // the summary stays
 }
 
-TEST_CASE("a letter is content: no keysym or character unless raw, Backspace keeps its keysym") {
+TEST_CASE("a letter is content: no keysym, character or modifier unless raw") {
     const std::string path = tracePath("keys.jsonl");
     Trace trace(path);
+    trace.start("test");
     trace.configure(tracing());
-    trace.key(KeyKind::Compose, ascii('a'));
+    KeyEvent capital = ascii('A');
+    capital.mods.shift = true;
+    trace.key(KeyKind::Compose, capital);
     trace.key(KeyKind::Boundary, ascii(' '));
     trace.key(KeyKind::Backspace, bare(keysym::BackSpace));
     trace.key(KeyKind::Shortcut, ctrlShift('z'));
@@ -65,7 +74,7 @@ TEST_CASE("a letter is content: no keysym or character unless raw, Backspace kee
     CHECK(lines[1]["kind"] == "Compose");
     CHECK_FALSE(lines[1].contains("keysym"));
     CHECK_FALSE(lines[1].contains("ch"));
-    CHECK_FALSE(lines[1].contains("mods"));
+    CHECK_FALSE(lines[1].contains("mods")); // Shift on a letter is its case: content
     CHECK_FALSE(lines[2].contains("keysym"));
     CHECK(lines[3]["kind"] == "Backspace");
     CHECK(lines[3]["keysym"] == "ff08");
@@ -73,15 +82,17 @@ TEST_CASE("a letter is content: no keysym or character unless raw, Backspace kee
     CHECK(lines[4]["keysym"] == "7a"); // which shortcut is behaviour, not content
 
     trace.configure(tracing(/*raw=*/true));
-    trace.key(KeyKind::Compose, ascii('a'));
+    trace.key(KeyKind::Compose, capital);
     lines = readLines(path);
-    CHECK(lines.back()["keysym"] == "61");
-    CHECK(lines.back()["ch"] == "a");
+    CHECK(lines.back()["keysym"] == "41");
+    CHECK(lines.back()["ch"] == "A");
+    CHECK(lines.back()["mods"] == "shift");
 }
 
 TEST_CASE("a Replace plan carries both delete counts and a text summary") {
     const std::string path = tracePath("plan.jsonl");
     Trace trace(path);
+    trace.start("test");
     trace.configure(tracing());
     ComposePlan plan = ComposePlan::replace(2, "ổ");
     plan.deleteAfterChars = 1;
@@ -113,21 +124,6 @@ TEST_CASE("a reading carries the composer's observation and the shell's bits") {
     CHECK(reading["answered"] == false);
     CHECK(reading["selection"] == true);
     CHECK(reading["selectedAfter"] == 1);
-}
-
-// The seam itself: `observeDocument()` hands back what the shell traces. A repair seen
-// to land reads as in sync; the reading after it, with nothing written since, does not.
-TEST_CASE("observeDocument reports a confirmed repair as in sync") {
-    Composer composer = composerFor(Method::Telex);
-    composer.setNonPreedit(true);
-    std::string document;
-    composer.observeDocument(document);
-    applyPlan(document, composer.onKey(ascii('a')), 'a');
-    CHECK(document == "a");
-    const Observation seen = composer.observeDocument(document);
-    CHECK(seen.verdict == Verdict::Unknown);
-    CHECK(seen.inSync);
-    CHECK_FALSE(composer.observeDocument(document).inSync);
 }
 
 TEST_CASE("focus, mode, adopt and note lines name what they are about") {

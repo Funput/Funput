@@ -342,10 +342,12 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       nonpreedit/observe.h    So ba chuỗi sau một lần sửa
       nonpreedit/selection.h  Hậu tố gợi ý sau caret (Sheets/Excel)
   trace/                  Trace chẩn đoán, mặc định tắt — xem "Gửi trace khi báo lỗi"
-    trace.h/.cpp            Công tắc, ring buffer và file
+    trace.h/.cpp            Công tắc, ring buffer và giới hạn kích thước
+    sink.h/.cpp             File trace: quyền 0700/0600, ghi qua descriptor, xoay vòng
     events.cpp              Mỗi loại dòng ghi gì
-    names.h                 Tên wire của các enum composer
-    summary.h               Số ký tự + hash có salt, thay cho văn bản
+    events/names.h          Tên wire của các enum composer
+    summary/text.h          Số ký tự + hash có khoá, thay cho văn bản
+    summary/siphash.h       SipHash-2-4, PRF đứng sau hash đó
   settings/               ~/.config/Funput/settings.json
     settings.h              Model mọi shell đều đọc, gồm cả công tắc gõ tắt
     lookup.cpp              File nằm đâu; loại trừ theo app
@@ -729,19 +731,24 @@ tắt được thứ file đã bật.
 > — và trace tắt theo, đúng như thiết kế: một công tắc không ai nhìn thấy không được tự giữ mình
 > bật. Thêm lại khoá sau khi đổi thiết lập nếu còn cần trace.
 
-**File.** `$XDG_CACHE_HOME/funput/trace.jsonl`, thường là `~/.cache/funput/trace.jsonl`, quyền
-`0600`, mỗi dòng một object JSON. Kích thước có giới hạn: shell giữ ~2000 dòng gần nhất trong bộ
-nhớ, và khi file vượt 1 MiB thì cắt rồi ghi lại đúng phần đó, nên file luôn chứa đoạn cuối của phiên
-và không bao giờ phình to. Mỗi dòng được flush ngay, vì phiên đáng trace nhất có thể là phiên treo.
+**File.** `$XDG_CACHE_HOME/funput/trace.jsonl`, thường là `~/.cache/funput/trace.jsonl`, mỗi dòng
+một object JSON. Thư mục `funput` được tạo với quyền `0700` và file với quyền `0600` ngay từ lúc tạo
+(không có khoảng hở chmod sau đó); file do bản cũ để lại cũng được siết về `0600` khi mở. Kích thước
+có giới hạn: shell giữ ~2000 dòng gần nhất trong bộ nhớ, và khi file vượt 1 MiB thì cắt rồi ghi lại
+đúng phần đó, nên file luôn chứa đoạn cuối của phiên và không bao giờ phình to; một dòng đơn lẻ vượt
+cả giới hạn (một `reading` raw của tài liệu rất dài) được thay bằng dòng `note` nói nó đã bị bỏ. Khi
+engine khởi động lại mà file đã quá nửa giới hạn, file được xoay sang `trace.jsonl.1` (một thế hệ,
+cũng `0600`) rồi mới ghi tiếp — để trace của phiên vừa treo không bị phiên mới ghi đè. Mỗi dòng được
+ghi thẳng qua `write(2)`, vì phiên đáng trace nhất có thể là phiên treo.
 
-**Nội dung mặc định.** Mỗi dòng có `t` (mili-giây theo đồng hồ đơn điệu kể từ lúc trace bật) và
-`ev`:
+**Nội dung mặc định.** Mỗi dòng có `t` (mili-giây theo đồng hồ đơn điệu kể từ dòng `start` gần nhất
+phía trên) và `ev`:
 
 | `ev` | Nghĩa |
 |---|---|
 | `start` | Shell (`fcitx5`/`ibus`), giờ thực, pid, và trace có đang ở chế độ raw không |
 | `focus` | Client vừa nhận focus, theo tên framework báo (`gnome-shell` trên GNOME/Wayland; IBus chưa có tên để báo) |
-| `key` | Loại phím sau khi phân loại (`Compose`, `Boundary`, `Backspace`, `Shortcut`…) và modifier. Keysym chỉ ghi cho phím không sinh ký tự |
+| `key` | Loại phím sau khi phân loại (`Compose`, `Boundary`, `Backspace`, `Shortcut`…). Keysym và modifier chỉ ghi cho phím mà *danh tính* là hành vi cần chẩn đoán — Backspace, mũi tên, tổ hợp như Ctrl+A — không ghi cho phím sinh ký tự (Shift trên một chữ cái là chữ hoa, tức là nội dung) |
 | `reading` | Văn bản trước caret mà shell đọc được, client có trả lời kể từ phím trước không, có vùng chọn không, và kết luận của composer: `verdict` và `inSync` |
 | `plan` | Composer yêu cầu shell làm gì: `effect`, `consumed`, và với `Replace` là `deleteChars`/`deleteAfterChars` |
 | `mode` | Gõ thẳng vừa bật hay tắt, và vì sao (`surrounding`, `silent`, `refused`, `hidden-preedit`) |
@@ -749,29 +756,41 @@ và không bao giờ phình to. Mỗi dòng được flush ngay, vì phiên đá
 | `note` | `reset`, `focus-out`, đổi VI/EN |
 
 Mọi chuỗi — văn bản quanh caret, chữ được commit — chỉ xuất hiện dưới dạng `{"chars": N, "hash":
-"…"}`: số ký tự (không phải byte, để đọc thẳng với `deleteChars`) và một hash FNV-1a 32 bit với
-salt ngẫu nhiên theo từng tiến trình. Salt không bao giờ được ghi, nên không dò ngược được một từ
-ngắn bằng từ điển; trong cùng một trace, hai chuỗi bằng nhau vẫn cho cùng hash — đủ để thấy hai lần
-đọc là cùng một tài liệu, hay một lệnh xoá đã đi quá một ký tự. Ký tự của phím chữ cũng là nội
-dung, nên không có trong file.
+"…"}`: số ký tự (không phải byte, để đọc thẳng với `deleteChars`) và một hash **SipHash-2-4** 64 bit
+dưới một khoá 128 bit ngẫu nhiên theo từng tiến trình. Khoá chỉ nằm trong bộ nhớ của engine, không
+bao giờ được ghi; SipHash là một PRF, nên không có khoá thì không hash nào nói gì về chuỗi của nó —
+không dò được một từ ngắn bằng từ điển, và cũng không suy ra khoá từ bất kỳ số cặp (chuỗi, hash) nào
+đã biết (một hash FNV có salt, như bản đầu, thì làm được cả hai). Chuỗi rỗng chỉ có `chars: 0`,
+không hash. Trong cùng một trace, hai chuỗi bằng nhau vẫn cho cùng hash — đủ để thấy hai lần đọc là
+cùng một tài liệu, hay một lệnh xoá đã đi quá một ký tự. Ký tự của phím chữ cũng là nội dung, nên
+không có trong file.
 
-Ví dụ `phur` ␣ ⌫ `s` → `phú`, rút gọn, ở chế độ mặc định:
+Những gì file **có** ghi nguyên văn, kể cả ở chế độ mặc định, để bạn biết trước khi đăng lên issue:
+
+- Tên client ở dòng `focus`, đúng như framework báo — `gnome-shell`, `firefox`, hay
+  `org.keepassxc.KeePassXC`. Đây là thông tin thiết yếu để biết client nào trục trặc, nhưng cũng cho
+  thấy bạn đã dùng ứng dụng nào trong lúc trace bật.
+- Keysym và modifier của phím không sinh ký tự (Backspace, mũi tên, Ctrl+A), loại của mọi phím, số
+  ký tự của mọi chuỗi, và giờ thực ở dòng `start`.
+
+Ví dụ `phur` ␣ ⌫ `s` → `phú`, ở chế độ mặc định (lấy từ một lần chạy thật; chỉ bỏ dòng `focus`):
 
 ```jsonl
+{"t":0,"ev":"start","shell":"fcitx5","wall":"2026-11-03T14:56:54Z","pid":22965,"raw":false}
 {"t":0,"ev":"key","kind":"Boundary"}
-{"t":0,"ev":"reading","before":{"chars":3,"hash":"9bf9d9bc"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
+{"t":0,"ev":"reading","before":{"chars":3,"hash":"d408edacde3f07da"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
 {"t":0,"ev":"plan","effect":"None","consumed":false}
 {"t":0,"ev":"key","kind":"Backspace","keysym":"ff08"}
-{"t":0,"ev":"reading","before":{"chars":4,"hash":"26519094"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
-{"t":0,"ev":"plan","effect":"Replace","consumed":true,"text":{"chars":0,"hash":"1b45100f"},"deleteChars":1,"deleteAfterChars":0}
+{"t":0,"ev":"reading","before":{"chars":4,"hash":"ca8b0ce8d5a34fa8"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
+{"t":0,"ev":"plan","effect":"Replace","consumed":true,"text":{"chars":0},"deleteChars":1,"deleteAfterChars":0}
 {"t":0,"ev":"adopt","taken":true}
 {"t":0,"ev":"key","kind":"Compose"}
-{"t":0,"ev":"reading","before":{"chars":3,"hash":"9bf9d9bc"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
-{"t":0,"ev":"plan","effect":"Replace","consumed":true,"text":{"chars":1,"hash":"fceddbba"},"deleteChars":1,"deleteAfterChars":0}
+{"t":0,"ev":"reading","before":{"chars":3,"hash":"d408edacde3f07da"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
+{"t":0,"ev":"plan","effect":"Replace","consumed":true,"text":{"chars":1,"hash":"51fe10172f2a4f08"},"deleteChars":1,"deleteAfterChars":0}
 ```
 
-Hai dòng `reading` có cùng hash `9bf9d9bc` là cùng một tài liệu (`phủ`), dù không dòng nào nói ra chữ
-đó.
+Hai dòng `reading` có cùng hash `d408edacde3f07da` là cùng một tài liệu (`phủ`), dù không dòng nào nói
+ra chữ đó.
 
 **Chế độ raw.** Khi tóm tắt không đủ — cần biết client trả về *chuỗi gì* — thêm:
 
@@ -779,8 +798,8 @@ Hai dòng `reading` có cùng hash `9bf9d9bc` là cùng một tài liệu (`ph�
 { "trace": true, "traceRaw": true }
 ```
 
-Từ dòng `start` kế tiếp (`"raw": true`), mỗi tóm tắt mang thêm trường `text`, và dòng `key` mang
-thêm `keysym` cùng ký tự.
+Từ dòng `start` kế tiếp (`"raw": true`), mỗi tóm tắt mang thêm trường `text`, và dòng `key` của
+mọi phím mang thêm `keysym`, modifier cùng ký tự.
 
 > [!WARNING]
 > Với `traceRaw`, file chứa **mọi thứ bạn gõ** trong lúc bật — kể cả mật khẩu — và cả văn bản quanh

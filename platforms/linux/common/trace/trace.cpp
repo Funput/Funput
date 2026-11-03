@@ -1,25 +1,14 @@
-// The trace's switches and its file. What goes into a line: events.cpp.
+// The trace's switches and its bound. What goes into a line: events.cpp; the file
+// itself: sink.cpp.
 
 #include "trace/trace.h"
 
 #include <cstdlib>
-#include <filesystem>
 #include <iterator>
-#include <random>
-#include <system_error>
 
 #include <nlohmann/json.hpp>
 
 namespace funput {
-
-namespace {
-
-uint64_t randomSalt() {
-    std::random_device device;
-    return (static_cast<uint64_t>(device()) << 32) ^ device();
-}
-
-} // namespace
 
 Trace &Trace::shared() {
     static Trace instance(defaultPath());
@@ -41,30 +30,39 @@ std::string Trace::defaultPath() {
 }
 
 Trace::Trace(std::string path, size_t ringLines, size_t maxBytes)
-    : path_(std::move(path)), ringLines_(ringLines), maxBytes_(maxBytes), salt_(randomSalt()),
-      epoch_(std::chrono::steady_clock::now()) {}
+    : ringLines_(ringLines), maxBytes_(maxBytes), key_(randomSipKey()),
+      epoch_(std::chrono::steady_clock::now()), sink_(std::move(path), maxBytes) {}
 
 void Trace::readEnvironment() {
     const char *value = std::getenv("FUNPUT_TRACE");
-    if (value == nullptr || *value == '\0' || std::string_view(value) == "0") return;
-    envOn_ = true;
-    envRaw_ = std::string_view(value) == "raw";
+    if (value != nullptr && *value != '\0' && std::string_view(value) != "0") {
+        envOn_ = true;
+        envRaw_ = std::string_view(value) == "raw";
+    }
+    // The file has not been read yet: what the environment says is all there is.
+    configure(Settings{});
 }
 
 void Trace::configure(const Settings &settings) {
     // `traceRaw` alone is enough: asking for the text is asking for the trace.
-    const bool on = !path_.empty() && (settings.trace || settings.traceRaw || envOn_);
+    const bool on = !sink_.path().empty() && (settings.trace || settings.traceRaw || envOn_);
     const bool raw = on && (settings.traceRaw || envRaw_);
     if (on == enabled_ && raw == raw_) return;
     enabled_ = on;
     raw_ = raw;
+    // The ring was filled under the old switches. A rewrite after this must not put
+    // raw lines into a summary-mode file — the user may have scrubbed the file in
+    // between, which is the point of switching raw off — nor lines of a trace that
+    // was off into one that is on again.
+    ring_.clear();
     if (!on) {
-        out_.close();
+        sink_.close();
         return;
     }
     // Also when only `raw` moved: a reader has to know from which line on the
-    // summaries became text.
-    announce();
+    // summaries became text. Not before the shell has named itself (start()), or
+    // an engine enabled from the environment would open with two `start` lines.
+    if (!shell_.empty()) announce();
 }
 
 void Trace::emit(nlohmann::ordered_json line) {
@@ -74,45 +72,32 @@ void Trace::emit(nlohmann::ordered_json line) {
     try {
         // `replace`, not the default `strict`: surrounding text is whatever the client
         // sent, and an invalid byte in it must not cost the line.
-        ring_.push_back(line.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
-        if (ring_.size() > ringLines_) ring_.pop_front();
-        if (!out_.is_open() && !open()) return;
-        const std::string &latest = ring_.back();
-        if (bytes_ + latest.size() + 1 > maxBytes_) {
-            rewrite();
-        } else {
-            out_ << latest << '\n' << std::flush;
-            bytes_ += latest.size() + 1;
+        constexpr auto replace = nlohmann::json::error_handler_t::replace;
+        std::string dumped = line.dump(-1, ' ', false, replace);
+        if (dumped.size() + 1 > maxBytes_) {
+            // A raw reading of a very long document can exceed the whole bound. Kept
+            // as is, the rewrite below would leave the file empty; what stays is a
+            // note that says what went missing, so the file is bounded and still
+            // ends on the newest line.
+            nlohmann::ordered_json dropped = this->line("note");
+            dropped["what"] = "dropped " + line["ev"].get<std::string>() + " line of " +
+                              std::to_string(dumped.size()) + " bytes";
+            dumped = dropped.dump(-1, ' ', false, replace);
         }
-        if (!out_) fail();
+        ring_.push_back(std::move(dumped));
+        if (ring_.size() > ringLines_) ring_.pop_front();
+        if (!sink_.isOpen() && !sink_.open()) {
+            fail();
+            return;
+        }
+        const std::string &latest = ring_.back();
+        if (!(sink_.fits(latest.size()) ? sink_.append(latest) : rewrite())) fail();
     } catch (...) {
         fail();
     }
 }
 
-bool Trace::open() {
-    std::error_code ec;
-    const std::filesystem::path file(path_);
-    std::filesystem::create_directories(file.parent_path(), ec);
-    if (ec) {
-        fail();
-        return false;
-    }
-    // Append: a trace spans engine restarts, and the bound below keeps it finite.
-    const auto size = std::filesystem::file_size(file, ec);
-    bytes_ = ec ? 0 : static_cast<size_t>(size);
-    out_.open(path_, std::ios::app);
-    if (!out_) {
-        fail();
-        return false;
-    }
-    // Raw mode writes what the user types. Whatever the umask said, nobody else reads it.
-    namespace fs = std::filesystem;
-    fs::permissions(file, fs::perms::owner_read | fs::perms::owner_write, ec);
-    return true;
-}
-
-void Trace::rewrite() {
+bool Trace::rewrite() {
     // The file holds the newest lines that fit. The ring is bounded by lines and the
     // file by bytes, and a raw trace of a long document can make the ring the larger
     // of the two — so the ring is cut to what the file takes, from the oldest end.
@@ -123,18 +108,14 @@ void Trace::rewrite() {
         total += first->size() + 1;
     }
     ring_.erase(ring_.begin(), first);
-    out_.close();
-    out_.open(path_, std::ios::trunc);
-    for (const std::string &line : ring_) out_ << line << '\n';
-    out_.flush();
-    bytes_ = total;
+    return sink_.rewrite(ring_);
 }
 
 void Trace::fail() {
     enabled_ = false;
     raw_ = false;
-    out_.close();
-    out_.clear();
+    ring_.clear();
+    sink_.close();
 }
 
 } // namespace funput

@@ -116,8 +116,10 @@ TEST_CASE("unknown wire values fall back to the current setting") {
 
 // The trace switches are hidden keys: read like any other, counted as a change so the
 // watcher's reload reaches the trace, and absent means off — the Settings app drops
-// them when it saves, and that must not keep a trace running.
-TEST_CASE("the hidden trace keys are read, count as a change, and read absent as off") {
+// them when it saves, and that must not keep a trace running. They are also typed by
+// hand, so a near miss (`1`, `"true"`) has to read as off, never throw: nothing above
+// the inotify callback catches, and an exception there would take the engine down.
+TEST_CASE("the hidden trace keys are read, count as a change, and read absent or mistyped as off") {
     writeSettingsFile(R"({"method": "vni", "trace": true, "traceRaw": true})");
     Settings settings;
     REQUIRE(settings.reload());
@@ -125,6 +127,10 @@ TEST_CASE("the hidden trace keys are read, count as a change, and read absent as
     CHECK(settings.traceRaw);
     writeSettingsFile(R"({"method": "vni"})");
     REQUIRE(settings.reload()); // only the trace keys moved, and that is a change
+    CHECK_FALSE(settings.trace);
+    CHECK_FALSE(settings.traceRaw);
+    writeSettingsFile(R"({"method": "vni", "trace": 1, "traceRaw": "true"})");
+    CHECK_NOTHROW(settings.reload());
     CHECK_FALSE(settings.trace);
     CHECK_FALSE(settings.traceRaw);
 }

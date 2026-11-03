@@ -44,8 +44,10 @@ add_executable(funput_linux_tests
     settings/save_tests.cpp
     settings/typing_tests.cpp
     settings/onsets/letters_tests.cpp
-    trace/summary_tests.cpp
+    trace/summary/siphash_tests.cpp
+    trace/summary/text_tests.cpp
     trace/ring_tests.cpp
+    trace/sink_tests.cpp
     trace/events_tests.cpp)
 
 target_link_libraries(funput_linux_tests PRIVATE funput_linux_common doctest::doctest)

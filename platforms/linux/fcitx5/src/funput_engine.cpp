@@ -27,10 +27,10 @@ FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
             lastSurroundingOk_ = ic->surroundingText().isValid();
             surroundingFresh_ = true;
         });
-    // The file itself is read at the first activate(); configuring from the defaults
-    // here is what lets FUNPUT_TRACE in the environment count before that.
+    // The file itself is read at the first activate() and reaches the trace through
+    // settingsReloaded(); until then the trace is whatever FUNPUT_TRACE says, which
+    // shared() applied itself.
     funput::Trace::shared().start("fcitx5");
-    funput::Trace::shared().configure(composer_.settings());
 }
 
 void FunputEngine::applyNonPreeditMode() {

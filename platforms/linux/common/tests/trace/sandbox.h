@@ -39,6 +39,15 @@ inline Settings tracing(bool raw = false) {
     return settings;
 }
 
+// A file as something other than the trace left it: an older build's, say.
+inline void writeFile(const std::string &path, const std::string &content) {
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path(path).parent_path(), ec);
+    std::ofstream out(path, std::ios::trunc);
+    REQUIRE(out.good());
+    out << content;
+}
+
 inline std::string readFile(const std::string &path) {
     std::ifstream in(path);
     return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};

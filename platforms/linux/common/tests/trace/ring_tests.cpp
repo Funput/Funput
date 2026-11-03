@@ -22,7 +22,7 @@ TEST_CASE("a disabled trace creates no file") {
     CHECK_FALSE(std::filesystem::exists(path));
 }
 
-TEST_CASE("an enabled trace writes one JSON object per line with t non-decreasing") {
+TEST_CASE("an enabled trace writes one JSON object per line with t from the start line") {
     const std::string path = tracePath("lines.jsonl");
     Trace trace(path);
     trace.start("test");
@@ -39,6 +39,7 @@ TEST_CASE("an enabled trace writes one JSON object per line with t non-decreasin
     CHECK(lines[0]["raw"] == false);
     CHECK(lines[0].contains("wall"));
     CHECK(lines[2]["what"] == "two");
+    CHECK(lines[0]["t"] == 0);
     long long last = -1;
     for (const auto &line : lines) {
         REQUIRE(line["t"].is_number_integer());
@@ -84,6 +85,22 @@ TEST_CASE("configure() turning the trace off stops the lines") {
     const auto lines = readLines(path);
     REQUIRE(lines.size() == 2);
     CHECK(lines[1]["what"] == "before");
+}
+
+// User: raw on → reproduce → raw off → delete the file to scrub it → keep tracing in
+// summary mode. The ring must not bring the raw lines back on the next rewrite.
+TEST_CASE("switching the trace or raw off empties the ring") {
+    const std::string path = tracePath("scrub.jsonl");
+    Trace trace(path, 50, 1500);
+    trace.start("test");
+    trace.configure(tracing(/*raw=*/true));
+    trace.reading("mật khẩu bí mật", true, false, 0, {});
+    trace.configure(tracing()); // raw off, still on
+    trace.configure(Settings{}); // off
+    std::filesystem::remove(path);
+    trace.configure(tracing()); // summary mode, fresh file
+    for (int i = 0; i < 60; ++i) trace.note("n" + std::to_string(i)); // past the bound
+    CHECK(readFile(path).find("mật khẩu") == std::string::npos);
 }
 
 TEST_CASE("switching raw on while enabled announces itself") {

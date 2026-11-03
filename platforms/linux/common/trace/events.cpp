@@ -1,5 +1,5 @@
 // What each trace line says. The switches and the file: trace.cpp; the words for
-// the composer's enums: names.h.
+// the composer's enums: events/names.h.
 
 #include "trace/trace.h"
 
@@ -11,8 +11,8 @@
 #include <nlohmann/json.hpp>
 
 #include "ffi/utf8.h"
-#include "trace/names.h"
-#include "trace/summary.h"
+#include "trace/events/names.h"
+#include "trace/summary/text.h"
 
 namespace funput {
 
@@ -21,9 +21,9 @@ namespace {
 using json = nlohmann::ordered_json;
 using namespace funput::trace;
 
-std::string hex(uint32_t value, int width) {
-    char buffer[16];
-    std::snprintf(buffer, sizeof buffer, "%0*x", width, value);
+std::string hex(uint64_t value, int width) {
+    char buffer[24];
+    std::snprintf(buffer, sizeof buffer, "%0*llx", width, static_cast<unsigned long long>(value));
     return buffer;
 }
 
@@ -45,8 +45,11 @@ json Trace::line(std::string_view event) const {
 }
 
 json Trace::text(const std::string &utf8) const {
-    const TextSummary summary = summarize(utf8, salt_);
-    json out{{"chars", summary.chars}, {"hash", hex(summary.hash, 8)}};
+    const TextSummary summary = summarize(utf8, key_);
+    json out{{"chars", summary.chars}};
+    // Not for the empty string: its count says it all, and its hash would be the one
+    // value a trace prints for a known input, on every line that carries it.
+    if (summary.chars != 0) out["hash"] = hex(summary.hash, 16);
     if (raw_) out["text"] = utf8;
     return out;
 }
@@ -60,6 +63,8 @@ void Trace::start(std::string_view shell) {
 }
 
 void Trace::announce() {
+    // `t` counts from the `start` line above it, so this one reads 0.
+    epoch_ = std::chrono::steady_clock::now();
     json out = line("start");
     out["shell"] = shell_;
     out["wall"] = wallClock();
@@ -79,8 +84,12 @@ void Trace::key(KeyKind kind, const KeyEvent &ev) {
     if (!enabled_) return;
     json out = line("key");
     out["kind"] = kindName(kind);
-    if (const std::string mods = modsName(ev.mods); !mods.empty()) out["mods"] = mods;
-    if (raw_ || !printsCharacter(kind)) out["keysym"] = hex(ev.keysym, 1);
+    // Which non-text key arrived is behaviour; a printable key's keysym is content,
+    // and so are its modifiers — Shift on a letter is the letter's case.
+    if (raw_ || !printsCharacter(kind)) {
+        if (const std::string mods = modsName(ev.mods); !mods.empty()) out["mods"] = mods;
+        out["keysym"] = hex(ev.keysym, 1);
+    }
     if (raw_ && ev.ch != 0) {
         std::string ch;
         appendUtf8(ch, static_cast<uint32_t>(ev.ch));

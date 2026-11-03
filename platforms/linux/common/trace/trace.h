@@ -5,15 +5,16 @@
 // developer's machine reproduces and no `g_debug` reaches (ibus-daemon points the
 // engine's stdio at /dev/null). So the shells write what they saw to
 // $XDG_CACHE_HOME/funput/trace.jsonl, one JSON object per line, and a bug report can
-// carry the file. `t` is milliseconds from a monotonic clock since the trace started;
-// the `start` line carries the wall clock once.
+// carry the file. `t` is milliseconds from a monotonic clock since the nearest
+// `start` line above, which carries the wall clock once.
 //
 // Off by default, and private when on: a string is written as its character count
-// and a salted hash (trace/summary.h) unless the user opts into raw text separately.
-// The switches are hidden keys in settings.json, picked up live by the settings
-// watcher, because the engines are spawned by a daemon that no shell environment
-// variable reaches; `FUNPUT_TRACE=1|raw` is honoured for a hand-started engine and
-// can only add to what the file says.
+// and a keyed hash (trace/summary/) unless the user opts into raw text separately,
+// and the file is readable by its owner alone (trace/sink.h). The switches are
+// hidden keys in settings.json, picked up live by the settings watcher, because the
+// engines are spawned by a daemon that no shell environment variable reaches;
+// `FUNPUT_TRACE=1|raw` is honoured for a hand-started engine and can only add to
+// what the file says.
 //
 // Bounded: an in-memory ring of the latest lines, and once the file passes
 // `maxBytes` it is truncated and rewritten from the ring, so it always holds the end
@@ -32,7 +33,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
-#include <fstream>
 #include <string>
 #include <string_view>
 
@@ -42,14 +42,17 @@
 #include "compose/key/classify.h"
 #include "compose/plan.h"
 #include "settings/settings.h"
+#include "trace/sink.h"
+#include "trace/summary/siphash.h"
 
 namespace funput {
 
 class Trace {
 public:
     // The process-wide trace at `defaultPath()`, the one the shells use. Also the only
-    // instance that reads FUNPUT_TRACE, so a test's explicit path is never switched on
-    // by the developer's environment.
+    // instance that reads FUNPUT_TRACE — applied here, once, so no shell has to
+    // configure it from a composer's defaults — and a test's explicit path is never
+    // switched on by the developer's environment.
     static Trace &shared();
     // $XDG_CACHE_HOME/funput/trace.jsonl, else ~/.cache/…; empty when neither is set,
     // and a trace with no path can never be enabled.
@@ -59,8 +62,8 @@ public:
     Trace(const Trace &) = delete;
     Trace &operator=(const Trace &) = delete;
 
-    // Apply `trace` / `traceRaw`; call again on every settings reload. Turning the
-    // trace on writes a `start` line.
+    // Apply `trace` / `traceRaw`; call on every settings reload, with what was read.
+    // Turning the trace on writes a `start` line once the shell has named itself.
     void configure(const Settings &settings);
     // Callers check this before gathering anything for an event, so a key handled
     // with the trace off costs one branch.
@@ -74,8 +77,8 @@ public:
     void start(std::string_view shell);
     // A client took focus, under the name the shell has for it (may be empty).
     void focus(std::string_view client);
-    // One key as classified. A printable key's identity is content: only its kind and
-    // modifiers are written unless raw.
+    // One key as classified. A printable key's identity is content: only its kind is
+    // written unless raw.
     void key(KeyKind kind, const KeyEvent &ev);
     // The document read before a key, with what the composer made of it.
     void reading(const std::string &before, bool answered, bool selection,
@@ -91,15 +94,13 @@ private:
     void readEnvironment();
     // A line with `t` and `ev` filled in, for an event to complete.
     nlohmann::ordered_json line(std::string_view event) const;
-    // A string as the trace is allowed to describe it (summary.h), raw if opted in.
+    // A string as the trace is allowed to describe it (summary/), raw if opted in.
     nlohmann::ordered_json text(const std::string &utf8) const;
     void announce();
     void emit(nlohmann::ordered_json line);
-    bool open();
-    void rewrite();
+    bool rewrite();
     void fail();
 
-    std::string path_;
     size_t ringLines_;
     size_t maxBytes_;
     bool enabled_ = false;
@@ -107,13 +108,12 @@ private:
     // From FUNPUT_TRACE, read once by shared(). Adds to the settings, never subtracts.
     bool envOn_ = false;
     bool envRaw_ = false;
-    // Never written anywhere. See summary.h.
-    uint64_t salt_;
+    // Never written anywhere. See summary/siphash.h.
+    SipKey key_;
     std::chrono::steady_clock::time_point epoch_;
     std::string shell_;
     std::deque<std::string> ring_;
-    std::ofstream out_;
-    size_t bytes_ = 0;
+    TraceSink sink_;
 };
 
 } // namespace funput

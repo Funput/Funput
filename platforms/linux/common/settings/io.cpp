@@ -19,6 +19,14 @@ ExtraOnsetLetters parseOnsets(const json &data) {
     if (value == data.end() || !value->is_string()) return {};
     return ExtraOnsetLetters::fromId(value->get<std::string>());
 }
+
+// The trace switches are typed by hand, so `1` or `"true"` will happen. `value()`
+// would throw on the type, and nothing between here and the inotify callback
+// catches, so a near miss would take the engine down. It reads as off instead.
+bool flag(const json &data, const char *key) {
+    const auto value = data.find(key);
+    return value != data.end() && value->is_boolean() && value->get<bool>();
+}
 } // namespace
 
 bool Settings::reloadIfChanged() {
@@ -55,10 +63,10 @@ bool Settings::reload() {
     shortcutsInEnglish = data.value("shortcutsInEnglish", shortcutsInEnglish);
     toggleHotkey = parseHotkey(data.value("toggleHotkey", std::string(hotkeyString(toggleHotkey))));
     flipHotkey = parseFlip(data.value("flipHotkey", std::string(flipString(flipHotkey))));
-    // Not `data.value(..., trace)`: the Settings app rewrites the file without these
-    // keys, and that rewrite has to read as "off" rather than keep a trace running.
-    trace = data.value("trace", false);
-    traceRaw = data.value("traceRaw", false);
+    // Absent is off, not "keep the current value": the Settings app rewrites the file
+    // without these keys, and that rewrite has to stop a running trace.
+    trace = flag(data, "trace");
+    traceRaw = flag(data, "traceRaw");
     shortcuts.clear();
     if (const auto items = data.find("shortcuts"); items != data.end() && items->is_array()) {
         for (const auto &item : *items) {

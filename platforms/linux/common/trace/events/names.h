@@ -4,8 +4,8 @@
 // does. Every switch is exhaustive: -Werror=switch names the case a new enumerator
 // adds, which is how a value added to KeyKind or Verdict reaches the trace.
 
-#ifndef FUNPUT_TRACE_NAMES_H
-#define FUNPUT_TRACE_NAMES_H
+#ifndef FUNPUT_TRACE_EVENTS_NAMES_H
+#define FUNPUT_TRACE_EVENTS_NAMES_H
 
 #include <string>
 
@@ -85,4 +85,4 @@ inline std::string modsName(const Mods &mods) {
 
 } // namespace funput::trace
 
-#endif // FUNPUT_TRACE_NAMES_H
+#endif // FUNPUT_TRACE_EVENTS_NAMES_H
