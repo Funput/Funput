@@ -27,6 +27,10 @@ FunputEngine::FunputEngine(fcitx::Instance *instance) : instance_(instance) {
             lastSurroundingOk_ = ic->surroundingText().isValid();
             surroundingFresh_ = true;
         });
+    // The file itself is read at the first activate() and reaches the trace through
+    // settingsReloaded(); until then the trace is whatever FUNPUT_TRACE says, which
+    // shared() applied itself.
+    funput::Trace::shared().start("fcitx5");
 }
 
 void FunputEngine::applyNonPreeditMode() {
@@ -40,7 +44,18 @@ void FunputEngine::applyNonPreeditMode() {
     // names: those are documented not to take a document repair (WPS turned
     // `nguyen64` into `nguyenênễn`), and with no setting to switch the mode off there
     // is nobody left to spare them the first mangled word.
-    composer_.setNonPreedit(lastSurroundingOk_ && !(context && hidesClientPreedit(context)));
+    const bool hidden = context && hidesClientPreedit(context);
+    composer_.setNonPreedit(lastSurroundingOk_ && !hidden);
+    funput::Trace &trace = funput::Trace::shared();
+    if (trace.enabled() && composer_.nonPreedit() != wasNonPreedit) {
+        // Off although the client qualifies means the composer's own latch: it was
+        // caught dropping a delete, and that verdict already stands in the trace.
+        const char *reason = composer_.nonPreedit() ? "surrounding"
+                             : !lastSurroundingOk_  ? "silent"
+                             : hidden               ? "hidden-preedit"
+                                                    : "refused";
+        trace.mode(composer_.nonPreedit(), reason);
+    }
     if (wasNonPreedit || !composer_.nonPreedit()) return;
     // Mode just turned on between words. A leftover preedit would sit as a ghost
     // while the new mode writes into the document — cheap if the panel is already
@@ -50,10 +65,15 @@ void FunputEngine::applyNonPreeditMode() {
 
 void FunputEngine::onSettingsChanged() {
     if (!composer_.reloadSettings()) return;
-    composer_.applySettings();
+    settingsReloaded();
     if (fcitx::InputContext *context = instance_->lastFocusedInputContext()) {
         refreshStatus(context);
     }
+}
+
+void FunputEngine::settingsReloaded() {
+    funput::Trace::shared().configure(composer_.settings());
+    composer_.applySettings();
 }
 
 std::string FunputEngine::subMode(const fcitx::InputMethodEntry &,
@@ -72,11 +92,12 @@ void FunputEngine::refreshStatus(fcitx::InputContext *ic) {
 }
 
 void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
+    funput::Trace::shared().note("reset");
     applyPlan(event.inputContext(), composer_.flush());
 }
 
 void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {
-    if (composer_.reloadSettingsIfChanged()) composer_.applySettings();
+    if (composer_.reloadSettingsIfChanged()) settingsReloaded();
     if (composer_.settings().autoCapitalize) composer_.armCapitalization();
     toggleChord_.reset();
     // This also runs on a capability change, and then it is the same client carrying
@@ -85,6 +106,9 @@ void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContext
     // verdict has to survive the churn, and must not survive the focus, or on GNOME/Wayland
     // (one input context for every app) a client that broke the mode takes Chrome's with it.
     if (event.type() == fcitx::EventType::InputContextFocusIn) {
+        // The program as Fcitx5 reports it, not clientId(): on GNOME/Wayland that is
+        // `gnome-shell`, and seeing the bridge in the trace is the point.
+        funput::Trace::shared().focus(event.inputContext()->program());
         composer_.onFocusChanged(clientId(event.inputContext()));
         // Like IBus `sawSurroundingText`: a new client has said nothing yet. `isValid()`
         // here can be leftover from the previous focus, so do not snapshot it — and the
@@ -107,6 +131,7 @@ void FunputEngine::deactivate(const fcitx::InputMethodEntry &, fcitx::InputConte
         // commit, and the word is already in the document one keystroke at a time —
         // which is the whole point of the mode. Dropping the engine state is all
         // that is left to do either way.
+        funput::Trace::shared().note("focus-out");
         composer_.discard();
         clearPreedit(context);
         return;

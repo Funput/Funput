@@ -9,6 +9,7 @@
 #include <doctest/doctest.h>
 
 #include <fstream>
+#include <iterator>
 #include <string>
 
 #include "settings/settings.h"
@@ -19,6 +20,12 @@ inline void writeSettingsFile(const std::string &json) {
     std::ofstream out(Settings::path(), std::ios::trunc);
     REQUIRE(out.good());
     out << json;
+}
+
+// The file as `save()` left it, for the cases about which keys a save writes.
+inline std::string readSettingsFile() {
+    std::ifstream in(Settings::path());
+    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
 }
 
 } // namespace funput::test

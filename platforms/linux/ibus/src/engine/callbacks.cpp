@@ -1,8 +1,11 @@
-// The IBus callbacks: one keystroke, and the four ways a composition ends.
+// The IBus callback for one keystroke, and the mode decision it begins with. The
+// focus, enable and reset callbacks: focus.cpp.
 
 #include "engine/internal.h"
 
 #include <utility>
+
+#include "trace/trace.h"
 
 namespace funput_ibus {
 
@@ -43,20 +46,37 @@ void applyNonPreeditMode(IBusEngine *engine) {
     // reason spelled out in internal.h, and it can only become true after the client
     // has spoken — which is why this is re-evaluated on every keystroke rather than
     // settled once at focus-in the way the Fcitx5 shell can.
+    const bool wasNonPreedit = state->composer.nonPreedit();
     state->composer.setNonPreedit(state->sawSurroundingText);
+    funput::Trace &trace = funput::Trace::shared();
+    if (trace.enabled() && state->composer.nonPreedit() != wasNonPreedit) {
+        // Off although the client has spoken is the composer's own latch: it was
+        // caught dropping a delete, and that verdict already stands in the trace.
+        const char *reason = state->composer.nonPreedit() ? "surrounding"
+                             : state->sawSurroundingText   ? "refused"
+                                                           : "silent";
+        trace.mode(state->composer.nonPreedit(), reason);
+    }
 }
 
 gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifiers) {
     EngineState *state = stateOf(engine);
     const bool released = (modifiers & IBUS_RELEASE_MASK) != 0;
     const funput::KeyEvent ev = toKeyEvent(keyval, modifiers);
+    funput::Trace &trace = funput::Trace::shared();
     if (state->toggleChord.feed(ev, released, state->composer.settings().toggleHotkey)) {
         applyPlan(engine, state->composer.toggleEnabled());
+        trace.note(state->composer.enabled() ? "toggle: vi" : "toggle: en");
         return TRUE;
     }
     // Releases never reach the composer: nothing in the typing rules depends on
     // them, and each framework reports them differently.
     if (released) return FALSE;
+
+    // Pure, so asking once up front for both the trace and the Backspace test below
+    // changes nothing the composer decides.
+    const funput::KeyKind kind = funput::classify(ev, state->composer.settings());
+    if (trace.enabled()) trace.key(kind, ev);
 
     // Between words, re-ask whether this client can take a document repair.
     // Surrounding text often arrives only after the client answers.
@@ -68,79 +88,26 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     const std::string before = nonPreedit ? textBeforeCaret(engine) : std::string();
     const bool answered = std::exchange(state->surroundingFresh, false);
     if (nonPreedit) {
-        state->composer.observeDocument(before, hasSelection(engine), answered,
-                                        selectedAfter(engine));
+        const bool selection = hasSelection(engine);
+        const uint32_t after = selectedAfter(engine);
+        const funput::Observation seen =
+            state->composer.observeDocument(before, selection, answered, after);
+        if (trace.enabled()) trace.reading(before, answered, selection, after, seen);
     }
 
     const bool reopen = state->composer.nonPreedit() && !state->composer.isComposing() &&
-                        funput::classify(ev, state->composer.settings()) ==
-                            funput::KeyKind::Backspace;
+                        kind == funput::KeyKind::Backspace;
 
     const funput::ComposePlan plan = state->composer.onKey(ev);
     applyPlan(engine, plan);
+    if (trace.enabled()) trace.plan(plan);
 
     // The key passes through; the engine only takes ownership of what is left.
-    if (reopen) state->composer.adoptWordBeforeBackspace(before);
-    return plan.consumed ? TRUE : FALSE;
-}
-
-void focusIn(IBusEngine *engine) {
-    EngineState *state = stateOf(engine);
-    // A different client, which has said nothing yet. Whatever the last one did tells
-    // us nothing about this one.
-    state->sawSurroundingText = false;
-    state->surroundingFresh = false;
-    state->toggleChord.reset();
-    // A new client: forget whether the last one could be trusted with a repair. Kept
-    // out of applyNonPreeditMode(), which runs every keystroke — clearing there would
-    // wipe a verdict the moment it was reached. Unnamed, unlike Fcitx5: IBus gives an
-    // engine per input context and calls this only on a real focus change.
-    state->composer.onFocusChanged();
-    requestSurroundingText(engine);
-    if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
-    applyNonPreeditMode(engine);
-    if (state->composer.settings().autoCapitalize) state->composer.armCapitalization();
-}
-
-void enable(IBusEngine *engine) {
-    EngineState *state = stateOf(engine);
-    if (state->composer.reloadSettingsIfChanged()) state->composer.applySettings();
-    applyNonPreeditMode(engine);
-    requestSurroundingText(engine);
-}
-
-void setSurroundingText(IBusEngine *engine, IBusText *text, guint cursorPos, guint anchorPos) {
-    // Chain up first: the base class is what caches the text, so skipping this leaves
-    // `ibus_engine_get_surrounding_text` returning nothing for the rest of the session.
-    // Reached through `g_type_class_peek_parent` rather than G_DEFINE_TYPE's
-    // `ibus_funput_engine_parent_class`, which is static to object.cpp.
-    auto *parent = IBUS_ENGINE_CLASS(g_type_class_peek_parent(G_OBJECT_GET_CLASS(engine)));
-    if (parent->set_surrounding_text != nullptr) {
-        parent->set_surrounding_text(engine, text, cursorPos, anchorPos);
+    if (reopen) {
+        const bool taken = state->composer.adoptWordBeforeBackspace(before);
+        if (trace.enabled()) trace.adopt(taken);
     }
-    EngineState *state = stateOf(engine);
-    state->sawSurroundingText = true;
-    state->surroundingFresh = true;
-    const gchar *raw = text != nullptr ? ibus_text_get_text(text) : nullptr;
-    state->surroundingText = raw != nullptr ? raw : "";
-    state->surroundingCursor = cursorPos;
-    state->surroundingAnchor = anchorPos;
-}
-
-// Focus loss, reset and engine switch all commit the composing word — but IBus does
-// it, not us: updatePreedit() publishes the preedit with IBUS_ENGINE_PREEDIT_COMMIT,
-// and the daemon flushes it to the client before dispatching these callbacks.
-// Committing again here would type the word twice, so only drop our own state.
-void focusOut(IBusEngine *engine) {
-    stateOf(engine)->composer.discard();
-}
-
-void disable(IBusEngine *engine) {
-    stateOf(engine)->composer.discard();
-}
-
-void reset(IBusEngine *engine) {
-    stateOf(engine)->composer.discard();
+    return plan.consumed ? TRUE : FALSE;
 }
 
 } // namespace funput_ibus

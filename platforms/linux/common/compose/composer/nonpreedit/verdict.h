@@ -25,6 +25,15 @@ enum class Verdict : uint8_t {
     RefuseMode,
 };
 
+// What one reading told the composer, handed back to the shell. The composer does no
+// I/O of its own, so this is how its conclusion reaches the diagnostic trace
+// (common/trace/) without the composer knowing there is one. `inSync` is whether the
+// last repair was seen to land — the evidence Backspace handling asks for.
+struct Observation {
+    Verdict verdict = Verdict::Unknown;
+    bool inSync = false;
+};
+
 // A document that stays empty while repairs are being written into it.
 //
 // The three-string comparison can only convict when "the delete was dropped" and "the

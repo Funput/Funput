@@ -33,14 +33,17 @@ void Composer::onFocusChanged(std::string_view client) {
 // allows. `answered` is whether the client sent surrounding text since the last
 // keystroke: without it an empty answer and no answer are the same string, and
 // standing the mode down on silence would take it from the clients it was built for.
-void Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive,
-                               bool answered, uint32_t selectedAfter) {
+Observation Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive,
+                                      bool answered, uint32_t selectedAfter) {
     nonPreedit_.selectionLive = selectionLive;
     nonPreedit_.selectionAfter = selectedAfter;
     nonPreedit_.answered = answered;
-    switch (nonPreedit_.observe(textBeforeCaret)) {
+    // Taken before acting on the verdict, so the shell sees what this reading said
+    // rather than the state the verdict left behind.
+    const Observation seen{nonPreedit_.observe(textBeforeCaret), nonPreedit_.inSync};
+    switch (seen.verdict) {
     case Verdict::Unknown:
-        return;
+        return seen;
     case Verdict::RefuseRetone:
         // Ordinary repairs still land here; only the one issued straight after the app
         // handled its own Backspace was dropped. Standing the whole mode down would
@@ -59,6 +62,7 @@ void Composer::observeDocument(const std::string &textBeforeCaret, bool selectio
     // Either way the engine is holding a word the document does not have, and the next
     // delete would aim at text Funput never wrote.
     discard();
+    return seen;
 }
 
 ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed) {

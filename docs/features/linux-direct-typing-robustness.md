@@ -8,8 +8,8 @@
 
 | Thuộc tính | Nội dung |
 | :--- | :--- |
-| Trạng thái | **Đang triển khai** — PR 1/5 |
-| Cập nhật | 02/11/2026 |
+| Trạng thái | **Đang triển khai** — PR 2/5 |
+| Cập nhật | 03/11/2026 |
 | Phạm vi | `platforms/linux` (composer dùng chung và hai shell Fcitx5, IBus). Không đụng engine Rust |
 | Đối tượng | Maintainer, contributor và người dùng quan tâm kiến trúc |
 | Liên quan | Issue [#640](https://github.com/Funput/Funput/issues/640); mục [Chế độ không preedit](../../platforms/linux/README.md#chế-độ-không-preedit) trong README Linux |
@@ -303,13 +303,28 @@ trường hợp này, rồi quyết định tiếp dựa trên dữ liệu.
 
 ### 6.5. `FUNPUT_TRACE` — chẩn đoán dựa trên dữ liệu
 
-- Bật bằng biến môi trường `FUNPUT_TRACE=1`, hoặc một khoá ẩn trong `settings.json`. **Mặc
-  định tắt.**
+- Bật bằng một khoá ẩn trong `settings.json` (`"trace": true`), hoặc biến môi trường
+  `FUNPUT_TRACE=1`. **Mặc định tắt.**
+- **Khoá trong `settings.json` là công tắc chính**, không phải biến môi trường: engine do
+  `fcitx5`/`ibus-daemon` sinh ra nên không thừa kế shell của người dùng, còn watcher `inotify` thì
+  nạp khoá lại ngay giữa phiên. `FUNPUT_TRACE` chỉ là đường phụ cho engine chạy tay từ terminal, và
+  chỉ bật thêm. Khoá không tính là thay đổi cách gõ (`sameTyping`) nên bật/tắt không làm rơi từ
+  đang gõ dở, và `save()` không bao giờ ghi nó lại.
 - Ghi ring buffer ra `~/.cache/funput/trace.jsonl`, mỗi dòng là một sự kiện: phím (đã phân
-  loại), plan, surrounding nhận được, cờ `answered`, phán quyết, timestamp đơn điệu.
-- **Quyền riêng tư:** mặc định chỉ ghi độ dài, số ký tự và hash của nội dung. Nội dung gốc
-  chỉ được ghi khi người dùng bật thêm một cờ riêng, và tài liệu hướng dẫn phải nói rõ điều đó.
-  Funput là bộ gõ ưu tiên quyền riêng tư, nên trace không được trở thành keylogger.
+  loại), plan, surrounding nhận được, cờ `answered`, phán quyết, timestamp đơn điệu. Giới hạn
+  1 MiB: vượt thì ghi lại từ ring; một dòng lớn hơn cả giới hạn được thay bằng `note`; file đã
+  quá nửa giới hạn lúc engine khởi động lại được xoay sang `trace.jsonl.1` để trace của phiên
+  vừa treo không bị ghi đè.
+- **Quyền riêng tư:** mặc định chỉ ghi số ký tự và hash của nội dung. Hash là **SipHash-2-4**
+  (64 bit) dưới khoá 128 bit ngẫu nhiên theo tiến trình, chỉ nằm trong bộ nhớ — một PRF, nên
+  file không cho dò từ điển, và không có số cặp (chuỗi, hash) nào suy ra được khoá. Bản đầu dùng
+  FNV-1a 32 bit với salt trộn vào trạng thái: review cho thấy một cặp đã biết (hay hai chuỗi
+  ngắn chưa biết) khôi phục được trạng thái đó, kéo theo mọi hash khác; chuỗi rỗng nay chỉ có
+  `chars: 0`, không hash. Phím sinh ký tự không ghi keysym lẫn modifier (Shift là chữ hoa).
+  Thư mục được tạo `0700`, file `0600` ngay trong `open(2)`, không chmod sau. Tên client ở dòng
+  `focus` được ghi nguyên — cần để biết client nào trục trặc, và README nói rõ điều đó. Nội dung
+  gốc chỉ được ghi khi người dùng bật thêm một cờ riêng, và tài liệu hướng dẫn phải nói rõ điều
+  đó. Funput là bộ gõ ưu tiên quyền riêng tư, nên trace không được trở thành keylogger.
 - Dùng chung một định dạng cho cả hai shell, để trace từ người dùng phát lại được trong test.
 
 ### 6.6. `ClientSim` — mô phỏng client trong test
@@ -402,6 +417,10 @@ Test cần thêm:
 - Toàn bộ test hiện có vẫn pass.
 
 ### PR 2 — Trace và hướng dẫn thu thập
+
+**Trạng thái:** Đã triển khai trong PR này (`common/trace/`, `Observation` trả về từ
+`Composer::observeDocument()`, test `tests/trace/`; mục "Gửi trace khi báo lỗi" trong README
+Linux).
 
 - Hiện thực [mục 6.5](#65-funput_trace--chẩn-đoán-dựa-trên-dữ-liệu) ở cả hai shell.
 - Bổ sung mục "Gửi trace khi báo lỗi" vào README Linux.
