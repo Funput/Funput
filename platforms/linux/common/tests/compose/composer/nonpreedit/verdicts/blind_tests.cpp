@@ -9,8 +9,8 @@
 
 #include <doctest/doctest.h>
 
-#include "compose/composer/nonpreedit/refusal.h"
 #include "compose/composer/nonpreedit/sim/client.h"
+#include "compose/composer/nonpreedit/verdicts/refusal.h"
 #include "compose/key/chord.h"
 #include "support.h"
 
@@ -120,7 +120,7 @@ TEST_CASE("an honest client late on an empty field, after a key that changed not
 
 TEST_CASE("a blind verdict is remembered against the client") {
     Composer composer = composerFor(Method::Telex);
-    composer.onFocusChanged("cursor");
+    composer.onFocusChanged({"cursor"});
     composer.setNonPreedit(true);
 
     const std::string blind;
@@ -133,7 +133,7 @@ TEST_CASE("a blind verdict is remembered against the client") {
 
     // Same client re-activating — Fcitx5 does this on every capability change — must
     // not be handed the mode back and cost another word.
-    composer.onFocusChanged("cursor");
+    composer.onFocusChanged({"cursor"});
     composer.setNonPreedit(true);
     CHECK_FALSE(composer.nonPreedit());
 }

@@ -4,8 +4,8 @@
 // clients_tests.cpp proves it is *remembered*, and the two must agree on what
 // misbehaviour looks like or they would be testing different clients.
 
-#ifndef FUNPUT_TESTS_NONPREEDIT_REFUSAL_H
-#define FUNPUT_TESTS_NONPREEDIT_REFUSAL_H
+#ifndef FUNPUT_TESTS_NONPREEDIT_VERDICTS_REFUSAL_H
+#define FUNPUT_TESTS_NONPREEDIT_VERDICTS_REFUSAL_H
 
 #include <string>
 
@@ -40,4 +40,4 @@ inline std::string typeUntilRefused(Composer &composer, const std::string &keys,
 
 } // namespace funput::test
 
-#endif // FUNPUT_TESTS_NONPREEDIT_REFUSAL_H
+#endif // FUNPUT_TESTS_NONPREEDIT_VERDICTS_REFUSAL_H

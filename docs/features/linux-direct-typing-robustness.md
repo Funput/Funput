@@ -8,7 +8,7 @@
 
 | Thuộc tính | Nội dung |
 | :--- | :--- |
-| Trạng thái | **Đang triển khai** — PR 3/5 |
+| Trạng thái | **Đang triển khai** — PR 4/5 |
 | Cập nhật | 03/11/2026 |
 | Phạm vi | `platforms/linux` (composer dùng chung và hai shell Fcitx5, IBus). Không đụng engine Rust |
 | Đối tượng | Maintainer, contributor và người dùng quan tâm kiến trúc |
@@ -339,20 +339,55 @@ chỉ xử lý những trường hợp mà Funput **biết chắc** bên nhận 
 - **Và** đường truyền đi qua cầu nối gnome-shell (Fcitx5: `program() == "gnome-shell"`; IBus:
   `focus-in-id` trả `gnome-shell`).
 
-**Hành vi đề xuất, cần đo trước khi chốt:** khi điều kiện trên đúng **ở đầu một từ**, từ đó
-được soạn bằng preedit thay vì gõ thẳng. Quyết định nằm ở `applyNonPreeditMode()`, vốn chỉ
-chạy giữa các từ, nên không vi phạm bất biến 5. README đã có tiền lệ: với IBus, "ô trống ngay
-sau một ô trống: từ đầu tiên có gạch chân".
+**Hành vi đã chọn (PR 4):** khi điều kiện trên đúng **ở đầu một từ**, từ đó được soạn bằng
+preedit thay vì gõ thẳng. Quyết định nằm ở `applyNonPreeditMode()`, vốn chỉ chạy giữa các từ,
+nên không vi phạm bất biến 5. README đã có tiền lệ: với IBus, "ô trống ngay sau một ô trống: từ
+đầu tiên có gạch chân".
 
-**Đánh đổi cần đo:**
+**Điều kiện đã chốt** (`transport/guard.h`, `bridgeBlocksRepairs(transport, spokeSinceReset,
+textBeforeCaret)`): `transport == GnomeShell` **và** (`!spokeSinceReset` **hoặc**
+`textBeforeCaret.empty()`).
+
+- `spokeSinceReset` là bit của shell: xoá ở focus-in thật và ở `reset()`, đặt khi surrounding
+  text tới. Nó đứng cho `_surroundingText === null` của gnome-shell sau `vfunc_reset`.
+- Bản đọc rỗng đứng cho cache rỗng của mutter: `g_utf8_offset_to_pointer (cursor, -N)` trên
+  chuỗi rỗng thất bại `before >= start` với mọi N ≥ 1.
+- Điều kiện "bản đọc ngắn hơn `deleteChars`" theo từng phím trong đề xuất ban đầu **không**
+  được dùng: nó chỉ đánh giá được giữa từ, và gác ở đó là phá bất biến 5. Prefix không rỗng dài L
+  ký tự thì không gác: lệnh sửa chỉ xoá trong từ đang gõ, ngắn hơn prefix đủ chứa từ trước nó.
+- Transport đến từ `compose/transport.h`: `identifyProgram()` cho Fcitx5 (`gnome-shell` → tên
+  rỗng + `GnomeShell`), `identifyIBusClient()` cho IBus (đã định nghĩa và có test, PR 5 mới nối).
+  Hai hàm dùng chung một danh sách `namesAToolkit()` cho các tên đứng cho toolkit chứ không phải
+  app (`fake*` theo prefix như `bus/inputcontext.c` của ibus-daemon, `xim`, `Qt`,
+  `QIBusInputContext`, `gtk-im`): frontend ibus của Fcitx5 chuyển chuỗi client đó nguyên vẹn vào
+  `program()`, nên Fcitx5 cũng gặp chúng. Trên IBus guard còn **trơ** cho tới PR 5: `Transport`
+  luôn là `Direct`.
+- Shell chỉ giải mã `textBeforeCaret` cho guard khi `Composer::transport()` là cầu nối; trên
+  đường truyền khác câu trả lời luôn là "không", và câu hỏi được đặt ở mỗi phím.
+- **`reset()` của Fcitx5 trên cầu nối không được flush.** Mutter commit preedit ngay trong
+  `clutter_input_focus_reset` (chế độ `CLUTTER_PREEDIT_RESET_COMMIT`, mà frontend ibus của Fcitx5
+  gửi cho mọi preedit không `DontCommit`) rồi mới reset IM; reset tới `FunputEngine::reset()` qua
+  `vfunc_reset` của gnome-shell → `Reset` → `InputContext::reset()`. Vì guard đưa từ đầu tiên của
+  ô vào preedit trên đúng đường truyền này, flush ở đó gõ từ hai lần. `Composer::onReset()` quyết
+  theo đường truyền: `Direct` flush, `GnomeShell` bỏ preedit và quên journal. IBus đã `discard()`
+  sẵn (ibus-daemon hoặc client commit).
+
+**Đánh đổi cần đo** (chưa đo; điền vào bảng dưới sau khi thử trên máy thật):
 
 - Nếu client trên cầu nối gnome-shell không vẽ preedit, từ đầu tiên sẽ vô hình cho tới ranh
   giới từ. Cần kiểm tra Chrome Wayland native, vốn đi qua cầu nối này.
 - Đổi focus khi đang gõ dở từ đầu tiên sẽ phụ thuộc vào cơ chế flush preedit của framework.
   `PREEDIT_COMMIT` của IBus và lần flush khi focus-out của Fcitx5 đã xử lý việc này.
 
+| Client (GNOME Wayland) | Từ đầu tiên có gạch chân nhìn thấy? | `[[` ở ô trống | `soor` ở ô trống | Từ kế tiếp gõ thẳng? |
+| :--- | :--- | :--- | :--- | :--- |
+| Chrome (Wayland native) | _chưa đo_ | | | |
+| Firefox | _chưa đo_ | | | |
+| GTK4 (gnome-text-editor) | _chưa đo_ | | | |
+| LibreOffice | _chưa đo_ | | | |
+
 Nếu phép đo cho thấy đánh đổi không chấp nhận được, phương án dự phòng là chỉ **ghi trace** cho
-trường hợp này, rồi quyết định tiếp dựa trên dữ liệu.
+trường hợp này (dòng `mode` với `reason: "bridge"` đã có), rồi quyết định tiếp dựa trên dữ liệu.
 
 ### 6.5. `FUNPUT_TRACE` — chẩn đoán dựa trên dữ liệu
 
@@ -399,7 +434,8 @@ Mỗi triệu chứng của #640 trở thành một regression test.
 
 Đăng ký `has-focus-id` và xử lý `focus-in-id` khi phiên bản IBus hỗ trợ (kiểm tra lúc chạy, có
 đường lùi về `focus-in` như hiện tại). Truyền chuỗi `client` vào `Composer::onFocusChanged()`.
-Các chuỗi `gnome-shell` và `fake` phải được coi là rỗng, cùng lý do như `clientId()` của Fcitx5.
+Các chuỗi `gnome-shell` và `fake` phải được coi là rỗng, cùng lý do như `identifyProgram()` của
+Fcitx5; quy tắc đã nằm sẵn ở `identifyIBusClient()` trong `compose/transport.h` (PR 4).
 
 Lợi ích: client X11/XWayland trên IBus được nhớ phán quyết qua các lần focus, đóng một hạn chế
 README đang ghi. `DeleteGuard` cũng biết được khi nào đường truyền đi qua gnome-shell.
@@ -431,7 +467,7 @@ Mỗi bước là **một PR độc lập**, có test, và không phụ thuộc 
 ### PR 1 — Ghi nhận thay đổi do app tự làm
 
 **Trạng thái:** Đã triển khai trong PR này (`Composer::appPerforms()`, test
-`nonpreedit/appedits_tests.cpp` và `nonpreedit/appedits_sync_tests.cpp`).
+`nonpreedit/appedits/appedits_tests.cpp` và `nonpreedit/appedits/sync_tests.cpp`).
 
 - `Composer::onBoundary()`, nhánh không có từ đang soạn: khi gõ thẳng đang bật, ghi
   `noteRepair(0, " ")` trước khi trả `passThrough()` — **chỉ với dấu cách thường** (U+0020). Ranh
@@ -525,11 +561,36 @@ test `document/predicted_tests.cpp`, `sim/lag_tests.cpp`, `retone/scan_tests.cpp
 
 ### PR 4 — Chặn lệnh xoá vô vọng
 
-- Đo trước, ghi kết quả vào PR: Chrome Wayland native có vẽ preedit qua text-input-v3 không;
-  Firefox, GTK4 và LibreOffice trên cầu nối gnome-shell hiển thị preedit ra sao.
-- Hiện thực [mục 6.4](#64-deleteguard--không-phát-lệnh-xoá-vô-vọng), kèm mô phỏng cầu nối
-  gnome-shell trong `ClientSim`.
-- Test: `[[` → `[` và `soor` → `sổ` ở đầu ô nhập, với mô phỏng mutter.
+**Trạng thái:** Đã triển khai trong PR này (`compose/transport.h`, `transport/guard.h`,
+`Composer::bridgeBlocksRepairs()`, `Composer::onReset()`; `BridgeSim` ở
+`tests/.../nonpreedit/sim/bridge/bridge.h`; test `transport_tests.cpp`,
+`transport/guard_tests.cpp`, `sim/bridge/bridge_tests.cpp`, `sim/bridge/click_tests.cpp`). Phần
+đo trên máy thật chưa làm — bảng ở [mục 6.4](#64-deleteguard--không-phát-lệnh-xoá-vô-vọng) còn
+trống.
+
+- Hiện thực [mục 6.4](#64-deleteguard--không-phát-lệnh-xoá-vô-vọng) ở cả hai shell: bit
+  `spokeSinceReset` và guard AND vào `applyNonPreeditMode()`, với trace `mode` lý do `"bridge"`.
+  Trên IBus guard còn trơ cho tới PR 5 (transport chưa được đặt tên).
+- `ClientIdentity {name, transport}` thay cho chuỗi tên ở `Composer::onFocusChanged()`;
+  `clientId()` của Fcitx5 bỏ, thay bằng `identifyProgram()` dùng chung.
+- `BridgeSim` mô phỏng gnome-shell + mutter + GTK3 imwayland + app: cache null trước câu trả
+  lời đầu và sau `click()`, đổi ký tự→byte trên cache (mutter bỏ khi cache ngắn hơn N) rồi
+  byte→ký tự trên cùng snapshot (GTK), commit luôn tới. `click()` để mutter commit preedit rồi
+  mới đưa reset cho shell (`Composer::onReset()`), và ghi tài liệu sau commit vào lịch sử như một
+  phím thường, nên client trả lời nó trễ `lag` phím như mọi thay đổi. Tuỳ chọn `Shell`: `Fcitx5`
+  nghe mọi câu trả lời (libibus so đối tượng `IBus.Text`, gnome-shell cấp đối tượng mới mỗi lần);
+  `IBus` đứng sau ibus-daemon, vốn bỏ câu trả lời giống hệt câu trước
+  (`bus_engine_proxy_set_surrounding_text`).
+- Test: không guard thì mô hình tái hiện `[[` → `ơ[` và `soor` → `soổ` với client trễ hai phím
+  (chứng minh mô hình trung thực; `sôổ` của triệu chứng 3 thì mô hình không ra); có guard thì
+  từ đầu ở ô trống soạn bằng preedit và ra `[`, `sổ`, từ kế tiếp gõ thẳng, sau `click()` từ kế
+  tiếp chờ client trả lời lại — với `IBus` là một thay đổi của tài liệu, với `Fcitx5` là bất kỳ
+  câu trả lời nào — rồi từ sau gõ thẳng, prefix không rỗng không bị gác, `click()` giữa chừng
+  một từ được gác commit từ đó đúng một lần, và vòng ký tự→byte→ký tự trên *một* snapshot là
+  đồng nhất ([mục 4.5](#45-điều-đã-loại-trừ-hỏng-utf-8-do-đổi-byte) thành test; cuộc đua commit
+  đang bay giữa hai lớp thì mô hình không có).
+- Còn lại cho người kiểm tra: Chrome Wayland native có vẽ preedit qua text-input-v3 không;
+  Firefox, GTK4 và LibreOffice trên cầu nối gnome-shell hiển thị từ đầu tiên ra sao.
 
 ### PR 5 — Tên client cho IBus
 

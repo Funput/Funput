@@ -22,6 +22,8 @@ add_executable(funput_linux_tests
     compose/key/classify_tests.cpp
     compose/key/chord_tests.cpp
     compose/key/modifier_tests.cpp
+    compose/transport_tests.cpp
+    compose/transport/guard_tests.cpp
     compose/composer/keys_tests.cpp
     compose/composer/keys/flip_tests.cpp
     compose/composer/state_tests.cpp
@@ -32,10 +34,10 @@ add_executable(funput_linux_tests
     compose/composer/retone/scan_tests.cpp
     compose/composer/verify_tests.cpp
     compose/composer/english/shortcuts_tests.cpp
-    compose/composer/nonpreedit/clients_tests.cpp
-    compose/composer/nonpreedit/blind_tests.cpp
+    compose/composer/nonpreedit/verdicts/clients_tests.cpp
+    compose/composer/nonpreedit/verdicts/blind_tests.cpp
     compose/composer/nonpreedit/selection_tests.cpp
-    compose/composer/nonpreedit/backspace_tests.cpp
+    compose/composer/nonpreedit/backspace/backspace_tests.cpp
     compose/composer/nonpreedit/appedits/appedits_tests.cpp
     compose/composer/nonpreedit/appedits/sync_tests.cpp
     compose/composer/nonpreedit/document/predicted_tests.cpp
@@ -46,6 +48,8 @@ add_executable(funput_linux_tests
     compose/composer/nonpreedit/sim/caret_tests.cpp
     compose/composer/nonpreedit/sim/honest_tests.cpp
     compose/composer/nonpreedit/sim/dropped_tests.cpp
+    compose/composer/nonpreedit/sim/bridge/bridge_tests.cpp
+    compose/composer/nonpreedit/sim/bridge/click_tests.cpp
     compose/composer/nonpreedit/fuzz/honest_tests.cpp
     compose/composer/nonpreedit/fuzz/broken_tests.cpp
     ffi/utf8_tests.cpp

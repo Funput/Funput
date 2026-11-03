@@ -1,8 +1,8 @@
 // A client that answers every keystroke on time — the honest counterpart of the one in
-// refusal.h, for the tests that need the composer to trust what it reads.
+// verdicts/refusal.h, for the tests that need the composer to trust what it reads.
 
-#ifndef FUNPUT_TESTS_NONPREEDIT_SYNC_H
-#define FUNPUT_TESTS_NONPREEDIT_SYNC_H
+#ifndef FUNPUT_TESTS_NONPREEDIT_APPEDITS_SYNC_H
+#define FUNPUT_TESTS_NONPREEDIT_APPEDITS_SYNC_H
 
 #include <string>
 
@@ -26,4 +26,4 @@ inline std::string typeInSync(Composer &composer, const std::string &keys) {
 
 } // namespace funput::test
 
-#endif // FUNPUT_TESTS_NONPREEDIT_SYNC_H
+#endif // FUNPUT_TESTS_NONPREEDIT_APPEDITS_SYNC_H

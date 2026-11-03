@@ -39,6 +39,12 @@ struct EngineState {
     // Whether the client has answered since the last keystroke — what tells an empty
     // answer apart from no answer. See BlindWrites.
     bool surroundingFresh = false;
+    // Whether the client has answered since the last focus-in or `reset`. The
+    // gnome-shell bridge drops every delete between a reset and the client's next
+    // answer (compose/transport/guard.h). Inert until the shell names the
+    // transport — `focus-in-id` is a later PR — but counted from here on, so the
+    // guard turns on with the name and not with a second change to this file.
+    bool spokeSinceReset = false;
     // The client's last surrounding text, kept rather than read back on demand.
     // `ibus_engine_get_surrounding_text` hands out null here even right after the
     // client has sent a perfectly good string, so the only reliable copy is the one

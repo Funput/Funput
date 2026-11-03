@@ -2,6 +2,7 @@
 
 #include "compose/composer/composer.h"
 
+#include "compose/transport/guard.h"
 #include "ffi/utf8.h"
 
 namespace funput {
@@ -9,8 +10,7 @@ namespace funput {
 // --- Composer ----------------------------------------------------------------
 
 // On from the start, with no setting behind it: this setter is how a shell narrows
-// the mode per client. It cannot revive a mode a client has already been caught
-// breaking — see [NonPreeditState].
+// the mode per client. It cannot revive a mode a client was caught breaking.
 void Composer::setNonPreedit(bool on) {
     // A client already caught dropping a delete stays refused until the next context,
     // whatever the shell asks for. IBus asks on every keystroke.
@@ -18,12 +18,16 @@ void Composer::setNonPreedit(bool on) {
 }
 
 // Clears what was learned about the last client, which is the only thing that lets a
-// stood-down mode be tried again. `client` is how the shell names the focus —
-// Fcitx5's program name, else the input context. A client caught dropping a delete
-// keeps that verdict (Fcitx5 also re-activates on capability churn). Empty is always
-// a fresh question (IBus has no name). See nonpreedit/clients.h.
-void Composer::onFocusChanged(std::string_view client) {
+// stood-down mode be tried again. A client caught dropping a delete keeps that verdict
+// under its name (Fcitx5 also re-activates on capability churn); an empty name is
+// always a fresh question. See nonpreedit/clients.h and compose/transport.h.
+void Composer::onFocusChanged(ClientIdentity client) {
     nonPreedit_.reset(client);
+}
+
+// Pure in the transport and what the shell knows; this only supplies the transport.
+bool Composer::bridgeBlocksRepairs(bool spokeSinceReset, const std::string &textBeforeCaret) const {
+    return funput::bridgeBlocksRepairs(nonPreedit_.transport, spokeSinceReset, textBeforeCaret);
 }
 
 // Checks that the previous repair landed, and stands down as narrowly as the failure
@@ -79,8 +83,7 @@ ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed)
         return ComposePlan::passThrough();
     }
     // A live selection that is not a suffix after the caret is the user's own
-    // highlight. Deleting into it would take their text, so the key goes through
-    // and the composition is dropped.
+    // highlight: deleting into it would take their text, so the key goes through.
     if (nonPreedit_.selectionLive && nonPreedit_.selectionAfter == 0 &&
         result.backspace > 0) {
         discard();
