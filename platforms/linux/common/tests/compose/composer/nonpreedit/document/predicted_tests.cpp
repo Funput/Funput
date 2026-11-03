@@ -1,7 +1,9 @@
 // The journal of predicted edits, judged one reading at a time: how many of the
 // pending edits a reading confirms, and what the document is predicted to read once
-// everything has landed. A reading matching none, and the journal's capacity:
-// restart_tests.cpp. The verdicts themselves: dropped_tests.cpp.
+// everything has landed. Restarts, capacity and trust: restart_tests.cpp; the
+// verdicts: dropped_tests.cpp. A journal seeded from a reading trusts nothing until
+// a reading confirms an edit that wrote text, so the verdict cases confirm one
+// before the delete they drop (they used to convict on the first reading).
 
 #include <doctest/doctest.h>
 
@@ -75,7 +77,9 @@ TEST_CASE("a reading equal to the base confirms nothing and forgets nothing") {
 
 TEST_CASE("a dropped delete convicts on the first pending edit") {
     PredictedDocument doc;
-    doc.observe("phu");
+    doc.observe("ph");
+    doc.predict(0, "u", false);
+    REQUIRE(doc.observe("phu").trusted);
     doc.predict(1, "ủ", false);
     CHECK(doc.observe("phuủ").verdict == Verdict::RefuseMode);
 }
@@ -84,7 +88,9 @@ TEST_CASE("a dropped delete convicts on the second pending edit too") {
     // The first edit landed but was never reported on its own: the reading is the
     // document with it applied and the second's delete dropped.
     PredictedDocument doc;
-    doc.observe("ph");
+    doc.observe("p");
+    doc.predict(0, "h", false);
+    REQUIRE(doc.observe("ph").trusted);
     doc.predict(0, "u", false);
     doc.predict(1, "ủ", false);
     const PredictedDocument::Ack ack = doc.observe("phuủ");
@@ -94,9 +100,21 @@ TEST_CASE("a dropped delete convicts on the second pending edit too") {
 
 TEST_CASE("a dropped delete after a re-open costs re-toning only") {
     PredictedDocument doc;
-    doc.observe("tiếng");
+    doc.observe("tiến");
+    doc.predict(0, "g", false);
+    REQUIRE(doc.observe("tiếng").trusted);
     doc.predict(3, "ềng", /*afterAdopt=*/true);
     CHECK(doc.observe("tiếngềng").verdict == Verdict::RefuseRetone);
+}
+
+TEST_CASE("a journal that trusts nothing yet gives no verdict") {
+    PredictedDocument doc; // the same drop from a seeded base: a stale one reads alike
+    doc.observe("phu");
+    doc.predict(1, "ủ", false);
+    const PredictedDocument::Ack ack = doc.observe("phuủ");
+    CHECK(ack.verdict == Verdict::Unknown);
+    CHECK_FALSE(ack.matched);
+    CHECK_FALSE(doc.trusted());
 }
 
 TEST_CASE("a delete that writes nothing never convicts") {

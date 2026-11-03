@@ -2,7 +2,7 @@
 // handed to the app, a Backspace inside a word — are journaled too, so the evidence
 // that the document is being followed survives them: unrecorded, the second space of
 // `phur␣␣⌫⌫s` broke the chain and the `s` was typed plain. What is never journaled,
-// and what such a record must never claim: appedits_sync_tests.cpp.
+// and what such a record must never claim: sync_tests.cpp.
 
 #include <doctest/doctest.h>
 

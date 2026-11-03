@@ -586,7 +586,7 @@ chỉ có thể là một trong ba chuỗi, và chúng khác nhau:
 | `D` | Client chưa trả lời — chưa có phán quyết |
 
 Chỉ trường hợp ở giữa là một phán quyết, và sự dè dặt đó mới là điểm mấu chốt: coi “không giống
-thứ tôi mong đợi” là thất bại sẽ tắt chế độ này ở 61% số commit không được trả lời — chữa một
+thứ tôi mong đợi” là thất bại sẽ tắt chế độ này ở 39% số commit không được trả lời — chữa một
 client hỏng bằng cách làm hỏng tính năng cho tất cả.
 
 #### Journal các thay đổi dự đoán
@@ -627,14 +627,17 @@ chuyển caret xen vào**. Mũi tên, Home/End, Enter, tổ hợp như Ctrl+A, c
 làm composer quên journal (`NonPreeditState::forget`, đúng việc `CommittedTail::clear` làm trên
 Windows), và lần đọc được trả lời kế tiếp bắt đầu lại từ chỗ caret thật sự đứng; chỉ phím modifier
 (Shift trước một chữ hoa) là không. Trước đây `phur` ␣ ← ⌫ `s` trên client trễ một phím mở lại
-`phủ` từ một dự đoán mà caret đã rời khỏi và cho ra `pú␣`. Phần dư duy nhất là một cú **click** mà
-client chưa kịp báo. Trong phạm vi đó, từ được mở lại luôn là hậu tố của những gì thật sự có trước
-caret, và lần sửa kế tiếp chỉ xoá trong phạm vi đó. Client bỏ một lệnh xoá thì giữ **nhiều** chữ
+`phủ` từ một dự đoán mà caret đã rời khỏi và cho ra `pú␣`. Hai phần dư còn lại được nêu ở cuối mục
+này. Trong phạm vi đó, từ được mở lại luôn là hậu tố của những gì thật sự có trước caret, và lần sửa
+kế tiếp chỉ xoá trong phạm vi đó. Client bỏ một lệnh xoá thì giữ **nhiều** chữ
 hơn dự đoán chứ không ít hơn, nên lần sửa ấy có thể rơi nhầm ký tự nhưng không bao giờ xoá thứ
 không tồn tại — và bản đọc sau đó bắt được nó (`RefuseRetone`), kể cả khi client bỏ **một chuỗi**
 lệnh xoá: lần ghi kế tiếp đọc ra gốc cộng mọi chữ đã ghi mà không lệnh xoá nào được áp dụng, và
-`dropped.h` so cả chuỗi ấy. Phép so này không thể buộc tội client trung thực dù trễ: bản đọc của
-client ấy luôn là một tiền tố, mà phán quyết chỉ được hỏi khi bản đọc không trùng tiền tố nào.
+`dropped.h` so cả chuỗi ấy. Chuỗi chỉ cho `RefuseRetone` khi **mọi** lệnh xoá bị buộc tội đều là sửa
+chữa sau khi mở lại từ; có một lệnh xoá thường trong đó thì client bỏ cả sửa chữa thường, và đó là
+`RefuseMode`. Phép so này không thể buộc tội client trung thực dù trễ: bản đọc của client ấy luôn
+là một tiền tố, mà phán quyết chỉ được hỏi khi bản đọc không trùng tiền tố nào — và chỉ trên một
+gốc journal đã **tin** (xem dưới).
 
 Một điểm mơ hồ được ghi rõ thay vì giấu đi: một lệnh xoá không kèm chữ bị client bỏ, theo sau là
 một lệnh y hệt được áp dụng, sẽ được đọc là lệnh đầu đã áp dụng và lệnh sau còn chờ. Chỉ bản đọc
@@ -647,12 +650,54 @@ tiếp bắt được client đó qua phép so chuỗi. Cái giá: client trễ 
 **Im lặng không bao giờ dịch journal.** Khi client chưa trả lời kể từ phím trước, bản đọc shell đưa
 xuống chỉ là câu trả lời cũ trong cache: composer để nguyên journal, không phán quyết, và coi phím
 đó là chưa đồng bộ, chưa theo dõi (bất biến 3 của RFC). Chỉ bản đọc được trả lời mới khớp tiền tố,
-bắt đầu lại gốc, hay đưa ra phán quyết. Bản đọc không trùng tiền tố nào thì journal bắt đầu lại từ
-nó nhưng giữ các mục đang chờ ở trạng thái **tạm**: với client trễ, đó là những thay đổi còn trên
-đường và journal bắt kịp sau vài phím; với client đúng hạn vừa click, đó là những thay đổi đã xảy
-ra ở chỗ cũ, và lần đọc sau khớp khi bỏ qua chúng. `BlindWrites` cũng chỉ đếm câu trả lời rỗng mà
-journal không giải thích được: người dùng xoá hết chữ rồi client trễ báo lại việc đó không phải là
-Cursor.
+bắt đầu lại gốc, hay đưa ra phán quyết.
+
+**Khi nào journal tin gốc của mình, và bảo đảm điều gì.** Bản đọc không trùng tiền tố nào thì
+journal bắt đầu lại từ nó nhưng giữ các mục đang chờ ở trạng thái **tạm**: với client trễ, đó là
+những thay đổi còn trên đường (khớp từ gốc mới, không bỏ qua mục nào); với client đúng hạn vừa im
+lặng vài phím, đó là những thay đổi đã nằm trong bản đọc (khớp khi bỏ qua chúng). Một cách bỏ qua
+chỉ được xét khi nó **khả dĩ**: các mục bị bỏ qua, áp dụng theo thứ tự ngay trước gốc, để lại một
+hậu tố mà gốc phải kết thúc bằng nó — `m`, `n`, `o` gõ trước một bản đọc `` thì không thể đã được áp
+dụng (`nonpreedit/document/match.h`). Trong các cách khớp khả dĩ, cách **ít mục được coi là đã áp
+dụng nhất** thắng; hai cách khớp ở hai mức bỏ qua khác nhau kể hai câu chuyện khác nhau về gốc, và
+lần khớp đó bị đánh dấu **tranh chấp**. Rà soát độc lập đã thấy quy tắc cũ — bỏ qua nhiều nhất thắng
+— xoá nhầm mục rồi buộc tội client trung thực khi các chữ lặp lại (`mnommm⌫mi` trễ 3 phím).
+
+Journal chỉ **tin** gốc của mình (`trusted`, `nonpreedit/document/trust.h`) trong ba trường hợp, và chỉ khi tin mới mở lại từ, tự
+thi hành Backspace hay đưa ra phán quyết — chưa tin thì chỉ theo dõi, và bản đọc không trùng tiền
+tố nào chỉ làm nó bắt đầu lại, không phán quyết:
+
+1. Sau **đổi focus**, bản đọc đầu tiên là ô như lúc focus tìm thấy nó, nên được tin ngay (không có
+   mục nào đang chờ).
+2. Sau **phím dời caret**, client trễ sẽ trả lời *trước hết* bằng những trạng thái nó chưa báo —
+   đúng bằng số mục còn chờ lúc nhấn phím — rồi trạng thái mà phím đó tạo ra. Journal coi đúng
+   chừng ấy bản đọc là **cũ theo cấu trúc**: chúng chỉ bắt đầu lại journal, không khớp gì cả. Không
+   có quy tắc này, một client trễ bảy phím phát lại chính những phím nó đã gõ trước mũi tên, và
+   phím gõ sau mũi tên trùng với chúng (`grhfip⏎psu⇧dj⌫ ←u⌫dd`) làm journal tin nhầm rồi buộc tội.
+3. Qua những bản đọc ấy, một lần khớp **ở mức bỏ qua 0, không tranh chấp, xác nhận một mục có ghi
+   chữ** làm gốc thành chính xác với client áp dụng mọi thay đổi theo thứ tự. Xác nhận chỉ gồm lệnh
+   xoá thì *giữ* được niềm tin nhưng không *tạo* ra nó: mũi tên trái bớt một ký tự khỏi bản đọc y hệt
+   một ⌫ đang chờ (`dwija etfmw⌫o←h u⌫ ⌫uf` trễ 4 phím từng bị buộc tội vì thế). Bắt đầu lại, hay
+   một lần khớp tranh chấp, làm mất niềm tin.
+
+Với client trung thực — áp dụng mọi thay đổi theo thứ tự, trễ bao nhiêu phím cũng được, im lặng
+từng quãng hay chỉ trả lời khi có thay đổi — hệ quả đo được: **0 phán quyết từ journal** và **0 lần
+sửa chữa rơi ra ngoài từ** trên hơn 160 000 lượt chạy ngẫu nhiên (trễ 0–7 phím, ba mô hình trả lời,
+có mũi tên trái, Enter, Shift và click có reset), và các test giới hạn trong
+`tests/compose/composer/nonpreedit/fuzz/` giữ con số đó. Cái giá: sau một phím dời caret, client trễ
+k phím mất khả năng bỏ dấu lại trong k + 2 phím; client im lặng g phím trước đó mất thêm chừng ấy.
+
+Hai phần dư được nêu tên thay vì giấu. Số bản đọc cũ được tính từ độ trễ **đo được trước** phím dời
+caret; client trễ *thêm* ngay sau đó nằm ngoài bảo đảm. Và **click mà client không gửi reset**: GTK
+và Qt reset input method khi click, Fcitx5 trả lời bằng `flush()` nên journal quên như sau một phím
+dời caret; client không làm vậy để lại những mục không bao giờ đặt được vào dòng mới, journal bắt
+đầu lại ở mỗi bản đọc — không phán quyết, không mở lại từ — cho tới khi đầy (16 mục) hoặc một phím
+tình cờ đánh vần đúng mục cũ. `BlindWrites` chỉ đếm câu trả lời rỗng khi journal **dự đoán có
+chữ** và câu trả lời không xác nhận mục nào: người dùng xoá hết chữ rồi client trễ báo lại việc đó
+không phải là Cursor, còn một ⌫ đang chờ trên gốc rỗng thì không còn được viện làm lý do — trước
+đây nó cho Cursor viết tiếp hơn chục phím (`⌫ tieengs vieejt nam` nát ba từ). Phán quyết `BlindWrites`
+với client trung thực trễ từ hai phím, trên ô trống, sau một phím không đổi gì (Shift trước chữ
+hoa, mũi tên hay ⌫ ở cột 0) là cái giá đã đo của ngưỡng hai và được ghim trong `blind_tests.cpp`.
 
 Một hậu tố gợi ý **sau** caret — Google Sheets trên Firefox bôi đen phần còn lại của ô khớp —
 không phải client bỏ lệnh xoá. `Replace` mang `deleteAfterChars` để gỡ hậu tố đó trước khi sửa

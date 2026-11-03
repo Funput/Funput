@@ -2,8 +2,7 @@
 // leave the journal describing a document the caret is no longer at the end of. It
 // used to carry on regardless: `phur␣ ← ⌫ s` on a client a key late re-opened
 // `phủ` from a prediction the caret had left and wrote `pú␣`. Every such key now
-// forgets the journal (NonPreeditState::forget), and only an answered reading
-// starts it again — which a lagging client supplies a few keys later.
+// forgets the journal (NonPreeditState::forget); answered readings start it again.
 
 #include <doctest/doctest.h>
 
@@ -117,15 +116,35 @@ TEST_CASE("a lagging client catches up again after Enter") {
     }
 }
 
-TEST_CASE("a click the client reports on time costs one reading, not the mode") {
+TEST_CASE("a click resets the input method, which forgets the journal like a caret key") {
+    // GTK and Qt reset the input method on a click; Fcitx5 answers with a flush.
+    // The journal restarts from the new line and earns its trust back from the
+    // first text confirmed there.
+    for (const int lag : {0, 1, 2}) {
+        CAPTURE(lag);
+        CaretSim sim(lag);
+        sim.run("phur ");
+        sim.click("xin"); // the caret is now at the end of another line
+        CHECK(sim.run(" chaof ") == "xin chào ");
+        CHECK(sim.pressBackspace() == (lag == 0));
+        CHECK(sim.adopted());
+        CHECK(sim.run("s") == "xin cháo");
+        CHECK(sim.observation().verdict == Verdict::Unknown);
+    }
+}
+
+TEST_CASE("a client that moves the caret without a reset is outside the guarantee") {
+    // The one residual predicted.h names. On time it costs re-toning, not the
+    // mode: the space's record cannot be placed on the new line (`xin` does not
+    // end with it), so the journal restarts on every reading and trusts nothing,
+    // until its capacity resets it or a later key happens to spell the record.
     CaretSim sim;
     sim.run("phur ");
-    sim.click("xin"); // the caret is now at the end of another line
-    // The space's record is still pending when the new line is read: kept as
-    // provisional, and dropped by the next reading, which matches without it.
-    CHECK(sim.run(" chaof ") == "xin chào ");
-    CHECK(sim.pressBackspace());
-    CHECK(sim.adopted());
-    CHECK(sim.run("s") == "xin cháo");
+    sim.click("xin", /*reset=*/false);
+    CHECK(sim.run("chaof,") == "xinchào,");
+    CHECK_FALSE(sim.pressBackspace());
+    CHECK_FALSE(sim.adopted());
+    CHECK(sim.run("s") == "xinchàos");
     CHECK(sim.observation().verdict == Verdict::Unknown);
+    CHECK(sim.composer().nonPreedit());
 }

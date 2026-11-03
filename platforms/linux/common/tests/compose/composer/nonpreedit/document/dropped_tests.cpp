@@ -23,12 +23,25 @@ TEST_CASE("a run of dropped deletes is caught at the write that follows") {
     CHECK(judge("tiếng ", {{1, ""}, {1, ""}, {0, "f"}}, "tiếng f") == Verdict::RefuseMode);
     // The same with a repair that followed a re-opened word among them.
     CHECK(judge("tiếng ", {{1, "", true}, {0, "f"}}, "tiếng f") == Verdict::RefuseRetone);
-    // Through the journal: the restart keeps the edits provisional, the verdict stands.
+    // Through a trusted journal: the restart keeps the edits provisional, the
+    // verdict stands.
     PredictedDocument doc;
-    doc.observe("tiếng ");
+    doc.observe("tiếng");
+    doc.predict(0, " ", false);
+    REQUIRE(doc.observe("tiếng ").trusted);
     doc.predict(1, "", false);
     doc.predict(0, "f", false);
     CHECK(doc.observe("tiếng f").verdict == Verdict::RefuseMode);
+}
+
+TEST_CASE("a chain blaming an ordinary deletion is RefuseMode, whatever else it blames") {
+    // Re-toning alone goes only when every deletion dropped followed a re-open. A
+    // reading two keys late that shows the adopt-repair *and* an ordinary repair
+    // both without their deletes says ordinary repairs are dropped too.
+    CHECK(judge("ab", {{1, "x", true}, {1, "y"}}, "abxy") == Verdict::RefuseMode);
+    CHECK(judge("ab", {{1, "x", true}, {1, "", false}, {0, "y"}}, "abxy") == Verdict::RefuseMode);
+    // Edits that delete nothing are not blamed, so they do not change the verdict.
+    CHECK(judge("ab", {{0, "c"}, {1, "x", true}, {0, "y"}}, "abcxy") == Verdict::RefuseRetone);
 }
 
 TEST_CASE("one delete dropped among applied edits is still caught") {

@@ -20,33 +20,39 @@ inline PredictedDocument::Ack NonPreeditState::observe(const std::string &readin
     // and this key is neither in sync nor on track.
     if (!answered) {
         inSync = onTrack = false;
-        return {0, document.pending(), false, Verdict::Unknown};
+        return {0, document.pending(), false, document.trusted(), Verdict::Unknown};
     }
-    // Whether the pending edits wrote text, and whether any state after them reads
-    // as this reading, is asked *before* the journal moves on: the reading is judged
-    // against the writes it may have swallowed.
-    const bool wrote = document.pendingWrites() && !document.explains(reading);
-    PredictedDocument::Ack ack = document.observe(reading);
-    // Every edit confirmed. With nothing pending nothing was written, so nothing
-    // was confirmed either — a document that moved on its own (the user clicking,
-    // or selecting with the mouse) lands there, and so does the reading after a
-    // confirmed one.
-    inSync = ack.pending > 0 && ack.acked == ack.pending;
-    // At least one edit confirmed. k == 0 is a reading equal to the base, which is
-    // byte for byte what a client that has not answered, or has stopped
-    // answering, reads: no evidence that this client follows anything.
-    onTrack = ack.matched && ack.acked >= 1;
+    // Whether the pending edits wrote text, and whether they leave the document
+    // predicted non-empty, is asked *before* the journal moves on: the reading is
+    // judged against the writes it may have swallowed.
+    const bool growing = document.pendingWrites() && !document.predicted().empty();
+    const PredictedDocument::Ack ack = document.observe(reading);
+    // Every edit confirmed, on a journal whose base is believed exact. With nothing
+    // pending nothing was written, so nothing was confirmed either — a document
+    // that moved on its own lands there, and so does the reading after a confirmed
+    // one.
+    inSync = ack.trusted && ack.pending > 0 && ack.acked == ack.pending;
+    // At least one edit confirmed, on a trusted journal. k == 0 is a reading equal
+    // to the base, which is byte for byte what a client that has not answered, or
+    // has stopped answering, reads: no evidence that this client follows anything.
+    // And a journal not yet trusted may have matched a stale reading by
+    // coincidence, so its prediction is not one to re-open a word from.
+    onTrack = ack.trusted && ack.matched && ack.acked >= 1;
     // The prefix comparison is blind to a document that is always empty, which is a
-    // failure of its own rather than an absence of one — see BlindWrites. Not an
-    // empty answer the journal explains, though: the user deleted everything, and a
-    // client a few keys late says so a few keys late. That is passed as silence,
-    // which counts nothing and still lets any text reset the count. What is counted
-    // is Cursor's shape: a document never growing past the base while text is
-    // written into it.
-    if (ack.verdict == Verdict::Unknown && blind.observe(reading, wrote)) {
-        ack.verdict = Verdict::RefuseMode;
+    // failure of its own rather than an absence of one — see BlindWrites. What is
+    // counted is Cursor's shape: a reading of `` while the journal predicts text.
+    // Not an empty answer the user earned by deleting everything: then the
+    // prediction is empty too, or the answer confirms the deletions (a client a
+    // few keys late says so a few keys late). Those pass as silence, which counts
+    // nothing and still lets any text reset the count. An empty answer equal to the
+    // base confirms nothing — a ⌫ pending on a base of `` used to explain `` as a
+    // later prefix and let Cursor write on for a dozen keys.
+    const bool wrote = growing && !(ack.matched && ack.acked >= 1);
+    PredictedDocument::Ack seen = ack;
+    if (seen.verdict == Verdict::Unknown && blind.observe(reading, wrote)) {
+        seen.verdict = Verdict::RefuseMode;
     }
-    return ack;
+    return seen;
 }
 
 } // namespace funput

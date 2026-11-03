@@ -12,7 +12,7 @@
 // forwards the same numbers, and Linux, Windows and macOS stay one behaviour.
 //
 // Writes are deliberately *not* serialized — waiting for each to be confirmed would
-// cost ~25ms a keystroke and stall on the 61% of commits a client never answers, and
+// cost ~25ms a keystroke and stall on the 39% of commits a client never answers, and
 // real typing cannot produce the burst that made waiting look necessary. The README
 // carries the measurements. But not waiting before a write is not the same as never
 // checking after one, and that is what this file is for.
@@ -117,6 +117,9 @@ struct NonPreeditState {
         selectionLive = false;
         selectionAfter = 0;
         forget();
+        // The field as focus found it is current, so the journal may trust the
+        // reading that reports it; after a caret key it may not (predicted.h).
+        document.reset(PredictedDocument::Reset::Focus);
     }
 
     // The caret may have moved on its own: a caret key, Enter, a shortcut, a VI/EN
@@ -127,7 +130,7 @@ struct NonPreeditState {
     // is not one of them: Shift goes down before every capital letter.
     void forget() {
         inSync = onTrack = backspaceJournaled = justAdopted = false;
-        document.reset();
+        document.reset(PredictedDocument::Reset::CaretKey);
     }
 
     // Record an edit just issued, so the readings that follow can confirm it.

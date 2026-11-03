@@ -1,9 +1,12 @@
 // Clients that apply every edit in order but answer late, in bursts, or only when
-// something changed. None of them may ever be convicted, and silence may never
-// move the journal: a reading the shell only cached is the previous answer again
-// (RFC §6.1, invariant 3). The review's brute force found an honest client with a
-// few keys of silence convicted 14 times in 20000 runs under the old capacity fold;
-// the same search runs here, bounded.
+// something changed. The journal may never convict one, and silence may never
+// move it: a reading the shell only cached is the previous answer again (RFC
+// §6.1, invariant 3). The review's brute force found an honest client with a few
+// keys of silence convicted 14 times in 20000 runs under the old capacity fold;
+// the same search runs here, bounded, and the wider one — caret keys, every lag,
+// clients that drop deletes — in ../fuzz/. One verdict is not the journal's and
+// is accepted: a client two or more keys late answering `` twice on an empty
+// field after a key that changed nothing (BlindWrites, pinned in blind_tests.cpp).
 
 #include <doctest/doctest.h>
 

@@ -4,7 +4,7 @@
 
 #include <doctest/doctest.h>
 
-#include "compose/composer/nonpreedit/sync.h"
+#include "compose/composer/nonpreedit/appedits/sync.h"
 #include "support.h"
 
 using namespace funput;

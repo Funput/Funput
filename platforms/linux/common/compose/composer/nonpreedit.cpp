@@ -18,10 +18,10 @@ void Composer::setNonPreedit(bool on) {
 }
 
 // Clears what was learned about the last client, which is the only thing that lets a
-// stood-down mode be tried again. `client` is how the shell names the focus — Fcitx5's program name, else the input
-// context. A client caught dropping a delete keeps that verdict (Fcitx5 also
-// re-activates on capability churn). Empty is always a fresh question (IBus has no
-// name). See nonpreedit/clients.h.
+// stood-down mode be tried again. `client` is how the shell names the focus —
+// Fcitx5's program name, else the input context. A client caught dropping a delete
+// keeps that verdict (Fcitx5 also re-activates on capability churn). Empty is always
+// a fresh question (IBus has no name). See nonpreedit/clients.h.
 void Composer::onFocusChanged(std::string_view client) {
     nonPreedit_.reset(client);
 }
@@ -93,52 +93,8 @@ ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed)
     return plan;
 }
 
-ComposePlan Composer::appPerforms(uint32_t deleted, char32_t typed) {
-    // An edit the app makes itself is still a change to the document, and a
-    // predictable one: a space typed with nothing composing, a Backspace handed to
-    // the app, a Backspace shortening a word that stands in the document. Journaled,
-    // it lets the next reading confirm the document is still being followed — the
-    // evidence `backspaceOutsideWord()` and `adoptWordBeforeBackspace()` require.
-    // Unrecorded, `phủ ␣ ␣ ⌫ ⌫ s` lost `inSync` at the second space and typed a plain
-    // `s`. The ACTION_NONE branch above is the same idea for a key the engine saw.
-    //
-    // Journaled whether or not the document is in sync. With one record that was
-    // unsafe: a client one keystroke late reads the document as it stood before the
-    // previous key, and two identical edits in a row — ␣␣, ⌫⌫ — made that stale
-    // reading equal what the record predicted, so Funput took the next ⌫ over and
-    // re-opened a word one character too long (`phủ ␣ ␣ ⌫ s` became `phủú`). The
-    // journal keeps every unconfirmed edit, so that reading matches prefix n−1 of
-    // n: on track, never in sync (nonpreedit/document/predicted.h). And a record
-    // made out of sync is what lets a lagging client re-tone: `phur ␣ ⌫ s` is `phú`
-    // there only because the ⌫ handed to the app is in the journal.
-    //
-    // These records never convict through the three-string comparison: with nothing
-    // deleted, "applied" and "dropped" are the same string, and with nothing written
-    // `observe()` keeps the record out of the verdict. A record that writes text is
-    // still an answer `BlindWrites` counts, as the letters the app types in the
-    // ACTION_NONE branch always have been. Windows keeps the same journal in
-    // `CommittedTail` (retone.rs).
-    //
-    // A live selection is excluded: what the key does to it is the app's business —
-    // replace it, or accept a Sheets suffix and append — so there is nothing to
-    // predict. Only the boundary path can get here with one: `onKey` passes a
-    // Backspace over a selection straight through, ahead of both Backspace paths.
-    if (nonPreedit_.on && !nonPreedit_.selectionLive) {
-        std::string text;
-        if (typed != 0) appendUtf8(text, static_cast<uint32_t>(typed));
-        // The repair a re-opened word arms is the next one *Funput* writes; the app
-        // shortening the word in between must not spend it, or a client like the
-        // address bar dropping that repair would cost the mode instead of re-toning.
-        const bool adopted = nonPreedit_.justAdopted;
-        nonPreedit_.noteRepair(deleted, text);
-        nonPreedit_.justAdopted = adopted;
-        // A deletion, so the word before it may be re-opened — see backspace.cpp.
-        if (deleted > 0) nonPreedit_.backspaceJournaled = true;
-    }
-    return ComposePlan::passThrough();
-}
-
-// Backspace outside a word, and re-opening a finished one: nonpreedit/backspace.cpp.
+// An edit the app makes itself: nonpreedit/appedits.cpp. Backspace outside a word,
+// and re-opening a finished one: nonpreedit/backspace.cpp.
 
 ComposePlan Composer::endComposition(bool consumed) {
     // Nothing to commit. The word reached the document one keystroke at a time, so

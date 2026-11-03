@@ -270,7 +270,8 @@ Mọi thay đổi trong RFC này phải giữ các quyết định đã được
   rộng cho **chuỗi** mục: với mục j, so cả với tài liệu mà mọi lệnh xoá trong các mục 0..j đều bị
   bỏ (gốc + T_0 + … + T_j). Client bỏ ⌫ của Funput rồi áp dụng ⌫⌫ của app để lại mọi bản đọc đều
   khớp tiền tố, trễ dự đoán một lệnh xoá, cho tới lần ghi kế tiếp — chuỗi ấy bắt được nó.
-  `RefuseRetone` nếu trong các mục bị buộc tội có sửa chữa sau khi mở lại từ, còn lại `RefuseMode`.
+  `RefuseRetone` chỉ khi **mọi** lệnh xoá bị buộc tội là sửa chữa sau khi mở lại từ, còn lại
+  `RefuseMode`: chuỗi buộc tội cả một lệnh xoá thường thì sửa chữa thường cũng bị bỏ.
   Phép so chuỗi không thể buộc tội client trung thực dù trễ: bản đọc của nó luôn là một tiền tố,
   phán quyết chỉ được hỏi khi không trùng tiền tố nào, và chuỗi chỉ khác tiền tố tương ứng khi có
   lệnh xoá thật sự xoá chữ mà bản đọc vẫn còn cho thấy (`nonpreedit/document/dropped.h`).
@@ -278,13 +279,27 @@ Mọi thay đổi trong RFC này phải giữ các quyết định đã được
   thay đổi triệt tiêu nhau (`dru` rồi ⌫ đọc là `dr`); lấy tiền tố mới nhất khi đó vứt đi các mục
   client trễ chưa báo, và từ đó không bản đọc nào của nó còn khớp. Giữ mọi mục còn lại chờ thì nhất
   quán với mọi trạng thái client có thể đang ở, vì mọi trạng thái sau đều là tiền tố của các mục
-  còn lại.
+  còn lại. Giữa các **mức bỏ qua** (xem mục tạm bên dưới) thì không có tính nhất quán ấy: cách khớp
+  ít mục được coi là đã áp dụng nhất thắng, và hai mức bỏ qua khác nhau cùng khớp là một lần khớp
+  **tranh chấp** (`nonpreedit/document/match.h`).
 - Chỉ bản đọc **được trả lời** mới khớp tiền tố, bắt đầu lại gốc hay đưa ra phán quyết. Bit
   `answered` shell đưa xuống bằng false nghĩa là bản đọc chỉ là câu trả lời cũ trong cache: journal
   giữ nguyên, không phán quyết, phím đó không đồng bộ cũng không theo dõi (bất biến 3).
 - Bản đọc không trùng tiền tố nào thì journal bắt đầu lại từ nó, giữ các mục đang chờ ở trạng thái
-  **tạm**: hoặc còn trên đường (client trễ, journal bắt kịp sau vài phím), hoặc đã áp dụng ở chỗ
-  cũ trước khi caret dời đi (client đúng hạn vừa click; lần đọc sau khớp khi bỏ qua chúng).
+  **tạm**: hoặc còn trên đường (client trễ, journal bắt kịp sau vài phím, không bỏ qua mục nào),
+  hoặc đã nằm trong bản đọc (client đúng hạn vừa im lặng vài phím; lần đọc sau khớp khi bỏ qua
+  chúng). Một mức bỏ qua chỉ được xét khi **khả dĩ**: các mục bị bỏ qua, áp dụng theo thứ tự ngay
+  trước gốc, để lại một hậu tố mà gốc phải kết thúc bằng nó. Cách giải thích đúng của client trung
+  thực luôn khả dĩ; cái bị loại là trùng hợp — bản đọc cũ bị coi là trạng thái sau vì một mục đang
+  chờ tình cờ đánh vần đúng khác biệt (`mnommm⌫mi`, `dwija etfmw⌫o←h u⌫ ⌫uf`).
+- Journal chỉ **tin** gốc của mình (`trusted`, `nonpreedit/document/trust.h`) — và chỉ khi tin mới mở
+  lại từ, tự thi hành Backspace hay đưa ra phán quyết — trong ba trường hợp: bản đọc đầu tiên sau
+  đổi focus (ô như lúc focus tìm thấy); sau phím dời caret, đúng bằng số trạng thái client chưa báo
+  cộng một bản đọc được coi là cũ theo cấu trúc và chỉ bắt đầu lại journal, rồi một lần khớp ở mức
+  bỏ qua 0, không tranh chấp, xác nhận một mục có ghi chữ; xác nhận chỉ gồm lệnh xoá giữ được niềm
+  tin chứ không tạo ra nó (mũi tên trái bớt một ký tự y hệt một ⌫). Chưa tin thì bản đọc không trùng
+  tiền tố nào chỉ bắt đầu lại journal, không phán quyết. Phần dư: độ trễ tăng ngay sau phím dời
+  caret, và click mà client không gửi reset (GTK/Qt gửi; Fcitx5 trả lời bằng `flush()`).
 
 **Quy tắc sử dụng:**
 
@@ -497,6 +512,16 @@ test `document/predicted_tests.cpp`, `sim/lag_tests.cpp`, `retone/scan_tests.cpp
   bản chụp mới. Test: `sim/caret_tests.cpp`, `sim/dropped_tests.cpp`, `sim/honest_tests.cpp` (vét
   cạn client trung thực có quãng im lặng 4–8 phím, và trễ 0–7 phím), `document/dropped_tests.cpp`,
   `document/restart_tests.cpp`.
+- Sau rà soát độc lập lần hai: mức bỏ qua phải **khả dĩ** và ít mục nhất thắng (`document/match.h`),
+  journal chỉ phán quyết, mở lại từ hay tự thi hành Backspace trên gốc đã **tin**, và sau phím dời
+  caret coi đúng số bản đọc client còn nợ là cũ (`document/trust.h`); chuỗi lệnh xoá bị bỏ chỉ cho
+  `RefuseRetone` khi mọi lệnh xoá bị buộc tội đều theo sau mở lại từ; `BlindWrites` không còn nhận
+  một ⌫ trên gốc rỗng làm lời giải thích cho câu trả lời rỗng (Cursor bị bắt ở câu trả lời rỗng thứ
+  hai, trước lần sửa thứ hai có xoá); `ClientSim::click()` mô hình reset mà GTK/Qt gửi; các test
+  gieo gốc rồi buộc tội ngay ở bản đọc đầu (`document/predicted_tests.cpp`, `document/dropped_tests.cpp`)
+  xác nhận một mục có chữ trước. Fuzz có giới hạn trong `nonpreedit/fuzz/`: 0 phán quyết từ journal
+  và 0 lần sửa rơi ngoài từ với client trung thực (trễ 0–7, ba mô hình trả lời, mũi tên, Enter,
+  Shift, click có reset); client bỏ lệnh xoá bị bắt ngay khi bản đọc có thể cho thấy.
 
 ### PR 4 — Chặn lệnh xoá vô vọng
 

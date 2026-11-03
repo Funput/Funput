@@ -10,6 +10,8 @@
 #include <doctest/doctest.h>
 
 #include "compose/composer/nonpreedit/refusal.h"
+#include "compose/composer/nonpreedit/sim/client.h"
+#include "compose/key/chord.h"
 #include "support.h"
 
 using namespace funput;
@@ -89,6 +91,31 @@ TEST_CASE("a document that answers is never called blind") {
 
     CHECK(composer.nonPreedit());
     CHECK(document == "tiếng tiếng ");
+}
+
+TEST_CASE("an honest client late on an empty field, after a key that changed nothing, is counted") {
+    // The trade-off behind kLimit = 2, pinned so it is changed on purpose. A client
+    // two or more keys late that re-sends its document on every key (ClientSim's
+    // model; Fcitx5's updates and Cursor do, the IBus daemon drops repeats) answers
+    // `` twice while text is pending when a key before the text changed nothing —
+    // Shift before a capital, Left or Backspace at column 0 — and the second ``
+    // is Cursor's shape exactly: readings alone cannot tell the two apart until
+    // the third key, and Cursor must be caught before its second text-deleting
+    // repair. The same client typing straight into the field is not counted.
+    for (const int lag : {2, 3}) {
+        CAPTURE(lag);
+        ClientSim shifted(lag);
+        shifted.press(bare(keysym::ShiftL));
+        shifted.type("Tieng");
+        CHECK_FALSE(shifted.composer().nonPreedit());
+        ClientSim deleting(lag);
+        deleting.pressBackspace();
+        deleting.type("tieng");
+        CHECK_FALSE(deleting.composer().nonPreedit());
+        ClientSim plain(lag);
+        plain.type("tieengs ");
+        CHECK(plain.composer().nonPreedit());
+    }
 }
 
 TEST_CASE("a blind verdict is remembered against the client") {
