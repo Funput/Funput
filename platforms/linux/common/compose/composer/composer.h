@@ -55,35 +55,22 @@ public:
     // Arm auto-capitalize for the next word (a no-op unless the setting is on).
     void armCapitalization();
 
-    // --- non-preedit ----------------------------------------------------------
+    // --- non-preedit (nonpreedit.cpp) -----------------------------------------
 
     // Build the word in the document instead of in a preedit: every keystroke
-    // emits an [Effect::Replace] that repairs what the previous one wrote. See
-    // nonpreedit.cpp for what the mode assumes of its shell.
-    //
-    // On from the start, with no setting behind it: this setter is how a shell narrows
-    // it per client. It cannot revive a mode a client has already been caught
-    // breaking — see [NonPreeditState].
+    // emits an [Effect::Replace] that repairs what the previous one wrote. On from
+    // the start; this is how a shell narrows it per client, never how it revives
+    // a mode a client was caught breaking.
     void setNonPreedit(bool on);
     bool nonPreedit() const { return nonPreedit_.on; }
 
-    // A client took focus. Clears what was learned about the last one, which is the
-    // only thing that lets a stood-down mode be tried again. Apart from
-    // `setNonPreedit()`: IBus calls that on every keystroke.
-    //
-    // `client` is how the shell names the focus — Fcitx5's program name, else the
-    // input context. A client caught dropping a delete keeps that verdict (Fcitx5
-    // also re-activates on capability churn). Empty is always a fresh question
-    // (IBus has no name). See nonpreedit/clients.h.
+    // A client took focus. `client` is the shell's name for it (empty: unnamed, a
+    // fresh question); a client caught dropping a delete keeps that verdict.
     void onFocusChanged(std::string_view client = {});
 
-    // The document in front of the caret as it stands now, before this keystroke.
-    // Checks that the previous repair landed, and stands down as narrowly as the
-    // failure allows — see nonpreedit.cpp.
-    //
-    // `answered` is whether the client sent surrounding text since the last keystroke.
-    // Without it an empty answer and no answer are the same string, and standing the
-    // mode down on silence would take it from the clients it was built for.
+    // The document before the caret as it stands now, before this keystroke: checks
+    // that the previous repair landed. `answered` is whether the client sent
+    // surrounding text since the last keystroke.
     void observeDocument(const std::string &textBeforeCaret, bool selectionLive = false,
                          bool answered = true, uint32_t selectedAfter = 0);
 
@@ -94,7 +81,8 @@ public:
     // A Backspace is about to delete the last character of `textBeforeCaret`; if that
     // leaves the caret at the end of a finished Vietnamese word, re-open it so the next
     // keystroke can still fix its tone. Returns whether a word was taken — nothing is
-    // written either way, so a refusal costs nothing. See nonpreedit/backspace.cpp.
+    // written either way, so a refusal costs nothing. Refused over a live selection:
+    // the key deletes that, not one character. See nonpreedit/backspace.cpp.
     bool adoptWordBeforeBackspace(const std::string &textBeforeCaret);
 
     // --- settings & VI/EN -----------------------------------------------------
@@ -130,6 +118,10 @@ private:
     ComposePlan planFromResult(const FunputResult &result, char32_t typed);
     // A Backspace with nothing composing: who removes the character.
     ComposePlan backspaceOutsideWord();
+    // An edit the app is about to make itself — `deleted` characters, then `typed`
+    // (0 for none) — journaled, while the document is in sync, so the next reading
+    // can confirm it. Always passes the key through.
+    ComposePlan appPerforms(uint32_t deleted, char32_t typed);
     // End the composition without committing: in non-preedit the word is already
     // in the document, so only the engine state is dropped.
     ComposePlan endComposition(bool consumed);
