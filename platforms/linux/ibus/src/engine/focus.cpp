@@ -4,8 +4,6 @@
 
 #include "engine/internal.h"
 
-#include <utility>
-
 #include "compose/transport.h"
 #include "trace/trace.h"
 
@@ -15,21 +13,27 @@ namespace {
 
 // A client took focus, under the name the daemon has for it: `gtk3-im:firefox` on
 // X11, XWayland or GTK_IM_MODULE=ibus, `gnome-shell` for every app on a GNOME Wayland
-// session, empty from a daemon older than 1.5.27, which has no `focus-in-id`. The raw
-// string goes to the trace as Fcitx5 traces `program()` — seeing the bridge there is
-// the point — and compose/transport.h decides what it names.
-void focusInWith(IBusEngine *engine, const char *client) {
+// session, empty for a plain `focus-in`, which is all a daemon older than 1.5.27
+// sends. The raw string goes to the trace as Fcitx5 traces `program()` — seeing the
+// bridge there is the point — and compose/transport.h decides what it names.
+// `objectPath` is the input context's, empty for a plain `focus-in`.
+void focusInWith(IBusEngine *engine, const char *objectPath, const char *client) {
     EngineState *state = stateOf(engine);
     funput::Trace::shared().focus(client);
     // Forget whether the last client could be trusted with a repair, unless this is
     // that client by name. Kept out of applyNonPreeditMode(), which runs every
-    // keystroke — clearing there would wipe a verdict the moment it was reached. IBus
-    // gives an engine per input context and calls this only on a real focus change,
-    // so there is no capability churn to survive, as there is on Fcitx5.
+    // keystroke — clearing there would wipe a verdict the moment it was reached. The
+    // daemon calls this only on a real focus change — a capability change is not one
+    // here, as it is on Fcitx5 — and pairs it with a focus-out on the same engine
+    // when the global engine moves from one context to the next.
     state->composer.onFocusChanged(funput::identifyIBusClient(client));
-    // The same focus named late (internal.h, `focused`) keeps what the client has
-    // said: the daemon will not repeat it. Only a new focus starts from nothing.
-    if (!std::exchange(state->focused, true)) {
+    // The focus in hand named again (internal.h, `focusPath`) keeps what the client
+    // has said: the daemon will not repeat it. Any other focus starts from nothing.
+    const bool sameFocus = state->focused &&
+                           (state->focusPath.empty() || state->focusPath == objectPath);
+    state->focused = true;
+    state->focusPath = objectPath;
+    if (!sameFocus) {
         state->sawSurroundingText = false;
         state->surroundingFresh = false;
         state->spokeSinceReset = false;
@@ -44,11 +48,11 @@ void focusInWith(IBusEngine *engine, const char *client) {
 } // namespace
 
 void focusIn(IBusEngine *engine) {
-    focusInWith(engine, "");
+    focusInWith(engine, "", "");
 }
 
-void focusInId(IBusEngine *engine, const gchar * /*objectPath*/, const gchar *client) {
-    focusInWith(engine, client != nullptr ? client : "");
+void focusInId(IBusEngine *engine, const gchar *objectPath, const gchar *client) {
+    focusInWith(engine, objectPath != nullptr ? objectPath : "", client != nullptr ? client : "");
 }
 
 void enable(IBusEngine *engine) {
@@ -85,6 +89,7 @@ void focusOut(IBusEngine *engine) {
     funput::Trace::shared().note("focus-out");
     EngineState *state = stateOf(engine);
     state->focused = false;
+    state->focusPath.clear();
     state->composer.discard();
 }
 
@@ -103,9 +108,10 @@ void reset(IBusEngine *engine) {
     // bridge holds no surrounding text until the client answers again
     // (transport/guard.h). Count the answers from here. The word is committed by
     // then: by mutter on the bridge, elsewhere by ibus-daemon's `_ic_reset` or the
-    // client that asked to commit the preedit itself.
+    // client that asked to commit the preedit itself. The composer drops it and, since
+    // the caret moved, forgets the journal with it (Composer::onResetCommitted).
     state->spokeSinceReset = false;
-    state->composer.discard();
+    state->composer.onResetCommitted();
 }
 
 } // namespace funput_ibus

@@ -369,8 +369,11 @@ textBeforeCaret)`): `transport == GnomeShell` **và** (`!spokeSinceReset` **ho�
   gửi cho mọi preedit không `DontCommit`) rồi mới reset IM; reset tới `FunputEngine::reset()` qua
   `vfunc_reset` của gnome-shell → `Reset` → `InputContext::reset()`. Vì guard đưa từ đầu tiên của
   ô vào preedit trên đúng đường truyền này, flush ở đó gõ từ hai lần. `Composer::onReset()` quyết
-  theo đường truyền: `Direct` flush, `GnomeShell` bỏ preedit và quên journal. IBus đã `discard()`
-  sẵn (ibus-daemon hoặc client commit).
+  theo đường truyền: `Direct` flush, `GnomeShell` bỏ preedit và quên journal. Nhánh sau là
+  `Composer::onResetCommitted()`, và `reset()` của IBus gọi đúng nó: ibus-daemon (`_ic_reset`)
+  hoặc client đã commit, nên không commit lại — bỏ từ và quên journal, theo bất biến 7. Trước đó
+  reset bên IBus chỉ `discard()` và journal sống qua cú nhấp. Test `guard_tests.cpp` ghim: sau
+  reset, trên mọi đường truyền và qua cả hai lối vào, ⌫ kế tiếp là của app và không mở lại từ.
 
 **Đánh đổi cần đo** (chưa đo; điền vào bảng dưới sau khi thử trên máy thật):
 
@@ -447,14 +450,23 @@ tắc nằm ở `identifyIBusClient()` trong `compose/transport.h` (PR 4).
 - `has-focus-id` là construct-only và handler mặc định của factory không đặt nó, nên `main.cpp`
   nối tín hiệu `create-engine` và tự `g_object_new` engine (chi tiết và tham chiếu floating ở
   README Linux, "Về phía IBus").
-- Daemon không bao giờ gọi cả `FocusIn` lẫn `FocusInId` cho một lần focus — trừ bản ibus main,
-  gửi lại `FocusInId` khi `FocusId` trả lời trễ. `focus.cpp` giữ bit `focused` giữa focus-in và
-  focus-out: lần gọi thứ hai chỉ đặt tên lại, không xoá `sawSurroundingText` (daemon không lặp
-  lại câu trả lời của client).
+- Daemon 1.5.27–1.5.31 không bao giờ gọi cả `FocusIn` lẫn `FocusInId` cho một lần focus. Từ
+  **1.5.32** (đã phát hành) nó gửi lại: khi thuộc tính `ActiveSurroundingText` trả lời,
+  `_get_active_surrounding_text_cb` trong `bus/engineproxy.c` ép `has_focus = FALSE` rồi gọi lại
+  `bus_engine_proxy_focus_in`, để lần focus đã tới dưới dạng `FocusIn` (vì `FocusId` trả lời
+  trễ) được gọi lại dưới dạng `FocusInId`. Daemon khử trùng lặp theo object path của input
+  context, nên `focus.cpp` giữ object path của focus đang có cùng bit `focused`: `FocusInId`
+  cùng path, hoặc tới sau một `FocusIn` không có path, là cùng một lần focus — chỉ đặt tên lại,
+  không xoá `sawSurroundingText` (daemon không lặp lại câu trả lời của client); path khác là
+  focus mới.
 - Đo bằng `ibus-daemon` 1.5.29 trong container: `FocusId = true` trên object engine; trace ghi
   `gtk3-im:<app>`, `gnome-shell`, `fake-gtk-im`, `gtk4-im:gnome-text-editor` đúng như gửi, và
   `fake` khi daemon trao focus cho context của chính nó. Lần focus đầu tiên sau khi daemon khởi
-  động không tên, vì phép đọc `FocusId` là bất đồng bộ.
+  động không tên, vì phép đọc `FocusId` là bất đồng bộ; thường đó là context `fake` của daemon,
+  nhưng nếu là một ô thật trên GNOME Wayland thì với 1.5.27–1.5.31 ô đó chạy như `Direct` và
+  guard mục 6.4 trơ cho đúng lần focus ấy, tới lần kế tiếp mới có tên; 1.5.32 trở lên sửa bằng
+  lần gửi lại ở trên. Daemon cache `FocusId` theo tên engine suốt đời nó, nên nâng cấp Funput khi
+  ibus-daemon đang chạy cần `ibus restart`.
 
 Lợi ích: client X11/XWayland/`GTK_IM_MODULE=ibus` trên IBus được nhớ phán quyết qua các lần
 focus, đóng hạn chế README từng ghi. `DeleteGuard` biết được khi nào đường truyền đi qua
@@ -626,6 +638,11 @@ trống.
   được trong đời tiến trình đó), `gtk3-im:` rỗng → không tên, app có dấu hai chấm trong tên.
 - README Linux: hạn chế "IBus không biết tên client" viết lại; "Về phía IBus" thêm sự thật thứ
   năm; "Cầu nối gnome-shell" ghi cổng gác đã hoạt động trên IBus.
+- Sau review độc lập: khử trùng lặp focus theo object path như daemon 1.5.32 (`focusPath` trong
+  `internal.h`); `reset()` của IBus đi qua `Composer::onResetCommitted()` nên quên journal theo
+  bất biến 7 (mục 6.4), có test; các chú thích "một engine cho mỗi input context" sửa lại —
+  với `use-global-engine` mặc định, một engine đi qua nhiều context và daemon ghép mỗi focus-in
+  với một focus-out trên cùng proxy.
 - Còn lại cho người kiểm tra: trace hiện `gtk3-im:firefox` trong phiên X11 hoặc với
   `GTK_IM_MODULE=ibus`, và `gnome-shell` trên GNOME Wayland; cột IBus của bảng ở mục 6.4.
 
@@ -678,6 +695,10 @@ Mã nguồn upstream, trích theo tên hàm vì số dòng thay đổi theo phi�
 - gnome-shell, `js/misc/inputMethod.js`: `_onDeleteSurroundingText`, `vfunc_reset`.
 - GTK 3, `modules/input/imwayland.c`: `text_input_delete_surrounding_text`.
 - Firefox, `widget/gtk/IMContextWrapper.cpp`: `IMContextWrapper::DeleteText`.
-- IBus, `src/ibusengine.c`: tín hiệu `focus-in-id`, thuộc tính `has-focus-id`.
+- IBus, `src/ibusengine.c`: tín hiệu `focus-in-id`, thuộc tính `has-focus-id`;
+  `bus/engineproxy.c`: `bus_engine_proxy_focus_in` (khử trùng lặp theo object path),
+  `_get_active_surrounding_text_cb` (gửi lại focus từ 1.5.32); `bus/ibusimpl.c`:
+  `bus_ibus_impl_set_focused_context` (engine toàn cục đi qua các context);
+  `bus/inputcontext.c`: `_ic_reset` (commit preedit trước `Reset`).
 - Funput: `platforms/linux/README.md` (mục Chế độ không preedit),
   `platforms/linux/common/compose/composer/`, `crates/funput-desktop/src/retone.rs`.

@@ -45,12 +45,21 @@ struct EngineState {
     // focus is named `gnome-shell` (focus.cpp), and is inert while the focus is
     // unnamed, as it is on a daemon older than 1.5.27.
     bool spokeSinceReset = false;
-    // Between a focus-in and its focus-out. The daemon can name a focus late — send
-    // `FocusInId` for a focus it has already sent as `FocusIn`, once the engine's
-    // FocusId property answers (bus/engineproxy.c on ibus main) — and that second
-    // call must not pass as a new client, which would clear the flags above while the
-    // daemon, which never repeats itself, keeps the client's answer.
+    // Between a focus-in and its focus-out, and the input context's object path for
+    // it: empty for a plain `focus-in`, which carries none. A daemon of 1.5.32 or
+    // later can name a focus late — re-send a focus it has already delivered once
+    // the engine's FocusId property has answered: bus/engineproxy.c
+    // `_get_active_surrounding_text_cb` forces `has_focus` off and calls
+    // `bus_engine_proxy_focus_in` again, so the engine sees `FocusIn` and then
+    // `FocusInId`, or `FocusInId` twice. That second call must not pass as a new
+    // client, which would clear the flags above while the daemon, which never
+    // repeats itself, keeps the client's answer. The daemon keys its own dedupe on
+    // the path (`bus_engine_proxy_focus_in`: `has_focus && !g_strcmp0 (object_path,
+    // engine->object_path)`), so this does the same: a focus-in-id for the path in
+    // hand, or for a focus that came unnamed, re-identifies that focus; any other
+    // path is a new focus, however the daemon came to skip the focus-out.
     bool focused = false;
+    std::string focusPath;
     // The client's last surrounding text, kept rather than read back on demand.
     // `ibus_engine_get_surrounding_text` hands out null here even right after the
     // client has sent a perfectly good string, so the only reliable copy is the one

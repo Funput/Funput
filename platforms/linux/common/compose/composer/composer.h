@@ -2,10 +2,9 @@
 //
 // Owns everything that decides *what* happens for a keystroke: the engine handle,
 // the persisted settings, and the runtime VI/EN state. It knows nothing about
-// Fcitx5 or IBus — it takes a normalized [KeyEvent] and returns a [ComposePlan]
-// the shell performs. That split is what keeps one copy of the typing rules
-// instead of the two that Fcitx5 and IBus drifted into, and it is what let the
-// non-preedit mode arrive as a new [Effect] rather than a second shell.
+// Fcitx5 or IBus — it takes a normalized [KeyEvent] and returns a [ComposePlan] the
+// shell performs. That split keeps one copy of the typing rules instead of the two
+// Fcitx5 and IBus drifted into, and let non-preedit arrive as an [Effect], not a shell.
 //
 // Deliberately *not* here, because they are genuinely per-framework: publishing the
 // preedit (Fcitx5 `setClientPreedit`; IBus `IBUS_ENGINE_PREEDIT_COMMIT`), including
@@ -42,9 +41,15 @@ public:
     // meaningless here and is left false.
     ComposePlan flush();
 
-    // Fcitx5's `reset()`: `flush()`, except on the gnome-shell bridge, where a reset
-    // is a click and mutter has committed the preedit itself (state.cpp).
+    // Fcitx5's `reset()`: `flush()` on a direct transport, where nothing else commits
+    // the preedit; `onResetCommitted()` on the gnome-shell bridge (state.cpp).
     ComposePlan onReset();
+
+    // A reset whose sender has already committed the composing word: IBus's always
+    // (ibus-daemon flushes the COMMIT-mode preedit before `Reset`), Fcitx5's on the
+    // bridge. Never commits again; drops the word and forgets the journal, since a
+    // reset is a click or a caret move. Dropping the visible preedit is the shell's job.
+    void onResetCommitted();
 
     // Drop the composition *without* committing it. Used on focus loss, where the
     // framework has already flushed the preedit to the client and committing again
@@ -68,8 +73,8 @@ public:
     // through. See compose/transport.h.
     void onFocusChanged(ClientIdentity client = {});
 
-    // What the writes travel through, as told at focus. A shell asks this before it
-    // reads the document for `bridgeBlocksRepairs()`: only the bridge can say yes.
+    // What the writes travel through, as told at focus. A shell asks this before
+    // reading the document for `bridgeBlocksRepairs()`: only the bridge can say yes.
     Transport transport() const { return nonPreedit_.transport; }
 
     // Whether the bridge this client sits behind is certain to drop the next repair,
@@ -83,8 +88,7 @@ public:
     Observation observeDocument(const std::string &textBeforeCaret, bool selectionLive = false,
                                 bool answered = true, uint32_t selectedAfter = 0);
 
-    // Whether a word is being composed right now: is a Backspace shortening a live
-    // word or eating a committed one?
+    // Whether a word is composing now: a Backspace shortens it, or eats committed text.
     bool isComposing() const { return !handle_.buffer().empty(); }
 
     // Right after `onKey()` handled a Backspace with nothing composing: if the
@@ -97,18 +101,15 @@ public:
 
     // --- settings & VI/EN -----------------------------------------------------
 
-    // Re-read the settings file only if its mtime moved; returns true if any value
-    // changed. Push the result with `applySettings()`.
+    // Re-read the settings file, only if its mtime moved or regardless (the watcher
+    // said it changed); true if any value changed. Push the result with `applySettings()`.
     bool reloadSettingsIfChanged();
-    // Force a re-read regardless of mtime, for when the watcher already said the
-    // file changed. Returns true if any value changed.
     bool reloadSettings();
     // Push `settings()` into the engine; resets VI/EN and the word unless only gõ tắt moved.
     void applySettings();
 
     // Flip VI/EN, committing whatever was composing first, and persist the choice.
     ComposePlan toggleEnabled();
-
     bool enabled() const { return effectiveEnabled_; }
     Settings &settings() { return settings_; }
     const Settings &settings() const { return settings_; }
@@ -117,8 +118,7 @@ private:
     // Commit the composing word and end the composition. `consumed` is the caller's
     // call: a word boundary swallows its key, a shortcut does not.
     ComposePlan commitBuffer(bool consumed);
-    // A word boundary arrived while composing: commit the finished word plus the
-    // boundary character itself as one string.
+    // A word boundary arrived while composing: commit the word and the boundary as one.
     ComposePlan onBoundary(char32_t scalar, KeySource source);
     bool englishShortcutsActive() const;
 

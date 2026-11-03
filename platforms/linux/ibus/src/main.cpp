@@ -56,14 +56,18 @@ void onDisconnected(IBusBus * /*bus*/, gpointer /*user_data*/) {
 }
 
 #if FUNPUT_IBUS_FOCUS_ID
-// The daemon's CreateEngine, one per input context. The factory's own handler
-// (`ibus_factory_real_create_engine`) builds the engine with
-// `ibus_engine_new_with_type`, which never sets `has-focus-id`; the property is
-// construct-only, so the only way to ask for `focus-in-id` is to construct the engine
-// here, with the same three properties that function passes plus that one. Run before
-// the class handler (G_SIGNAL_RUN_LAST), and the accumulator stops at the first
-// non-null engine. A name that is not ours is left to the class handler, which answers
-// the daemon "Cannot find engine" the way it always has.
+// The daemon's CreateEngine. Not one engine per input context: under the default
+// use-global-engine one instance moves from context to context — the daemon detaches
+// it from the old one and attaches it to the new (bus/ibusimpl.c
+// `bus_ibus_impl_set_focused_context`), pairing every focus-in with a focus-out on
+// the same proxy — and asks for a fresh one when the global engine is switched away
+// and back. The factory's own handler (`ibus_factory_real_create_engine`) builds the
+// engine with `ibus_engine_new_with_type`, which never sets `has-focus-id`; the
+// property is construct-only, so the only way to ask for `focus-in-id` is to construct
+// the engine here, with the same three properties that function passes plus that one.
+// Run before the class handler (G_SIGNAL_RUN_LAST), and the accumulator stops at the
+// first non-null engine. A name that is not ours is left to the class handler, which
+// answers the daemon "Cannot find engine" the way it always has.
 //
 // Returned floating, as `g_object_new` on an IBusObject makes it: the signal copies
 // the value out, and the factory then `g_object_ref_sink`s what it receives, so an

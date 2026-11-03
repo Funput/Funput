@@ -855,7 +855,8 @@ với một prefix không rỗng — thường là chính từ vừa commit. Khi
 `mode` với `reason: "bridge"`. Chỉ khi đường truyền là cầu nối shell mới giải mã `textBeforeCaret`
 cho cổng gác, vì câu hỏi được đặt ở mỗi phím. Phía IBus, `Transport` đến từ chuỗi client của
 `focus-in-id`: `gnome-shell` là cầu nối, mọi chuỗi khác là `Direct`. Daemon cũ hơn 1.5.27 không có
-tín hiệu này, engine nhận `focus-in` không tên, và cổng gác đứng yên — như trước PR 5 của RFC.
+tín hiệu này, engine nhận `focus-in` không tên, và cổng gác đứng yên — như trước PR 5 của RFC. Lần
+focus đầu tiên sau khi daemon khởi động cũng không tên trên 1.5.27–1.5.31 (xem "Về phía IBus").
 
 **Sau một cú nhấp, từ kế tiếp chờ tới khi shell nghe client trả lời lại**, và hai shell nghe khác
 nhau. GTK trả lời ngay cú nhấp với văn bản như đang có (`gtk_im_context_wayland_reset`), nhưng
@@ -876,7 +877,11 @@ của gnome-shell chuyển thành `Reset` → `InputContext::reset()` → `Funpu
 đó là gõ từ hai lần, và cổng gác lại đưa đúng từ đầu tiên của ô vào preedit trên đúng đường truyền
 này. `Composer::onReset()` vì thế quyết theo đường truyền: `Direct` thì flush như trước (không ai
 khác commit preedit); `GnomeShell` thì bỏ preedit, quên journal (caret đã dời) và không commit gì.
-Phía IBus không đổi: `reset` của nó xưa nay chỉ `discard()`, vì ibus-daemon hoặc client đã commit.
+Nhánh thứ hai tách thành `Composer::onResetCommitted()`, và `reset` của IBus gọi đúng nó: ibus-daemon
+đã commit preedit trong `_ic_reset` (`bus/inputcontext.c`) — hoặc client tự commit — trước khi `Reset`
+tới engine, nên không commit lại, chỉ bỏ từ và **quên journal**, vì reset là một cú nhấp hay một phím
+dời caret (bất biến 7 của RFC). Trước đây reset bên IBus chỉ `discard()`, journal sống qua cú nhấp, và
+phím ⌫ kế tiếp có thể bị Funput nhận làm trên một tài liệu caret đã rời.
 
 Mô hình cầu nối nằm trong test (`tests/.../nonpreedit/sim/bridge/`): một bản cache null cho tới câu
 trả lời đầu và sau `click()`, phép đổi ký tự→byte trên cache rồi byte→ký tự trên cùng snapshot như
@@ -926,14 +931,24 @@ Năm sự thật về API, mỗi cái tốn vài vòng mới tìm ra, và không
   `has-focus-id` cùng ba thuộc tính handler mặc định vẫn truyền (`engine-name`, `object-path`,
   `connection`), trả về tham chiếu floating đúng như hàm kia — factory sẽ `ref_sink`. Daemon đọc
   thuộc tính D-Bus `FocusId` **một lần cho mỗi tên engine** rồi gọi hoặc `FocusInId`/`FocusOutId`,
-  hoặc `FocusIn`/`FocusOut`, không bao giờ cả hai cho một lần focus; engine giữ cả hai cặp vfunc
-  để daemon cũ hơn 1.5.27 vẫn gọi được cặp không tên. Hai điều đã đo bằng `ibus-daemon` 1.5.29
+  hoặc `FocusIn`/`FocusOut` — với 1.5.27–1.5.31 không bao giờ cả hai cho một lần focus; engine
+  giữ cả hai cặp vfunc để daemon cũ hơn 1.5.27 vẫn gọi được cặp không tên. Hai điều đã đo bằng `ibus-daemon` 1.5.29
   trong CI container: phép đọc `FocusId` là bất đồng bộ, nên **lần focus đầu tiên** sau khi
   daemon khởi động tới dưới dạng `FocusIn` không tên — từ lần thứ hai mới có tên; và khi không ô
   nào có focus, daemon trao focus cho context `fake` của chính nó (module GTK còn có
-  `fake-gtk-im`), nên `fake*` là một tên phải bỏ, không phải một app. Bản ibus main còn gửi lại
-  `FocusInId` cho đúng lần focus đã gửi `FocusIn` khi `FocusId` trả lời trễ; `focus.cpp` coi đó
-  là cùng một lần focus — chỉ đặt tên lại, không xoá những gì client đã nói.
+  `fake-gtk-im`), nên `fake*` là một tên phải bỏ, không phải một app. Lần focus không tên đó cần
+  nói cho chính xác: trên thực tế nó thường là context `fake` của daemon (không ô nào có focus
+  khi daemon vừa lên), nhưng nếu là một ô thật trên GNOME Wayland thì với daemon 1.5.27–1.5.31 ô
+  đó chạy như `Direct` — cổng gác trơ cho đúng lần focus ấy, tới lần focus kế tiếp mới có tên.
+  Từ **1.5.32** daemon tự sửa: khi thuộc tính `ActiveSurroundingText` trả lời (sau `FocusId`),
+  `_get_active_surrounding_text_cb` trong `bus/engineproxy.c` ép `has_focus = FALSE` rồi gọi lại
+  `bus_engine_proxy_focus_in`, nên engine nhận `FocusInId` cho đúng lần focus đã nhận `FocusIn`
+  (hoặc `FocusInId` lần thứ hai). Daemon khử trùng lặp theo **object path** của input context
+  (`has_focus && !g_strcmp0 (object_path, engine->object_path)`), nên `focus.cpp` cũng giữ
+  object path của focus đang có: `FocusInId` cùng path, hay tới sau một `FocusIn` không path, là
+  cùng một lần focus — chỉ đặt tên lại, không xoá những gì client đã nói; path khác là focus
+  mới. Và vì daemon cache `FocusId` theo tên engine suốt đời nó, nâng cấp Funput khi ibus-daemon
+  vẫn đang chạy cần `ibus restart`, không thì daemon tiếp tục gọi cặp không tên.
 
 Việc đếm theo ký tự được xác nhận lần thứ hai từ phía này, không cần suy luận: client báo con trỏ
 ở 4 cho `phủ ` (năm byte) và 3 cho `phủ` (bốn byte).
