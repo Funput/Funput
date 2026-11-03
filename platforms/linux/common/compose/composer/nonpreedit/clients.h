@@ -30,10 +30,14 @@ class ClientMemory {
 public:
     // A client took focus. Returns whether it is already known to drop deletes, which
     // is what keeps a re-activation of the same client from reopening a settled
-    // question. An unnamed client is always a fresh question — the IBus shell has no
-    // name to give — and it is the shell's job never to pass a name that stands for
-    // more than one app. compose/transport.h gives none for `gnome-shell`, and not the
-    // input context's uuid either: on GNOME/Wayland one context serves every app.
+    // question. An unnamed client is always a fresh question. The IBus shell has no
+    // name when the running daemon is older than 1.5.27 (it sends a plain `focus-in`,
+    // whatever libibus the engine was built with), and none from a newer one for a
+    // client that only names its toolkit — `xim`, `QIBusInputContext`, `gnome-shell`,
+    // the daemon's own `fake*` contexts. It is the shell's job never to pass a name
+    // that stands for more than one app: compose/transport.h gives none for those,
+    // and not the input context's uuid either, since on GNOME/Wayland one context
+    // serves every app.
     bool focus(std::string_view id) {
         current_.assign(id);
         return !current_.empty() &&

@@ -80,11 +80,14 @@ inline ClientIdentity identifyProgram(std::string_view program) {
     return {std::string(program), Transport::Direct};
 }
 
-// IBus: the `client` of `focus-in-id`. Only a toolkit module names the app —
-// `gtk3-im:firefox`, `gtk4-im:gnome-text-editor` — so only `<module>:<program>` yields
-// a name; every bare shape is one of `namesAToolkit()`'s or the bridge. `gnome-shell`
-// is what every GTK app reports on a GNOME Wayland session. Wired up by the shell in a
-// later PR; defined here so the rule has one home.
+// IBus: the `client` of `focus-in-id` (ibusengine.c documents the shapes). Only a
+// toolkit module names the app — `gtk3-im:firefox`, `gtk4-im:gnome-text-editor` — so
+// only `<module>:<program>` yields a name; every bare shape is one of `namesAToolkit()`'s
+// or the bridge, and `gnome-shell` is what every GTK app reports on a GNOME Wayland
+// session. What follows the colon is taken as it comes: GTK falls back to `(<pid>)`
+// when the process has no name, and that still stands for one app for as long as it
+// runs. Empty — the shell passes that for a plain `focus-in`, which is all a daemon
+// older than 1.5.27 sends — names none either.
 inline ClientIdentity identifyIBusClient(std::string_view client) {
     if (client == "gnome-shell") return {{}, Transport::GnomeShell};
     const size_t colon = client.find(':');

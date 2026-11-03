@@ -41,12 +41,14 @@ TEST_CASE("IBus: only a toolkit module names the app") {
 
     // A module that names nothing is nothing.
     CHECK(identifyIBusClient("gtk3-im:").name.empty());
+    CHECK(identifyIBusClient("gtk3-im:").transport == Transport::Direct);
     CHECK(identifyIBusClient(":").name.empty());
 }
 
 TEST_CASE("the names that stand for a toolkit are the same list for both producers") {
-    // IBus's stand-in when nothing has focus, and the toolkits that name no app, as
-    // the IBus engine meets them in `focus-in-id` and as Fcitx5 meets them in
+    // IBus's stand-in when nothing has focus, the toolkits that name no app, and the
+    // empty client a plain `focus-in` amounts to (all a daemon older than 1.5.27 sends),
+    // as the IBus engine meets them in `focus-in-id` and as Fcitx5 meets them in
     // `program()` when its IBus frontend passes the client string on. Both must
     // refuse every one, or a verdict against `xim` would stand the mode down for
     // every X11 app at once on one shell and not the other.
@@ -66,6 +68,15 @@ TEST_CASE("the names that stand for a toolkit are the same list for both produce
     CHECK(identifyProgram("fa").name == "fa");
     // A module-qualified client through Fcitx5's IBus frontend is still one app.
     CHECK(identifyProgram("gtk3-im:firefox").name == "gtk3-im:firefox");
+}
+
+TEST_CASE("IBus: what follows the module is taken as it comes") {
+    // GTK falls back to the pid when the process has no name (ibusimcontext.c,
+    // `_create_input_context`). That is still exactly one app for as long as it runs,
+    // and a fresh question after a restart — the cost of forgetting is one word.
+    CHECK(identifyIBusClient("gtk3-im:(1234)").name == "(1234)");
+    // The first colon ends the module; the app may hold more of them.
+    CHECK(identifyIBusClient("gtk4-im:org.gnome.TextEditor:dev").name == "org.gnome.TextEditor:dev");
 }
 
 TEST_CASE("a refused client re-focused as the bridge is a fresh question") {

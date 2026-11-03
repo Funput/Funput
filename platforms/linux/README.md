@@ -235,12 +235,17 @@ Cả hai đều tới cùng một process.
   bất cứ lần ghi nào. Đây là phía Chromium/EditContext, Funput không với tới được, nên
   `BlindWrites` đứng dậy sau hai câu trả lời rỗng — trước lần sửa đầu tiên có lệnh xoá. Khung
   chat của Cursor là input DOM thường nên không dính.
-- **IBus không biết tên client, nên một client bỏ lệnh xoá bị thử lại ở mỗi lần focus.** Phán
-  quyết gắn với tên client mà IBus không có tên nào để đưa, và lấy object path của engine làm tên
-  là sai: engine có thể dùng chung cho nhiều app, khi đó một lần từ chối tắt chế độ cho tất cả.
+- **IBus chỉ biết tên client khi app đi qua module IBus của GTK.** Từ libibus 1.5.27, engine
+  nhận chuỗi client của `focus-in-id` — `gtk3-im:firefox`, `gtk4-im:gnome-text-editor` — nên
+  trên X11, XWayland hay với `GTK_IM_MODULE=ibus`, một client bỏ lệnh xoá được nhớ qua các lần
+  focus như bên Fcitx5. Trên GNOME Wayland thì mọi app vẫn báo `gnome-shell` (tên của cầu nối,
+  không phải của app, nên không bao giờ được nhớ — xem [Cầu nối gnome-shell](#cầu-nối-gnome-shell));
+  app Qt báo `QIBusInputContext`, XIM báo `xim`, cũng không phải tên một app. Với daemon cũ hơn
+  1.5.27, engine vẫn nhận `focus-in` không tên và mọi thứ như trước: client bỏ lệnh xoá bị thử lại
+  ở mỗi lần focus, mất một từ mỗi lần quay lại. Lấy object path của engine làm tên thay thế là
+  sai: engine có thể dùng chung cho nhiều app, khi đó một lần từ chối tắt chế độ cho tất cả.
   Client **luôn** trả lời rỗng thì tự an toàn bên IBus — daemon khử trùng lặp `("",0,0)` nên
-  chế độ không bao giờ bật với nó. Còn client trả lời tài liệu thật nhưng bỏ lệnh xoá thì mất một
-  từ mỗi lần quay lại; chưa có cách đo hay đặt tên đáng tin, và không còn công tắc để tắt.
+  chế độ không bao giờ bật với nó.
 - **IBus, ô trống ngay sau một ô trống: từ đầu tiên có gạch chân.** Daemon không chuyển payload
   trùng với lần trước, nên engine không biết client đã lên tiếng cho tới khi tài liệu đổi; từ thứ
   hai trở đi thì chữ vào thẳng.
@@ -313,8 +318,9 @@ tồn tại hai bản — mỗi shell một — và chúng đã trôi khỏi nha
 `deleteSurroundingText`. Preedit chỉ còn là đường lùi cho client không nhận được cách đó.
 
 Thứ thật sự khác nhau giữa hai shell nằm ở ba chỗ. Thứ nhất là cách đọc văn bản quanh con trỏ
-và thi hành `Replace`. Thứ hai là cách gọi tên client để nhớ phán quyết: Fcitx5 có tên tiến
-trình và sự kiện focus-in, IBus không có tên nào để đưa. Thứ ba là đường lùi sang preedit, và
+và thi hành `Replace`. Thứ hai là chuỗi dùng để gọi tên client và nhận ra cầu nối: Fcitx5 có
+`program()` của input context, IBus có chuỗi client của `focus-in-id` (libibus 1.5.27 trở lên,
+daemon cũ hơn thì không tên); cả hai đi qua `compose/transport.h`. Thứ ba là đường lùi sang preedit, và
 **ai commit nó khi mất focus**: Fcitx5 dùng `setClientPreedit` cộng watcher focus-out, IBus
 dùng `IBUS_ENGINE_PREEDIT_COMMIT`. Cả hai đều có chú thích tại chỗ.
 
@@ -384,7 +390,8 @@ fcitx5/src/             Addon Fcitx5 -> libfunput.so
   funput_client.cpp       Nói chuyện với client, cả hai chiều
   hidden_preedit.cpp      Danh sách client tự giấu preedit (allowlist)
 ibus/src/               IBus engine -> ibus-engine-funput
-  engine.h                Kiểu GObject công khai
+  main.cpp                Bus, factory, và dựng engine với has-focus-id qua create-engine
+  engine.h                Kiểu GObject công khai, công tắc phiên bản FUNPUT_IBUS_FOCUS_ID
   engine/                 internal.h, object.cpp, callbacks.cpp, focus.cpp, client.cpp
 settings-gtk/           App Cài đặt GTK4 + libadwaita (crate cargo riêng,
                         và là gói riêng — xem mục Build)
@@ -768,8 +775,9 @@ không riêng khi đổi focus — chú thích trong `deactivate()` nói đúng 
 thay đổi capability sẽ xoá phán quyết chỉ một hai phím sau khi nó được đưa ra. Editor của Cursor
 là client như vậy: chế độ tự bật lại rồi phá tiếp từ sau, lặp vô hạn thay vì hỏng đúng một lần.
 Bộ nhớ nằm ở `compose/composer/nonpreedit/clients.h`, giới hạn tám client gần nhất. Tên client
-là `InputContext::program()` khi nó chỉ đúng một app. **Tên rỗng không bao giờ được nhớ**: shell
-IBus không có tên để đưa, và trên GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái
+là `InputContext::program()` của Fcitx5, hay phần sau dấu hai chấm trong `gtk3-im:firefox` của
+IBus, khi nó chỉ đúng một app. **Tên rỗng không bao giờ được nhớ**: shell IBus trên daemon cũ hơn
+1.5.27 không có tên để đưa, và trên GNOME/Wayland mọi client đều trả lời `gnome-shell` — nhớ cái
 tên đó là tắt chế độ cho tất cả.
 
 Uuid của input context từng được dùng thế chỗ, như một cái tên "hẹp hơn", và đó là một sai lầm đo
@@ -802,8 +810,8 @@ Shell Fcitx5 đã có danh sách client tự giấu preedit (`hidden_preedit.cpp
 `applyNonPreeditMode()` đọc luôn danh sách đó: chờ chế độ bị từ chối là mất một từ nát
 (`nguyen64` ra `nguyenênễn`), một cái giá không còn ai gánh khi công tắc đã bỏ. Danh sách chỉ gồm
 tên tiến trình, không bao giờ cờ capability hay việc thiếu surrounding text — cả hai nói dối, và
-sẽ kéo cả những client đang chạy tốt vào. IBus không biết tên client nên không có đường tương
-đương.
+sẽ kéo cả những client đang chạy tốt vào. IBus không có đường tương đương: nó chỉ đặt được tên
+cho app đi qua module GTK, còn WPS là Qt và báo `QIBusInputContext`, không phải tên app.
 
 #### Cầu nối gnome-shell
 
@@ -845,9 +853,10 @@ Shell cung cấp bit `spokeSinceReset`: xoá ở focus-in thật và ở `reset(
 tới. Chế độ được chọn lại ở đầu mỗi từ, nên từ kế tiếp quay về gõ thẳng ngay khi client đã trả lời
 với một prefix không rỗng — thường là chính từ vừa commit. Khi chế độ đổi vì lý do này, trace ghi
 `mode` với `reason: "bridge"`. Chỉ khi đường truyền là cầu nối shell mới giải mã `textBeforeCaret`
-cho cổng gác, vì câu hỏi được đặt ở mỗi phím. Phía IBus mọi thứ đã nối sẵn nhưng còn **trơ**:
-shell chưa đặt tên client nên `Transport` luôn là `Direct` cho tới khi có `focus-in-id` (PR 5 của
-RFC).
+cho cổng gác, vì câu hỏi được đặt ở mỗi phím. Phía IBus, `Transport` đến từ chuỗi client của
+`focus-in-id`: `gnome-shell` là cầu nối, mọi chuỗi khác là `Direct`. Daemon cũ hơn 1.5.27 không có
+tín hiệu này, engine nhận `focus-in` không tên, và cổng gác đứng yên — như trước PR 5 của RFC. Lần
+focus đầu tiên sau khi daemon khởi động cũng không tên trên 1.5.27–1.5.31 (xem "Về phía IBus").
 
 **Sau một cú nhấp, từ kế tiếp chờ tới khi shell nghe client trả lời lại**, và hai shell nghe khác
 nhau. GTK trả lời ngay cú nhấp với văn bản như đang có (`gtk_im_context_wayland_reset`), nhưng
@@ -868,7 +877,11 @@ của gnome-shell chuyển thành `Reset` → `InputContext::reset()` → `Funpu
 đó là gõ từ hai lần, và cổng gác lại đưa đúng từ đầu tiên của ô vào preedit trên đúng đường truyền
 này. `Composer::onReset()` vì thế quyết theo đường truyền: `Direct` thì flush như trước (không ai
 khác commit preedit); `GnomeShell` thì bỏ preedit, quên journal (caret đã dời) và không commit gì.
-Phía IBus không đổi: `reset` của nó xưa nay chỉ `discard()`, vì ibus-daemon hoặc client đã commit.
+Nhánh thứ hai tách thành `Composer::onResetCommitted()`, và `reset` của IBus gọi đúng nó: ibus-daemon
+đã commit preedit trong `_ic_reset` (`bus/inputcontext.c`) — hoặc client tự commit — trước khi `Reset`
+tới engine, nên không commit lại, chỉ bỏ từ và **quên journal**, vì reset là một cú nhấp hay một phím
+dời caret (bất biến 7 của RFC). Trước đây reset bên IBus chỉ `discard()`, journal sống qua cú nhấp, và
+phím ⌫ kế tiếp có thể bị Funput nhận làm trên một tài liệu caret đã rời.
 
 Mô hình cầu nối nằm trong test (`tests/.../nonpreedit/sim/bridge/`): một bản cache null cho tới câu
 trả lời đầu và sau `click()`, phép đổi ký tự→byte trên cache rồi byte→ký tự trên cùng snapshot như
@@ -879,7 +892,7 @@ chế độ của từ đầu là preedit và `[[` ra `[`, `soor` ra `sổ`.
 
 #### Về phía IBus
 
-Bốn sự thật về API, mỗi cái tốn vài vòng mới tìm ra, và không cái nào được header nói cho biết:
+Năm sự thật về API, mỗi cái tốn vài vòng mới tìm ra, và không cái nào được header nói cho biết:
 
 - **Đăng ký nhận surrounding text là theo từng input context, không phải theo engine.** IBus ghi
   tài liệu cho `ibus_engine_get_surrounding_text()` với out-param null như cách đăng ký và bảo
@@ -911,6 +924,31 @@ Bốn sự thật về API, mỗi cái tốn vài vòng mới tìm ra, và khôn
   [trace](#gửi-trace-khi-báo-lỗi) bên dưới. Cùng lý do đó, công tắc của trace nằm trong
   `settings.json` chứ không phải biến môi trường: engine do daemon sinh ra không thừa kế shell
   của bạn.
+- **Tên client phải xin lúc dựng engine, và daemon tự chọn gọi gì.** `focus-in-id` (libibus
+  1.5.27) chỉ tới engine nào có thuộc tính `has-focus-id`, mà thuộc tính đó **construct-only**;
+  handler mặc định của factory dựng engine bằng `ibus_engine_new_with_type` và không bao giờ đặt
+  nó. Vì thế `main.cpp` nối tín hiệu `create-engine` của factory và tự `g_object_new` engine với
+  `has-focus-id` cùng ba thuộc tính handler mặc định vẫn truyền (`engine-name`, `object-path`,
+  `connection`), trả về tham chiếu floating đúng như hàm kia — factory sẽ `ref_sink`. Daemon đọc
+  thuộc tính D-Bus `FocusId` **một lần cho mỗi tên engine** rồi gọi hoặc `FocusInId`/`FocusOutId`,
+  hoặc `FocusIn`/`FocusOut` — với 1.5.27–1.5.31 không bao giờ cả hai cho một lần focus; engine
+  giữ cả hai cặp vfunc để daemon cũ hơn 1.5.27 vẫn gọi được cặp không tên. Hai điều đã đo bằng `ibus-daemon` 1.5.29
+  trong CI container: phép đọc `FocusId` là bất đồng bộ, nên **lần focus đầu tiên** sau khi
+  daemon khởi động tới dưới dạng `FocusIn` không tên — từ lần thứ hai mới có tên; và khi không ô
+  nào có focus, daemon trao focus cho context `fake` của chính nó (module GTK còn có
+  `fake-gtk-im`), nên `fake*` là một tên phải bỏ, không phải một app. Lần focus không tên đó cần
+  nói cho chính xác: trên thực tế nó thường là context `fake` của daemon (không ô nào có focus
+  khi daemon vừa lên), nhưng nếu là một ô thật trên GNOME Wayland thì với daemon 1.5.27–1.5.31 ô
+  đó chạy như `Direct` — cổng gác trơ cho đúng lần focus ấy, tới lần focus kế tiếp mới có tên.
+  Từ **1.5.32** daemon tự sửa: khi thuộc tính `ActiveSurroundingText` trả lời (sau `FocusId`),
+  `_get_active_surrounding_text_cb` trong `bus/engineproxy.c` ép `has_focus = FALSE` rồi gọi lại
+  `bus_engine_proxy_focus_in`, nên engine nhận `FocusInId` cho đúng lần focus đã nhận `FocusIn`
+  (hoặc `FocusInId` lần thứ hai). Daemon khử trùng lặp theo **object path** của input context
+  (`has_focus && !g_strcmp0 (object_path, engine->object_path)`), nên `focus.cpp` cũng giữ
+  object path của focus đang có: `FocusInId` cùng path, hay tới sau một `FocusIn` không path, là
+  cùng một lần focus — chỉ đặt tên lại, không xoá những gì client đã nói; path khác là focus
+  mới. Và vì daemon cache `FocusId` theo tên engine suốt đời nó, nâng cấp Funput khi ibus-daemon
+  vẫn đang chạy cần `ibus restart`, không thì daemon tiếp tục gọi cặp không tên.
 
 Việc đếm theo ký tự được xác nhận lần thứ hai từ phía này, không cần suy luận: client báo con trỏ
 ở 4 cho `phủ ` (năm byte) và 3 cho `phủ` (bốn byte).
@@ -959,7 +997,7 @@ phía trên) và `ev`:
 | `ev` | Nghĩa |
 |---|---|
 | `start` | Shell (`fcitx5`/`ibus`), giờ thực, pid, và trace có đang ở chế độ raw không |
-| `focus` | Client vừa nhận focus, theo tên framework báo (`gnome-shell` trên GNOME/Wayland; IBus chưa có tên để báo) |
+| `focus` | Client vừa nhận focus, theo chuỗi framework báo: `program()` của Fcitx5, chuỗi client của `focus-in-id` bên IBus (`gtk3-im:firefox`; rỗng với daemon cũ hơn 1.5.27). `gnome-shell` trên GNOME/Wayland ở cả hai |
 | `key` | Loại phím sau khi phân loại (`Compose`, `Boundary`, `Backspace`, `Shortcut`…). Keysym và modifier chỉ ghi cho phím mà *danh tính* là hành vi cần chẩn đoán — Backspace, mũi tên, tổ hợp như Ctrl+A — không ghi cho phím sinh ký tự (Shift trên một chữ cái là chữ hoa, tức là nội dung) |
 | `reading` | Văn bản trước caret mà shell đọc được, client có trả lời kể từ phím trước không, có vùng chọn không, và kết luận của composer: `verdict`, `inSync`, cùng `acked`/`pending` — số thay đổi trong journal mà bản đọc xác nhận trên tổng số đang chờ |
 | `plan` | Composer yêu cầu shell làm gì: `effect`, `consumed`, và với `Replace` là `deleteChars`/`deleteAfterChars` |

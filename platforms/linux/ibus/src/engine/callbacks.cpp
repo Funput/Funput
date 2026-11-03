@@ -50,9 +50,10 @@ void applyNonPreeditMode(IBusEngine *engine) {
     // And the path to it must be able to carry a repair right now: on the gnome-shell
     // bridge the first word in an empty field, or the first after a click, would lose
     // its repairs for certain (transport/guard.h), so that one word is composed in a
-    // preedit. Inert on this shell until it names the transport at focus-in (a later
-    // PR): the composer holds `Transport::Direct` until then. Same place as Fcitx5's,
-    // and the document is decoded for it only on the bridge: this runs on every key.
+    // preedit. The transport is what focus.cpp read off the `focus-in-id` client; an
+    // unnamed focus (a plain `focus-in`, all a daemon older than 1.5.27 sends) is
+    // `Transport::Direct`, and the guard then stays inert. Same place as Fcitx5's, and
+    // the document is decoded for it only on the bridge: this runs on every key.
     const bool bridge =
         state->composer.transport() == funput::Transport::GnomeShell &&
         state->composer.bridgeBlocksRepairs(state->spokeSinceReset, textBeforeCaret(engine));
