@@ -7,7 +7,7 @@
 // (transport/guard.h). Both come from one string the framework hands the shell —
 // Fcitx5's `InputContext::program()`, IBus's `focus-in-id` client — and this is the
 // one place that string is read, so the two shells cannot drift on what `gnome-shell`
-// means.
+// means, or on which names stand for a toolkit rather than an app.
 //
 // This is also the seam a future source of identity plugs into: a focus bridge that
 // resolves the real app behind the shell, or a data-driven client profile, would be
@@ -59,25 +59,39 @@ struct ClientIdentity {
     Transport transport = Transport::Direct;
 };
 
-// Fcitx5: `InputContext::program()`.
+// The bare client strings that stand for a toolkit or a stand-in, never for one app:
+// the shapes `focus-in-id` documents in ibusengine.c, less `gnome-shell`, which names
+// the transport instead. Both producers meet them. IBus sees them as the client; Fcitx5
+// sees them as `program()` whenever its IBus frontend passes the client string on
+// unchanged — ibusfrontend.cpp `createInputContext` looks the process up only for
+// `QIBusInputContext` and `gtk-im`, and asking for "the process" there is still a
+// guess. `fake` is matched the way ibus-daemon tells its own stand-in contexts apart,
+// by prefix: bus/inputcontext.c, `context->fake = (strncmp (client, "fake", 4) == 0)`.
+inline bool namesAToolkit(std::string_view client) {
+    return client.substr(0, 4) == "fake" || client == "xim" || client == "Qt" ||
+           client == "QIBusInputContext" || client == "gtk-im";
+}
+
+// Fcitx5: `InputContext::program()`. A process name from its own frontends, or the IBus
+// client string from the IBus one.
 inline ClientIdentity identifyProgram(std::string_view program) {
     if (program == "gnome-shell") return {{}, Transport::GnomeShell};
+    if (program.empty() || namesAToolkit(program)) return {};
     return {std::string(program), Transport::Direct};
 }
 
-// IBus: the `client` of `focus-in-id` (ibusengine.c documents the shapes). Only a
-// toolkit module names the app — `gtk3-im:firefox`, `gtk4-im:gnome-text-editor` — so
-// only `<module>:<program>` yields a name. `gnome-shell` is the bridge, as above, and
-// on a GNOME Wayland session it is what every GTK app reports. `fake` is IBus's own
-// stand-in when nothing has focus, and `xim`, `QIBusInputContext` and the like are a
-// toolkit, not an app; all of those would stand for more than one app, so they name
-// none. Wired up by the shell in a later PR; defined here so the rule has one home.
+// IBus: the `client` of `focus-in-id`. Only a toolkit module names the app —
+// `gtk3-im:firefox`, `gtk4-im:gnome-text-editor` — so only `<module>:<program>` yields
+// a name; every bare shape is one of `namesAToolkit()`'s or the bridge. `gnome-shell`
+// is what every GTK app reports on a GNOME Wayland session. Wired up by the shell in a
+// later PR; defined here so the rule has one home.
 inline ClientIdentity identifyIBusClient(std::string_view client) {
     if (client == "gnome-shell") return {{}, Transport::GnomeShell};
-    if (client.substr(0, 4) == "fake") return {};
     const size_t colon = client.find(':');
-    if (colon == std::string_view::npos) return {};
-    return {std::string(client.substr(colon + 1)), Transport::Direct};
+    if (colon == std::string_view::npos || namesAToolkit(client)) return {};
+    const std::string_view program = client.substr(colon + 1);
+    if (program.empty()) return {};
+    return {std::string(program), Transport::Direct};
 }
 
 } // namespace funput

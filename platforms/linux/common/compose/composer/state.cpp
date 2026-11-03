@@ -22,6 +22,28 @@ void Composer::discard() {
     handle_.clear();
 }
 
+// Fcitx5 hands a reset on to the engine whatever sent it, and on the gnome-shell
+// bridge the sender has already committed the word. There a reset is a click into
+// the focused field: mutter's `clutter_input_focus_reset` (clutter-input-focus.c)
+// commits `priv->preedit` first when the preedit was published with
+// CLUTTER_PREEDIT_RESET_COMMIT — fcitx5's IBus frontend sends that mode for every
+// preedit not marked DontCommit (ibusfrontend.cpp `updatePreeditDelegate`, with
+// gnome-shell's `set_client_commit_preedit(true)`), and this composer marks none —
+// and only then calls `clutter_input_method_reset`, which gnome-shell's `vfunc_reset`
+// (js/misc/inputMethod.js) forwards as IBus `Reset` → `resetDBus` → `InputContext::
+// reset()` → `FunputEngine::reset()`. Flushing here would type the word a second
+// time, and the guard puts the first word of a field into a preedit on exactly this
+// transport. Dropping the preedit is still the shell's job, so the plan says so. On
+// a direct transport nothing else commits the preedit, as the IBus shell's comment
+// on `reset` records for ibus-daemon's own commit, and it is flushed as before.
+ComposePlan Composer::onReset() {
+    if (nonPreedit_.transport == Transport::Direct) return flush();
+    // The click moved the caret: the journal goes, as it does through `flush()`.
+    nonPreedit_.forget();
+    discard();
+    return ComposePlan::flushThrough({});
+}
+
 void Composer::armCapitalization() {
     handle_.armCapitalization();
 }

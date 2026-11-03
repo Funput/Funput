@@ -357,7 +357,20 @@ textBeforeCaret)`): `transport == GnomeShell` **và** (`!spokeSinceReset` **ho�
   ký tự thì không gác: lệnh sửa chỉ xoá trong từ đang gõ, ngắn hơn prefix đủ chứa từ trước nó.
 - Transport đến từ `compose/transport.h`: `identifyProgram()` cho Fcitx5 (`gnome-shell` → tên
   rỗng + `GnomeShell`), `identifyIBusClient()` cho IBus (đã định nghĩa và có test, PR 5 mới nối).
-  Trên IBus guard vì vậy còn **trơ** cho tới PR 5: `Transport` luôn là `Direct`.
+  Hai hàm dùng chung một danh sách `namesAToolkit()` cho các tên đứng cho toolkit chứ không phải
+  app (`fake*` theo prefix như `bus/inputcontext.c` của ibus-daemon, `xim`, `Qt`,
+  `QIBusInputContext`, `gtk-im`): frontend ibus của Fcitx5 chuyển chuỗi client đó nguyên vẹn vào
+  `program()`, nên Fcitx5 cũng gặp chúng. Trên IBus guard còn **trơ** cho tới PR 5: `Transport`
+  luôn là `Direct`.
+- Shell chỉ giải mã `textBeforeCaret` cho guard khi `Composer::transport()` là cầu nối; trên
+  đường truyền khác câu trả lời luôn là "không", và câu hỏi được đặt ở mỗi phím.
+- **`reset()` của Fcitx5 trên cầu nối không được flush.** Mutter commit preedit ngay trong
+  `clutter_input_focus_reset` (chế độ `CLUTTER_PREEDIT_RESET_COMMIT`, mà frontend ibus của Fcitx5
+  gửi cho mọi preedit không `DontCommit`) rồi mới reset IM; reset tới `FunputEngine::reset()` qua
+  `vfunc_reset` của gnome-shell → `Reset` → `InputContext::reset()`. Vì guard đưa từ đầu tiên của
+  ô vào preedit trên đúng đường truyền này, flush ở đó gõ từ hai lần. `Composer::onReset()` quyết
+  theo đường truyền: `Direct` flush, `GnomeShell` bỏ preedit và quên journal. IBus đã `discard()`
+  sẵn (ibus-daemon hoặc client commit).
 
 **Đánh đổi cần đo** (chưa đo; điền vào bảng dưới sau khi thử trên máy thật):
 
@@ -549,9 +562,11 @@ test `document/predicted_tests.cpp`, `sim/lag_tests.cpp`, `retone/scan_tests.cpp
 ### PR 4 — Chặn lệnh xoá vô vọng
 
 **Trạng thái:** Đã triển khai trong PR này (`compose/transport.h`, `transport/guard.h`,
-`Composer::bridgeBlocksRepairs()`; `BridgeSim` ở `tests/.../nonpreedit/sim/bridge.h`; test
-`transport_tests.cpp`, `transport/guard_tests.cpp`, `sim/bridge_tests.cpp`). Phần đo trên máy
-thật chưa làm — bảng ở [mục 6.4](#64-deleteguard--không-phát-lệnh-xoá-vô-vọng) còn trống.
+`Composer::bridgeBlocksRepairs()`, `Composer::onReset()`; `BridgeSim` ở
+`tests/.../nonpreedit/sim/bridge/bridge.h`; test `transport_tests.cpp`,
+`transport/guard_tests.cpp`, `sim/bridge/bridge_tests.cpp`, `sim/bridge/click_tests.cpp`). Phần
+đo trên máy thật chưa làm — bảng ở [mục 6.4](#64-deleteguard--không-phát-lệnh-xoá-vô-vọng) còn
+trống.
 
 - Hiện thực [mục 6.4](#64-deleteguard--không-phát-lệnh-xoá-vô-vọng) ở cả hai shell: bit
   `spokeSinceReset` và guard AND vào `applyNonPreeditMode()`, với trace `mode` lý do `"bridge"`.
@@ -560,12 +575,20 @@ thật chưa làm — bảng ở [mục 6.4](#64-deleteguard--không-phát-lện
   `clientId()` của Fcitx5 bỏ, thay bằng `identifyProgram()` dùng chung.
 - `BridgeSim` mô phỏng gnome-shell + mutter + GTK3 imwayland + app: cache null trước câu trả
   lời đầu và sau `click()`, đổi ký tự→byte trên cache (mutter bỏ khi cache ngắn hơn N) rồi
-  byte→ký tự trên cùng snapshot (GTK), commit luôn tới, daemon IBus không chuyển tiếp hai câu
-  trả lời giống nhau.
-- Test: không guard thì mô hình tái hiện `[[` → `ơ[` (chứng minh mô hình trung thực); có guard
-  thì `[[` → `[` và `soor` → `sổ` ở đầu ô trống, từ kế tiếp gõ thẳng, sau `click()` đúng một từ
-  chờ client, prefix không rỗng không bị gác, và vòng ký tự→byte→ký tự là đồng nhất
-  ([mục 4.5](#45-điều-đã-loại-trừ-hỏng-utf-8-do-đổi-byte) thành test).
+  byte→ký tự trên cùng snapshot (GTK), commit luôn tới. `click()` để mutter commit preedit rồi
+  mới đưa reset cho shell (`Composer::onReset()`), và ghi tài liệu sau commit vào lịch sử như một
+  phím thường, nên client trả lời nó trễ `lag` phím như mọi thay đổi. Tuỳ chọn `Shell`: `Fcitx5`
+  nghe mọi câu trả lời (libibus so đối tượng `IBus.Text`, gnome-shell cấp đối tượng mới mỗi lần);
+  `IBus` đứng sau ibus-daemon, vốn bỏ câu trả lời giống hệt câu trước
+  (`bus_engine_proxy_set_surrounding_text`).
+- Test: không guard thì mô hình tái hiện `[[` → `ơ[` và `soor` → `soổ` với client trễ hai phím
+  (chứng minh mô hình trung thực; `sôổ` của triệu chứng 3 thì mô hình không ra); có guard thì
+  từ đầu ở ô trống soạn bằng preedit và ra `[`, `sổ`, từ kế tiếp gõ thẳng, sau `click()` từ kế
+  tiếp chờ client trả lời lại — với `IBus` là một thay đổi của tài liệu, với `Fcitx5` là bất kỳ
+  câu trả lời nào — rồi từ sau gõ thẳng, prefix không rỗng không bị gác, `click()` giữa chừng
+  một từ được gác commit từ đó đúng một lần, và vòng ký tự→byte→ký tự trên *một* snapshot là
+  đồng nhất ([mục 4.5](#45-điều-đã-loại-trừ-hỏng-utf-8-do-đổi-byte) thành test; cuộc đua commit
+  đang bay giữa hai lớp thì mô hình không có).
 - Còn lại cho người kiểm tra: Chrome Wayland native có vẽ preedit qua text-input-v3 không;
   Firefox, GTK4 và LibreOffice trên cầu nối gnome-shell hiển thị từ đầu tiên ra sao.
 

@@ -54,9 +54,10 @@ void FunputEngine::applyNonPreeditMode() {
     // its repairs for certain (transport/guard.h). That word is composed in a preedit
     // instead; the question is asked again at the next word, by which time the client
     // has answered with the word before it. Asked here and nowhere else, so the mode
-    // still never changes under a word.
-    const bool bridge = context && composer_.bridgeBlocksRepairs(
-                                       spokeSinceReset_, textBeforeCaret(context));
+    // still never changes under a word. Only the bridge can say yes, so only there is
+    // the document decoded for it: this runs on every key.
+    const bool bridge = context && composer_.transport() == funput::Transport::GnomeShell &&
+                        composer_.bridgeBlocksRepairs(spokeSinceReset_, textBeforeCaret(context));
     composer_.setNonPreedit(lastSurroundingOk_ && !hidden && !bridge);
     funput::Trace &trace = funput::Trace::shared();
     if (trace.enabled() && composer_.nonPreedit() != wasNonPreedit) {

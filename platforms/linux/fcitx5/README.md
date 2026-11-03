@@ -116,8 +116,8 @@ một.
 | File | Dòng | Việc |
 |---|---|---|
 | [`src/funput_engine.h`](src/funput_engine.h) | 123 | Kiểu addon, config, và mọi thứ nửa còn lại cần |
-| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 107 | Vòng đời: watcher, nạp lại settings, chọn chế độ giữa hai từ |
-| [`src/engine/focus.cpp`](src/engine/focus.cpp) | 67 | Focus vào/ra, reset, đổi bộ gõ: định danh client, đếm lại câu trả lời |
+| [`src/funput_engine.cpp`](src/funput_engine.cpp) | 108 | Vòng đời: watcher, nạp lại settings, chọn chế độ giữa hai từ |
+| [`src/engine/focus.cpp`](src/engine/focus.cpp) | 70 | Focus vào/ra, reset, đổi bộ gõ: định danh client, đếm lại câu trả lời |
 | [`src/funput_input.cpp`](src/funput_input.cpp) | 91 | Một phím: chuẩn hoá, hỏi composer |
 | [`src/funput_client.cpp`](src/funput_client.cpp) | 101 | Thi hành plan lên client — preedit, commit, sửa tài liệu; đọc tài liệu |
 | [`src/hidden_preedit.cpp`](src/hidden_preedit.cpp) | 53 | Allowlist client tự giấu preedit, và không bao giờ gõ thẳng |
@@ -210,8 +210,13 @@ shell này:
 - **`spokeSinceReset_`: client đã trả lời kể từ focus-in hay `reset()` gần nhất chưa.** Trên
   cầu nối gnome-shell, `reset()` là một cú nhấp chuột vào ô đang focus, sau đó cầu nối không còn
   bản surrounding text nào cho tới khi client trả lời lại. `applyNonPreeditMode()` hỏi
-  `Composer::bridgeBlocksRepairs()` với bit này và `textBeforeCaret()`, và nếu cầu nối chắc
-  chắn bỏ lệnh sửa thì từ đó soạn bằng preedit — xem "Cầu nối gnome-shell" trong README Linux.
+  `Composer::bridgeBlocksRepairs()` với bit này và `textBeforeCaret()` — chỉ giải mã khi
+  `Composer::transport()` là cầu nối — và nếu cầu nối chắc chắn bỏ lệnh sửa thì từ đó soạn bằng
+  preedit — xem "Cầu nối gnome-shell" trong README Linux.
+- **`reset()` không flush trên cầu nối.** Ở đó mutter đã commit preedit trước khi chuyển reset đi
+  (`clutter_input_focus_reset`, chế độ `COMMIT` mà frontend ibus của Fcitx5 gửi), nên flush là gõ
+  từ hai lần. `Composer::onReset()` quyết theo đường truyền: `Direct` flush, `GnomeShell` bỏ
+  preedit và không commit — chi tiết và dẫn nguồn ở `state.cpp`.
 - **`applyNonPreeditMode()` không bao giờ lật giữa từ.** Hai chế độ bất đồng về chỗ từ đang gõ
   nằm ở đâu, nên lật khi đang soạn dở sẽ để engine và client mô tả hai thứ khác nhau. Cùng một
   cổng gác với `applyNonPreeditMode()` bên IBus.

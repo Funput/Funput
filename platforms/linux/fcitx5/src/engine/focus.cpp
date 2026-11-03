@@ -16,7 +16,10 @@ void FunputEngine::reset(const fcitx::InputMethodEntry &, fcitx::InputContextEve
     // nulls its copy of the surrounding text. Until the client answers again, every
     // delete is dropped — see transport/guard.h — so count the answers from here.
     spokeSinceReset_ = false;
-    applyPlan(event.inputContext(), composer_.flush());
+    // Whether the composing word is committed depends on the same transport: mutter
+    // has already committed the preedit on the bridge, and a flush would type it
+    // twice. The composer decides (Composer::onReset, state.cpp).
+    applyPlan(event.inputContext(), composer_.onReset());
 }
 
 void FunputEngine::activate(const fcitx::InputMethodEntry &, fcitx::InputContextEvent &event) {

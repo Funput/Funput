@@ -77,7 +77,9 @@ void reset(IBusEngine *engine) {
     EngineState *state = stateOf(engine);
     // On the gnome-shell bridge a reset is a click into the field, after which the
     // bridge holds no surrounding text until the client answers again
-    // (transport/guard.h). Count the answers from here.
+    // (transport/guard.h). Count the answers from here. The word is committed by
+    // then: by mutter on the bridge, elsewhere by ibus-daemon's `_ic_reset` or the
+    // client that asked to commit the preedit itself.
     state->spokeSinceReset = false;
     state->composer.discard();
 }

@@ -1,7 +1,8 @@
 // When the gnome-shell bridge is certain to drop the next repair — the truth table
-// of transport/guard.h. The pipeline behind it is exercised in sim/bridge_tests.cpp;
-// this pins the rule itself, and that it is a rule about the transport, not about
-// the client: a direct path is never guarded, whatever the reading.
+// of transport/guard.h. The pipeline behind it is exercised in sim/bridge/; this
+// pins the rule itself, and that it is a rule about the transport, not about the
+// client: a direct path is never guarded, whatever the reading. With it, the other
+// thing the composer decides by transport: what a reset does to the composing word.
 
 #include <doctest/doctest.h>
 
@@ -58,4 +59,29 @@ TEST_CASE("the composer answers for the transport it was told at focus") {
     CHECK_FALSE(composer.bridgeBlocksRepairs(kSpoke, ""));
     composer.onFocusChanged();
     CHECK_FALSE(composer.bridgeBlocksRepairs(!kSpoke, ""));
+}
+
+TEST_CASE("a reset flushes on a direct transport and discards on the bridge") {
+    // Fcitx5's `reset()`. Direct: nothing else commits the preedit, so the composer
+    // does. gnome-shell: the reset is a click, and mutter committed the preedit before
+    // forwarding it (`clutter_input_focus_reset`, COMMIT mode); a flush would type
+    // the word twice. The plan still drops the preedit the shell shows.
+    Composer direct = composerFor(Method::Telex);
+    direct.onFocusChanged(identifyProgram("firefox"));
+    type(direct, "tieengs");
+    REQUIRE(direct.isComposing());
+    const ComposePlan flushed = direct.onReset();
+    CHECK(flushed.effect == Effect::Commit);
+    CHECK(flushed.text == "tiếng");
+    CHECK_FALSE(direct.isComposing());
+
+    Composer bridged = composerFor(Method::Telex);
+    bridged.onFocusChanged(identifyProgram("gnome-shell"));
+    type(bridged, "tieengs");
+    REQUIRE(bridged.isComposing());
+    const ComposePlan dropped = bridged.onReset();
+    CHECK(dropped.effect == Effect::Commit);
+    CHECK(dropped.text.empty());
+    CHECK_FALSE(dropped.consumed);
+    CHECK_FALSE(bridged.isComposing());
 }

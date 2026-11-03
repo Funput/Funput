@@ -49,6 +49,7 @@ add_executable(funput_linux_tests
     compose/composer/nonpreedit/sim/honest_tests.cpp
     compose/composer/nonpreedit/sim/dropped_tests.cpp
     compose/composer/nonpreedit/sim/bridge/bridge_tests.cpp
+    compose/composer/nonpreedit/sim/bridge/click_tests.cpp
     compose/composer/nonpreedit/fuzz/honest_tests.cpp
     compose/composer/nonpreedit/fuzz/broken_tests.cpp
     ffi/utf8_tests.cpp

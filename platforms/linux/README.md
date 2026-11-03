@@ -181,8 +181,8 @@ trường hợp sau:
 - Trên GNOME Wayland: từ đầu tiên trong một ô **trống**, và từ đầu tiên sau khi **nhấp chuột**
   vào ô cho tới khi app gửi lại văn bản. Ở đó lệnh gõ đi qua gnome-shell và mutter, và hai lớp
   này chuyển lệnh sửa chữ dựa trên bản văn bản chúng đang giữ: bản đó rỗng thì lệnh xoá bị bỏ
-  mà không ai được báo, chữ ra thành `ơ[` hay `sôổ`. Funput biết trước điều đó nên soạn đúng
-  một từ bằng gạch chân thay vì gõ hỏng; từ kế tiếp gõ thẳng như thường.
+  mà không ai được báo, chữ ra thành `ơ[`. Funput biết trước điều đó nên soạn từ đó bằng gạch
+  chân thay vì gõ hỏng; từ kế tiếp gõ thẳng như thường.
 
 Nếu một app ra sai chữ ở từ đầu rồi mới chuyển sang gạch chân, đó là cách Funput nhận ra app
 không nhận được gõ thẳng. Hãy báo lỗi kèm tên tiến trình của app. Với Fcitx5, thêm một app vào
@@ -514,7 +514,7 @@ tự nối tay. Nút thì không cần: `clicked` không bao giờ nổ vì mộ
 **Luôn bật**, không còn là một thiết lập: app Cài đặt không có công tắc cho nó và `settings.json`
 không còn khoá nào. Thay vào đó mỗi client được quyết định riêng — chế độ bật khi client đã gửi
 surrounding text, và **tự lùi về preedit** khi không: client chưa lên tiếng, client nằm trong
-danh sách biết là không chạy được, client bị bắt quả tang bỏ lệnh xoá, hay — đúng một từ — khi
+danh sách biết là không chạy được, client bị bắt quả tang bỏ lệnh xoá, hay — từng từ một — khi
 cầu nối gnome-shell chắc chắn bỏ lệnh sửa kế tiếp. **Cả hai shell đều thi hành nó.**
 
 Khoá `"nonPreedit"` còn sót trong một `settings.json` cũ bị bỏ qua, kể cả khi là `false`; app Cài
@@ -820,8 +820,10 @@ bằng ký tự, text-input-v3 đếm bằng byte, nên mỗi lớp chuyển đ�
   start)`: bản cache **rỗng** — đầu một ô nhập — thì mọi N ≥ 1 đều thất bại.
 
 Cả hai chỉ ghi log rồi bỏ lệnh xoá; lệnh commit theo sau vẫn tới nơi, không exception nào ném,
-nhánh `catch` thử lại của gnome-shell không chạy, và engine không được báo. Đó là `[[` ra `ơ[` và
-`soor` ra `sôổ` ở từ đầu tiên của #640. Phép so ba chuỗi bắt được nó, nhưng sau khi chữ đã hỏng.
+nhánh `catch` thử lại của gnome-shell không chạy, và engine không được báo. Đó là `[[` ra `ơ[` ở
+từ đầu tiên của #640 (triệu chứng 4). Phép so ba chuỗi bắt được nó, nhưng sau khi chữ đã hỏng.
+(`sôổ` của triệu chứng 3 là một chuỗi lặp khác, mô hình dưới không tái hiện đúng nó: với client
+trễ một phím, lệnh sửa đầu tiên của `soor` tới ở phím thứ ba, khi cầu nối đã giữ `s`.)
 
 Vì thế có một **cổng gác** (`transport/guard.h`, `bridgeBlocksRepairs()`): khi đường truyền là
 `Transport::GnomeShell` **và** (client chưa gửi surrounding text kể từ lần focus hoặc reset gần
@@ -842,13 +844,38 @@ không phá những bất biến ở trên:
 Shell cung cấp bit `spokeSinceReset`: xoá ở focus-in thật và ở `reset()`, đặt khi surrounding text
 tới. Chế độ được chọn lại ở đầu mỗi từ, nên từ kế tiếp quay về gõ thẳng ngay khi client đã trả lời
 với một prefix không rỗng — thường là chính từ vừa commit. Khi chế độ đổi vì lý do này, trace ghi
-`mode` với `reason: "bridge"`. Phía IBus mọi thứ đã nối sẵn nhưng còn **trơ**: shell chưa đặt tên
-client nên `Transport` luôn là `Direct` cho tới khi có `focus-in-id` (PR 5 của RFC).
+`mode` với `reason: "bridge"`. Chỉ khi đường truyền là cầu nối shell mới giải mã `textBeforeCaret`
+cho cổng gác, vì câu hỏi được đặt ở mỗi phím. Phía IBus mọi thứ đã nối sẵn nhưng còn **trơ**:
+shell chưa đặt tên client nên `Transport` luôn là `Direct` cho tới khi có `focus-in-id` (PR 5 của
+RFC).
 
-Mô hình cầu nối nằm trong test (`tests/.../nonpreedit/sim/bridge/bridge.h`): một bản cache null cho tới
-câu trả lời đầu và sau một cú nhấp, phép đổi ký tự→byte trên cache rồi byte→ký tự trên cùng
-snapshot như GTK, và daemon IBus không chuyển tiếp hai câu trả lời giống nhau. Không có cổng gác,
-mô hình cho ra đúng `ơ[`; có nó, `[[` ra `[` và `soor` ra `sổ`.
+**Sau một cú nhấp, từ kế tiếp chờ tới khi shell nghe client trả lời lại**, và hai shell nghe khác
+nhau. GTK trả lời ngay cú nhấp với văn bản như đang có (`gtk_im_context_wayland_reset`), nhưng
+câu trả lời đó tới *trước* lệnh reset, nên không tính. Sau reset, frontend ibus của Fcitx5 nhận
+mọi câu trả lời: libibus so *đối tượng* `IBus.Text`, mà gnome-shell cấp một đối tượng mới cho mỗi
+câu trả lời (`ibusinputcontext.c`, `text != priv->surrounding_text`). Engine IBus thì đứng sau
+ibus-daemon, và `bus_engine_proxy_set_surrounding_text` (`engineproxy.c`) chỉ chuyển tiếp câu trả
+lời có văn bản, con trỏ hoặc anchor khác lần trước. Vì vậy trên IBus, từ sau cú nhấp chờ một **thay
+đổi** của tài liệu — thường là chính từ đó khi commit; trên Fcitx5 chờ client *nói bất cứ gì*. Cả
+hai trường hợp, một từ gõ ra chữ là đủ; một từ bị huỷ rỗng, hay chỉ nhấp lại, thì chưa.
+
+Cú nhấp còn một hệ quả nữa, riêng Fcitx5. Trên cầu nối, lệnh reset tới shell **sau khi mutter đã
+commit preedit**: `clutter_input_focus_reset` (`clutter-input-focus.c`) commit `priv->preedit` khi
+preedit được công bố với chế độ `CLUTTER_PREEDIT_RESET_COMMIT` — frontend ibus của Fcitx5 gửi chế
+độ đó cho mọi preedit không đánh dấu `DontCommit` (`updatePreeditDelegate`, vì gnome-shell đặt
+`set_client_commit_preedit(true)`) — rồi mới gọi `clutter_input_method_reset`, mà `vfunc_reset`
+của gnome-shell chuyển thành `Reset` → `InputContext::reset()` → `FunputEngine::reset()`. Flush ở
+đó là gõ từ hai lần, và cổng gác lại đưa đúng từ đầu tiên của ô vào preedit trên đúng đường truyền
+này. `Composer::onReset()` vì thế quyết theo đường truyền: `Direct` thì flush như trước (không ai
+khác commit preedit); `GnomeShell` thì bỏ preedit, quên journal (caret đã dời) và không commit gì.
+Phía IBus không đổi: `reset` của nó xưa nay chỉ `discard()`, vì ibus-daemon hoặc client đã commit.
+
+Mô hình cầu nối nằm trong test (`tests/.../nonpreedit/sim/bridge/`): một bản cache null cho tới câu
+trả lời đầu và sau `click()`, phép đổi ký tự→byte trên cache rồi byte→ký tự trên cùng snapshot như
+GTK, và `click()` để mutter commit preedit trước khi shell nhận reset. Tuỳ chọn `Shell` chọn giữa
+hai cách nghe ở trên (`Fcitx5`: nghe mọi câu trả lời; `IBus`: ibus-daemon bỏ câu trả lời giống hệt
+câu trước). Không có cổng gác, mô hình cho ra đúng `ơ[`, và `soổ` với client trễ hai phím; có nó,
+chế độ của từ đầu là preedit và `[[` ra `[`, `soor` ra `sổ`.
 
 #### Về phía IBus
 

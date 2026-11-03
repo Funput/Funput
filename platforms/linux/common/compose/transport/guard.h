@@ -18,9 +18,9 @@
 //       g_return_if_fail (before >= start);                   // warns and returns
 //
 // Both drop the delete and nothing else: the commit that follows still lands, so
-// `[[` leaves `ơ[` and `soor` leaves `sôổ`. Neither failure throws, so the retry in
-// gnome-shell's `catch` never runs, and the engine is told nothing. Two states of the
-// bridge make the drop certain:
+// `[[` leaves `ơ[` (#640, symptom 4; sim/bridge/ reproduces it). Neither failure
+// throws, so the retry in gnome-shell's `catch` never runs, and the engine is told
+// nothing. Two states of the bridge make the drop certain:
 //
 //   1. The client has not sent surrounding text since the last focus or reset.
 //      gnome-shell's `vfunc_reset` — mutter calls it on a click into the focused

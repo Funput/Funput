@@ -8,46 +8,66 @@
 // dropped (`_onDeleteSurroundingText`). With one, mutter walks back `deleteChars`
 // characters on it to get a byte count, and fewer characters than that before the
 // caret is dropped too (`g_return_if_fail (before >= start)`). GTK turns the bytes
-// back into characters on the same snapshot — which is why §4.5's byte corruption
-// cannot happen — and the app deletes that many from the real document. The commit
-// always lands. Dropped means dropped: nothing throws, nobody is told.
+// back into characters on the same snapshot, and the app deletes that many from the
+// real document. The commit always lands. Dropped means dropped: nothing throws,
+// nobody is told.
 //
-// Answers reach the shell as in ClientSim, `lag` keystrokes late, with one more fact
-// from the IBus daemon in between: a snapshot equal to the last one forwarded is not
-// forwarded again (`bus_engine_proxy_set_surrounding_text`, README Linux). So after a
-// click the shell hears nothing until the document changes. The daemon's own seed is
-// the empty string; this starts unseeded, as a field focused after one that held text.
+// Answers reach the shell as in ClientSim, `lag` keystrokes late. What sits between
+// gnome-shell and the shell is the one choice (`Shell`): Fcitx5's IBus frontend hears
+// every answer, since libibus compares `IBus.Text` objects and gnome-shell allocates
+// a new one per answer (ibusinputcontext.c `text != priv->surrounding_text`, js/misc/
+// inputMethod.js `IBus.Text.new_from_string`); the IBus engine sits behind
+// ibus-daemon, whose `bus_engine_proxy_set_surrounding_text` (engineproxy.c) forwards
+// an answer only when its text, cursor or anchor differ from the last one forwarded.
+// The daemon's own seed is the empty string; this starts unseeded, as a field focused
+// after one that held text.
 
 #ifndef FUNPUT_TESTS_NONPREEDIT_SIM_BRIDGE_BRIDGE_H
 #define FUNPUT_TESTS_NONPREEDIT_SIM_BRIDGE_BRIDGE_H
 
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "compose/composer/nonpreedit/sim/client.h"
 #include "compose/transport.h"
 
 namespace funput::test {
 
-class BridgeSim : public ClientSim {
-public:
+enum class Shell { Fcitx5, IBus };
+
+struct BridgeOptions {
     // `Transport::Direct` keeps the guard inert while the bridge still drops deletes:
     // the model of the bug without the fix.
-    explicit BridgeSim(int lag, Transport transport = Transport::GnomeShell,
-                       Method method = Method::Telex)
-        : ClientSim(lag, method), lag_(lag) {
-        composer().onFocusChanged(transport == Transport::GnomeShell ? identifyProgram("gnome-shell")
-                                                                     : ClientIdentity{});
+    Transport transport = Transport::GnomeShell;
+    Method method = Method::Telex;
+    Shell shell = Shell::Fcitx5;
+};
+
+class BridgeSim : public ClientSim {
+public:
+    explicit BridgeSim(int lag, BridgeOptions options = {})
+        : ClientSim(lag, options.method), lag_(lag), dedupe_(options.shell == Shell::IBus) {
+        composer().onFocusChanged(options.transport == Transport::GnomeShell
+                                      ? identifyProgram("gnome-shell")
+                                      : ClientIdentity{});
     }
 
-    // A click into the focused field, between words. mutter resets its input focus;
-    // gnome-shell's `vfunc_reset` forwards the reset — the shell flushes, as
-    // `FunputEngine::reset()` does, and counts answers afresh — and nulls its copy.
-    // The answers to the keys before the click have landed by then.
+    // A click into the focused field, between words. GTK answers the click itself
+    // with the text as it stands (`gtk_im_context_wayland_reset`), and that answer and
+    // everything in flight land before the reset does. mutter then commits the
+    // preedit (`clutter_input_focus_reset`, COMMIT mode) and forwards the reset, which
+    // gnome-shell's `vfunc_reset` passes to the shell — `Composer::onReset()` — and
+    // nulls its copy. A commit is a change to the document, answered `lag` keystrokes
+    // late like any other; a click that changed nothing is answered by nobody.
     void click() {
-        perform(composer().flush(), KeyEvent{});
-        heard_ = presses_;
+        const bool changed = !preedit_.empty();
         forwarded_ = document_;
+        document_ += std::exchange(preedit_, {});
+        perform(composer().onReset(), KeyEvent{});
+        ClientSim::click(document_, /*reset=*/false); // the reset went through onReset()
+        const size_t at = ++events_;
+        heard_ = changed ? at - 1 : at;
         cache_.reset();
         spokeSinceReset_ = false;
     }
@@ -58,10 +78,14 @@ public:
 protected:
     // FunputEngine::applyNonPreeditMode() over this transport.
     bool wantsNonPreedit(const std::string &before) override {
-        return !composer().bridgeBlocksRepairs(spokeSinceReset_, before);
+        return composer().transport() == Transport::Direct ||
+               !composer().bridgeBlocksRepairs(spokeSinceReset_, before);
     }
 
     void perform(const ComposePlan &plan, const KeyEvent &ev) override {
+        // mutter's `priv->preedit`: what a click would commit.
+        if (plan.effect == Effect::Preedit) preedit_ = plan.text;
+        if (plan.effect == Effect::Commit) preedit_.clear();
         if (plan.effect != Effect::Replace) return ClientSim::perform(plan, ev);
         ComposePlan delivered = plan;
         delivered.deleteChars = acrossBridge(plan.deleteChars);
@@ -69,13 +93,15 @@ protected:
     }
 
     std::string answer(bool &answered) override {
-        ++presses_;
+        // Which event this press's snapshot followed, in the history ClientSim keeps:
+        // the seed is event 0, and this press will be event `events_ + 1`.
+        const size_t at = events_ >= static_cast<size_t>(lag_) ? events_ - lag_ : 0;
+        ++events_;
         const std::string snapshot = ClientSim::answer(answered);
         if (!answered) return snapshot;
-        // Which press this snapshot followed: the daemon forwards only what is newer
-        // than the last thing it forwarded, and only when it differs.
-        const size_t at = presses_ > static_cast<size_t>(lag_) ? presses_ - 1 - lag_ : 0;
-        if ((forwarded_ && at <= heard_) || snapshot == forwarded_) {
+        // Nothing older than what the shell already heard, and, behind ibus-daemon,
+        // nothing equal to it.
+        if ((forwarded_ && at <= heard_) || (dedupe_ && snapshot == forwarded_)) {
             answered = false;
             return *forwarded_; // the shell still holds the last answer it heard
         }
@@ -107,9 +133,12 @@ private:
     }
 
     int lag_;
-    size_t presses_ = 0;
-    // The bridge's copy of the surrounding text; the last snapshot the daemon
-    // forwarded, and which press it followed.
+    bool dedupe_;
+    // Presses and clicks so far: the index of the newest entry in ClientSim's history.
+    size_t events_ = 0;
+    std::string preedit_;
+    // The bridge's copy of the surrounding text; the last snapshot the shell heard,
+    // and which event it followed.
     std::optional<std::string> cache_;
     std::optional<std::string> forwarded_;
     size_t heard_ = 0;

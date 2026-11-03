@@ -51,8 +51,10 @@ void applyNonPreeditMode(IBusEngine *engine) {
     // bridge the first word in an empty field, or the first after a click, would lose
     // its repairs for certain (transport/guard.h), so that one word is composed in a
     // preedit. Inert on this shell until it names the transport at focus-in (a later
-    // PR): the composer holds `Transport::Direct` until then. Same place as Fcitx5's.
+    // PR): the composer holds `Transport::Direct` until then. Same place as Fcitx5's,
+    // and the document is decoded for it only on the bridge: this runs on every key.
     const bool bridge =
+        state->composer.transport() == funput::Transport::GnomeShell &&
         state->composer.bridgeBlocksRepairs(state->spokeSinceReset, textBeforeCaret(engine));
     state->composer.setNonPreedit(state->sawSurroundingText && !bridge);
     funput::Trace &trace = funput::Trace::shared();

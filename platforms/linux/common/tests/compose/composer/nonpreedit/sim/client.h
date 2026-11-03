@@ -51,12 +51,12 @@ public:
 
     void seed(const std::string &text) { document_ = history_.front() = text; } // pre-existing
 
-    // The user clicked: the text before the caret is now `before`. GTK and Qt reset
-    // the input method on a click, which Fcitx5 answers with `flush()` (its `reset()`):
-    // the composition ends and the journal is forgotten, as after a caret key. `reset =
-    // false` is a client that moves the caret silently, the one residual match.h names.
+    // The user clicked: the text before the caret is now `before`. GTK and Qt reset the
+    // input method on a click; Fcitx5 answers with `Composer::onReset()`, on this direct
+    // transport a `flush()`: the composition ends and the journal is forgotten, as after
+    // a caret key; the bridge: bridge/bridge.h. `reset = false`: the silent move match.h names.
     void click(const std::string &before, bool reset = true) {
-        if (reset) composer_.flush();
+        if (reset) composer_.onReset();
         document_ = before;
         history_.push_back(document_);
     }
