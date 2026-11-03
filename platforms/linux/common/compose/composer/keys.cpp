@@ -28,8 +28,14 @@ ComposePlan Composer::onBoundary(char32_t scalar, KeySource source) {
     if (before.empty()) {
         // Nothing composing: the boundary is just a character the app types itself.
         // It still reaches the engine when auto-capitalize is on, which tracks
-        // sentence ends — and non-preedit journals it (see `appPerforms`).
+        // sentence ends. Non-preedit journals a plain space (see `appPerforms`) and
+        // nothing else: Tab indents or completes rather than inserting itself, and
+        // editors auto-pair `(`, `[` and `"` — the `(` before the caret would confirm
+        // a record of it, and the next ⌫ would become Funput's one-character delete,
+        // leaving the `)` the app's own Backspace removes with its pair. Unrecorded,
+        // such a key only costs `inSync`, which is the safe side.
         if (settings_.autoCapitalize) handle_.process(static_cast<uint32_t>(scalar), source);
+        if (scalar != U' ') return ComposePlan::passThrough();
         return appPerforms(0, scalar);
     }
     const FunputResult result = handle_.process(static_cast<uint32_t>(scalar), source);

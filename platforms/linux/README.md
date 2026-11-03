@@ -512,13 +512,22 @@ một thay đổi ta dự đoán rồi thấy nó xảy ra thật. Không có b�
 chính điều này giữ cho một vùng bôi đen bằng chuột vẫn xoá được.
 
 Bằng chứng đó phải sống sót qua cả những thay đổi mà **app tự làm**: dấu cách gõ khi không có gì
-đang soạn, Backspace được nhường cho app, và Backspace rút ngắn một từ đang đứng trong tài liệu. Cả
-ba đều đoán trước được, nên composer ghi nhận chúng y như một sửa chữa của chính mình
-(`Composer::appPerforms()`) để lần đọc kế tiếp xác nhận tài liệu vẫn đang được theo dõi. Nhờ vậy
-`phủ` ␣ ␣ ⌫ ⌫ `s` vẫn ra `phú`; trước đây dấu cách thứ hai làm đứt chuỗi bằng chứng và `s` được gõ
-như chữ thường. Những bản ghi này không bao giờ buộc tội được client: bản ghi không xoá gì thì "đã
-áp dụng" và "bị bỏ" là cùng một chuỗi, còn bản ghi không ghi gì thì phép so ba chuỗi bên dưới đã
-loại khỏi phán quyết từ trước.
+đang soạn, và Backspace rút ngắn một từ đang đứng trong tài liệu. Cả hai đều đoán trước được, nên
+composer ghi nhận chúng y như một sửa chữa của chính mình (`Composer::appPerforms()`) để lần đọc kế
+tiếp xác nhận tài liệu vẫn đang được theo dõi. Nhờ vậy `phủ` ␣ ␣ ⌫ ⌫ `s` vẫn ra `phú`; trước đây
+dấu cách thứ hai làm đứt chuỗi bằng chứng và `s` được gõ như chữ thường.
+
+Một bản ghi như thế chỉ được **giữ** bằng chứng, không bao giờ được tạo ra nó, nên chỉ được ghi khi
+tài liệu đang đồng bộ sẵn. Với client trả lời trễ một phím, hai thay đổi giống hệt nhau liên tiếp
+(␣␣, ⌫⌫) làm bản đọc cũ trùng đúng với điều bản ghi dự đoán; ghi nhận khi chưa đồng bộ sẽ chứng
+nhận một tài liệu đi sau thực tế một bước, Funput tự thực hiện Backspace và mở lại một từ dài hơn
+một ký tự — `phủ` ␣ ␣ ⌫ `s` thành `phủú`. Vì thế Backspace được nhường cho app thì không ghi gì cả,
+và chỉ dấu cách thường mới được ghi: Tab thì app thụt lề hoặc hoàn thành chứ không chèn, còn `(`,
+`[`, `"` thì editor tự đóng cặp, và lệnh xoá một ký tự của Funput sẽ bỏ lại dấu đóng mà Backspace
+của chính app xoá cùng cặp. Những bản ghi này không bao giờ buộc tội được client qua phép so ba
+chuỗi: bản ghi không xoá gì thì "đã áp dụng" và "bị bỏ" là cùng một chuỗi, còn bản ghi không ghi gì
+thì phép so đã loại khỏi phán quyết từ trước. Riêng bản ghi có ghi chữ — dấu cách — vẫn được
+`BlindWrites` đếm như một câu trả lời, y như những chữ cái app tự gõ xưa nay.
 
 #### Đo được gì, và suy ra gì
 

@@ -68,7 +68,7 @@ ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed)
     // the next reading can confirm the document is being followed. Without it, the
     // space that ends a word would leave us out of sync exactly when the Backspace
     // after it wants to know. A repair that deletes nothing can never produce a
-    // verdict, so this cannot accuse anyone.
+    // verdict through the comparison; only `BlindWrites` counts it, as an answer.
     if (result.action == ACTION_NONE) {
         std::string text;
         if (typed != 0) appendUtf8(text, static_cast<uint32_t>(typed));
@@ -91,25 +91,36 @@ ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed)
 
 ComposePlan Composer::appPerforms(uint32_t deleted, char32_t typed) {
     // An edit the app makes itself is still a change to the document, and a
-    // predictable one: a boundary typed with nothing composing, a Backspace handed to
-    // the app, a Backspace shortening a word that stands in the document. Journaled,
-    // it lets the next reading confirm the document is being followed — which is the
-    // evidence `backspaceOutsideWord()` and `adoptWordBeforeBackspace()` require.
-    // Unrecorded, `phủ ␣ ␣ ⌫ ⌫ s` lost `inSync` at the second space and typed a plain
-    // `s`. The ACTION_NONE branch above is the same idea for a key the engine saw.
+    // predictable one: a space typed with nothing composing, a Backspace shortening a
+    // word that stands in the document. Journaled, it lets the next reading confirm
+    // the document is still being followed — the evidence `backspaceOutsideWord()`
+    // and `adoptWordBeforeBackspace()` require. Unrecorded, `phủ ␣ ␣ ⌫ ⌫ s` lost
+    // `inSync` at the second space and typed a plain `s`. The ACTION_NONE branch
+    // above is the same idea for a key the engine saw.
     //
-    // These records can never convict a client. With nothing deleted, "applied" and
-    // "dropped" are the same string; with nothing written, `observe()` already
-    // excludes the record from verdicts. So the rules of `BlindWrites` and of the
-    // verdict are untouched, and a delete journaled while out of sync, or against an
-    // empty reading, is safe too: all it can do is confirm a change that was then
-    // seen to happen, and both consumers of `inSync` also require text before the
-    // caret. Windows keeps the same journal in `CommittedTail` (retone.rs).
+    // Only while already in sync: an app edit may *keep* that evidence, never create
+    // it. A client one keystroke late reads the document as it stood before the
+    // previous key, and two identical edits in a row — ␣␣, ⌫⌫ — make that stale
+    // reading equal exactly what the record predicts. Journaled out of sync, the
+    // record would then vouch for a document one edit behind the real one, Funput
+    // would take the next ⌫ over, and the word adopted from a reading one character
+    // too long re-toned the wrong text: `phủ ␣ ␣ ⌫ s` became `phủú`. Regaining sync
+    // after the app's own edits is the job of the k-of-n journal a later PR puts in
+    // place of this single record; until then only a repair Funput writes earns it.
     //
-    // A live selection is excluded: the key then replaces or deletes the selection,
-    // not one character, so there is nothing to predict. (The ACTION_NONE branch
-    // records under a Sheets suffix selection as it always has.)
-    if (nonPreedit_.on && !nonPreedit_.selectionLive) {
+    // These records never convict through the three-string comparison: with nothing
+    // deleted, "applied" and "dropped" are the same string, and with nothing written
+    // `observe()` keeps the record out of the verdict. A record that writes text is
+    // still an answer `BlindWrites` counts, exactly as the letters the app types in
+    // the ACTION_NONE branch always have been. Windows keeps the same journal in
+    // `CommittedTail` (retone.rs).
+    //
+    // A live selection is excluded: what the key does to it is the app's business —
+    // replace it, or accept a Sheets suffix and append — so there is nothing to
+    // predict, and a guess would only invite the reading to confirm it. Only the
+    // boundary path can get here with one: `onKey` passes a Backspace over a
+    // selection straight through, ahead of both Backspace paths.
+    if (nonPreedit_.on && nonPreedit_.inSync && !nonPreedit_.selectionLive) {
         std::string text;
         if (typed != 0) appendUtf8(text, static_cast<uint32_t>(typed));
         // The repair a re-opened word arms is the next one *Funput* writes; the app

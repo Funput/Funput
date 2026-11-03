@@ -119,8 +119,8 @@ private:
     // A Backspace with nothing composing: who removes the character.
     ComposePlan backspaceOutsideWord();
     // An edit the app is about to make itself — `deleted` characters, then `typed`
-    // (0 for none) — journaled so the next reading can confirm it. Always passes
-    // the key through.
+    // (0 for none) — journaled, while the document is in sync, so the next reading
+    // can confirm it. Always passes the key through.
     ComposePlan appPerforms(uint32_t deleted, char32_t typed);
     // End the composition without committing: in non-preedit the word is already
     // in the document, so only the engine state is dropped.

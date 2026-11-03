@@ -363,23 +363,42 @@ Mỗi bước là **một PR độc lập**, có test, và không phụ thuộc 
 ### PR 1 — Ghi nhận thay đổi do app tự làm
 
 **Trạng thái:** Đã triển khai trong PR này (`Composer::appPerforms()`, test
-`nonpreedit/appedits_tests.cpp`).
+`nonpreedit/appedits_tests.cpp` và `nonpreedit/appedits_sync_tests.cpp`).
 
 - `Composer::onBoundary()`, nhánh không có từ đang soạn: khi gõ thẳng đang bật, ghi
-  `noteRepair(0, <ký tự ranh giới>)` trước khi trả `passThrough()`.
-- `Composer::backspaceOutsideWord()`, nhánh nhường cho app: khi gõ thẳng đang bật và không có
-  vùng chọn, ghi `noteRepair(1, {})`, tức là "app xoá một ký tự".
+  `noteRepair(0, " ")` trước khi trả `passThrough()` — **chỉ với dấu cách thường** (U+0020). Ranh
+  giới khác đi thẳng qua không ghi nhận: Tab thì app thụt lề hoặc hoàn thành chứ không chèn, còn
+  `(`, `[`, `"` thì editor tự đóng cặp — bản ghi `(` sẽ được bản đọc xác nhận, Backspace kế tiếp
+  thành lệnh xoá một ký tự của Funput và bỏ lại dấu đóng mà Backspace của chính app xoá cùng cặp.
+  Mất `inSync` ở đó là phía an toàn.
 - `Composer::onKey()`, Backspace trong từ đang soạn ở chế độ gõ thẳng: ghi `noteRepair(1, {})`.
+- `Composer::backspaceOutsideWord()`, nhánh nhường cho app: **không ghi gì** (xem dưới).
 
-Cả ba bản ghi **không bao giờ buộc tội được client**. Bản ghi không xoá thì "đã áp dụng" và "bị
-bỏ" là cùng một chuỗi. Bản ghi chỉ xoá mà không ghi gì thì đã được `observe()` coi là không đủ
-để phán quyết. Các bất biến của `BlindWrites` và phán quyết vì vậy không đổi.
+Bản ghi chỉ được tạo khi `inSync` đang đúng (và không có vùng chọn): một thay đổi do app làm được
+phép **giữ** bằng chứng đồng bộ, không được tạo ra nó. Với client trễ một phím, hai thay đổi giống
+hệt nhau liên tiếp (␣␣, ⌫⌫) làm bản đọc cũ trùng đúng với điều bản ghi dự đoán; ghi khi chưa đồng
+bộ sẽ cấp `inSync` cho một tài liệu đi sau thực tế một bước, Funput tự thực hiện Backspace và mở
+lại từ từ bản đọc dài hơn một ký tự — `phur ␣ ␣ ⌫ s` thành `phủú`, `phur ab ⌫⌫⌫⌫ s` thành `pú`,
+vi phạm bất biến 6. Nhánh nhường Backspace cho app vì thế không ghi: ba trong bốn điều kiện dẫn
+tới đó cũng là điều kiện `appPerforms()` từ chối, còn điều kiện thứ tư (bản đọc rỗng khi đang đồng
+bộ) thì trước con trỏ không còn gì để xoá nên không có gì để dự đoán. Lấy lại đồng bộ sau thay đổi
+của app là việc của journal k trên n ở PR 3.
+
+Các bản ghi này không bao giờ buộc tội được client **qua phép so ba chuỗi**. Bản ghi không xoá thì
+"đã áp dụng" và "bị bỏ" là cùng một chuỗi. Bản ghi chỉ xoá mà không ghi gì thì đã được `observe()`
+coi là không đủ để phán quyết. Riêng bản ghi có ghi chữ (dấu cách) vẫn được `BlindWrites` đếm như
+một câu trả lời, y như những chữ cái app tự gõ (nhánh `ACTION_NONE`) xưa nay — hành vi giữ nguyên,
+chỉ phát biểu lại cho đúng.
 
 Test cần thêm:
 
 - `phur␣␣⌫⌫s` → `phú` với client đúng hạn.
 - Biến thể dấu câu: `phur,␣⌫s` → `phủ,s`, dừng ở dấu phẩy (đúng quy tắc tách từ hiện có).
-- Vùng chọn đang có thì Backspace vẫn đi thẳng qua và không ghi nhận gì.
+- Dấu cách gõ trên vùng chọn không được ghi nhận; vùng chọn đang có thì không mở lại từ.
+- Ranh giới không phải dấu cách (`(` được editor đóng cặp) đi thẳng qua; Backspace kế tiếp là của
+  app.
+- Client trễ một phím: `phur ␣ ␣ ⌫ s` → `phủ s`, `phur ab ⌫⌫⌫⌫ s` → `phs` — đúng những gì app tự
+  làm, không hỏng chữ.
 - Toàn bộ test hiện có vẫn pass.
 
 ### PR 2 — Trace và hướng dẫn thu thập
