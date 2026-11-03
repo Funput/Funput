@@ -242,8 +242,9 @@ Cả hai đều tới cùng một process.
 - **Phím điều khiển được phân loại theo ký tự C0, không theo keysym.** Cả Fcitx5 lẫn IBus đều
   ánh xạ Return → CR, Tab → HT, Escape → ESC, nên `classify()` phải loại chúng ra *trước* phép
   thử ranh giới từ — `isBoundary()` cố tình nhận `\t \n \r` vì
-  `adoptWordBeforeBackspace()` dò ranh giới trong tài liệu thật, nơi xuống dòng đúng là ranh
-  giới. Thiếu bước đó thì Enter bị nuốt và CR được nối vào chuỗi commit.
+  `adoptWordBeforeBackspace()` dò ranh giới trong tài liệu dự đoán, mà gốc là surrounding text
+  thật, nơi xuống dòng đúng là ranh giới. Thiếu bước đó thì Enter bị nuốt và CR được nối vào chuỗi
+  commit.
 - **Bỏ dấu sau Backspace chỉ chạy ở chế độ không preedit.** Ở chế độ preedit, Backspace chỉ rút
   ngắn composition, nên `phủ` ␣ ⌫ `s` ra chữ `s` thường.
 - **Ở kiểu gạch chân, một số client làm mất từ đang gõ dở khi đổi focus.** Cả hai shell giao
@@ -339,8 +340,11 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       nonpreedit/backspace.cpp  Ai xoá một ký tự đã nằm trong tài liệu, và mở lại từ đã xong
       nonpreedit/clients.h    Phán quyết đó thuộc về client nào
       nonpreedit/verdict.h    Verdict, Observation trả cho shell, và client không bao giờ cho xem tài liệu
-      nonpreedit/observe.h    So ba chuỗi sau một lần sửa
       nonpreedit/selection.h  Hậu tố gợi ý sau caret (Sheets/Excel)
+      nonpreedit/document/
+        predicted.h             Journal các thay đổi dự đoán: k trên n lần ghi đã xác nhận
+        dropped.h               Phép so "lệnh xoá bị bỏ", cho từng mục và cho cả chuỗi mục
+        observe.h               Một lần đọc đáng giá gì với chế độ (inSync, onTrack)
   trace/                  Trace chẩn đoán, mặc định tắt — xem "Gửi trace khi báo lỗi"
     trace.h/.cpp            Công tắc, ring buffer và giới hạn kích thước
     sink.h/.cpp             File trace: quyền 0700/0600, ghi qua descriptor, xoay vòng
@@ -507,16 +511,18 @@ Thay vì đỗ từ đang gõ trong một preedit, mỗi phím commit thẳng v�
 trước đã viết — `Effect::Replace` mang theo “xoá N ký tự, rồi commit cái này”. Đó đúng là chỉ thị
 mà shell hook trên Windows đã thi hành (`crates/funput-desktop/src/inject.rs`), và N tới thẳng từ
 engine dưới dạng `FunputResult::backspace`, nên các nền tảng giữ **một** hành vi chứ không phải
-ba. Backspace lùi vào một từ đã xong sẽ mở lại từ đó, nên `phủ` ␣ ⌫ `s` cho ra `phú`; Windows giữ
-một bản bóng của thứ nó đã gõ để làm việc này (`retone.rs`), còn ở đây thì đọc thẳng tài liệu là
-được.
+ba. Backspace lùi vào một từ đã xong sẽ mở lại từ đó, nên `phủ` ␣ ⌫ `s` cho ra `phú`. Windows giữ
+một bản bóng của thứ nó đã gõ để làm việc này (`CommittedTail` trong `retone.rs`); ở đây cũng vậy:
+từ được lấy từ **tài liệu dự đoán** (`nonpreedit/document/predicted.h`, xem bên dưới), không phải
+từ bản surrounding text vừa đọc, vì bản đọc đó có thể trễ một phím.
 
 Một Backspace khi không có gì đang soạn sẽ do **chính chúng ta** thi hành, không chuyển cho app,
 để việc xoá đi cùng một kênh với mọi sửa chữa khác. Để app tự làm chính là thứ đã làm hỏng việc
 bỏ dấu lại trong thanh địa chỉ Chrome: app sửa sau lưng ta rồi vứt bỏ sửa chữa được phát ở phím
 kế tiếp. Việc tiếp quản chỉ xảy ra khi **có bằng chứng dương** rằng tài liệu đang đọc là mới —
-một thay đổi ta dự đoán rồi thấy nó xảy ra thật. Không có bằng chứng đó thì phím đi thẳng qua, và
-chính điều này giữ cho một vùng bôi đen bằng chuột vẫn xoá được.
+**mọi** thay đổi đã ghi trong journal đều được thấy là đã xảy ra thật, không chỉ một phần. Không
+có bằng chứng đó thì phím đi thẳng qua, và chính điều này giữ cho một vùng bôi đen bằng chuột vẫn
+xoá được.
 
 Bằng chứng đó phải sống sót qua cả những thay đổi mà **app tự làm**: dấu cách gõ khi không có gì
 đang soạn, và Backspace rút ngắn một từ đang đứng trong tài liệu. Cả hai đều đoán trước được, nên
@@ -524,17 +530,21 @@ composer ghi nhận chúng y như một sửa chữa của chính mình (`Compos
 tiếp xác nhận tài liệu vẫn đang được theo dõi. Nhờ vậy `phủ` ␣ ␣ ⌫ ⌫ `s` vẫn ra `phú`; trước đây
 dấu cách thứ hai làm đứt chuỗi bằng chứng và `s` được gõ như chữ thường.
 
-Một bản ghi như thế chỉ được **giữ** bằng chứng, không bao giờ được tạo ra nó, nên chỉ được ghi khi
-tài liệu đang đồng bộ sẵn. Với client trả lời trễ một phím, hai thay đổi giống hệt nhau liên tiếp
-(␣␣, ⌫⌫) làm bản đọc cũ trùng đúng với điều bản ghi dự đoán; ghi nhận khi chưa đồng bộ sẽ chứng
-nhận một tài liệu đi sau thực tế một bước, Funput tự thực hiện Backspace và mở lại một từ dài hơn
-một ký tự — `phủ` ␣ ␣ ⌫ `s` thành `phủú`. Vì thế Backspace được nhường cho app thì không ghi gì cả,
-và chỉ dấu cách thường mới được ghi: Tab thì app thụt lề hoặc hoàn thành chứ không chèn, còn `(`,
-`[`, `"` thì editor tự đóng cặp, và lệnh xoá một ký tự của Funput sẽ bỏ lại dấu đóng mà Backspace
-của chính app xoá cùng cặp. Những bản ghi này không bao giờ buộc tội được client qua phép so ba
-chuỗi: bản ghi không xoá gì thì "đã áp dụng" và "bị bỏ" là cùng một chuỗi, còn bản ghi không ghi gì
-thì phép so đã loại khỏi phán quyết từ trước. Riêng bản ghi có ghi chữ — dấu cách — vẫn được
-`BlindWrites` đếm như một câu trả lời, y như những chữ cái app tự gõ xưa nay.
+Những bản ghi này được tạo cả khi tài liệu chưa đồng bộ, và chính journal bên dưới làm điều đó an
+toàn. Với một bản ghi duy nhất thì không: client trả lời trễ một phím đọc tài liệu như nó đứng
+trước phím kế trước, và hai thay đổi giống hệt nhau liên tiếp (␣␣, ⌫⌫) làm bản đọc cũ trùng đúng
+với điều bản ghi mới nhất dự đoán — Funput tự thực hiện Backspace và mở lại một từ dài hơn một ký
+tự, `phủ` ␣ ␣ ⌫ `s` thành `phủú`. Journal giữ mọi thay đổi chưa xác nhận, nên bản đọc cũ ấy trùng
+tiền tố n − 1 chứ không phải n: client *đang theo dõi* nhưng chưa *đồng bộ*, Backspace vẫn là của
+app, và từ được mở lại (nếu có) lấy từ tài liệu dự đoán chứ không từ bản đọc. Đổi lại, chính bản
+ghi ngoài đồng bộ là thứ cho client trễ bỏ dấu lại được: `phur` ␣ ⌫ `s` ra `phú` ở đó vì Backspace
+nhường cho app vẫn vào journal. Chỉ dấu cách thường mới được ghi ở ranh giới từ: Tab thì app thụt
+lề hoặc hoàn thành chứ không chèn, còn `(`, `[`, `"` thì editor tự đóng cặp, và lệnh xoá một ký tự
+của Funput sẽ bỏ lại dấu đóng mà Backspace của chính app xoá cùng cặp. Những bản ghi này không bao
+giờ buộc tội được client qua phép so ba chuỗi: bản ghi không xoá gì thì "đã áp dụng" và "bị bỏ" là
+cùng một chuỗi, còn bản ghi không ghi gì thì phép so đã loại khỏi phán quyết từ trước. Riêng bản
+ghi có ghi chữ — dấu cách — vẫn được `BlindWrites` đếm như một câu trả lời, y như những chữ cái app
+tự gõ xưa nay.
 
 #### Đo được gì, và suy ra gì
 
@@ -576,8 +586,118 @@ chỉ có thể là một trong ba chuỗi, và chúng khác nhau:
 | `D` | Client chưa trả lời — chưa có phán quyết |
 
 Chỉ trường hợp ở giữa là một phán quyết, và sự dè dặt đó mới là điểm mấu chốt: coi “không giống
-thứ tôi mong đợi” là thất bại sẽ tắt chế độ này ở 61% số commit không được trả lời — chữa một
+thứ tôi mong đợi” là thất bại sẽ tắt chế độ này ở 39% số commit không được trả lời — chữa một
 client hỏng bằng cách làm hỏng tính năng cho tất cả.
+
+#### Journal các thay đổi dự đoán
+
+Bảng trên là trường hợp **một lần ghi** của một cơ chế tổng quát hơn. Composer không chỉ nhớ lần
+sửa cuối cùng, mà giữ một **journal ngắn** (`PredictedDocument`, tối đa 16 mục; quá ngưỡng thì
+journal coi như mất và lần đọc được trả lời kế tiếp bắt đầu lại từ chính nó, không phán quyết) gồm
+bản đọc gần nhất mà client **đã trả lời** cùng mọi thay đổi phát ra sau đó — của Funput lẫn của
+app. Mỗi lần đọc surrounding text được so với từng **tiền tố** của journal: tài liệu sau 0, 1, … n
+thay đổi. Tiền tố **cũ nhất** trùng với bản đọc cho biết **k trên n** lần ghi đã được xác nhận; n − k
+mục còn lại được giữ nguyên chờ lần đọc sau. Cũ nhất chứ không phải dài nhất: một bản đọc cũ *có
+thể* trông mới hơn thực tế khi các thay đổi triệt tiêu nhau — `dru` rồi ⌫ đọc là `dr`, tức tài liệu
+hai bước trước — và coi nó là mới sẽ vứt đi những mục mà client trễ còn chưa báo, sau đó không bản
+đọc nào của client ấy còn khớp; giữ mọi mục còn lại thì luôn nhất quán dù client đang ở trạng thái
+nào. Với n = 1, tiền tố thứ nhất và thứ hai chính là dòng ba và dòng một của bảng, còn phép so "`D`
+rồi `T`" được áp dụng cho từng mục chưa xác nhận (`nonpreedit/document/dropped.h`).
+
+Lý do cần journal là client **trả lời trễ một phím** — cache nội dung của Firefox đa tiến trình
+(xem RFC #640, mục 4.4). Bản đọc của client đó không bao giờ bằng "lần sửa cuối đã áp dụng", nên
+với một bản ghi duy nhất tài liệu không bao giờ được coi là đồng bộ và `phur` ␣ ⌫ `s` cho ra
+`phủs`. Tệ hơn, hai thay đổi giống hệt nhau liên tiếp (`␣␣`, `⌫⌫`) khiến một bản đọc cũ *trông như*
+đã xác nhận: ⌫ thứ ba của `gox` ␣ ⌫⌫⌫ bị tiếp quản trên bản đọc trễ, và `tiến` được mở lại trong
+khi tài liệu thật chỉ còn `tiế`. Với journal, bản đọc cũ đó trùng tiền tố n − 1 chứ không phải n.
+
+Hai thao tác cần bằng chứng dùng journal với hai ngưỡng khác nhau:
+
+| Thao tác | Điều kiện | Lý do |
+|---|---|---|
+| Funput tự thi hành Backspace (`backspaceOutsideWord`) | **k = n** (`inSync`) | Xoá là ghi vào tài liệu; bản đọc trễ một phím chính là kịch bản vùng chọn cũ trong thanh địa chỉ Chrome |
+| Mở lại từ để bỏ dấu (`adoptWordBeforeBackspace`) | **k ≥ 1** (`onTrack`), Backspace vừa gõ đã vào journal, và lần xác nhận không **mơ hồ** (xem dưới) | Không ghi gì cả; từ được lấy từ **tài liệu dự đoán** (`predicted()`), nơi Backspace vừa gõ đã được tính vào |
+
+k = 0 **không** phải bằng chứng: bản đọc bằng đúng gốc journal là thứ một client im lặng, hay đã
+ngừng trả lời, cũng cho ra.
+
+Journal bảo đảm điều gì, và không bảo đảm điều gì. Với client áp dụng mọi thay đổi theo đúng thứ
+tự, tài liệu dự đoán chính là tài liệu thật dù trễ bao nhiêu phím — **miễn là không có phím di
+chuyển caret xen vào**. Mũi tên, Home/End, Enter, tổ hợp như Ctrl+A, công tắc VI/EN và flush đều
+làm composer quên journal (`NonPreeditState::forget`, đúng việc `CommittedTail::clear` làm trên
+Windows), và lần đọc được trả lời kế tiếp bắt đầu lại từ chỗ caret thật sự đứng; chỉ phím modifier
+(Shift trước một chữ hoa) là không. Trước đây `phur` ␣ ← ⌫ `s` trên client trễ một phím mở lại
+`phủ` từ một dự đoán mà caret đã rời khỏi và cho ra `pú␣`. Hai phần dư còn lại được nêu ở cuối mục
+này. Trong phạm vi đó, từ được mở lại luôn là hậu tố của những gì thật sự có trước caret, và lần sửa
+kế tiếp chỉ xoá trong phạm vi đó. Client bỏ một lệnh xoá thì giữ **nhiều** chữ
+hơn dự đoán chứ không ít hơn, nên lần sửa ấy có thể rơi nhầm ký tự nhưng không bao giờ xoá thứ
+không tồn tại — và bản đọc sau đó bắt được nó (`RefuseRetone`), kể cả khi client bỏ **một chuỗi**
+lệnh xoá: lần ghi kế tiếp đọc ra gốc cộng mọi chữ đã ghi mà không lệnh xoá nào được áp dụng, và
+`dropped.h` so cả chuỗi ấy. Chuỗi chỉ cho `RefuseRetone` khi **mọi** lệnh xoá bị buộc tội đều là sửa
+chữa sau khi mở lại từ; có một lệnh xoá thường trong đó thì client bỏ cả sửa chữa thường, và đó là
+`RefuseMode`. Phép so này không thể buộc tội client trung thực dù trễ: bản đọc của client ấy luôn
+là một tiền tố, mà phán quyết chỉ được hỏi khi bản đọc không trùng tiền tố nào — và chỉ trên một
+gốc journal đã **tin** (xem dưới).
+
+Một điểm mơ hồ được ghi rõ thay vì giấu đi: một lệnh xoá không kèm chữ bị client bỏ, theo sau là
+một lệnh y hệt được áp dụng, sẽ được đọc là lệnh đầu đã áp dụng và lệnh sau còn chờ. Chỉ bản đọc
+không phân biệt được hai trường hợp này, và trễ là trường hợp journal sinh ra để phục vụ. Journal
+đánh dấu lần xác nhận ấy là **mơ hồ** và không mở lại từ trên nó, vì dự đoán khi đó có thể đi trước
+tài liệu một lệnh xoá — `tiếng` ␣ ␣ ⌫⌫⌫ từng mở lại `tiến` khi tài liệu còn `tiếng`; lần ghi kế
+tiếp bắt được client đó qua phép so chuỗi. Cái giá: client trễ một phím không mở lại được từ sau
+⌫⌫⌫ liên tiếp, còn sau một ⌫ thường thì mục đứng trước nó có ghi chữ và không bao giờ mơ hồ.
+
+**Im lặng không bao giờ dịch journal.** Khi client chưa trả lời kể từ phím trước, bản đọc shell đưa
+xuống chỉ là câu trả lời cũ trong cache: composer để nguyên journal, không phán quyết, và coi phím
+đó là chưa đồng bộ, chưa theo dõi (bất biến 3 của RFC). Chỉ bản đọc được trả lời mới khớp tiền tố,
+bắt đầu lại gốc, hay đưa ra phán quyết.
+
+**Khi nào journal tin gốc của mình, và bảo đảm điều gì.** Bản đọc không trùng tiền tố nào thì
+journal bắt đầu lại từ nó nhưng giữ các mục đang chờ ở trạng thái **tạm**: với client trễ, đó là
+những thay đổi còn trên đường (khớp từ gốc mới, không bỏ qua mục nào); với client đúng hạn vừa im
+lặng vài phím, đó là những thay đổi đã nằm trong bản đọc (khớp khi bỏ qua chúng). Một cách bỏ qua
+chỉ được xét khi nó **khả dĩ**: các mục bị bỏ qua, áp dụng theo thứ tự ngay trước gốc, để lại một
+hậu tố mà gốc phải kết thúc bằng nó — `m`, `n`, `o` gõ trước một bản đọc `` thì không thể đã được áp
+dụng (`nonpreedit/document/match.h`). Trong các cách khớp khả dĩ, cách **ít mục được coi là đã áp
+dụng nhất** thắng; hai cách khớp ở hai mức bỏ qua khác nhau kể hai câu chuyện khác nhau về gốc, và
+lần khớp đó bị đánh dấu **tranh chấp**. Rà soát độc lập đã thấy quy tắc cũ — bỏ qua nhiều nhất thắng
+— xoá nhầm mục rồi buộc tội client trung thực khi các chữ lặp lại (`mnommm⌫mi` trễ 3 phím).
+
+Journal chỉ **tin** gốc của mình (`trusted`, `nonpreedit/document/trust.h`) trong ba trường hợp, và chỉ khi tin mới mở lại từ, tự
+thi hành Backspace hay đưa ra phán quyết — chưa tin thì chỉ theo dõi, và bản đọc không trùng tiền
+tố nào chỉ làm nó bắt đầu lại, không phán quyết:
+
+1. Sau **đổi focus**, bản đọc đầu tiên là ô như lúc focus tìm thấy nó, nên được tin ngay (không có
+   mục nào đang chờ).
+2. Sau **phím dời caret**, client trễ sẽ trả lời *trước hết* bằng những trạng thái nó chưa báo —
+   đúng bằng số mục còn chờ lúc nhấn phím — rồi trạng thái mà phím đó tạo ra. Journal coi đúng
+   chừng ấy bản đọc là **cũ theo cấu trúc**: chúng chỉ bắt đầu lại journal, không khớp gì cả. Không
+   có quy tắc này, một client trễ bảy phím phát lại chính những phím nó đã gõ trước mũi tên, và
+   phím gõ sau mũi tên trùng với chúng (`grhfip⏎psu⇧dj⌫ ←u⌫dd`) làm journal tin nhầm rồi buộc tội.
+3. Qua những bản đọc ấy, một lần khớp **ở mức bỏ qua 0, không tranh chấp, xác nhận một mục có ghi
+   chữ** làm gốc thành chính xác với client áp dụng mọi thay đổi theo thứ tự. Xác nhận chỉ gồm lệnh
+   xoá thì *giữ* được niềm tin nhưng không *tạo* ra nó: mũi tên trái bớt một ký tự khỏi bản đọc y hệt
+   một ⌫ đang chờ (`dwija etfmw⌫o←h u⌫ ⌫uf` trễ 4 phím từng bị buộc tội vì thế). Bắt đầu lại, hay
+   một lần khớp tranh chấp, làm mất niềm tin.
+
+Với client trung thực — áp dụng mọi thay đổi theo thứ tự, trễ bao nhiêu phím cũng được, im lặng
+từng quãng hay chỉ trả lời khi có thay đổi — hệ quả đo được: **0 phán quyết từ journal** và **0 lần
+sửa chữa rơi ra ngoài từ** trên hơn 160 000 lượt chạy ngẫu nhiên (trễ 0–7 phím, ba mô hình trả lời,
+có mũi tên trái, Enter, Shift và click có reset), và các test giới hạn trong
+`tests/compose/composer/nonpreedit/fuzz/` giữ con số đó. Cái giá: sau một phím dời caret, client trễ
+k phím mất khả năng bỏ dấu lại trong k + 2 phím; client im lặng g phím trước đó mất thêm chừng ấy.
+
+Hai phần dư được nêu tên thay vì giấu. Số bản đọc cũ được tính từ độ trễ **đo được trước** phím dời
+caret; client trễ *thêm* ngay sau đó nằm ngoài bảo đảm. Và **click mà client không gửi reset**: GTK
+và Qt reset input method khi click, Fcitx5 trả lời bằng `flush()` nên journal quên như sau một phím
+dời caret; client không làm vậy để lại những mục không bao giờ đặt được vào dòng mới, journal bắt
+đầu lại ở mỗi bản đọc — không phán quyết, không mở lại từ — cho tới khi đầy (16 mục) hoặc một phím
+tình cờ đánh vần đúng mục cũ. `BlindWrites` chỉ đếm câu trả lời rỗng khi journal **dự đoán có
+chữ** và câu trả lời không xác nhận mục nào: người dùng xoá hết chữ rồi client trễ báo lại việc đó
+không phải là Cursor, còn một ⌫ đang chờ trên gốc rỗng thì không còn được viện làm lý do — trước
+đây nó cho Cursor viết tiếp hơn chục phím (`⌫ tieengs vieejt nam` nát ba từ). Phán quyết `BlindWrites`
+với client trung thực trễ từ hai phím, trên ô trống, sau một phím không đổi gì (Shift trước chữ
+hoa, mũi tên hay ⌫ ở cột 0) là cái giá đã đo của ngưỡng hai và được ghim trong `blind_tests.cpp`.
 
 Một hậu tố gợi ý **sau** caret — Google Sheets trên Firefox bôi đen phần còn lại của ô khớp —
 không phải client bỏ lệnh xoá. `Replace` mang `deleteAfterChars` để gỡ hậu tố đó trước khi sửa
@@ -749,7 +869,7 @@ phía trên) và `ev`:
 | `start` | Shell (`fcitx5`/`ibus`), giờ thực, pid, và trace có đang ở chế độ raw không |
 | `focus` | Client vừa nhận focus, theo tên framework báo (`gnome-shell` trên GNOME/Wayland; IBus chưa có tên để báo) |
 | `key` | Loại phím sau khi phân loại (`Compose`, `Boundary`, `Backspace`, `Shortcut`…). Keysym và modifier chỉ ghi cho phím mà *danh tính* là hành vi cần chẩn đoán — Backspace, mũi tên, tổ hợp như Ctrl+A — không ghi cho phím sinh ký tự (Shift trên một chữ cái là chữ hoa, tức là nội dung) |
-| `reading` | Văn bản trước caret mà shell đọc được, client có trả lời kể từ phím trước không, có vùng chọn không, và kết luận của composer: `verdict` và `inSync` |
+| `reading` | Văn bản trước caret mà shell đọc được, client có trả lời kể từ phím trước không, có vùng chọn không, và kết luận của composer: `verdict`, `inSync`, cùng `acked`/`pending` — số thay đổi trong journal mà bản đọc xác nhận trên tổng số đang chờ |
 | `plan` | Composer yêu cầu shell làm gì: `effect`, `consumed`, và với `Replace` là `deleteChars`/`deleteAfterChars` |
 | `mode` | Gõ thẳng vừa bật hay tắt, và vì sao (`surrounding`, `silent`, `refused`, `hidden-preedit`) |
 | `adopt` | Backspace có mở lại được từ đứng trước nó không |
@@ -778,14 +898,14 @@ Ví dụ `phur` ␣ ⌫ `s` → `phú`, ở chế độ mặc định (lấy t�
 ```jsonl
 {"t":0,"ev":"start","shell":"fcitx5","wall":"2026-11-03T14:56:54Z","pid":22965,"raw":false}
 {"t":0,"ev":"key","kind":"Boundary"}
-{"t":0,"ev":"reading","before":{"chars":3,"hash":"d408edacde3f07da"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
+{"t":0,"ev":"reading","before":{"chars":3,"hash":"d408edacde3f07da"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true,"acked":1,"pending":1}
 {"t":0,"ev":"plan","effect":"None","consumed":false}
 {"t":0,"ev":"key","kind":"Backspace","keysym":"ff08"}
-{"t":0,"ev":"reading","before":{"chars":4,"hash":"ca8b0ce8d5a34fa8"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
+{"t":0,"ev":"reading","before":{"chars":4,"hash":"ca8b0ce8d5a34fa8"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true,"acked":1,"pending":1}
 {"t":0,"ev":"plan","effect":"Replace","consumed":true,"text":{"chars":0},"deleteChars":1,"deleteAfterChars":0}
 {"t":0,"ev":"adopt","taken":true}
 {"t":0,"ev":"key","kind":"Compose"}
-{"t":0,"ev":"reading","before":{"chars":3,"hash":"d408edacde3f07da"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true}
+{"t":0,"ev":"reading","before":{"chars":3,"hash":"d408edacde3f07da"},"answered":true,"selection":false,"selectedAfter":0,"verdict":"Unknown","inSync":true,"acked":1,"pending":1}
 {"t":0,"ev":"plan","effect":"Replace","consumed":true,"text":{"chars":1,"hash":"51fe10172f2a4f08"},"deleteChars":1,"deleteAfterChars":0}
 ```
 

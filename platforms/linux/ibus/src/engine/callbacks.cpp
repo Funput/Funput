@@ -82,8 +82,10 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     // Surrounding text often arrives only after the client answers.
     applyNonPreeditMode(engine);
 
-    // One read of the document, used twice: to check that the last repair landed,
-    // and as the word a Backspace may re-open. Same order as Fcitx5's keyEvent().
+    // One read of the document, before the key, to check that the last repairs
+    // landed. The word a Backspace may re-open comes from the composer's own
+    // prediction, not from this reading, which can be a keystroke old. Same order as
+    // Fcitx5's keyEvent(), and as the ClientSim test double mirrors it.
     const bool nonPreedit = state->composer.nonPreedit();
     const std::string before = nonPreedit ? textBeforeCaret(engine) : std::string();
     const bool answered = std::exchange(state->surroundingFresh, false);
@@ -102,9 +104,9 @@ gboolean processKeyEvent(IBusEngine *engine, guint keyval, guint, guint modifier
     applyPlan(engine, plan);
     if (trace.enabled()) trace.plan(plan);
 
-    // The key passes through; the engine only takes ownership of what is left.
+    // Nothing is written here; the engine only takes ownership of what is left.
     if (reopen) {
-        const bool taken = state->composer.adoptWordBeforeBackspace(before);
+        const bool taken = state->composer.adoptWordBeforeBackspace();
         if (trace.enabled()) trace.adopt(taken);
     }
     return plan.consumed ? TRUE : FALSE;

@@ -54,7 +54,7 @@ TEST_CASE("a silent client keeps the mode") {
     composer.setNonPreedit(true);
 
     // The client answers nothing, so every reading is the document as it was before any
-    // of this. That is the common case — 61% of commits go unanswered — and reading it
+    // of this. That is the common case — 39% of commits go unanswered — and reading it
     // as failure would disable the mode for almost everybody. Stale, not empty: an
     // always-empty reading is a verdict of its own now (nonpreedit/verdict.h), and a
     // client that has never shown a document cannot arm the mode in the first place.
