@@ -343,6 +343,7 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       nonpreedit/selection.h  Hậu tố gợi ý sau caret (Sheets/Excel)
       nonpreedit/document/
         predicted.h             Journal các thay đổi dự đoán: k trên n lần ghi đã xác nhận
+        dropped.h               Phép so "lệnh xoá bị bỏ", cho từng mục và cho cả chuỗi mục
         observe.h               Một lần đọc đáng giá gì với chế độ (inSync, onTrack)
   trace/                  Trace chẩn đoán, mặc định tắt — xem "Gửi trace khi báo lỗi"
     trace.h/.cpp            Công tắc, ring buffer và giới hạn kích thước
@@ -591,12 +592,17 @@ client hỏng bằng cách làm hỏng tính năng cho tất cả.
 #### Journal các thay đổi dự đoán
 
 Bảng trên là trường hợp **một lần ghi** của một cơ chế tổng quát hơn. Composer không chỉ nhớ lần
-sửa cuối cùng, mà giữ một **journal ngắn** (`PredictedDocument`, tối đa bốn mục) gồm bản đọc gần
-nhất đã được xác nhận cùng mọi thay đổi phát ra sau đó — của Funput lẫn của app. Mỗi lần đọc
-surrounding text được so với từng **tiền tố** của journal: tài liệu sau 0, 1, … n thay đổi. Tiền tố
-dài nhất trùng với bản đọc cho biết **k trên n** lần ghi đã được xác nhận; n − k mục còn lại được
-giữ nguyên chờ lần đọc sau. Với n = 1, tiền tố thứ nhất và thứ hai chính là dòng ba và dòng một của
-bảng, còn phép so "`D` rồi `T`" được áp dụng cho từng mục chưa xác nhận.
+sửa cuối cùng, mà giữ một **journal ngắn** (`PredictedDocument`, tối đa 16 mục; quá ngưỡng thì
+journal coi như mất và lần đọc được trả lời kế tiếp bắt đầu lại từ chính nó, không phán quyết) gồm
+bản đọc gần nhất mà client **đã trả lời** cùng mọi thay đổi phát ra sau đó — của Funput lẫn của
+app. Mỗi lần đọc surrounding text được so với từng **tiền tố** của journal: tài liệu sau 0, 1, … n
+thay đổi. Tiền tố **cũ nhất** trùng với bản đọc cho biết **k trên n** lần ghi đã được xác nhận; n − k
+mục còn lại được giữ nguyên chờ lần đọc sau. Cũ nhất chứ không phải dài nhất: một bản đọc cũ *có
+thể* trông mới hơn thực tế khi các thay đổi triệt tiêu nhau — `dru` rồi ⌫ đọc là `dr`, tức tài liệu
+hai bước trước — và coi nó là mới sẽ vứt đi những mục mà client trễ còn chưa báo, sau đó không bản
+đọc nào của client ấy còn khớp; giữ mọi mục còn lại thì luôn nhất quán dù client đang ở trạng thái
+nào. Với n = 1, tiền tố thứ nhất và thứ hai chính là dòng ba và dòng một của bảng, còn phép so "`D`
+rồi `T`" được áp dụng cho từng mục chưa xác nhận (`nonpreedit/document/dropped.h`).
 
 Lý do cần journal là client **trả lời trễ một phím** — cache nội dung của Firefox đa tiến trình
 (xem RFC #640, mục 4.4). Bản đọc của client đó không bao giờ bằng "lần sửa cuối đã áp dụng", nên
@@ -610,18 +616,43 @@ Hai thao tác cần bằng chứng dùng journal với hai ngưỡng khác nhau:
 | Thao tác | Điều kiện | Lý do |
 |---|---|---|
 | Funput tự thi hành Backspace (`backspaceOutsideWord`) | **k = n** (`inSync`) | Xoá là ghi vào tài liệu; bản đọc trễ một phím chính là kịch bản vùng chọn cũ trong thanh địa chỉ Chrome |
-| Mở lại từ để bỏ dấu (`adoptWordBeforeBackspace`) | **k ≥ 1** (`onTrack`), và Backspace vừa gõ đã vào journal | Không ghi gì cả; từ được lấy từ **tài liệu dự đoán** (`predicted()`), nơi Backspace vừa gõ đã được tính vào |
+| Mở lại từ để bỏ dấu (`adoptWordBeforeBackspace`) | **k ≥ 1** (`onTrack`), Backspace vừa gõ đã vào journal, và lần xác nhận không **mơ hồ** (xem dưới) | Không ghi gì cả; từ được lấy từ **tài liệu dự đoán** (`predicted()`), nơi Backspace vừa gõ đã được tính vào |
 
 k = 0 **không** phải bằng chứng: bản đọc bằng đúng gốc journal là thứ một client im lặng, hay đã
-ngừng trả lời, cũng cho ra. Với client áp dụng mọi thay đổi theo đúng thứ tự, tài liệu dự đoán
-chính là tài liệu thật dù trễ bao nhiêu phím, nên từ được mở lại luôn là hậu tố của những gì thật
-sự có trước caret, và lần sửa kế tiếp chỉ xoá trong phạm vi đó. Client bỏ một lệnh xoá thì giữ
-**nhiều** chữ hơn dự đoán chứ không ít hơn, nên lần sửa ấy có thể rơi nhầm ký tự nhưng không bao
-giờ xoá thứ không tồn tại — và bản đọc sau đó bắt được nó (`RefuseRetone`). Một điểm mơ hồ được
-ghi rõ thay vì giấu đi: một lệnh xoá không kèm chữ bị client bỏ, theo sau là một lệnh y hệt được
-áp dụng, sẽ được đọc là lệnh đầu đã áp dụng và lệnh sau còn chờ. Chỉ bản đọc không phân biệt được
-hai trường hợp này, và trễ là trường hợp journal sinh ra để phục vụ; journal tự chỉnh lại ở lần
-đọc kế tiếp không trùng tiền tố nào.
+ngừng trả lời, cũng cho ra.
+
+Journal bảo đảm điều gì, và không bảo đảm điều gì. Với client áp dụng mọi thay đổi theo đúng thứ
+tự, tài liệu dự đoán chính là tài liệu thật dù trễ bao nhiêu phím — **miễn là không có phím di
+chuyển caret xen vào**. Mũi tên, Home/End, Enter, tổ hợp như Ctrl+A, công tắc VI/EN và flush đều
+làm composer quên journal (`NonPreeditState::forget`, đúng việc `CommittedTail::clear` làm trên
+Windows), và lần đọc được trả lời kế tiếp bắt đầu lại từ chỗ caret thật sự đứng; chỉ phím modifier
+(Shift trước một chữ hoa) là không. Trước đây `phur` ␣ ← ⌫ `s` trên client trễ một phím mở lại
+`phủ` từ một dự đoán mà caret đã rời khỏi và cho ra `pú␣`. Phần dư duy nhất là một cú **click** mà
+client chưa kịp báo. Trong phạm vi đó, từ được mở lại luôn là hậu tố của những gì thật sự có trước
+caret, và lần sửa kế tiếp chỉ xoá trong phạm vi đó. Client bỏ một lệnh xoá thì giữ **nhiều** chữ
+hơn dự đoán chứ không ít hơn, nên lần sửa ấy có thể rơi nhầm ký tự nhưng không bao giờ xoá thứ
+không tồn tại — và bản đọc sau đó bắt được nó (`RefuseRetone`), kể cả khi client bỏ **một chuỗi**
+lệnh xoá: lần ghi kế tiếp đọc ra gốc cộng mọi chữ đã ghi mà không lệnh xoá nào được áp dụng, và
+`dropped.h` so cả chuỗi ấy. Phép so này không thể buộc tội client trung thực dù trễ: bản đọc của
+client ấy luôn là một tiền tố, mà phán quyết chỉ được hỏi khi bản đọc không trùng tiền tố nào.
+
+Một điểm mơ hồ được ghi rõ thay vì giấu đi: một lệnh xoá không kèm chữ bị client bỏ, theo sau là
+một lệnh y hệt được áp dụng, sẽ được đọc là lệnh đầu đã áp dụng và lệnh sau còn chờ. Chỉ bản đọc
+không phân biệt được hai trường hợp này, và trễ là trường hợp journal sinh ra để phục vụ. Journal
+đánh dấu lần xác nhận ấy là **mơ hồ** và không mở lại từ trên nó, vì dự đoán khi đó có thể đi trước
+tài liệu một lệnh xoá — `tiếng` ␣ ␣ ⌫⌫⌫ từng mở lại `tiến` khi tài liệu còn `tiếng`; lần ghi kế
+tiếp bắt được client đó qua phép so chuỗi. Cái giá: client trễ một phím không mở lại được từ sau
+⌫⌫⌫ liên tiếp, còn sau một ⌫ thường thì mục đứng trước nó có ghi chữ và không bao giờ mơ hồ.
+
+**Im lặng không bao giờ dịch journal.** Khi client chưa trả lời kể từ phím trước, bản đọc shell đưa
+xuống chỉ là câu trả lời cũ trong cache: composer để nguyên journal, không phán quyết, và coi phím
+đó là chưa đồng bộ, chưa theo dõi (bất biến 3 của RFC). Chỉ bản đọc được trả lời mới khớp tiền tố,
+bắt đầu lại gốc, hay đưa ra phán quyết. Bản đọc không trùng tiền tố nào thì journal bắt đầu lại từ
+nó nhưng giữ các mục đang chờ ở trạng thái **tạm**: với client trễ, đó là những thay đổi còn trên
+đường và journal bắt kịp sau vài phím; với client đúng hạn vừa click, đó là những thay đổi đã xảy
+ra ở chỗ cũ, và lần đọc sau khớp khi bỏ qua chúng. `BlindWrites` cũng chỉ đếm câu trả lời rỗng mà
+journal không giải thích được: người dùng xoá hết chữ rồi client trễ báo lại việc đó không phải là
+Cursor.
 
 Một hậu tố gợi ý **sau** caret — Google Sheets trên Firefox bôi đen phần còn lại của ô khớp —
 không phải client bỏ lệnh xoá. `Replace` mang `deleteAfterChars` để gỡ hậu tố đó trước khi sửa

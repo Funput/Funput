@@ -52,6 +52,13 @@ public:
     // Text that was in the field before Funput was watching.
     void seed(const std::string &text) { document_ = history_.front() = text; }
 
+    // The user clicked: the text before the caret is now `before`. Reported like
+    // any other change, so a lagging client shows it as late as it shows a key.
+    void click(const std::string &before) {
+        document_ = before;
+        history_.push_back(document_);
+    }
+
     ComposePlan press(const KeyEvent &ev) {
         bool answered = false;
         const std::string before = answer(answered);
@@ -107,13 +114,21 @@ protected:
     }
 
     // The surrounding text the client reports before this key, and whether it sent
-    // any since the last one. A lagging client reports the document as it stood
-    // `lag` keystrokes ago — before that many of the latest presses were performed —
-    // and the field as typing found it until it has anything that old. A silent
-    // client reports that initial field forever, and never counts as having answered.
+    // any since the last one — the shells' `surroundingFresh`, set by an update from
+    // the client, never by the shell asking. A lagging client reports the document
+    // as it stood `lag` keystrokes ago, once it has anything that old; until then
+    // the shell hands back what it cached, which is the field as focus found it,
+    // and that answer counts once, on the first key: it is the one that turned the
+    // mode on. A silent client never counts as having answered. IBus's daemon also
+    // drops an update identical to the previous one, so a client whose document did
+    // not change answers nothing there; no case here depends on that.
     virtual std::string answer(bool &answered) {
-        answered = lag_ != kSilent;
-        const size_t behind = answered ? static_cast<size_t>(lag_) : history_.size();
+        if (lag_ == kSilent) {
+            answered = false;
+            return history_.front();
+        }
+        const size_t behind = static_cast<size_t>(lag_);
+        answered = history_.size() == 1 || history_.size() > behind;
         if (history_.size() <= behind) return history_.front();
         return history_[history_.size() - 1 - behind];
     }

@@ -66,17 +66,25 @@ bool Composer::adoptWordBeforeBackspace() {
     //
     // Why a lagging client is safe here. The word comes from the predicted document,
     // never from the reading: for a client that applies every edit in order, that is
-    // its document whatever its lag, so the word is a suffix of what is really there
-    // and the next repair deletes within it. A stale reading that happens to equal
-    // some prefix — `␣␣`, `⌫⌫` — only ever makes the journal drop edits whose text
-    // the reading already contains, and leaves the prediction the same string. A
-    // client that dropped a delete holds *more* text than predicted, never less, so
-    // the repair can land on the wrong characters but not on missing ones; that
-    // repair is marked as following a re-open, and the reading after it catches the
-    // drop as RefuseRetone. See nonpreedit/document/predicted.h for the one case the
-    // journal cannot tell apart. Chrome, reporting `gox ` a keystroke late as `gox`,
-    // used to be offered `go` from that reading and wrote `goõ` on the next `x`.
+    // its document whatever its lag — as long as no caret key or click intervened,
+    // which is why a caret key resets the journal and a click the client has not
+    // yet reported is the one residual (nonpreedit/document/predicted.h). So the
+    // word is a suffix of what is really there and the next repair deletes within
+    // it. A client that dropped a delete holds *more* text than predicted, never
+    // less, so that repair can land on the wrong characters but not on missing
+    // ones; it is marked as following a re-open, and the reading after it catches
+    // the drop as RefuseRetone (document/dropped.h). Chrome, reporting `gox ` a
+    // keystroke late as `gox`, used to be offered `go` from that reading and wrote
+    // `goõ` on the next `x`.
+    //
+    // Not on an ambiguous acknowledgement: a delete-only edit confirmed with an
+    // identical one still pending is what a client a key late reports, and also
+    // what a client that dropped Funput's ⌫ and honoured the app's ⌫⌫ reports — the
+    // prediction is then one deletion ahead, and `tiếng␣␣⌫⌫⌫` offered `tiến` while
+    // the document read `tiếng`. A client a key late loses the re-open after ⌫⌫⌫
+    // to this; the edit before a single ⌫ wrote text, which is never ambiguous.
     if (!nonPreedit_.onTrack || !nonPreedit_.backspaceJournaled) return false;
+    if (nonPreedit_.document.ambiguous()) return false;
     nonPreedit_.backspaceJournaled = false;
     std::vector<uint32_t> chars = decodeUtf8(nonPreedit_.document.predicted());
 

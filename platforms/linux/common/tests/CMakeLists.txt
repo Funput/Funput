@@ -39,7 +39,12 @@ add_executable(funput_linux_tests
     compose/composer/nonpreedit/appedits_tests.cpp
     compose/composer/nonpreedit/appedits_sync_tests.cpp
     compose/composer/nonpreedit/document/predicted_tests.cpp
+    compose/composer/nonpreedit/document/dropped_tests.cpp
+    compose/composer/nonpreedit/document/restart_tests.cpp
     compose/composer/nonpreedit/sim/lag_tests.cpp
+    compose/composer/nonpreedit/sim/caret_tests.cpp
+    compose/composer/nonpreedit/sim/honest_tests.cpp
+    compose/composer/nonpreedit/sim/dropped_tests.cpp
     ffi/utf8_tests.cpp
     ffi/onsets_tests.cpp
     settings/lookup_tests.cpp

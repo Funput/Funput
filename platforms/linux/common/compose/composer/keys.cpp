@@ -12,9 +12,10 @@
 namespace funput {
 
 ComposePlan Composer::commitBuffer(bool consumed) {
-    // Non-preedit typed the word into the document as it went, so there is nothing
-    // left to commit. This one early-out covers every exit that funnels through
-    // here: flush(), toggleEnabled(), a shortcut and a caret key.
+    // Every exit funnels through here — flush(), toggleEnabled(), a shortcut and a
+    // caret key — and each may move the caret, so the journal goes first (see
+    // NonPreeditState::forget). Non-preedit then has nothing left to commit.
+    nonPreedit_.forget();
     if (nonPreedit_.on) return endComposition(consumed);
     std::string buffer = handle_.buffer();
     handle_.clear();

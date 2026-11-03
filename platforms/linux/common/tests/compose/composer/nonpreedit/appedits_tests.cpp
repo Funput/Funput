@@ -103,23 +103,28 @@ TEST_CASE("adoption is refused while a selection is live") {
 }
 
 TEST_CASE("app-performed edits never convict a client") {
+    // `tiếng`, whose truncation `tiến` is a syllable the engine would take.
     Shell shell;
-    REQUIRE(shell.type("phur ") == "phủ ");
+    REQUIRE(shell.type("tieengs ") == "tiếng ");
     // From here the client drops every delete, but is only ever asked for one of the
     // records that cannot produce a verdict: a space that deletes nothing, and
     // deletions that write nothing. The mode stays, and so does re-toning.
     shell.dropsDeletes = true;
     shell.type(" ");
     backspace(shell); // Funput's, dropped: no verdict, out of sync
-    CHECK(shell.document() == "phủ  ");
+    CHECK(shell.document() == "tiếng  ");
     backspace(shell); // the app's, journaled, and seen to land
-    CHECK(shell.document() == "phủ ");
+    CHECK(shell.document() == "tiếng ");
     // That reading cannot tell "the first deletion dropped" from "the second still
     // pending" (nonpreedit/document/predicted.h), so this Backspace is the app's as
     // well — a takeover needs every edit confirmed — and no word is offered from a
-    // prediction one deletion ahead. Still no verdict, and still no RefuseRetone.
+    // prediction one deletion ahead: `tiến` while the document reads `tiếng`. Still
+    // no verdict, and still no RefuseRetone; what happens at the next write is
+    // sim/dropped_tests.cpp.
     CHECK_FALSE(backspace(shell).consumed);
-    CHECK(shell.document() == "phủ");
+    CHECK_FALSE(shell.adopted());
+    CHECK_FALSE(shell.composer().isComposing());
+    CHECK(shell.document() == "tiếng");
     CHECK(shell.composer().nonPreedit());
     CHECK(shell.observation().verdict == Verdict::Unknown);
 }

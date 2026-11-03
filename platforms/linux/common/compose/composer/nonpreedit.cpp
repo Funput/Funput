@@ -30,6 +30,7 @@ void Composer::onFocusChanged(std::string_view client) {
 // allows. `answered` is whether the client sent surrounding text since the last
 // keystroke: without it an empty answer and no answer are the same string, and
 // standing the mode down on silence would take it from the clients it was built for.
+// A reading not answered is the shell's cache, and leaves the journal untouched.
 Observation Composer::observeDocument(const std::string &textBeforeCaret, bool selectionLive,
                                       bool answered, uint32_t selectedAfter) {
     nonPreedit_.selectionLive = selectionLive;

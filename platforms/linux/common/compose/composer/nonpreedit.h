@@ -75,8 +75,9 @@ struct NonPreeditState {
     // How often this client has answered with nothing while being written into.
     BlindWrites blind;
     bool retoneAllowed = true;
-    // Whether the client answered since the last keystroke. Only the shell can see it,
-    // and `BlindWrites` needs it to tell an empty answer from no answer at all.
+    // Whether the client answered since the last keystroke. Only the shell can see it.
+    // Without it a reading is the shell's cache of the previous answer: `observe()`
+    // then leaves the journal alone, and `BlindWrites` does not count it.
     bool answered = false;
     // Whether the client is holding a selection. Only the shell can see this, and the
     // Backspace path below needs it: taking a Backspace over while text is selected
@@ -115,11 +116,18 @@ struct NonPreeditState {
         retoneAllowed = true;
         selectionLive = false;
         selectionAfter = 0;
-        inSync = false;
-        onTrack = false;
-        backspaceJournaled = false;
+        forget();
+    }
+
+    // The caret may have moved on its own: a caret key, Enter, a shortcut, a VI/EN
+    // toggle, a flush. The journal describes a document the caret has left, so it
+    // goes, and with it every bit of evidence it had earned; the next answered
+    // reading restarts it from wherever the caret turns out to be. What Windows'
+    // `CommittedTail::clear` does for the same events (retone.rs). A modifier press
+    // is not one of them: Shift goes down before every capital letter.
+    void forget() {
+        inSync = onTrack = backspaceJournaled = justAdopted = false;
         document.reset();
-        justAdopted = false;
     }
 
     // Record an edit just issued, so the readings that follow can confirm it.
