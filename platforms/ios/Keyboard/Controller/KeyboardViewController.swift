@@ -48,6 +48,7 @@ final class KeyboardViewController: UIInputViewController {
     var isClipboardMonitoring = false
     lazy var clipboardRecorder = makeClipboardRecorder()
     var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
+    var bootstrappedSource: KeyboardBootstrappedSource?
     var adoptedIdentity: KeyboardActivationIdentity?
     var resolvedBackgroundRequest: KeyboardBackgroundRequest?
     var displayedSurface = KeyboardSurface.funput

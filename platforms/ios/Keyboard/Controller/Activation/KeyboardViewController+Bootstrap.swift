@@ -21,6 +21,7 @@ extension KeyboardViewController {
         let source = launchTrace.measure("Bootstrap") {
             loadActivationSource(hasFullAccess: hasFullAccess)
         }
+        bootstrappedSource = KeyboardBootstrappedSource(source: source, loadedAt: .now)
         // The layout depends on the input method, so the engine has to know the
         // configuration before the first presentation is built, or bootstrap would
         // size the keyboard for the wrong one and `viewWillAppear` would resize it.
