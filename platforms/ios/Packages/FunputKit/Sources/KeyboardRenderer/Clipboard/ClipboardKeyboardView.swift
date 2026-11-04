@@ -2,7 +2,11 @@
 import ThemeSchema
 import UIKit
 
-/// Panel listing text captured by Funput.
+/// Panel listing text pasted through Funput.
+///
+/// When the pasteboard holds text not yet pasted, a paste row sits above the list. It
+/// is the toolbar's own chip, a system `UIPasteControl`, so pasting from here raises
+/// no prompt either: the panel never reads the pasteboard to show what is on it.
 ///
 /// Built on the same bones as ``KaomojiKeyboardView`` — `KeyboardBackdropView` for
 /// the background, a collection above a 46pt bottom bar — so every theme, image
@@ -20,12 +24,13 @@ public final class ClipboardKeyboardView: UIView {
     public var onClearAll: (() -> Void)?
     public var onDelete: (() -> Void)?
     public var onReturn: (() -> Void)?
-    public var onRetry: (() -> Void)?
+    public var onPaste: ((KeyboardClipboardPaste) -> Void)?
 
     static let bottomBarHeight: CGFloat = 46
-    static let retryBannerHeight: CGFloat = 52
+    static let pasteRowHeight: CGFloat = 52
+    static let pasteRowInset: CGFloat = 12
 
-    let retryBanner = ClipboardRetryBanner()
+    let pasteChip = KeyboardClipboardChipView()
     let backdropView = KeyboardBackdropView()
     let collectionView: UICollectionView
     let bottomBar = ClipboardBottomBar()
@@ -33,6 +38,8 @@ public final class ClipboardKeyboardView: UIView {
     var groups: [ClipboardHistorySection.Group] = []
     var presentation = KeyboardPresentation()
     var emptyState = ClipboardEmptyState.nothingSaved
+    var hasFullAccess = true
+    var pasteHint: KeyboardClipboardHint?
     /// Frozen per refresh so every row in one pass agrees on what "now" is.
     var now = Date()
     var theme: ResolvedTheme { presentation.theme }
@@ -57,10 +64,11 @@ public final class ClipboardKeyboardView: UIView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         backdropView.frame = bounds
-        let retryHeight = retryBanner.isHidden ? 0 : Self.retryBannerHeight
-        retryBanner.frame = CGRect(x: 0, y: 0, width: bounds.width, height: retryHeight)
-        let listHeight = max(0, bounds.height - Self.bottomBarHeight - retryHeight)
-        collectionView.frame = CGRect(x: 0, y: retryHeight, width: bounds.width, height: listHeight)
+        let pasteHeight = pasteChip.isHidden ? 0 : Self.pasteRowHeight
+        pasteChip.frame = CGRect(x: 0, y: 0, width: bounds.width, height: pasteHeight)
+            .insetBy(dx: Self.pasteRowInset, dy: 0)
+        let listHeight = max(0, bounds.height - Self.bottomBarHeight - pasteHeight)
+        collectionView.frame = CGRect(x: 0, y: pasteHeight, width: bounds.width, height: listHeight)
         emptyStateView.frame = collectionView.frame
         bottomBar.frame = CGRect(
             x: 0, y: bounds.height - Self.bottomBarHeight,

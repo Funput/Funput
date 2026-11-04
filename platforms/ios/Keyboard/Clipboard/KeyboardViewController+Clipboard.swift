@@ -12,11 +12,12 @@ extension KeyboardViewController {
         }
     }
 
-    /// Re-evaluates whether the toolbar may invite a paste.
+    /// Re-evaluates whether the toolbar, and the clipboard panel when it is open, may
+    /// invite a paste.
     ///
-    /// Reads pasteboard metadata only — including its plain-text type identifiers —
-    /// which raises no paste alert. The contents are never read here; they arrive
-    /// through the capture controller or the chip's `UIPasteControl`.
+    /// Reads pasteboard metadata only, including its plain-text type identifiers,
+    /// which raises no paste alert. The contents are never read by the keyboard; they
+    /// arrive only through the `UIPasteControl` the user taps.
     ///
     /// Deliberately not called from `updateInputPresentation()`: that runs on every
     /// keystroke that moves the shift state, and the typing hot path stays free of
@@ -34,7 +35,7 @@ extension KeyboardViewController {
         // Checked before anything else, so a refused pasteboard read can never leave
         // a paste invitation sitting in a password field.
         guard ClipboardOfferPolicy.allowsOffer(context: context) else {
-            keyboardView.updateClipboardHint(nil)
+            showClipboardHint(nil)
             return
         }
 
@@ -49,10 +50,17 @@ extension KeyboardViewController {
 
         let offer = ClipboardOfferPolicy.offer(
             snapshot: snapshot,
-            lastPastedChangeCount: clipboardCapture.lastPastedChangeCount,
+            lastPastedChangeCount: clipboardRecorder.lastPastedChangeCount,
             context: context
         )
-        keyboardView.updateClipboardHint(offer.map(Self.hint))
+        showClipboardHint(offer.map(Self.hint))
+    }
+
+    /// One answer for both places a paste can be offered, so the panel can never
+    /// invite a paste the toolbar has already withdrawn.
+    private func showClipboardHint(_ hint: KeyboardClipboardHint?) {
+        keyboardView.updateClipboardHint(hint)
+        clipboardPanelView?.updatePasteHint(hint)
     }
 
     /// Bounded and widening: two more attempts, then leave it until the next thing
@@ -86,10 +94,12 @@ extension KeyboardViewController {
         }
     }
 
-    private func pasteFromClipboard(_ paste: KeyboardClipboardPaste) {
+    /// Shared by the toolbar chip and the panel's paste row: both hand over text the
+    /// user's tap on a `UIPasteControl` released.
+    func pasteFromClipboard(_ paste: KeyboardClipboardPaste) {
         guard activationState.isActive, !paste.text.isEmpty else { return }
         let effects = inputCoordinator.insertLiteral(paste.text, writer: makeDocumentWriter())
-        clipboardCapture.didPaste(paste.text, changeCount: paste.changeCount)
+        clipboardRecorder.didPaste(paste.text, changeCount: paste.changeCount)
         refreshClipboardOffer()
         applyPostCommitEffects(effects)
     }

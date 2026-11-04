@@ -9,30 +9,26 @@ import Foundation
 public struct ClipboardStore {
     public static let limit = 50
 
-    /// The change-count marks and the boot they belong to. On disk, not in the
-    /// session: the keyboard is rebuilt in every app it appears in.
+    /// The pasted mark and the boot it belongs to. On disk, not in the session: the
+    /// keyboard is rebuilt in every app it appears in. Files written while the
+    /// keyboard still captured on its own also carry `lastCapturedChangeCount`;
+    /// decoding ignores it.
     struct Payload: Codable {
         var bootTime: Int?
-        var lastCapturedChangeCount: Int?
         var lastPastedChangeCount: Int?
         var items: [ClipboardItem]
 
-        static let empty = Payload(
-            bootTime: nil, lastCapturedChangeCount: nil, lastPastedChangeCount: nil, items: []
-        )
+        static let empty = Payload(bootTime: nil, lastPastedChangeCount: nil, items: [])
 
-        /// Claims the marks for this boot, dropping any the previous boot left: their
-        /// change counts name generations that no longer exist and could collide.
+        /// Claims the mark for this boot, dropping one the previous boot left: its
+        /// change count names a generation that no longer exists and could collide.
         mutating func stampThisBoot() {
-            if !marksAreCurrent {
-                lastCapturedChangeCount = nil
-                lastPastedChangeCount = nil
-            }
+            if !marksAreCurrent { lastPastedChangeCount = nil }
             bootTime = ClipboardBootTime.current
         }
 
-        /// Change counts restart at boot, so marks written before this one name
-        /// generations that no longer exist.
+        /// Change counts restart at boot, so a mark written before this one names a
+        /// generation that no longer exists.
         var marksAreCurrent: Bool {
             guard let bootTime, let current = ClipboardBootTime.current else { return false }
             return bootTime == current
@@ -82,9 +78,8 @@ public struct ClipboardStore {
         return payload.items
     }
 
-    /// Drops every entry, pinned included, and both change-count marks with them:
-    /// after a wipe nothing on disk claims to have seen this pasteboard. Not
-    /// re-importing it is the running session's job, not the store's.
+    /// Drops every entry, pinned included, and the pasted mark with them: after a wipe
+    /// nothing on disk claims to have seen this pasteboard.
     public func clear() {
         write(.empty)
     }
@@ -106,19 +101,15 @@ public struct ClipboardStore {
         return Array(kept.reversed())
     }
 
-    /// Idempotent for an unchanged clipboard, including a reopened keyboard.
-    public func capture(_ item: ClipboardItem, now: Date = Date()) -> Bool {
+    /// Adds a pasted entry, or moves an earlier copy of the same text to the front.
+    /// Idempotent for the same text from the same generation, so pasting it twice
+    /// writes nothing the second time.
+    public func record(_ item: ClipboardItem, now: Date = Date()) -> Bool {
         var payload = read()
         let known = payload.items.contains {
             $0.text == item.text && $0.sourceChangeCount == item.sourceChangeCount
         }
-        // Re-stamp even for text already held: the mark is what spares the next
-        // session a pasteboard read, and after a boot it has to be earned again.
-        guard !known || !payload.marksAreCurrent
-            || payload.lastCapturedChangeCount != item.sourceChangeCount else { return true }
-        payload.stampThisBoot()
-        payload.lastCapturedChangeCount = item.sourceChangeCount
-        guard !known else { return write(payload) }
+        guard !known else { return true }
         payload.items = merged(item, into: payload.items, now: now)
         return write(payload)
     }
