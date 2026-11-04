@@ -61,6 +61,16 @@ public final class ClipboardKeyboardView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /// The keyboard builds this panel hidden and shows it later. `UIPasteControl` only
+    /// measures itself once it can be seen, so the paste row laid out while hidden
+    /// keeps a control collapsed to nothing; lay it out again when the panel appears.
+    public override var isHidden: Bool {
+        didSet {
+            guard oldValue, !isHidden else { return }
+            pasteChip.remeasure()
+        }
+    }
+
     public override func layoutSubviews() {
         super.layoutSubviews()
         backdropView.frame = bounds

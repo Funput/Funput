@@ -60,6 +60,36 @@ final class ClipboardPasteUITests: XCTestCase {
         XCTAssertFalse(pastePrompt().exists)
     }
 
+    /// The panel's paste row is the toolbar's own chip, so it must paste the same way:
+    /// no prompt, the text lands in the field, and the history records it.
+    @MainActor
+    func testPanelPasteRowPastesWithoutAPrompt() throws {
+        app = XCUIApplication()
+        let text = "Panel " + UUID().uuidString
+        app.launchArguments = ["-uitest-typing-harness", "-uitest-clipboard"]
+        app.launchEnvironment["CLIPBOARD_TEST_TEXT"] = text
+        app.launch()
+        let field = app.textViews["typingHarness.field"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        XCTAssertTrue(FunputKeyboardDriver.switchToFunputKeyboard(app))
+        app.buttons["clipboardHarness.copy"].tap()
+
+        let history = app.keys["Lịch sử clipboard"]
+        XCTAssertTrue(history.waitForExistence(timeout: 3))
+        history.tap()
+        let paste = app.buttons["funput.clipboard.paste"]
+        XCTAssertTrue(paste.waitForExistence(timeout: 3))
+        XCTAssertTrue(paste.isHittable, "The panel's paste control must be visible to paste without a prompt")
+        XCTAssertGreaterThan(paste.frame.width, 20)
+        paste.tap()
+
+        let inserted = NSPredicate(format: "value == %@", text)
+        XCTAssertEqual(XCTWaiter.wait(
+            for: [XCTNSPredicateExpectation(predicate: inserted, object: field)], timeout: 5
+        ), .completed)
+        XCTAssertFalse(pastePrompt().exists)
+    }
+
     @MainActor
     private func pastePrompt() -> XCUIElement {
         app.alerts.buttons.matching(NSPredicate(format: "label IN %@", pastePromptLabels)).firstMatch

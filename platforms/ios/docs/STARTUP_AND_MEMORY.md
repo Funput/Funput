@@ -320,6 +320,14 @@ không còn tự ghi mọi thứ user copy.
   `ClipboardRetryBanner` cũ. Dán từ dòng này thì quay về bàn phím chữ, giống dán từ
   lịch sử. Toolbar và panel nhận cùng một hint từ `refreshClipboardOffer`, nên panel
   không bao giờ mời một lần dán mà toolbar đã rút lại.
+- `UIPasteControl` báo `intrinsicContentSize` bằng 0 cho tới khi nó tự layout một
+  lượt trên màn hình, mà lượt đó chạy sau lượt của chip. Toolbar được layout lại liên
+  tục nên không lộ; panel thì được dựng khi đang ẩn và chỉ layout một lần, nên nút
+  Dán co về 0 và biến mất (UI test bắt được, máy ảo iPhone 17 Pro Max iOS 27.2).
+  `KeyboardClipboardChipView` vì thế xin thêm tối đa 3 lượt layout khi còn đọc được
+  kích thước 0, và `ClipboardKeyboardView` gọi `pasteChip.remeasure()` khi chuyển từ
+  ẩn sang hiện. Unit test không kiểm được chuyện này: không có app host thì mọi
+  `UIPasteControl` đều báo kích thước 0.
 - Chữ trống của panel thành "Nội dung bạn dán bằng nút Dán của Funput sẽ được lưu ở
   đây.", vì panel giờ cũng có nút Dán của riêng nó.
 - `ClipboardStore.capture(_:now:)` đổi tên thành `record(_:now:)`. Khái niệm "capture"
