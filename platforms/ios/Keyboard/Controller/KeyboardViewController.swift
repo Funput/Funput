@@ -17,6 +17,7 @@ import UIKit
 
 final class KeyboardViewController: UIInputViewController {
     let launchTrace = KeyboardLaunchTrace()
+    let censusEnrollment = KeyboardLifetimeCensus.Enrollment(.controller)
     let inputCoordinator = KeyboardInputCoordinator()
     let shortcutsLoader = KeyboardShortcutsLoader(store: KeyboardShortcutSource())
     lazy var keyboardView = makePrimarySurface()
@@ -111,7 +112,7 @@ final class KeyboardViewController: UIInputViewController {
 #endif
         repairBootstrapSnapshotIfNeeded()
         scheduleClipboardMonitoringStart()
-        KeyboardMemoryTrace.record("Appeared")
+        KeyboardMemoryTrace.recordAppearance()
     }
 
     override func viewDidDisappear(_ animated: Bool) {

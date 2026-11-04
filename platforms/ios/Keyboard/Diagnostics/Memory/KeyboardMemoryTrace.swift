@@ -25,11 +25,23 @@ enum KeyboardMemoryTrace {
         guard let footprint = MemoryFootprint.current() else { return }
         os_signpost(
             .event, log: log, name: "Footprint",
-            "moment=%{public}@ physicalMB=%{public}.1f peakMB=%{public}.1f availableMB=%{public}.1f",
+            "moment=%{public}@ physicalMB=%{public}.1f peakMB=%{public}.1f availableMB=%{public}.1f controllers=%{public}d surfaces=%{public}d",
             moment,
             footprint.physicalMegabytes,
             footprint.peakMegabytes,
-            Double(MemoryFootprint.availableBytes()) / 1_048_576
+            Double(MemoryFootprint.availableBytes()) / 1_048_576,
+            KeyboardLifetimeCensus.liveCount(.controller),
+            KeyboardLifetimeCensus.liveCount(.surface)
         )
+    }
+
+    /// The `Appeared` sample, plus the leak check once the previous host's controller
+    /// has had time to go.
+    static func recordAppearance() {
+        record("Appeared")
+        Task { @MainActor in
+            try? await Task.sleep(for: KeyboardLifetimeCensus.settleDelay)
+            KeyboardLifetimeCensus.reportLeakIfAny()
+        }
     }
 }
