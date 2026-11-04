@@ -5,7 +5,7 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A2 đã hiện thực; A3–A7 đã duyệt
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A3 đã hiện thực; A4–A7 đã duyệt
 > hướng, chưa hiện thực.
 >
 > **Cập nhật:** 04/11/2026
@@ -103,6 +103,9 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 - Mark đã dán nằm trong file riêng `clipboard-marks.json` (A2): `begin()` lúc +300ms
   chỉ đọc vài chục byte, không decode lịch sử
   (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardStoreMarks.swift`).
+- Lưu clipboard vẫn decode và encode cả lịch sử trên main actor, nhưng lịch sử có trần
+  cố định (A3, `ClipboardHistoryPolicy`): file xấu nhất khoảng 768 KB, không phụ thuộc
+  user dán gì.
 
 **Lệch:**
 
@@ -111,7 +114,6 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 | `init` | `var clipboardStore = ClipboardStore()` gọi `AppGroupDirectory.prepare` (`createDirectory` + `setAttributes` + `setResourceValues`), rồi `adoptConfiguration` tạo lại ngay trong bootstrap | A6 |
 | `viewWillAppear` | `activateKeyboardForAppearance()` gọi `loadActivationSource` **lần thứ hai** (`Keyboard/Controller/Activation/KeyboardViewController+Activation.swift`); `adoptConfiguration` sau đó thấy identity không đổi nên không build lại gì. Lần đọc chỉ có nghĩa cho warm re-activation | A5 |
 | Sau `viewDidAppear`, suốt lúc gõ | `ClipboardChangeMonitor` cứ 500ms đọc đủ 4 trường metadata pasteboard trên main (`changeCount`, `hasStrings`, `hasURLs`, `contains(pasteboardTypes:)`), đo được ~3ms mỗi lần trên máy thật | A4 |
-| Khi lưu clipboard | `ClipboardStore.record()` đọc + decode toàn bộ file, encode lại, ghi, trên main actor; file không có trần | A3 |
 
 ### 2.2. Ảnh nền: giữ decode đồng bộ (đã quyết định)
 
@@ -176,7 +178,7 @@ Hai ràng buộc đã biết, **không sửa được**, chỉ quản lý:
 | Ảnh nền theme | Pixel budget theo width | Memory warning khi đang ẩn (`releaseBackgroundImageIfHidden`) |
 | Lexicon `en.lex` | mmap read-only, trang clean, OS tự thu hồi | Không cần thả |
 | Personal suggestion store | `max_words: 5_000` (`crates/funput-suggestions/src/engine/config.rs`) | Flush định kỳ, engine sống trên queue riêng |
-| Clipboard history | **Không có trần: 50 mục unpinned + pinned không giới hạn số lượng, mỗi mục text không giới hạn độ dài. Xem A3** | Expiry theo cấu hình (pinned không bao giờ expire) |
+| Clipboard history | ≤ 50 mục; mỗi mục ≤ 16.384 UTF-16; tổng ≤ 262.144 UTF-16 kể cả pinned (`ClipboardHistoryPolicy`, A3) | Expiry theo cấu hình (pinned không bao giờ expire); vượt trần thì bỏ mục unpinned cũ nhất |
 
 ### 3.3. Memory warning
 
@@ -453,6 +455,22 @@ bộ** text trước khi cắt còn 120 ký tự.
 - Kịch bản tay: copy chuỗi > 16.384 ký tự, dán bằng nút của Funput → văn bản vào ô
   nhập đầy đủ, lịch sử không có mục mới.
 - Cập nhật dòng clipboard ở §3.2 trong cùng PR.
+
+**Đã đổi khi hiện thực.**
+
+- Toàn bộ luật cắt tỉa (expiry, 50 mục, trần mỗi mục, ngân sách tổng) dồn vào
+  `ClipboardHistoryPolicy.prune`; `ClipboardStore.prune` chỉ còn truyền điều kiện
+  expiry. Store là nơi quyết định cuối: `record(_:)` trả `false` khi mục không được
+  giữ (quá dài, hoặc không vừa cạnh các mục pinned) và để nguyên lịch sử. Recorder
+  kiểm `admits` trước chỉ để khỏi decode lịch sử cho một mục chắc chắn bị từ chối.
+- Mục pinned không bao giờ bị tự xoá vì ngân sách, nhưng trần vẫn giữ được: mục chỉ
+  vào lịch sử qua `record`, mà `record` từ chối mục không vừa, còn ghim một mục có sẵn
+  không làm tổng tăng. Chỉ file cũ (viết trước khi có trần) mới có thể vượt, và các
+  mục quá dài trong đó bị lọc ngay ở lần `load` đầu tiên.
+- Preview cắt `prefix(previewLimit * 4)` trước khi gộp khoảng trắng, và vẫn thêm "…"
+  khi phần đầu đã gộp ngắn hơn giới hạn nhưng clip còn tiếp.
+- Test: `ClipboardHistoryPolicyTests`, thêm ca mới trong `ClipboardPasteRecorderTests`
+  và `ClipboardRowTextTests`.
 
 ### A4: Polling metadata pasteboard chỉ đọc `changeCount`
 
