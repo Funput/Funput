@@ -122,6 +122,7 @@ final class KeyboardViewController: UIInputViewController {
         // hold memory while the keyboard is off screen.
         switchSurface(to: .funput)
         emojiCatalogCache.release()
+        detachPrimarySurface()
         KeyboardMemoryTrace.record("Disappeared")
 #if DEBUG
         touchDiagnosticsReporter.finish()
@@ -135,15 +136,4 @@ final class KeyboardViewController: UIInputViewController {
     func markPreferredHeightVisible() {
         isKeyboardVisible = true
     }
-
-    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransition(to: size, with: coordinator)
-        let shouldReactivate = heightController.deactivate()
-        coordinator.animate(alongsideTransition: nil) { [weak self] _ in
-            guard let self, shouldReactivate else { return }
-            updatePreferredHeight()
-            activatePreferredHeight()
-        }
-    }
-
 }

@@ -5,8 +5,7 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A7 đã hiện thực. A8 (leak surface, phát hiện nhờ A7)
-> chưa sửa.
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A8 đã hiện thực.
 >
 > **Cập nhật:** 04/11/2026
 >
@@ -178,7 +177,7 @@ Hai ràng buộc đã biết, **không sửa được**, chỉ quản lý:
 |---|---|---|
 | Primary surface | Cố định theo layout | Sống cùng controller |
 | Controller cũ khi đổi app host | Được thả đúng; `KeyboardLifetimeCensus` đếm và báo fault (A7) | `deinit` khi host đổi |
-| Surface cũ khi đổi app host | **Leak: mỗi lần đổi app giữ lại nguyên một surface, ~2,5 MB. Xem A8** | Không bao giờ |
+| Surface cũ khi đổi app host | Được tháo khỏi `inputView` ở `viewDidDisappear` và đi theo controller (A8) | `deinit` của controller |
 | Emoji/kaomoji/clipboard panel | Theo panel | Rời panel nào thả panel đó; giữ cặp emoji↔kaomoji khi chuyển qua lại; `viewDidDisappear` thả hết |
 | Emoji catalog đã decode | Nhỏ (model, không ảnh) | `viewDidDisappear`, memory warning |
 | Ảnh nền theme | Pixel budget theo width | Memory warning khi đang ẩn (`releaseBackgroundImageIfHidden`) |
@@ -210,7 +209,8 @@ leak duy nhất có thể làm bàn phím chết "sau một lúc dùng".
   `PersonalSuggestionEngine`, `PersonalDictionarySnapshot`).
 
 A7 thêm bộ đếm và nó cho thấy controller được thả đúng, nhưng **surface thì không**:
-xem A8.
+`inputView` và surface bên trong giữ nhau qua tham chiếu nội bộ của UIKit, thành một
+vòng không ai thả. A8 tháo surface khỏi `inputView` khi bàn phím rời màn hình.
 
 ### 3.5. Signpost sẵn có
 
@@ -606,7 +606,7 @@ vẫn xanh.
   trên máy ảo iPhone 17 Pro Max iOS 27.2. Controller đạt (luôn về 1 sau 2s), surface
   **không đạt**, dẫn tới A8.
 
-### A8: Surface cũ không được thả khi đổi app (chưa sửa)
+### A8: Surface cũ không được thả khi đổi app
 
 **Phát hiện bằng A7**, 11/2026, máy ảo iPhone 17 Pro Max iOS 27.2, bản Debug:
 
@@ -642,6 +642,37 @@ jetsam của keyboard extension, và iOS thay bằng bàn phím hệ thống: đ
    `UIVisualEffectView` cho khỏi kích hoạt observation tracking.
 4. Nghiệm thu: cùng kịch bản 10 lần đổi app, `surfaces=` luôn về 1, `physicalMB` đi
    ngang, không có log fault.
+
+**Đã hiện thực.**
+
+Thử loại trừ từng nghi phạm, mỗi lần 5 lần đổi app, đếm `surfaces=` và `heap`:
+
+| Thử | Kết quả |
+|---|---|
+| Tắt glass (`UIGlassEffect` trên phím, `UIGlassContainerEffect`) | Vẫn leak: 6 surface sau 6 lần hiện |
+| Tắt `UIPasteControl` trên thanh công cụ | Vẫn leak |
+| `inputView` là `UIInputView` thường, không `UIInputViewAudioFeedback` | Vẫn leak |
+| Tháo các subview khỏi `inputView` ở `viewDidDisappear` | **Hết leak**: footprint đi ngang, còn 1 surface |
+
+Vậy không phải glass hay paste control: `inputView` và surface bên trong nó giữ nhau
+qua tham chiếu nội bộ của UIKit (Auto Layout engine, observation tracking), thành một
+vòng mà controller chết cũng không cắt được. Tách surface ra khỏi `inputView` là cắt
+vòng đó; sau khi sửa, `heap` chỉ còn 1 `inputView`, tức cả hai đều được thả. Cách chữa
+(`Keyboard/Controller/Surfaces/KeyboardViewController+PrimarySurfaceLifecycle.swift`):
+
+- `viewDidDisappear` gọi `detachPrimarySurface()`: primary surface rời `inputView`,
+  chỉ còn controller giữ nó, và nó đi cùng controller. Các panel vốn đã được thả ở
+  lượt run loop kế tiếp (`switchSurface(to: .funput)`), nên cũng rời `inputView`.
+- `activateKeyboardForAppearance()` gọi `reattachPrimarySurfaceIfNeeded()` trước mọi
+  việc khác, vì cùng một controller có thể hiện lại mà không qua `viewDidLoad`. Phần
+  gắn surface và constraint dùng chung hàm `pin(_:)` với lúc tạo.
+- `viewWillTransition` chuyển sang `KeyboardViewController+Height.swift` để file
+  controller còn chỗ (≤150 dòng).
+
+Nghiệm thu, máy ảo iPhone 17 Pro Max iOS 27.2, bản Debug, 10 lần đổi app harness ↔
+Settings: `physicalMB` lúc `Appeared` đi ngang 23,5 → 21,6 MB (trước khi sửa 23,6 →
+46,4 MB); sau 2 giây không còn log fault; `heap` cuối còn 1 `KeyboardSurfaceView`, 1
+controller, 1 `inputView`. Chưa đo trên máy thật, bản Release.
 
 ---
 

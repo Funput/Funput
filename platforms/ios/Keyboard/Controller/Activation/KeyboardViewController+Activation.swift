@@ -38,6 +38,7 @@ struct KeyboardActivationIdentity: Equatable {
 
 extension KeyboardViewController {
     func activateKeyboardForAppearance() {
+        reattachPrimarySurfaceIfNeeded()
         cancelClipboardRetry()
         let generation = activationState.begin()
         let source = takeBootstrappedSource() ?? loadActivationSource(hasFullAccess: hasFullAccess)
