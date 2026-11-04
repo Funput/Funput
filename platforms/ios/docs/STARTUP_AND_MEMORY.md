@@ -5,7 +5,7 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A5 đã hiện thực; A6–A7 đã duyệt
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A6 đã hiện thực; A7 đã duyệt
 > hướng, chưa hiện thực.
 >
 > **Cập nhật:** 04/11/2026
@@ -111,12 +111,14 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
   (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardChangeMonitor.swift`).
 - `viewWillAppear` đầu tiên dùng lại cấu hình `viewDidLoad` vừa đọc (A5,
   `bootstrappedSource`), nên mỗi lần trình bày chỉ đọc cấu hình một lần.
+- `init` của controller không gọi xuống đĩa lần nào (A6): `ClipboardStore` bắt đầu là
+  bản giữ chỗ, `KeyboardBootstrapSnapshotStore` là `lazy` và được tạo lần đầu trong
+  `viewDidLoad`. Các store còn lại chỉ giữ handle.
 
 **Lệch:**
 
 | Chặng | Việc lệch | Đề xuất |
 |---|---|---|
-| `init` | `var clipboardStore = ClipboardStore()` gọi `AppGroupDirectory.prepare` (`createDirectory` + `setAttributes` + `setResourceValues`), rồi `adoptConfiguration` tạo lại ngay trong bootstrap | A6 |
 
 ### 2.2. Ảnh nền: giữ decode đồng bộ (đã quyết định)
 
@@ -555,6 +557,20 @@ Comment tại property ghi rõ bất biến đó.
 **Nghiệm thu.** Breakpoint/log trong `AppGroupDirectory.prepare(named: "Clipboard")`:
 không chạy trong `init`, đúng một lần mỗi cold start; test `ClipboardStore` hiện có
 vẫn xanh.
+
+**Đã đổi khi hiện thực.**
+
+- Rà lại mọi property của controller thì thấy thêm `KeyboardBootstrapSnapshotStore()`
+  cũng gọi `AppGroupDirectory.prepare` trong `init`; §2.1 trước đây bỏ sót. Store đó
+  được chuyển thành `lazy var`: `viewDidLoad` đọc snapshot ngay nên chi phí chỉ dời
+  sang chặng hợp đồng cho phép, nhưng `init` giờ không còn syscall đĩa nào. Các store
+  khác (`FunputConfigurationStore`, `CustomThemeStore`, `KeyboardAccessStateStore`,
+  `EmojiRecentsStore`) chỉ tạo `UserDefaults(suiteName:)`; `ThemeAssetStore` chỉ tra
+  `containerURL`, không ghi.
+- `adoptConfiguration` có comment ghi bất biến: lần gọi đầu luôn chạy tới chỗ tạo
+  store thật, vì `adoptedIdentity` bắt đầu là nil.
+- Không đặt breakpoint: bất biến đọc thẳng được trong code (một chỗ tạo store thật,
+  luôn chạy ở bootstrap), và các UI test clipboard (dùng store thật) vẫn xanh.
 
 ### A7: Gác leak controller
 

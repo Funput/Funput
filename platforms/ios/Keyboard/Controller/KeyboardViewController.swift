@@ -27,7 +27,10 @@ final class KeyboardViewController: UIInputViewController {
     let emojiRecentsStore = EmojiRecentsStore()
     let emojiCatalogCache = EmojiCatalogCache()
     /// Rebuilt whenever configuration changes, since it carries the chosen expiry.
-    var clipboardStore = ClipboardStore()
+    /// Starts as a placeholder with no directory, so `init` makes no disk calls:
+    /// bootstrap's first `adoptConfiguration` always installs the real store, before
+    /// anything can touch the clipboard.
+    var clipboardStore = ClipboardStore(directory: nil)
     let kaomojiRecentsStore = EmojiRecentsStore(key: FunputAppGroup.kaomojiRecentsKey)
     let accessStateStore = KeyboardAccessStateStore()
     let customThemeStore = CustomThemeStore()
@@ -41,7 +44,9 @@ final class KeyboardViewController: UIInputViewController {
     }
     let activationState = KeyboardActivationState()
     let backgroundImageCache = KeyboardBackgroundAssetCache<UIImage>()
-    let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
+    /// Lazy because its initializer prepares the App Group directory, and `init` makes
+    /// no disk calls; bootstrap reads it first, in `viewDidLoad`.
+    lazy var bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
     var clipboardRetryTask: Task<Void, Never>?
     let clipboardChangeMonitor = ClipboardChangeMonitor()
     var clipboardStartTask: Task<Void, Never>?

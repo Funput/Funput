@@ -94,6 +94,8 @@ extension KeyboardViewController {
             from: source.configuration,
             catalog: source.catalog
         )
+        // Always reached on the first call, since `adoptedIdentity` starts nil: that
+        // is what lets the controller begin with a placeholder store.
         clipboardStore = ClipboardStore(expiry: source.configuration.clipboardExpiry)
     }
 
