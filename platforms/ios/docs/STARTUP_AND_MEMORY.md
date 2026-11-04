@@ -5,7 +5,7 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A3 đã hiện thực; A4–A7 đã duyệt
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A4 đã hiện thực; A5–A7 đã duyệt
 > hướng, chưa hiện thực.
 >
 > **Cập nhật:** 04/11/2026
@@ -106,6 +106,9 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 - Lưu clipboard vẫn decode và encode cả lịch sử trên main actor, nhưng lịch sử có trần
   cố định (A3, `ClipboardHistoryPolicy`): file xấu nhất khoảng 768 KB, không phụ thuộc
   user dán gì.
+- Polling pasteboard lúc gõ (A4): mỗi tick 500ms chỉ hỏi `changeCount`, một truy vấn;
+  đủ 4 trường metadata chỉ đọc khi số đó đổi
+  (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardChangeMonitor.swift`).
 
 **Lệch:**
 
@@ -113,7 +116,6 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 |---|---|---|
 | `init` | `var clipboardStore = ClipboardStore()` gọi `AppGroupDirectory.prepare` (`createDirectory` + `setAttributes` + `setResourceValues`), rồi `adoptConfiguration` tạo lại ngay trong bootstrap | A6 |
 | `viewWillAppear` | `activateKeyboardForAppearance()` gọi `loadActivationSource` **lần thứ hai** (`Keyboard/Controller/Activation/KeyboardViewController+Activation.swift`); `adoptConfiguration` sau đó thấy identity không đổi nên không build lại gì. Lần đọc chỉ có nghĩa cho warm re-activation | A5 |
-| Sau `viewDidAppear`, suốt lúc gõ | `ClipboardChangeMonitor` cứ 500ms đọc đủ 4 trường metadata pasteboard trên main (`changeCount`, `hasStrings`, `hasURLs`, `contains(pasteboardTypes:)`), đo được ~3ms mỗi lần trên máy thật | A4 |
 
 ### 2.2. Ảnh nền: giữ decode đồng bộ (đã quyết định)
 
@@ -495,6 +497,16 @@ thay đổi do process host làm.
 **Nghiệm thu.** Test `FunputShared` với nguồn metadata giả đếm số lần đọc: 10 tick
 không đổi `changeCount` thì đọc snapshot đúng 1 lần; `changeCount` đổi thì
 `onChange` gọi đúng 1 lần; snapshot indeterminate thì tick sau đọc lại đủ.
+
+**Đã đổi khi hiện thực.**
+
+- `readChangeCount` là tham số tuỳ chọn của `start`; thiếu nó thì mỗi tick đọc đủ
+  snapshot như trước, nên các test monitor cũ giữ nguyên. Tick là hàm riêng `poll()`;
+  `sample()` (đọc đủ) vẫn dùng cho lúc start, `refresh()` và notification.
+- Probe trả nil (mất quyền, ô password) thì tick rơi về `sample()`, đúng như khi
+  `readSnapshot` trả nil: lời mời dán bị gỡ, và lấy lại quyền thì đọc lại đủ.
+- Test mới nằm ở file riêng `ClipboardChangeMonitorPollingTests.swift`, vì file test
+  monitor cũ đã sát giới hạn 150 dòng.
 
 ### A5: Bỏ lần đọc activation source thừa
 

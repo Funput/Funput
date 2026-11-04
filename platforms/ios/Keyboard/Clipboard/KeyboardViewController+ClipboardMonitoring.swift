@@ -57,6 +57,12 @@ extension KeyboardViewController {
                     guard self?.allowsClipboardOffer == true else { return nil }
                     return ClipboardSnapshot(.general)
                 },
+                // One query per tick while the user types, behind the same gate:
+                // a password field asks the pasteboard nothing at all.
+                readChangeCount: { [weak self] in
+                    guard self?.allowsClipboardOffer == true else { return nil }
+                    return UIPasteboard.general.changeCount
+                },
                 // Metadata only: the offer changes, the contents stay unread until
                 // the user taps a paste control.
                 onChange: { [weak self] in self?.refreshClipboardOffer() }
