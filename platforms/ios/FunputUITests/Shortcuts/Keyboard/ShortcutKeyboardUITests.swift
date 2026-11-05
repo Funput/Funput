@@ -74,7 +74,7 @@ final class ShortcutKeyboardUITests: XCTestCase {
         ShortcutKeyboardUITestSupport.add(app, expansion: "việt nam")
         var field = ShortcutKeyboardUITestSupport.openField(app)
         ShortcutKeyboardUITestSupport.typeTitleTrigger(app)
-        ShortcutsUITestSupport.waitForValue(field, "Việt Nam ")
+        ShortcutsUITestSupport.waitForValue(field, "Việt nam ")
         ShortcutKeyboardUITestSupport.back(app)
         app.buttons["shortcuts.options"].tap()
         app.switches["shortcuts.smartCase"].firstMatch.tap()

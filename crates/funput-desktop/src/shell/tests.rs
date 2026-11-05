@@ -687,7 +687,7 @@ fn shell_with_tp() -> ShellState {
 #[test]
 fn smart_case_is_on_by_default() {
     let mut state = shell_with_tp();
-    assert_eq!(app_text(&mut state, "Tp "), "Tp. Hcm ");
+    assert_eq!(app_text(&mut state, "Tp "), "TP. HCM ");
 }
 
 /// The Settings switch has to reach the engine, not just the settings file — on
@@ -717,7 +717,7 @@ fn turning_smart_case_back_on_restores_matching() {
     state.set_shortcut_smart_case(false);
     state.set_shortcut_smart_case(true);
 
-    assert_eq!(app_text(&mut state, "Tp "), "Tp. Hcm ");
+    assert_eq!(app_text(&mut state, "Tp "), "TP. HCM ");
 }
 
 // --- keyboard layout -------------------------------------------------------

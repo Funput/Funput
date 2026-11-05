@@ -10,6 +10,8 @@ Các góp ý khác trong issue được bàn riêng: file `.txt` ở [shortcut-f
 
 ## 1. Viết hoa khi bung
 
+Trạng thái: đã làm (PR #…).
+
 ### Hiện trạng
 
 `classify_case` + `apply_shortcut_case` trong [shortcut.rs](../../crates/funput-engine/src/compose/boundary/shortcut.rs), khi bật "Tự nhận diện hoa/thường":
@@ -42,21 +44,30 @@ Không còn cách nhanh để ra "Hoa Đầu Mọi Từ". Trường hợp này h
 
 ### Engine
 
-- `ShortcutCase::Title` đổi nghĩa: viết hoa **chữ cái đầu tiên** của nội dung (bỏ qua ký tự không có hoa/thường đứng trước, ví dụ `(`), phần còn lại giữ nguyên từng ký tự. Dùng `to_uppercase` cho chữ đó để `đ` → `Đ`, `ệ` → `Ệ` đúng.
+- `ShortcutCase::Title` đổi nghĩa: viết hoa **chữ cái đầu tiên** của nội dung (bỏ qua ký tự đứng trước không phải chữ cái hay chữ số, ví dụ `(`; gặp chữ số thì giữ nguyên), phần còn lại giữ nguyên từng ký tự. Dùng `to_uppercase` cho chữ đó để `đ` → `Đ`, `ệ` → `Ệ` đúng.
 - `classify_case` không đổi: `Ct` và `C` vẫn là `Title`, `CT` vẫn là `Upper`, `cT` vẫn rơi về khớp chính xác.
 - Câu mô tả công tắc ("Gõ vn, Vn hay VN đều bung và nội dung tự viết hoa theo") vẫn đúng, không cần sửa trên nền tảng nào.
 - Đổi trong engine nên áp dụng cho mọi nền tảng cùng lúc. Ghi rõ trong release note vì người đang quen kiểu cũ sẽ thấy khác.
 
 ### Kiểm thử
 
-Sửa kỳ vọng trong `crates/funput-engine/tests/words/shortcut.rs`:
+Test cũ trong `crates/funput-engine/tests/words/shortcut.rs` đổi kỳ vọng theo quy tắc mới:
 
-- `title_case_trigger_expands_to_title_case`: `Vn` với `việt nam` → `Việt nam`.
-- `title_case_capitalizes_every_word_in_a_multi_word_expansion`: đổi tên và kỳ vọng, `Kg` → `Không có gì`.
+- `title_case_trigger_capitalizes_the_first_letter` (tên cũ `title_case_trigger_expands_to_title_case`): `Vn` với `việt nam` → `Việt nam`.
+- `title_case_leaves_the_rest_of_a_multi_word_expansion_as_stored` (tên cũ `title_case_capitalizes_every_word_in_a_multi_word_expansion`): `Kg` → `Không có gì`.
 - `single_uppercase_letter_trigger_capitalizes_rather_than_shouts`: `V` → `Việt nam`.
-- `smart_case_off_keeps_the_expansion_verbatim`: nhánh smart case, `Tp` → `TP. HCM`.
+- `smart_case_keeps_a_stored_acronym_as_stored` thay cho `smart_case_off_keeps_the_expansion_verbatim`: `Tp` → `TP. HCM`.
+- `english_mode_expansion_follows_smart_case`: `Vn` → `Việt nam`.
 
-Thêm ca: nội dung có sẵn chữ hoa ở giữa (`Ct` → `Cơm tấm Sài Gòn`), nội dung mở đầu bằng ký tự không có hoa/thường, nội dung mở đầu bằng `đ`.
+Test mới, cũng trong file đó:
+
+- `title_case_keeps_capitals_stored_mid_expansion`: `ct`/`Ct` với `cơm tấm Sài Gòn`.
+- `title_case_skips_leading_punctuation`: `(việt nam)` → `(Việt nam)`.
+- `title_case_leaves_an_expansion_opening_with_a_digit_alone`: `3 con mèo` giữ nguyên.
+- `title_case_uppercases_a_leading_dd`: `Dc` với `được` → `Được`.
+- `title_case_touches_only_the_first_sentence_of_an_expansion`: `ok. cảm ơn\nnhé` → `Ok. cảm ơn\nnhé`.
+
+Ngoài engine, các test đang khẳng định hành vi cũ cũng đổi theo: `crates/funput-ffi/tests/round_trip.rs`, `crates/funput-desktop/src/shell/tests.rs` (`Tp` → `TP. HCM`), `ImeShortcutInstrumentedTest.kt` trên Android, `ShortcutInputTests.swift` và `ShortcutKeyboardUITests.swift` trên iOS (`Vn` → `Việt nam`).
 
 ## 2. Backspace hoàn tác gõ tắt trên desktop
 

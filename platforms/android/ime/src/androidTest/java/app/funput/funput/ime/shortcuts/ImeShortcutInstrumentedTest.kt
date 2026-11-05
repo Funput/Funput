@@ -28,7 +28,7 @@ class ImeShortcutInstrumentedTest {
     }
 
     @Test fun englishModeUsesRustSmartCaseWithoutComposing() = onMainThread {
-        listOf("vn" to "việt nam.", "Vn" to "Việt Nam.", "VN" to "VIỆT NAM.")
+        listOf("vn" to "việt nam.", "Vn" to "Việt nam.", "VN" to "VIỆT NAM.")
             .forEach { (trigger, expected) ->
                 ImeEditingScenario.create().use { scenario ->
                     scenario.handler.receiveShortcuts(library())

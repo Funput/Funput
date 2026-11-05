@@ -5,10 +5,10 @@ use crate::ImeResult;
 use crate::compose::doubled;
 use crate::model::{NumberGlue, Session};
 
-/// The letter-casing pattern of typed keys, used to mirror the expansion's case
-/// (`vn` → lowercase, `Vn` → Title Case, `VN` → UPPERCASE) — the same "propagate
-/// case" convention used by common text expanders like Espanso. Only consulted while
-/// `shortcut_smart_case` is on.
+/// The letter-casing pattern of typed keys, used to raise the expansion's case to
+/// match (`vn` → as stored, `Vn` → first letter capitalized, `VN` → UPPERCASE), the
+/// way UniKey does. Case is only ever raised, never lowered: what the user stored in
+/// the table is the floor. Only consulted while `shortcut_smart_case` is on.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum ShortcutCase {
     Lower,
@@ -40,29 +40,33 @@ fn classify_case(keys: &str) -> Option<ShortcutCase> {
     }
 }
 
-/// Re-case `expansion` to match `case`, using Unicode-aware `to_uppercase`/
-/// `to_lowercase` so accented Vietnamese letters (`đ` → `Đ`, `ệ` → `Ệ`) come out right.
+/// Raise the case of `expansion` to match `case`. Nothing is ever lowered: a stored
+/// `TP. HCM` stays `TP. HCM` under `Tp`. Unicode-aware `to_uppercase` keeps accented
+/// Vietnamese letters right (`đ` → `Đ`, `ệ` → `Ệ`).
 fn apply_shortcut_case(expansion: &str, case: ShortcutCase) -> String {
     match case {
         ShortcutCase::Lower => expansion.to_string(),
         ShortcutCase::Upper => expansion.to_uppercase(),
-        ShortcutCase::Title => {
-            let mut result = String::with_capacity(expansion.len());
-            let mut start_of_word = true;
-            for ch in expansion.chars() {
-                if ch.is_whitespace() {
-                    start_of_word = true;
-                    result.push(ch);
-                } else if start_of_word {
-                    result.extend(ch.to_uppercase());
-                    start_of_word = false;
-                } else {
-                    result.extend(ch.to_lowercase());
-                }
-            }
-            result
-        }
+        ShortcutCase::Title => capitalize_first_letter(expansion),
     }
+}
+
+/// Uppercase the first letter of `expansion`, leaving every other char as stored.
+/// Leading non-alphanumerics (brackets, quotes, whitespace) are skipped over; an
+/// expansion whose first alphanumeric is a digit (`3 con mèo`) comes back unchanged.
+fn capitalize_first_letter(expansion: &str) -> String {
+    let Some((at, letter)) = expansion
+        .char_indices()
+        .find(|(_, c)| c.is_alphanumeric())
+        .filter(|(_, c)| c.is_alphabetic())
+    else {
+        return expansion.to_string();
+    };
+    let mut result = String::with_capacity(expansion.len());
+    result.push_str(&expansion[..at]);
+    result.extend(letter.to_uppercase());
+    result.push_str(&expansion[at + letter.len_utf8()..]);
+    result
 }
 
 pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<ImeResult> {

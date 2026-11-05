@@ -187,9 +187,10 @@ trên.
 Bảng trigger → expansion do người dùng định nghĩa (`vn` → `việt nam`, `kg` → `không`). Tại **ranh
 giới từ**, engine khớp lần lượt **chuỗi phím đã gõ** (`doubled::typed_keys`, gồm cả phím mà hủy dấu đã
 nuốt), **chuỗi phím thô** (`keys`), rồi buffer đã ghép (`đc`) với bảng gõ tắt theo kiểu
-**smart-case**: gõ `vn`/`Vn`/`VN` đều khớp cùng một trigger, và expansion được viết lại hoa/thường
-tương ứng —
-`vn` → `việt nam`, `Vn` → `Việt Nam` (hoa chữ đầu mỗi từ), `VN` → `VIỆT NAM` (hoa toàn bộ). Kiểu gõ
+**smart-case**: gõ `vn`/`Vn`/`VN` đều khớp cùng một trigger, và expansion chỉ được nâng hoa cho khớp,
+không bao giờ hạ thường cách viết đã lưu —
+`vn` → `việt nam` (giữ nguyên), `Vn` → `Việt nam` (hoa chữ cái đầu tiên, phần sau giữ nguyên), `VN` →
+`VIỆT NAM` (hoa toàn bộ); `tp` → `TP. HCM` thì gõ `Tp` vẫn ra `TP. HCM`. Kiểu gõ
 hoa/thường "lộn xộn" không khớp 1 trong 3 mẫu trên (ví dụ `vNa`) chỉ được khớp **chính xác** — nhờ
 vậy trigger cố ý viết hoa/thường tuỳ ý (ví dụ `iOS`) vẫn hoạt động đúng như định nghĩa. Xem
 `classify_case`/`apply_shortcut_case` trong `compose/boundary/shortcut.rs`.
