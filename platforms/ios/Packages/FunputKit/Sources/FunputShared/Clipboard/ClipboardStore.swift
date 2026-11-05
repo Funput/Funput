@@ -77,33 +77,28 @@ public struct ClipboardStore {
         writeMarks(.empty)
     }
 
-    /// Newest first. Expired unpinned entries go, then the oldest unpinned ones until
-    /// the list fits; pinned entries are never evicted.
+    /// Expired unpinned entries go, then whatever ``ClipboardHistoryPolicy`` says no
+    /// longer fits.
     private func prune(_ items: [ClipboardItem], now: Date) -> [ClipboardItem] {
-        let live = items.filter { $0.isPinned || now.timeIntervalSince($0.capturedAt) < expiry }
-        guard live.count > Self.limit else { return live }
-        var excess = live.count - Self.limit
-        var kept: [ClipboardItem] = []
-        for item in live.reversed() {
-            if excess > 0, !item.isPinned {
-                excess -= 1
-                continue
-            }
-            kept.append(item)
+        ClipboardHistoryPolicy.prune(items, limit: Self.limit) {
+            $0.isPinned || now.timeIntervalSince($0.capturedAt) < expiry
         }
-        return Array(kept.reversed())
     }
 
     /// Adds a pasted entry, or moves an earlier copy of the same text to the front.
     /// Idempotent for the same text from the same generation, so pasting it twice
-    /// writes nothing the second time.
+    /// writes nothing the second time. Returns whether the history holds the entry
+    /// afterwards: false for text too long to keep, for text that does not fit beside
+    /// the pinned entries, and when the write fails. The history is left as it was.
     public func record(_ item: ClipboardItem, now: Date = Date()) -> Bool {
         var payload = read()
         let known = payload.items.contains {
             $0.text == item.text && $0.sourceChangeCount == item.sourceChangeCount
         }
         guard !known else { return true }
-        payload.items = merged(item, into: payload.items, now: now)
+        let items = merged(item, into: payload.items, now: now)
+        guard items.contains(where: { $0.text == item.text }) else { return false }
+        payload.items = items
         return write(payload)
     }
 

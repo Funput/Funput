@@ -49,12 +49,16 @@ public final class ClipboardPasteRecorder {
     /// that generation now: a copy that landed in between must not be claimed as
     /// pasted, or its offer would never appear. Such a paste is stored under -1, which
     /// never suppresses an offer.
+    ///
+    /// Text longer than ``ClipboardHistoryPolicy/maxItemUTF16`` was still pasted, so
+    /// the offer is withdrawn as usual, but it is not kept: checked here so the store
+    /// never decodes the history only to turn it away.
     public func didPaste(_ text: String, changeCount: Int?) {
         guard active, !text.isEmpty else { return }
         let stable = changeCount == gateway.snapshot().changeCount ? changeCount : nil
         lastPastedChangeCount = stable
         if let stable { marks.markPasted(stable) }
-        guard allowsRecording(),
+        guard allowsRecording(), ClipboardHistoryPolicy.admits(text),
               save(ClipboardItem(text: text, sourceChangeCount: stable ?? -1)) else { return }
         onUpdate()
     }

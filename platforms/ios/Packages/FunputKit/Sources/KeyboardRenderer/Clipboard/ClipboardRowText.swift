@@ -13,11 +13,18 @@ enum ClipboardRowText {
     /// The row shows at most two lines, so a clip that starts with blank lines would
     /// otherwise render as an empty row. Structure is lost, but the point here is to
     /// recognise the clip, not to read it.
+    ///
+    /// Only the head of the clip is looked at: splitting and joining an entire long
+    /// clip for every row it scrolls past would copy all of it to show 120 letters.
+    /// Four times the limit leaves room for the whitespace the collapse removes.
     static func preview(_ text: String) -> String {
-        let collapsed = text
+        let head = text.prefix(previewLimit * 4)
+        let collapsed = head
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")
-        guard collapsed.count > previewLimit else { return collapsed }
+        guard collapsed.count > previewLimit || head.endIndex < text.endIndex else {
+            return collapsed
+        }
         return collapsed.prefix(previewLimit) + "…"
     }
 

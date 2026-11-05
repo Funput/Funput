@@ -20,6 +20,23 @@ struct ClipboardRowTextTests {
         #expect(preview.hasSuffix("…"))
     }
 
+    @Test("Preview of a very long clip only looks at its head")
+    func veryLongClip() {
+        let long = "  mở đầu\n" + String(repeating: "chữ ", count: 250_000)
+        let preview = ClipboardRowText.preview(long)
+        #expect(preview.count == ClipboardRowText.previewLimit + 1)
+        #expect(preview.hasPrefix("mở đầu chữ"))
+        #expect(preview.hasSuffix("…"))
+    }
+
+    /// Whitespace the head was mostly made of collapses away, but the clip goes on,
+    /// so the row still says so.
+    @Test("Preview marks a clip cut off inside a run of whitespace")
+    func cutInsideWhitespace() {
+        let clip = "a" + String(repeating: " ", count: ClipboardRowText.previewLimit * 5) + "b"
+        #expect(ClipboardRowText.preview(clip) == "a…")
+    }
+
     @Test("Preview leaves a short single-line clip alone")
     func shortText() {
         #expect(ClipboardRowText.preview("xin chào") == "xin chào")

@@ -58,6 +58,18 @@ struct ClipboardPasteRecorderTests {
         #expect(f.recorder.lastPastedChangeCount == 1)
     }
 
+    /// Too long to keep, but it was pasted: the offer goes away all the same, and the
+    /// store is never asked.
+    @Test func oversizedPasteWithdrawsTheOfferButKeepsNothing() {
+        let f = PasteFixture()
+        let long = String(repeating: "a", count: ClipboardHistoryPolicy.maxItemUTF16 + 1)
+        f.recorder.didPaste(long, changeCount: 1)
+        #expect(f.saved.isEmpty)
+        #expect(f.updates == 0)
+        #expect(f.recorder.lastPastedChangeCount == 1)
+        #expect(f.offer() == nil)
+    }
+
     @Test func emptyTextAndEndedSessionsAreIgnored() {
         let f = PasteFixture()
         f.recorder.didPaste("", changeCount: 1)
