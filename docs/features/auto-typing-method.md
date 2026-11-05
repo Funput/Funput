@@ -2,9 +2,23 @@
 
 ## Trạng thái
 
-Bản thiết kế, chưa hiện thực. Đây là nơi mọi quyết định thiết kế sống: chỗ nào hiện thực lệch khỏi
-bản viết này thì sửa lại ngay trong PR đó và đánh dấu **Đã đổi khi hiện thực**. Thứ tự PR ở mục
-[Kế hoạch triển khai](#kế-hoạch-triển-khai-theo-pr).
+**Để dành, chờ nhu cầu.** Thiết kế đã xong nhưng chưa lên lịch hiện thực.
+
+Lý do để dành:
+
+- Lợi ích hẹp: chỉ giúp nhiều người gõ khác kiểu dùng chung một tài khoản trên một máy. Mỗi người một
+  tài khoản hệ điều hành thì cài đặt đã tách riêng sẵn.
+- Chi phí không nhỏ: module nhận biết trong engine, luật `configure` hai chiều, nối config, FFI, JNI và
+  giao diện, thêm một cấu hình phải chạy trong bộ diff, và mọi luật gõ viết sau phải tính tới nó.
+- Vẫn còn ca chốt nhầm (`lan2`, `bai1`) cho một tính năng chỉ là nên có.
+
+Việc rẻ hơn nên làm trước: hiện rõ kiểu gõ đang dùng trên biểu tượng thanh menu hoặc khay hệ thống, kèm
+phím tắt chuyển nhanh. Việc đó nằm ở nền tảng, không đụng engine.
+
+Làm lại khi có tín hiệu thật: có issue hoặc người dùng yêu cầu, hoặc Funput nhắm tới môi trường dùng
+chung như trường học, phòng máy. Khi đó bắt đầu từ PR 1 ở mục
+[Kế hoạch triển khai](#kế-hoạch-triển-khai-theo-pr). Chỗ nào hiện thực lệch khỏi bản viết này thì sửa lại
+ngay trong PR đó và đánh dấu **Đã đổi khi hiện thực**.
 
 Đây là tính năng **nên có**, không phải tính năng chính. Mọi quyết định bên dưới ưu tiên một điều:
 người không bật Tự động không thấy bất kỳ thay đổi nào, và người bật Tự động gõ y như kiểu gõ cố định
