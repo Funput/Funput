@@ -72,6 +72,16 @@ fn a_word_that_could_still_become_a_syllable_is_not_previewed() {
 }
 
 #[test]
+fn a_word_rescued_from_a_restore_is_not_dead() {
+    // `dduoxwc` restores to its raw keys and would be searched; the nặng key that
+    // follows re-tones it to `được`, a finished syllable with nothing to correct.
+    let (engine, doc, found) = previewed("dduoxwcj", &[]);
+    assert_eq!(doc.text(), "được");
+    assert_eq!(found, 0);
+    assert!(engine.correction_candidates().is_empty());
+}
+
+#[test]
 fn the_next_letter_drops_the_preview() {
     let (mut engine, mut doc, _) = previewed("dduwowfnh", &[(8, 'g')]);
     assert!(!engine.correction_candidates().is_empty());

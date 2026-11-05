@@ -12,5 +12,7 @@ mod english;
 mod extra_onsets;
 #[path = "restore/place_names.rs"]
 mod place_names;
+#[path = "restore/retone.rs"]
+mod retone;
 #[path = "restore/toggle.rs"]
 mod toggle;

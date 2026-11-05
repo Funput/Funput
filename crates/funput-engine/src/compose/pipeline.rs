@@ -5,6 +5,7 @@
 //! are refilled in place so their capacity is reused across keystrokes.
 
 mod display;
+mod rescue;
 
 use funput_core::{TransformKind, apply_with};
 
@@ -29,7 +30,10 @@ pub(crate) fn process(
     typed: char,
     capitalize_shortcut: bool,
 ) -> ImeResult {
-    let mut result = apply_with(&session.buffer, key, session.config.compose_options());
+    // A nặng key right after an eager restore re-tones the composition the restore
+    // abandoned (`hoxc` + `j` → `học`); every other key composes on the buffer.
+    let mut result = rescue::retone_after_restore(session, key)
+        .unwrap_or_else(|| apply_with(&session.buffer, key, session.config.compose_options()));
     if capitalize_shortcut && result.kind == TransformKind::Applied {
         uppercase_direct_vowel(&mut result.text);
     }
@@ -41,9 +45,14 @@ pub(crate) fn process(
     };
 
     // Remember the Vietnamese composition before an eager restore can collapse the
-    // buffer to raw keys, so the flip hotkey can recover it after a restore.
+    // buffer to raw keys, so the flip hotkey can recover it after a restore. The `h`
+    // of a `ch` coda typed on a restored word extends that composition instead
+    // (`sãc` → `sãch`), keeping it ready for the nặng key that may follow.
+    let shadow = rescue::shadow_coda(session, key);
     session.vn_form.clear();
-    session.vn_form.push_str(&composed);
+    session
+        .vn_form
+        .push_str(shadow.as_deref().unwrap_or(&composed));
 
     // Keep the keys a revert swallows while `keys` still holds them, and before the
     // display is chosen, so the reverting key itself can be the decisive one.

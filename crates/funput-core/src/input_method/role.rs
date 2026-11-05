@@ -11,9 +11,14 @@
 //! [`KeyRole::Letter`]: a caller that cares about the pair looks at the pair.
 //! The answer is therefore not what [`crate::apply`] will do with the key; it is
 //! what the key *could* mean, and it never changes how the pipeline composes.
+//!
+//! [`key_tone`] is the same question narrowed to *which* tone, for a caller that
+//! treats one tone differently from the rest — the engine lets only a nặng key
+//! re-tone a word an English restore has just abandoned.
 
 use crate::input_method::{telex, vni};
 use crate::options::InputMethod;
+use crate::unicode::marks::Tone;
 
 /// What a key can mean in a method, independent of what precedes it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -45,6 +50,16 @@ pub fn key_role(method: InputMethod, key: char) -> KeyRole {
     }
 }
 
+/// The tone mark `key` types in `method`, case-insensitively and with no buffer in
+/// sight: Telex `s f r x j`, VNI `1`–`5`. `None` for every other key, including the
+/// tone keys of the *other* method (`j` in VNI, `5` in Telex).
+pub fn key_tone(method: InputMethod, key: char) -> Option<Tone> {
+    match method {
+        InputMethod::Vni => vni::tone_from_digit(key),
+        InputMethod::Telex | InputMethod::TelexAdvanced => telex::tone_from_key(key),
+    }
+}
+
 fn vni_role(key: char) -> KeyRole {
     match key {
         '9' => KeyRole::Stroke,
@@ -70,6 +85,8 @@ fn telex_role(key: char) -> KeyRole {
 mod tests {
     use super::*;
     use InputMethod::{Telex, TelexAdvanced, Vni};
+    // `KeyRole::Tone` shadows the enum below, so the enum goes by its full name.
+    use crate::unicode::marks::Tone as Mark;
     use KeyRole::*;
 
     #[test]
@@ -122,6 +139,46 @@ mod tests {
         assert_eq!(key_role(Telex, 'Z'), Remove);
         assert_eq!(key_role(Telex, 'A'), Letter);
         assert_eq!(key_role(Vni, 'A'), Letter);
+    }
+
+    #[test]
+    fn tone_keys_name_their_tone() {
+        for (key, tone) in [
+            ('s', Mark::Sac),
+            ('f', Mark::Huyen),
+            ('r', Mark::Hoi),
+            ('x', Mark::Nga),
+            ('j', Mark::Nang),
+        ] {
+            assert_eq!(key_tone(Telex, key), Some(tone), "{key}");
+            assert_eq!(key_tone(TelexAdvanced, key), Some(tone), "{key}");
+            assert_eq!(
+                key_tone(Telex, key.to_ascii_uppercase()),
+                Some(tone),
+                "{key} uppercase"
+            );
+        }
+        for (key, tone) in [
+            ('1', Mark::Sac),
+            ('2', Mark::Huyen),
+            ('3', Mark::Hoi),
+            ('4', Mark::Nga),
+            ('5', Mark::Nang),
+        ] {
+            assert_eq!(key_tone(Vni, key), Some(tone), "{key}");
+        }
+    }
+
+    #[test]
+    fn non_tone_keys_have_no_tone() {
+        for method in [Telex, TelexAdvanced] {
+            for key in ['w', '[', ']', 'z', 'a', 'd', '5', '6', ' '] {
+                assert_eq!(key_tone(method, key), None, "{method:?} {key:?}");
+            }
+        }
+        for key in ['j', 's', '6', '9', '0', ' '] {
+            assert_eq!(key_tone(Vni, key), None, "{key:?}");
+        }
     }
 
     #[test]

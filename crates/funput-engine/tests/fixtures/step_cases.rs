@@ -454,6 +454,18 @@ pub const APP_TEXT_CASES: &[AppTextCase] = &[
     },
     AppTextCase {
         method: InputMethod::Telex,
+        keys: "dduoxwcj saxchj ",
+        output: "được sạch ",
+        label: "telex nang retones a restored stop coda",
+    },
+    AppTextCase {
+        method: InputMethod::Vni,
+        keys: "d9uo37c5 sa4ch5 ",
+        output: "được sạch ",
+        label: "vni nang retones a restored stop coda",
+    },
+    AppTextCase {
+        method: InputMethod::Telex,
         keys: "cool ",
         output: "cool ",
         label: "english restore cool",
