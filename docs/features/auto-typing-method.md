@@ -1,4 +1,4 @@
-# Kiểu gõ Tự động: Telex và VNI, khoá theo từ
+# Kiểu gõ Tự động: nhận biết Telex hay VNI theo phiên
 
 ## Trạng thái
 
@@ -6,95 +6,158 @@ Bản thiết kế, chưa hiện thực. Đây là nơi mọi quyết định th
 bản viết này thì sửa lại ngay trong PR đó và đánh dấu **Đã đổi khi hiện thực**. Thứ tự PR ở mục
 [Kế hoạch triển khai](#kế-hoạch-triển-khai-theo-pr).
 
+Đây là tính năng **nên có**, không phải tính năng chính. Mọi quyết định bên dưới ưu tiên một điều:
+người không bật Tự động không thấy bất kỳ thay đổi nào, và người bật Tự động gõ y như kiểu gõ cố định
+sau khi Funput đã nhận ra kiểu gõ.
+
 ## Tóm tắt
 
-Kiểu gõ **Tự động** cho người dùng gõ Telex và VNI trong cùng một chế độ. Mỗi từ được **khoá** theo
-kiểu gõ của phím bỏ dấu đầu tiên thực sự có tác dụng, và từ đã khoá thì cư xử y hệt kiểu gõ cố định
-tương ứng. Toàn bộ logic nằm trong `funput-engine`. `funput-core` không đổi một dòng nào; 5 nền tảng
-chỉ thêm một giá trị cấu hình.
+Nhiều người dùng chung một máy (máy gia đình, máy văn phòng, phòng máy), người gõ Telex, người gõ
+VNI. Kiểu gõ **Tự động** cho Funput tự nhận ra kiểu gõ của người đang ngồi gõ, **nhớ nó cho cả phiên**,
+và từ đó xử lý y hệt kiểu gõ cố định tương ứng. Không ai phải vào cài đặt đổi kiểu gõ.
+
+- Khi chưa biết, Funput gõ như Telex và chỉ quan sát chữ số.
+- Gặp một chữ số làm VNI bỏ dấu hợp lệ (`vie6` thành `viê`) thì chuyển sang VNI ngay tại phím đó.
+- Đã nhận ra rồi thì engine đặt `config.method` sang kiểu đó, mọi luật gõ chạy đúng đường của kiểu cố
+  định. Không luật nào trong engine phải biết Tự động tồn tại.
+- Phiên kết thúc khi không ai gõ trong 5 phút, hoặc khi bằng chứng ngược chiều lặp lại liên tiếp
+  (người khác ngồi vào máy).
+
+Toàn bộ logic nằm trong `funput-engine`. `funput-core` không đổi một dòng nào. 5 nền tảng chỉ thêm một
+lựa chọn trong cài đặt.
 
 **Mục tiêu**
 
-- Một chế độ gõ được cả `vieejt` lẫn `vie65t`, chuyển qua lại giữa các từ mà không cần phím tắt.
-- **Không tụt hậu với kiểu gõ cố định:** khi Tự động tắt, đường chạy của Telex, Telex nâng cao và VNI
-  giữ nguyên từng byte.
-- **Tự động mà không có chữ số thì giống hệt Telex:** mọi chuỗi phím không chứa chữ số cho ra kết quả
-  y như Telex. Chứng minh bằng bộ diff 70k chuỗi.
-- Không cấp phát thêm trên luồng phím nóng. `Session` tăng tối đa 2 byte, không dùng thêm heap.
+- Người gõ Telex và người gõ VNI dùng chung một cấu hình mà không phải đổi kiểu gõ.
+- **Không tụt hậu với kiểu gõ cố định:** Tự động tắt thì Telex, Telex nâng cao và VNI giữ nguyên từng
+  byte so với `main`.
+- **Tự động mà không gõ chữ số thì giống hệt Telex**, trên toàn bộ phiên chứ không chỉ một từ.
+- **Đã chốt thì giống hệt kiểu cố định:** từ phím chốt trở đi, kết quả bằng kiểu cố định gõ cùng chuỗi
+  phím.
+- Không cấp phát thêm trên luồng phím nóng. `Session` tăng khoảng 24 byte, không dùng thêm heap.
 
 **Phi mục tiêu**
 
-- Không tự đổi kiểu gõ trong cài đặt, không học thói quen gõ, không lưu gì về văn bản đã gõ.
-- Không đoán kiểu gõ từ ngữ cảnh ứng dụng.
-- Không cứu mọi ca chữ số dính sau chữ (`tuan1`). Ca này có luật Backspace riêng ở mục
-  [Luật Backspace trả lại chữ số](#luật-backspace-trả-lại-chữ-số).
+- Không cho một người gõ lẫn Telex và VNI trong cùng một câu. Bản thiết kế khoá theo từng từ trước đây
+  đã bị bỏ vì quá phức tạp so với nhu cầu thật.
+- Không sửa lại những từ đã gõ xong trước khi Funput nhận ra kiểu gõ.
+- Không học thói quen gõ, không lưu gì về văn bản đã gõ, không lưu kiểu đã nhận ra xuống đĩa.
+- Không đoán kiểu gõ theo ứng dụng hay theo tài khoản hệ điều hành.
 
 ## Đặc tả hành vi
 
-Mỗi từ bắt đầu ở trạng thái **chưa rõ** và được khoá ngay tại lần bấm đầu tiên mà `funput-core` trả
-về `TransformKind::Applied`. Khoá theo họ của phím vừa bấm: chữ số thì VNI, còn lại thì Telex. Khoá
-không bao giờ chuyển thẳng từ Telex sang VNI hay ngược lại. Nó chỉ quay về chưa rõ khi từ kết thúc,
-hoặc khi Backspace xóa hết chữ đã biến đổi.
+Engine giữ một trạng thái nhận biết cho cả phiên, sống qua các ranh giới từ.
 
 ```mermaid
 stateDiagram-v2
-    state "Chưa rõ" as Undecided
-    state "Khoá Telex (chữ số là số thật)" as Telex
-    state "VNI vừa khoá (Backspace có thể trả số)" as VniFresh
-    state "Khoá VNI (s f r x j w là chữ cái)" as Vni
+    state "Chưa biết (gõ như Telex)" as Undecided
+    state "Telex" as Telex
+    state "VNI" as Vni
     [*] --> Undecided
-    Undecided --> Undecided: Pending, Ignored
-    Undecided --> Telex: phím Telex có tác dụng
-    Undecided --> VniFresh: chữ số có tác dụng
-    VniFresh --> Vni: phím kế tiếp
-    VniFresh --> Telex: Backspace ngay sau đó, trả chữ số
+    Undecided --> Vni: 1 bằng chứng VNI
+    Undecided --> Telex: 3 từ có bằng chứng Telex
+    Telex --> Vni: 2 bằng chứng VNI liên tiếp
+    Vni --> Telex: 2 bằng chứng Telex liên tiếp
+    Telex --> Undecided: rảnh 5 phút
+    Vni --> Undecided: rảnh 5 phút
 ```
 
-Hết từ, `adopt`, hoặc Backspace để lại buffer toàn ASCII: mọi trạng thái quay về Chưa rõ. Khoá chỉ đi
-một chiều trong một từ. Lối duy nhất từ VNI sang Telex là Backspace ngay sau chữ số vừa khoá.
+Ở mọi trạng thái, bật lại Tự động trong cài đặt hoặc host gọi `Engine::reset_auto_method()` cũng đưa về
+Chưa biết.
 
-**Cách đọc một phím theo trạng thái của từ**
+**Chưa biết** gõ đúng như nền Telex đã cấu hình (Telex hoặc Telex nâng cao). Khác biệt duy nhất là
+engine thử chữ số theo VNI (xem bằng chứng VNI). Vì vậy người gõ Telex không thấy gì khác ngay từ phím
+đầu tiên.
 
-| Trạng thái từ | Chữ số `0`–`9` | `s f r x j w z`, `aa ee oo dd` | Chữ cái khác |
-| --- | --- | --- | --- |
-| Chưa rõ | bộ phân loại VNI | bộ phân loại Telex | chữ cái |
-| Khoá Telex | chữ số thật | phím bỏ dấu Telex | chữ cái |
-| Khoá VNI | phím bỏ dấu VNI | chữ cái | chữ cái |
+**Telex** và **VNI** là kiểu cố định thật sự: `session.config.method` mang giá trị đó, và mọi luật
+(ranh giới từ, khôi phục tiếng Anh, collision, sửa lỗi gõ, gõ tắt) chạy đúng như khi người dùng chọn
+kiểu đó trong cài đặt.
 
-Phím chỉ khoá khi nó thực sự biến đổi chữ. Ba kiểu kết quả còn lại không khoá: `Pending` (chữ số
-không có nguyên âm để bỏ dấu, như `h2`), `Ignored` (`ng` + `1`) và `Reverted` (`ass`, `a11`). Riêng
-`Reverted` chỉ xảy ra khi từ đã khoá từ trước, nên khoá được giữ.
+### Bằng chứng VNI
 
-**Ví dụ**
+Xét tại một phím chữ số đi vào pipeline, trước khi pipeline xử lý phím đó. Chữ số đầu từ, chữ số bàn
+phím số và `500k` không tới được đây, nên không đổi gì. Phím là bằng chứng VNI khi đủ cả bốn điều kiện:
 
-| Phím gõ | Diễn biến | Kết quả |
+1. Từ đang gõ vẫn còn thô: `keys == buffer`, chưa có lần huỷ dấu nào (`literal` chưa bật), chưa bị lật
+   (`restore_override` rỗng). Nghĩa là Telex chưa biến đổi chữ nào trong từ.
+2. Từ đã có ít nhất 2 ký tự trước chữ số.
+3. Áp chữ số đó theo VNI lên buffer cho kết quả `TransformKind::Applied`.
+4. Kết quả không bị `syllable_rules.is_definitely_invalid_in(.., Vni)` loại, tức là dùng đúng bộ luật âm
+   tiết người dùng đã bật.
+
+Điều kiện 1 gần như luôn đúng với người gõ VNI. Âm cuối tiếng Việt chỉ là `c ch m n ng nh p t`, không
+có `s f r x j w`, và người gõ VNI không gõ `aa`, `dd`. Vì vậy trước chữ số đầu tiên, từ VNI không chứa
+phím bỏ dấu Telex nào.
+
+Điều kiện 2 và 4 chặn các chuỗi người gõ Telex hay gõ: `U23` (1 chữ), `h2o` và `mp3` (không có nguyên
+âm để bỏ dấu, ra `Pending`), `covid19` và `iphone15` (âm tiết không hợp lệ).
+
+### Bằng chứng Telex
+
+Xét tại ranh giới từ. Một từ là bằng chứng Telex khi đọc theo Telex nó là âm tiết tiếng Việt hoàn
+chỉnh (`is_complete_syllable`), có **cả** một dấu thanh **lẫn** một biến đổi hình chữ (`â ă ê ô ơ ư
+đ`). Ví dụ `vieejt` thành `việt`, `dduowcj` thành `được`, `nguwowif` thành `người`.
+
+Đòi cả hai loại dấu là để chặn chữ tiếng Anh. Rất nhiều chữ tiếng Anh đọc theo Telex vẫn ra âm tiết hợp
+lệ, như `see` ra `sê`, `now` ra `nơ`, `box` ra `bõ`, `bar` ra `bả`, nhưng gần như không chữ nào vừa có
+nguyên âm đôi hoặc `w` vừa có phím thanh.
+
+- Ở trạng thái **Chưa biết**, đọc thẳng buffer vừa ghép (đang gõ theo Telex), không tốn thêm phép tính
+  nào ngoài lần kiểm tra âm tiết.
+- Ở trạng thái **VNI**, chỉ phát lại khi từ không có chữ số và VNI để nguyên nó (`keys == buffer`).
+  Trước khi phát lại còn lọc nhanh: `keys` phải có một cặp `aa ee oo dd` hoặc một chữ `w`, cộng một chữ
+  trong `s f r x j`. Đa số từ của người gõ VNI có chữ số nên bị loại ngay ở bước này.
+- Ở trạng thái **Telex**, không xét.
+
+### Ngưỡng và độ trễ
+
+Ngưỡng lệch về phía an toàn cho người đang gõ, và nghiêm hơn khi phải đảo kiểu đã chốt.
+
+| Chuyển | Ngưỡng | Lý do |
 | --- | --- | --- |
-| `vieejt2` | `ee` khoá Telex, `2` là số thật | `việt2` |
-| `vie65ts` | `6` khoá VNI, `s` là chữ cái | `việts` |
-| `khoong2` | `oo` khoá Telex | `không2` |
-| `d9i` | `9` khoá VNI | `đi` |
-| `h2o` | `2` không có nguyên âm, vẫn chưa rõ | `h2o` |
-| `sao` | `s` đầu từ là chữ cái, vẫn chưa rõ | `sao` |
-| `ass` | `s` khoá Telex, `s` thứ hai huỷ dấu, giữ khoá | `as` |
-| `tuan1` | `1` khoá VNI | `tuán`, Backspace ngay sau đó trả về `tuan1` |
+| Chưa biết sang VNI | 1 bằng chứng VNI | trạng thái Chưa biết đang gõ Telex, người gõ VNI cần được nhận ra ngay ở từ đầu |
+| Chưa biết sang Telex | 3 từ có bằng chứng Telex, không xen bằng chứng VNI | về hành vi gõ thì không đổi gì. Chốt chỉ để bật vùng đệm chống đảo nhầm bên dưới |
+| Telex sang VNI | 2 bằng chứng VNI liên tiếp | người gõ Telex đôi khi gõ `tuan1990`, `lan2`. Một lần không đủ để đảo |
+| VNI sang Telex | 2 bằng chứng Telex liên tiếp | như trên, cho người gõ VNI gặp chữ tiếng Anh hiếm như `rows` |
 
-**Ca khó**
+"Liên tiếp" nghĩa là giữa hai bằng chứng không có từ nào mang dấu theo kiểu đang chốt. Ở trạng thái
+Telex, từ nào có biến đổi Telex (`buffer != keys` sau ranh giới) thì xoá bộ đếm ngược chiều. Ở trạng
+thái VNI, từ nào có chữ số đã biến đổi chữ thì xoá bộ đếm.
+
+**Rảnh 5 phút** đo từ lúc bắt đầu từ trước đó tới lúc bắt đầu từ mới. Sau khi rảnh thì về Chưa biết và
+xoá mọi bộ đếm. Với người gõ Telex quay lại máy, việc về Chưa biết không đổi gì. Với người gõ VNI, họ
+được nhận ra lại ở chữ số đầu tiên.
+
+### Ví dụ
+
+| Tình huống | Diễn biến | Màn hình |
+| --- | --- | --- |
+| Mở máy, gõ `vie65t` | `6`: từ thô, 3 chữ, VNI áp ra `viê` hợp lệ. Chuyển VNI ngay tại phím này | `việt` |
+| Mở máy, gõ `vieejt` | Chưa biết gõ như Telex | `việt` |
+| Mở máy, gõ `U23` | 1 chữ, không xét | `U23` |
+| Mở máy, gõ `iphone15` | `iphone` + `1` không hợp lệ | `iphone15` |
+| Đang VNI, người Telex ngồi vào, gõ `vieejt dduowcj` | 2 bằng chứng Telex liên tiếp, chuyển Telex sau từ thứ hai | `vieejt dduowcj`, từ thứ ba trở đi gõ đúng |
+| Đang Telex, người VNI ngồi vào, gõ `vie65t tie61ng` | `6` của từ đầu là bằng chứng thứ nhất, Telex giữ nguyên. `6` của từ sau là bằng chứng thứ hai, chuyển VNI tại phím đó | `vie65t tiếng` |
+| Người VNI ngồi vào sau khi máy rảnh 5 phút | Đã về Chưa biết | gõ đúng từ chữ số đầu tiên |
+| Người Telex đang gõ, viết `tuan1990` | Đang Telex, mới 1 bằng chứng | `tuan1990` |
+
+### Ca khó
 
 | Tình huống | Hành vi |
 | --- | --- |
-| Backspace mà buffer còn chữ có dấu (`việ` sau khi xóa `t`) | giữ khoá |
-| Backspace làm buffer chỉ còn ASCII (`viê` thành `vi`) | về chưa rõ |
-| Mở lại từ cũ qua `Engine::adopt` (`việt`) | chưa rõ. Gõ `2` hay `f` đều là đổi dấu hợp lệ |
-| Chữ số đầu từ, numpad, `500k` | không đổi: đi thẳng qua như hiện nay, vì xảy ra trước khi tới pipeline |
-| Phím lật (flip) | giữ khoá. Flip chỉ ghim dạng hiển thị |
-| Từ không có phím bỏ dấu nào (`anh`, `the`) | chưa rõ tới cuối từ. Tầng ranh giới xử nó như Telex |
+| Đổi kiểu xảy ra giữa một từ (sang VNI tại chữ số) | không phải ghép lại gì. Điều kiện 1 bảo đảm buffer đang là phím thô, đúng như VNI cố định sẽ có |
+| Đổi kiểu sang Telex | chỉ xảy ra ở ranh giới từ, sau `clear()`, nên không có từ dở dang |
+| Backspace ngay sau chữ số vừa chuyển sang VNI | xoá như VNI cố định. Không có luật hoàn tác riêng |
+| `Engine::adopt` mở lại từ cũ | gõ theo kiểu đang chốt, như kiểu cố định |
+| `Engine::configure` gọi lại với cùng cài đặt | giữ trạng thái nhận biết (xem mục Cấu hình) |
+| Bàn phím iOS dựng lại controller mỗi lần đổi app | trạng thái về Chưa biết. Chấp nhận được, vì Chưa biết gõ như Telex và người gõ VNI được nhận ra ở chữ số đầu tiên |
+| Phím Telex/VNI trên bàn phím iOS và Android (`set_method`) | người dùng tự chọn kiểu cố định, nên tắt Tự động |
 
 ## Kiến trúc
 
-Khoá theo từ là trạng thái của phiên gõ, nên nó thuộc về `funput-engine`. `funput-core` giữ đúng vai
-một hàm thuần: với mỗi phím, engine chọn `InputMethod` rồi truyền vào `apply_with` như bây giờ. Điều
-này làm được vì trong core chỉ có đúng một chỗ đọc `options.method`, là `match` ở
-[transform/mod.rs:15](../../crates/funput-core/src/composition/transform/mod.rs). Đã grep để xác nhận.
+Nhận biết là trạng thái của phiên gõ, nên nó thuộc về `funput-engine`. Khi đã chốt, nó chỉ làm một việc
+là đặt `session.config.method`. Đây là lý do thiết kế này nhẹ: mọi chỗ đang đọc `config.method` (pipeline,
+ranh giới từ, collision, doubled, sửa lỗi gõ) tiếp tục đọc đúng chỗ đó và nhận được kiểu cố định thật.
 
 ```mermaid
 flowchart TD
@@ -106,15 +169,15 @@ flowchart TD
         Windows
         Term["funput-term"]
     end
-    FFI["funput-ffi<br/>byte 3, 4 = Tự động. has_backspace_undo"]
+    FFI["funput-ffi<br/>byte 3, 4 = Tự động"]
     JNI["funput-jni<br/>như ffi"]
     subgraph Engine["funput-engine"]
-        Auto["compose/auto (mới)<br/>WordLock 1 byte, key_method,<br/>after_transform, take_digit_undo"]
-        Pipeline["pipeline::process<br/>chọn kiểu gõ cho phím, gọi apply_with,<br/>cập nhật khoá"]
-        Boundary["Ranh giới, sửa lỗi gõ<br/>đọc word_method() ở 8 chỗ"]
-        Auto --> Pipeline --> Boundary
+        Detect["compose/auto (mới)<br/>Detector khoảng 24 byte<br/>bằng chứng VNI, bằng chứng Telex, rảnh"]
+        Config["engine/config.rs<br/>configure giữ nền Telex,<br/>config.method = kiểu đang dùng"]
+        Rest["pipeline, ranh giới từ, sửa lỗi gõ<br/>không đổi, đọc config.method như cũ"]
+        Detect --> Config --> Rest
     end
-    Core["funput-core<br/>apply_with, không đổi một dòng"]
+    Core["funput-core<br/>không đổi một dòng"]
     macOS --> FFI
     Linux --> FFI
     iOS --> FFI
@@ -123,365 +186,322 @@ flowchart TD
     Term --> Engine
     FFI --> Engine
     JNI --> Engine
-    Pipeline --> Core
+    Rest --> Core
 ```
-
-Nền tảng và cầu nối chỉ truyền một giá trị cấu hình. Khoá sinh ra, được đọc và mất đi đều trong
-`funput-engine`.
 
 | Tầng | Thay đổi |
 | --- | --- |
-| `funput-core` | Không đổi. API, ABI và bảng phím giữ nguyên |
-| `funput-engine` | Module mới `compose/auto/` (chọn kiểu gõ cho từng phím, chốt khoá, Backspace). Thêm `Session::lock` và `EngineConfig::auto_method`. 8 chỗ chuyển từ `config.method` sang `word_method(session)` |
-| `funput-config` | Trường `auto_method: bool` (serde default `false`) đặt cạnh `method`. ID riêng trong tài liệu chuyển cấu hình |
-| `funput-ffi` / `funput-jni` | Byte kiểu gõ nhận thêm `3` = Tự động (nền Telex) và `4` = Tự động (nền Telex nâng cao). Không đổi struct |
-| 5 nền tảng | Thêm một lựa chọn "Tự động" trong cài đặt. Chỉ nền tảng nào chưa tiêu kết quả của `on_backspace` mới phải nối thêm luật Backspace |
+| `funput-core` | Không đổi |
+| `funput-engine` | Module mới `compose/auto/`. Thêm `Session::auto` và `EngineConfig::auto_method`. Ba điểm móc: thử chữ số trong `compose_key`, xét từ trong `on_word_boundary`, đo rảnh lúc bắt đầu từ. `configure` và `set_method` hiểu cờ mới |
+| `funput-config` | Trường `auto_method: bool` (serde default `false`) đặt cạnh `method` |
+| `funput-ffi` / `funput-jni` | Byte kiểu gõ nhận thêm `3` = Tự động (nền Telex) và `4` = Tự động (nền Telex nâng cao). Thêm getter trạng thái nhận biết để hiện lên giao diện |
+| 5 nền tảng | Thêm lựa chọn "Tự động". Tuỳ chọn: hiện kiểu đang dùng, gọi `reset_auto_method` khi mở khoá màn hình |
+
+**Ba điểm móc, không điểm nào nằm trên đường chạy khi Tự động tắt**
+
+| Điểm móc | Chỗ | Chạy khi nào |
+| --- | --- | --- |
+| Thử chữ số | [process.rs](../../crates/funput-engine/src/engine/process.rs) `compose_key`, ngay trước `session.push_key` | cờ bật, phím là chữ số ASCII, trạng thái khác VNI |
+| Xét từ | [boundary/mod.rs](../../crates/funput-engine/src/compose/boundary/mod.rs) `on_word_boundary`, trước `session.clear()` | cờ bật, trạng thái Chưa biết hoặc VNI, không phải gõ tắt bung ra |
+| Đo rảnh | `compose_key`, nhánh `keys.is_empty()` đang gọi `glue.start_word()` | cờ bật, một lần mỗi từ |
 
 **Vì sao dùng cờ chứ không thêm `InputMethod::Auto`**
 
-1. `Method::from_core` trong `funput-config` có `unreachable!` cho biến thể mới. Thêm biến thể mà quên
+1. `Method::from_core` trong `funput-config` có `unreachable!` cho biến thể lạ. Thêm biến thể mà quên
    nối ở đâu là panic lúc chạy.
 2. Serde đọc giá trị enum lạ là lỗi. File cấu hình có `"method": "auto"` chuyển sang máy chạy bản cũ
-   có thể làm hỏng cả file. Một trường bool lạ thì bản cũ bỏ qua và vẫn gõ Telex.
-3. Các phép so sánh `== InputMethod::Telex` (ví dụ collision ở
-   [class.rs:64](../../crates/funput-engine/src/compose/collision/class.rs)) sẽ âm thầm sai với biến thể
-   mới. Với thiết kế này, chúng nhận `word_method()`, luôn là một trong ba kiểu cố định đã có test.
-4. Tự động với nền Telex nâng cao có sẵn mà không phải nhân đôi biến thể.
-
-**Bất biến thiết kế:** `word_method()` luôn trả về một `InputMethod` cố định. Từ chưa rõ hoặc khoá
-Telex trả về nền Telex đã cấu hình, từ khoá VNI trả về `Vni`. Vì vậy mọi luật ở ranh giới từ, khôi
-phục tiếng Anh và sửa lỗi gõ chạy đúng đường đã được kiểm chứng của kiểu gõ cố định.
+   có thể hỏng cả file. Một trường bool lạ thì bản cũ bỏ qua và gõ theo `method`.
+3. `funput-core` và mọi phép so sánh `== InputMethod::Telex` trong engine chỉ cần biết ba kiểu cố định.
+   Với thiết kế này, `config.method` luôn là một trong ba kiểu đó.
 
 ## Mô hình dữ liệu
 
-Toàn bộ trạng thái mới là một enum 1 byte trong `Session` và một bool trong `EngineConfig`. Không
-dùng heap, không lưu lịch sử.
-
 ```rust
-// crates/funput-engine/src/compose/auto/lock.rs
+// crates/funput-engine/src/compose/auto/detector.rs
 
-/// Which grammar the live word committed to. Per-word: `Session::clear` resets it.
+/// What the auto typing method has concluded about whoever is typing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[repr(u8)]
-pub(crate) enum WordLock {
-    /// No key has transformed the word yet; both grammars still read it the same.
+pub enum DetectedMethod {
+    /// Nothing seen yet: compose with the Telex base, probe digits as VNI.
     #[default]
     Undecided,
     Telex,
     Vni,
-    /// VNI, locked by the very last key. The one state Backspace may hand back
-    /// as a literal digit; any further key demotes it to `Vni`.
-    VniFresh,
+}
+
+/// Session-wide detection state. Survives `Session::clear`; only idleness,
+/// `reset_auto_method` and switching the setting reset it.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub(crate) struct Detector {
+    pub(crate) state: DetectedMethod,
+    /// The user's Telex flavour (`Telex` or `TelexAdvanced`), restored whenever
+    /// the state is not `Vni`.
+    pub(crate) base: InputMethod,
+    /// Undecided: words with Telex evidence seen so far (locks at 3).
+    pub(crate) telex_words: u8,
+    /// Locked: consecutive evidence for the other method (flips at 2).
+    pub(crate) contrary: u8,
+    /// When the previous word started; the idle reset compares against it.
+    pub(crate) last_word: Option<Instant>,
 }
 ```
 
 ```rust
 // EngineConfig (model/config.rs)
-/// "Tự động": compose Telex and VNI side by side, locking each word to the
-/// grammar of its first transforming key. `method` then names the Telex base
-/// (`Telex` or `TelexAdvanced`); `configure` normalises `Vni` to `Telex`.
+/// "Tự động": recognise whether the person typing uses Telex or VNI and keep
+/// it for the session. `method` then names the Telex base; while the flag is
+/// on, the engine itself writes the method in use into `method`.
 pub auto_method: bool,
-```
-
-Hai hàm đọc, cả hai `#[inline]`, không cấp phát:
-
-```rust
-/// The grammar this keystroke is classified under.
-pub(crate) fn key_method(session: &Session, key: char) -> InputMethod {
-    let config = &session.config;
-    if !config.auto_method {
-        return config.method; // fixed methods: the path they have today
-    }
-    match session.lock {
-        WordLock::Vni | WordLock::VniFresh => InputMethod::Vni,
-        WordLock::Undecided if key.is_ascii_digit() => InputMethod::Vni,
-        _ => config.method, // the Telex base
-    }
-}
-
-/// The grammar the whole word is judged under at its boundary.
-pub(crate) fn word_method(session: &Session) -> InputMethod {
-    let config = &session.config;
-    match (config.auto_method, session.lock) {
-        (true, WordLock::Vni | WordLock::VniFresh) => InputMethod::Vni,
-        _ => config.method,
-    }
-}
 ```
 
 | Trường | Kích thước | Vòng đời |
 | --- | --- | --- |
-| `Session::lock: WordLock` | 1 byte, nhiều khả năng nằm gọn trong padding cạnh `enabled` và `glue` | reset ở `clear()`. `resync_after_backspace` tính lại |
-| `EngineConfig::auto_method: bool` | 1 byte | cấu hình. Đổi giá trị thì xóa từ đang gõ, như khi đổi `method` |
+| `Session::auto: Detector` | khoảng 24 byte (`Instant` là 8 byte trên macOS và Windows, 16 byte trên Linux) | sống qua `clear()`. Reset khi rảnh, khi bật lại cờ, khi `reset_auto_method` |
+| `EngineConfig::auto_method: bool` | 1 byte | cấu hình |
 
-Một test `size_of::<Session>()` ghim kích thước hiện tại, để PR không âm thầm làm nó phình ra.
+Không có bảng dữ liệu nào mới. Bằng chứng chỉ dùng lại bộ phân loại VNI/Telex và bộ kiểm tra âm tiết đã
+có trong `funput-core`.
 
-## Luồng phím nóng
+Một test `size_of::<Session>()` ghim kích thước, để các PR sau không âm thầm làm nó phình ra.
 
-Luồng phím nóng chỉ đổi ở hai dòng trong
-[pipeline.rs](../../crates/funput-engine/src/compose/pipeline.rs): chọn kiểu gõ trước `apply_with`,
-cập nhật khoá sau đó. Pipeline đã có sẵn `result.kind` và `key` ở đúng chỗ này, nên không phải tính
-lại gì.
+**Đọc đồng hồ:** `Instant::now()` chỉ được gọi lúc bắt đầu từ và chỉ khi cờ bật, tức một lần mỗi từ.
+Engine đã dùng `Instant` ở [correction/mod.rs](../../crates/funput-engine/src/correction/mod.rs) nên
+không thêm phụ thuộc nào. Để test không phụ thuộc thời gian thật, logic nhận một `now: Instant` do
+engine truyền vào. Test tự dựng mốc thời gian bằng `Instant + Duration`.
+
+## Luồng xử lý
+
+### Thử chữ số
 
 ```rust
-// compose/pipeline.rs, process()
-let method = auto::key_method(session, key);
-let mut result = apply_with(&session.buffer, key, session.config.compose_options_for(method));
-auto::after_transform(session, result.kind, key);
-// ...rest of process() unchanged
+// compose/auto/probe.rs, called from compose_key before push_key
+pub(crate) fn before_digit(session: &mut Session, key: char) {
+    if !session.config.auto_method
+        || !key.is_ascii_digit()
+        || session.auto.state == DetectedMethod::Vni
+        || !is_vni_evidence(session, key)
+    {
+        return;
+    }
+    let needed = match session.auto.state {
+        DetectedMethod::Undecided => 1,
+        _ => 2,
+    };
+    session.auto.contrary += 1;
+    if session.auto.contrary >= needed {
+        switch_to(session, DetectedMethod::Vni); // writes config.method = Vni
+    }
+}
+
+fn is_vni_evidence(session: &Session, key: char) -> bool {
+    session.keys == session.buffer
+        && !session.literal.is_active()
+        && session.restore_override.is_none()
+        && session.keys.chars().nth(1).is_some()
+        && {
+            let probe = apply_with(&session.buffer, key, session.config.compose_options_for(InputMethod::Vni));
+            probe.kind == TransformKind::Applied
+                && !session
+                    .config
+                    .syllable_rules
+                    .is_definitely_invalid_in(&probe.text, InputMethod::Vni)
+        }
+}
 ```
 
+Sau `before_digit`, `compose_key` chạy tiếp như cũ. Nếu vừa chuyển sang VNI thì `pipeline::process`
+đọc `config.method == Vni` và áp chữ số đúng như VNI cố định. Phép thử bỏ đi một `TransformResult`,
+nghĩa là thêm một `String` ngắn, chỉ ở phím chữ số giữa từ.
+
+`EngineConfig::compose_options()` tách thành `compose_options_for(method)`. Hàm cũ gọi hàm mới với
+`self.method`, nên mọi chỗ gọi khác không đổi.
+
+### Xét từ ở ranh giới
+
 ```rust
-// compose/auto/lock.rs
-pub(crate) fn after_transform(session: &mut Session, kind: TransformKind, key: char) {
+// compose/auto/boundary.rs, called from on_word_boundary before session.clear()
+pub(crate) fn at_boundary(session: &mut Session) {
     if !session.config.auto_method {
         return;
     }
-    session.lock = match (session.lock, kind) {
-        (WordLock::Undecided, TransformKind::Applied) if key.is_ascii_digit() => WordLock::VniFresh,
-        (WordLock::Undecided, TransformKind::Applied) => WordLock::Telex,
-        (WordLock::VniFresh, _) => WordLock::Vni,
-        (lock, _) => lock,
-    };
-}
-```
-
-`EngineConfig::compose_options()` tách thành `compose_options_for(method)`. Hàm cũ gọi hàm mới với
-`self.method`, nên mọi chỗ gọi khác không đổi. `ComposeOptions` là `Copy` và vốn đã được dựng lại ở
-mỗi phím.
-
-**Các đường vào khác**
-
-| Đường vào | Xử lý khoá |
-| --- | --- |
-| Ranh giới từ, `Engine::clear`, host reset | `Session::clear()` đưa về `Undecided` |
-| Phím huỷ dấu (`Reverted`), pipeline viết lại `keys` | giữ nguyên. Khoá không phụ thuộc `keys`, nên việc viết lại không làm lệch gì |
-| `on_backspace` | chạy luật trả chữ số trước (mục riêng), rồi `resync_after_backspace`: buffer toàn ASCII thì về `Undecided`, `VniFresh` thì hạ xuống `Vni`, còn lại giữ |
-| `Engine::adopt` | gọi `clear()` nên về `Undecided` |
-| `flip_composing` | giữ |
-| `is_word_boundary` (`[` `]` của Telex nâng cao) | đọc `word_method()`. Từ khoá VNI gặp `[` thì ngắt từ, giống VNI cố định |
-
-**Vì sao khoá không lưu vị trí trong `keys`:** pipeline viết lại `keys` khi huỷ dấu, còn Backspace
-thay `keys` bằng chính `buffer` đã ghép. Một chỉ số vào `keys` sẽ sai sau cả hai thao tác. Thay vào
-đó, sau Backspace khoá được suy lại từ buffer. Buffer còn chữ có dấu nghĩa là phép biến đổi đã khoá
-từ vẫn còn trên màn hình. `str::is_ascii` trên vài byte là rẻ nhất có thể.
-
-## Tầng ranh giới từ
-
-Có 8 chỗ trong engine đang đọc `config.method` để phán xét cả từ. Tất cả chuyển sang đọc
-`word_method(session)`. Khi Tự động tắt, hai giá trị này bằng nhau, nên kiểu gõ cố định không đổi
-hành vi. Không chỗ nào cần luật riêng cho Tự động.
-
-| Chỗ | Đang đọc | Việc cần làm | Nếu bỏ sót |
-| --- | --- | --- | --- |
-| [collision/class.rs:64](../../crates/funput-engine/src/compose/collision/class.rs) | `config.method == class.method()` | `Collision::matching` nhận `InputMethod` thay cho `&EngineConfig` | `two` thành `tơ` quay lại (#661) |
-| [doubled/mod.rs:44](../../crates/funput-engine/src/compose/doubled/mod.rs) | `config.method.is_telex_family()` | `word_method` | từ khoá VNI bị khôi phục phím đúp kiểu Telex |
-| [boundary/mod.rs:85](../../crates/funput-engine/src/compose/boundary/mod.rs) `keystrokes_intend_vietnamese` | `is_telex_family()` cho `w` chưa giải | `word_method`. Mệnh đề "có chữ số" giữ nguyên, xem ghi chú | từ VNI có `w` bị hiểu là chưa xong |
-| [boundary/mod.rs:19](../../crates/funput-engine/src/compose/boundary/mod.rs) `is_word_boundary` | tham số `method` | nơi gọi ở [process.rs:62](../../crates/funput-engine/src/engine/process.rs) truyền `word_method` | `[` trong từ VNI biến thành `ư` |
-| [pipeline/display.rs:73](../../crates/funput-engine/src/compose/pipeline/display.rs) | `is_definitely_invalid_in(.., config.method)` | `word_method` | khôi phục sớm sai. Âm cuối địa danh `h/l/r` mất ở từ VNI |
-| [correction/preview.rs:102](../../crates/funput-engine/src/correction/preview.rs) | như trên | `word_method` | thanh xem trước sửa lỗi phán sai |
-| [correction/gate.rs:48](../../crates/funput-engine/src/correction/gate.rs) `has_literal_digit` | `!= InputMethod::Vni` | `word_method` | từ VNI có chữ số còn lại bị loại khỏi sửa lỗi gõ |
-| [correction/generate/tiers.rs:98](../../crates/funput-engine/src/correction/generate/tiers.rs) `Evidence::new` | `config.method` | `word_method`. Kéo theo `key_role`, bảng chữ cái chèn và phím lân cận hàng số | sinh ứng viên sai bảng. Thang chi phí đã chỉnh bị lệch |
-
-**Ghi chú về `keystrokes_intend_vietnamese`:** mệnh đề "có chữ số trong `keys`" giữ nguyên, vì hai
-kiểu cố định đang dùng chung nó. Từ khoá VNI gặp nó đúng như VNI cố định, từ khoá Telex có chữ số
-thật gặp nó đúng như Telex cố định. Đổi mệnh đề này sẽ làm Telex cố định đổi hành vi: `chaof2` hiện
-giữ `chào2`, sửa thì sẽ bị khôi phục thành `chaof2`. Vì vậy không đổi.
-
-**Giữ cho bảng này đúng về lâu dài:** thêm script gác `scripts/check-word-method.sh`, theo mẫu
-`check-pasteboard-reads.sh`. Script cấm đọc `config.method` trong `compose/` và `correction/`, trừ
-`compose/auto/` và một danh sách cho phép ghi rõ lý do (ví dụ `prepare_key`, chạy khi buffer còn rỗng
-nên luôn ở trạng thái chưa rõ). Luật mới viết sau này không thể vô tình đọc nhầm kiểu gõ trong cài
-đặt.
-
-## Luật Backspace trả lại chữ số
-
-Nếu Backspace là thao tác **ngay sau** chữ số vừa khoá từ sang VNI, nó không xóa ký tự mà trả từ về
-đúng phím đã gõ. Từ đó được khoá Telex, nên chữ số gõ tiếp theo là số thật. Ví dụ `tuán` + Backspace
-thành `tuan1`, gõ tiếp `2` ra `tuan12`.
-
-**Điều kiện:** `auto_method` bật, `lock == VniFresh`, buffer không rỗng.
-
-**Không tốn thêm bộ nhớ.** Khi từ còn chưa rõ thì chưa có phím nào được áp (`Applied`). Vì vậy ngay
-trước chữ số khoá, `buffer` bằng `keys` bỏ chữ số đó, và `keys` hiện tại chính là văn bản cần trả
-lại. Không phải lưu buffer cũ. Bất biến này được ghim bằng `debug_assert!` và property test.
-
-```rust
-// compose/auto/undo.rs
-pub(crate) fn take_digit_undo(session: &mut Session) -> Option<ImeResult> {
-    if session.lock != WordLock::VniFresh || session.buffer.is_empty() {
-        return None;
+    match session.auto.state {
+        DetectedMethod::Undecided => count_telex_word(session),   // reads buffer
+        DetectedMethod::Vni => count_contrary_telex(session),     // replays keys if prefiltered
+        DetectedMethod::Telex => {
+            if session.buffer != session.keys {
+                session.auto.contrary = 0; // a Telex-marked word breaks the VNI streak
+            }
+        }
     }
-    let prefix = common_prefix_bytes(&session.buffer, &session.keys);
-    let erase = session.buffer[prefix..].chars().count();
-    let result = ImeResult::send(erase, session.keys[prefix..].to_string());
-    session.buffer.clear();
-    session.buffer.push_str(&session.keys);
-    session.vn_form.clear();
-    session.vn_form.push_str(&session.keys);
-    session.lock = WordLock::Telex;
-    Some(result)
 }
 ```
 
-`Engine::on_backspace` gọi hàm này ngay sau `correction::take_undo`, trước khi xóa ký tự. Sau đó
-`buffer == keys`, nên ranh giới từ không còn gì để khôi phục, không cần ghim `RestoreOverride`.
+Từ đã bung gõ tắt không được xét: hàm gõ tắt trả về sớm trong `boundary_result`, và lời gọi
+`at_boundary` đặt sau đó trong cùng nhánh.
 
-**Host phải nuốt phím Backspace.** Hiện nền tảng desktop cho Backspace đi qua ứng dụng trước rồi mới
-đồng bộ engine. iOS và Android thì đã hỏi `has_correction_undo()` trước. Thiết kế tổng quát hoá hàm
-này:
+Phát lại ở trạng thái VNI dùng `apply_with` với nền Telex, từng phím của `keys` trên một `String` cục
+bộ. Không chạy luật ranh giới, khôi phục tiếng Anh hay sửa lỗi gõ, vì chỉ cần biết âm tiết có hợp lệ
+không. Từ đó vẫn được commit đúng như VNI cố định. Không sửa lại chữ trên màn hình.
+
+### Đo rảnh
 
 ```rust
-/// Whether the next Backspace is an undo the engine answers itself (a typo
-/// correction, or a digit that just locked the word to VNI). The host then
-/// swallows the key and applies `on_backspace()`'s result instead.
-pub fn has_backspace_undo(&self) -> bool {
-    self.has_correction_undo() || auto::digit_undo_pending(&self.session)
+// compose/auto/idle.rs, called where compose_key starts a word
+pub(crate) const IDLE_RESET: Duration = Duration::from_secs(5 * 60);
+
+pub(crate) fn on_word_start(session: &mut Session, now: Instant) {
+    if !session.config.auto_method {
+        return;
+    }
+    let idle = session.auto.last_word.is_some_and(|then| now - then >= IDLE_RESET);
+    session.auto.last_word = Some(now);
+    if idle {
+        switch_to(session, DetectedMethod::Undecided);
+    }
 }
 ```
 
-`has_correction_undo` giữ nguyên cho tương thích, đánh dấu là nên dùng hàm mới. FFI thêm
-`funput_engine_has_backspace_undo`, JNI thêm hàm tương ứng.
-
-**Giá phải trả cho người gõ VNI:** gõ `a1` rồi Backspace ngay thì ra `a1`, chứ không phải xóa chữ
-`á`. Giá này thấp, vì người VNI đổi dấu bằng cách gõ chữ số khác ngay (`tuán` + `2` thành `tuàn`),
-không cần Backspace. Bấm thêm một Backspace nữa thì xóa `1` như bình thường. Chỗ này nằm trong mục câu
-hỏi mở.
-
-## Hiệu năng và bộ nhớ
-
-Tự động không thêm lần cấp phát nào trên mỗi phím và không thêm bảng dữ liệu nào. Chi phí là vài nhánh
-rẽ nhánh đoán trước được.
-
-| Đường chạy | Thêm khi Tự động tắt | Thêm khi Tự động bật | Cấp phát |
-| --- | --- | --- | --- |
-| Mỗi phím gõ vào từ | 2 lần kiểm tra bool | 2 `match` trên `u8` và 1 `is_ascii_digit` | 0 |
-| Ranh giới từ | `word_method` đọc 2 trường, khoảng 7 lần | như bên trái | 0 |
-| Backspace | 1 so sánh | thêm `is_ascii` trên buffer vài byte | 0 |
-| Backspace trả chữ số | không chạy | 1 `String` trong `ImeResult`, giống mọi lần sửa chữ trên màn hình | 1, hiếm gặp |
-| Sửa lỗi gõ | không đổi | mỗi từ dùng **một** bảng chữ cái theo khoá, không gộp hai bảng, nên số ứng viên bằng kiểu cố định | 0 |
-
-**Bộ nhớ:** `Session` tăng 1 byte, `EngineConfig` tăng 1 byte. `funput-core` không đổi nên kích thước
-binary và ngân sách bộ nhớ của bàn phím iOS không bị ảnh hưởng.
-
-**Cổng chặn trong CI cho mỗi PR của tính năng**
-
-- Ngân sách cấp phát mỗi phím (hiện là 2 lần và 24 byte) chạy thêm một cấu hình `auto_method = true`.
-  Con số không được tăng.
-- Bench độ trễ [latency.rs](../../crates/funput-ffi/benches/latency.rs) thêm biến thể Tự động. Chênh
-  lệch so với Telex phải nằm trong nhiễu đo.
-- Test `size_of::<Session>()` và `size_of::<WordLock>() == 1`.
-- Cổng tối đa 150 dòng mỗi file. `compose/auto/` chia sẵn thành `lock.rs`, `undo.rs`, `mod.rs` và
-  test riêng.
+`switch_to` đặt `state`, xoá `telex_words` và `contrary`, rồi ghi `config.method`: `Vni` cho VNI, còn
+lại là `base`. Nó **không** đi qua `configure`, vì `configure` xoá từ đang gõ khi kiểu gõ đổi.
 
 ## Cấu hình, giao thức và tương thích ngược
 
-Mọi tầng dùng chung một cách biểu diễn: `method` là nền Telex, kèm cờ `auto_method`. Riêng trên dây
-FFI/JNI, cặp này được gộp vào byte kiểu gõ để không phải đổi struct C. Bản cũ gặp giá trị mới sẽ quay
-về Telex, không lỗi.
+Khi cờ bật, `EngineConfig::method` mang hai nghĩa tuỳ chiều. Đi vào (host gửi cấu hình) thì đó là nền
+Telex. Đi ra (`Engine::config()`) thì đó là kiểu đang dùng. Hai luật trong `configure` giữ cho việc này
+an toàn:
+
+1. Cấu hình vào có `auto_method` bật và `method` là `Telex` hoặc `TelexAdvanced`: cập nhật `base`. Nếu
+   `method` là `Vni` thì giữ `base` cũ. Cách này để `update_config` (sao chép cấu hình đang có, sửa một
+   trường, gửi lại) không bao giờ làm mất nền Telex.
+2. `method` được thay bằng kiểu đang dùng trước khi so sánh `method_changed`. Host gửi lại cùng cài đặt
+   thì không xoá từ đang gõ, không mất trạng thái nhận biết.
+
+Cờ chuyển từ tắt sang bật thì trạng thái về Chưa biết. Cờ chuyển sang tắt thì `method` là đúng giá trị
+host gửi, như hiện nay.
 
 | Tầng | Biểu diễn | Bản cũ đọc giá trị mới |
 | --- | --- | --- |
-| `EngineConfig` | `method` + `auto_method: bool`. `configure` chuẩn hoá `Vni` thành `Telex` khi cờ bật | không áp dụng |
-| `Engine` API | `set_auto_method(bool)`, `auto_method()`. Đổi giá trị thì xóa từ đang gõ, giống `set_method` | không áp dụng |
-| `funput-config` (file cài đặt) | `"auto_method": true` với `#[serde(default)]` | bỏ qua trường lạ và gõ theo `method`. Đã kiểm: crate không dùng `deny_unknown_fields` |
+| `Engine` API | `configure` như trên. `set_method(m)` tắt Tự động rồi đặt `m`. Thêm `reset_auto_method()` và `auto_method_state() -> Option<DetectedMethod>` (`None` khi cờ tắt) | không áp dụng |
+| `funput-config` (file cài đặt) | `"auto_method": true` với `#[serde(default)]`. `method` giữ nền Telex | bỏ qua trường lạ và gõ theo `method`. Crate không dùng `deny_unknown_fields` |
 | Tài liệu chuyển cấu hình ([CONFIG_FORMAT.md](../../platforms/CONFIG_FORMAT.md)) | khoá `auto_method`. ID kiểu gõ giữ nguyên `telex` / `telex_advanced` / `vni` | như trên |
-| `funput-ffi` | byte `3` = Tự động nền Telex, `4` = Tự động nền Telex nâng cao. `decode_method` trả về `(InputMethod, bool)`. Getter trả `3`/`4` khi cờ bật | `decode_method` hiện đã quy giá trị lạ về Telex |
-| `funput-jni` | cùng bảng giá trị, khớp với `EngineConfiguration` bên Kotlin | đã quy giá trị lạ về Telex |
+| `funput-ffi` | byte `3` = Tự động nền Telex, `4` = Tự động nền Telex nâng cao. `decode_method` trả về `(InputMethod, bool)`. Getter kiểu gõ trả `3`/`4` khi cờ bật, không trả kiểu đang dùng, để host lưu lại cài đặt không bị đổi. Thêm `funput_engine_auto_method_state` | `decode_method` hiện đã quy giá trị lạ về Telex |
+| `funput-jni` | cùng bảng giá trị, khớp `EngineConfiguration` bên Kotlin | đã quy giá trị lạ về Telex |
 | Nhập cấu hình UniKey | UniKey không có Tự động, không đổi | không áp dụng |
 
-**Phím tắt xoay vòng kiểu gõ** (`funput-term` và các nền tảng có phím tắt): Telex, VNI, Tự động, rồi
-quay lại Telex. Test `cycle_method_key_switches_telex_vni` được mở rộng tương ứng.
+**Không có di chuyển dữ liệu:** cài đặt có sẵn không có `auto_method` nên đọc ra `false`. Người dùng
+hiện tại không thấy gì thay đổi.
 
-**Không có di chuyển dữ liệu:** cài đặt có sẵn không có `auto_method`, nên đọc ra `false`. Người dùng
-hiện tại không thấy gì thay đổi cho tới khi tự chọn Tự động.
+**Phím tắt xoay vòng kiểu gõ** (`funput-term` và các nền tảng có phím tắt): Telex, VNI, Tự động, rồi
+quay lại Telex.
 
 ## Việc trên 5 nền tảng
 
-Nền tảng không chứa logic gõ nào. Mỗi nền tảng chỉ làm 2 việc: thêm lựa chọn "Tự động", và hỏi
-`has_backspace_undo()` trước khi cho Backspace đi qua. iOS và Android đã có sẵn đường này cho hoàn tác
-sửa lỗi gõ. Desktop thì phải nối mới.
+Nền tảng không chứa logic nhận biết nào và không phải sửa đường xử lý Backspace. Mỗi nền tảng chỉ thêm
+một lựa chọn trong cài đặt. Hai việc còn lại là tuỳ chọn.
 
-| Nền tảng | Cầu nối | Cài đặt | Backspace trả chữ số | Riêng |
-| --- | --- | --- | --- | --- |
-| macOS | `funput-ffi`, [FunputComposer.swift](../../platforms/macos/Funput/IME/FunputComposer.swift) | thêm lựa chọn vào bộ chọn kiểu gõ | kiểm tra cả chế độ preedit lẫn "Gõ không gạch chân" có áp kết quả `backspace()` hay không. Nối thêm bước hỏi trước | menu thanh trạng thái hiện kiểu gõ |
-| Windows | gọi thẳng `funput-engine` (Rust) | Control Center | `shell::on_backspace` hiện cho phím đi qua trước. Phải nuốt phím rồi chèn kết quả | nhãn kiểu gõ mới trên biểu tượng khay |
-| Linux fcitx5/ibus | `funput-ffi` qua `common/ffi/handle.h`. Cài đặt dùng `settings-gtk` | trang Gõ chữ trong [typing.rs](../../platforms/linux/settings-gtk/src/settings_window/typing.rs) | preedit: [keys.cpp:106](../../platforms/linux/common/compose/composer/keys.cpp) vẽ lại từ `handle_.buffer()`, nên chạy đúng mà không cần sửa. Không gạch chân: đang cho phím đi qua, phải nuốt phím và chèn kết quả khi `has_backspace_undo` đúng | sửa một lần trong `common/compose/` là đủ cho cả hai IME |
-| iOS | `funput-ffi`, FunputKit | KeyboardConfiguration, ghi qua App Group | đổi chỗ hỏi `has_correction_undo` sang `has_backspace_undo` | chữ số nằm ở trang 123. Cần kiểm tra đổi trang giữa từ có giữ từ đang gõ không |
-| Android | `funput-jni` | trang Gõ chữ trong settings hub, `EngineConfiguration.method` | đổi chỗ hỏi trong [NativeTypoCorrection.kt](../../platforms/android/ime/src/main/java/app/funput/funput/ime/nativebridge/correction/NativeTypoCorrection.kt) | hàng số trên bàn phím là tuỳ chọn của người dùng |
-| funput-term | gọi thẳng `funput-engine` | schema cấu hình | engine đã sở hữu buffer, chỉ cần áp kết quả | phím tắt xoay vòng kiểu gõ |
+| Nền tảng | Cài đặt | Hiện kiểu đang dùng (tuỳ chọn) | Reset khi mở khoá (tuỳ chọn) |
+| --- | --- | --- | --- |
+| macOS | bộ chọn kiểu gõ | menu thanh trạng thái, ví dụ "Tự động (VNI)" | thông báo mở khoá màn hình của hệ thống |
+| Windows | Control Center | nhãn trên biểu tượng khay | sự kiện mở khoá phiên |
+| Linux fcitx5/ibus | trang Gõ chữ trong [typing.rs](../../platforms/linux/settings-gtk/src/settings_window/typing.rs) | nhãn IME. Sửa một lần trong `common/compose/` | không cần, đã có rảnh 5 phút |
+| iOS | KeyboardConfiguration, ghi qua App Group | không cần | không cần, controller dựng lại mỗi lần đổi app |
+| Android | trang Gõ chữ trong settings hub | không cần | không cần |
+| funput-term | schema cấu hình | dòng trạng thái | không cần |
 
-**Đề xuất thứ tự:** bật trước trên desktop (macOS, Windows, Linux), vì đó là nơi người dùng VNI đông
-nhất và có hàng phím số ngay dưới tay. Di động bật sau khi đã trả lời câu hỏi về trang 123 trên iOS.
+**Đề xuất:** chỉ hiện Tự động trên máy tính (macOS, Windows, Linux) ở bản đầu. Máy dùng chung chủ yếu
+là máy tính. Điện thoại thường là đồ cá nhân, và trên iOS và Android người dùng đã có phím Telex/VNI ngay
+trên bàn phím. Engine vẫn hỗ trợ đầy đủ để bật cho di động sau này mà không phải sửa Rust.
+
+## Hiệu năng và bộ nhớ
+
+| Đường chạy | Thêm khi Tự động tắt | Thêm khi Tự động bật | Cấp phát thêm |
+| --- | --- | --- | --- |
+| Phím chữ cái | 1 kiểm tra bool | như bên trái | 0 |
+| Phím đầu từ | 1 kiểm tra bool | 1 lần đọc đồng hồ | 0 |
+| Chữ số giữa từ | 1 kiểm tra bool | so `keys == buffer` rồi 1 lần `apply_with` theo VNI | 1 `String` ngắn, chỉ khi qua được kiểm tra rẻ |
+| Ranh giới từ, trạng thái Chưa biết | 1 kiểm tra bool | 1 lần `is_complete_syllable`, chỉ khi buffer có cả dấu thanh lẫn dấu hình chữ | 1, trong vài từ đầu phiên |
+| Ranh giới từ, trạng thái VNI | 1 kiểm tra bool | lọc nhanh trên `keys`, phát lại hiếm khi xảy ra | vài `String` ngắn mỗi lần phát lại |
+| Ranh giới từ, trạng thái Telex | 1 kiểm tra bool | 1 so sánh chuỗi | 0 |
+
+Sau khi chốt Telex, đường chạy gần như trùng Telex cố định. Chi phí chỉ còn ở chữ số giữa từ, vốn rất
+hiếm khi gõ tiếng Việt bằng Telex.
+
+**Bộ nhớ:** `Session` tăng khoảng 24 byte, `EngineConfig` tăng 1 byte. Không có heap thường trực, không
+có bảng tĩnh. `funput-core` không đổi nên kích thước binary và ngân sách bộ nhớ bàn phím iOS không bị
+ảnh hưởng.
+
+**Cổng chặn trong CI**
+
+- Ngân sách cấp phát mỗi phím (hiện là 2 lần, 24 byte) chạy thêm cấu hình `auto_method = true` trên
+  chuỗi không có chữ số. Con số không được tăng.
+- Bench độ trễ [latency.rs](../../crates/funput-ffi/benches/latency.rs) thêm biến thể Tự động. Chênh lệch
+  so với Telex phải nằm trong nhiễu đo.
+- Test `size_of::<Session>()`.
+- Cổng tối đa 150 dòng mỗi file. `compose/auto/` chia sẵn thành `detector.rs`, `probe.rs`,
+  `boundary.rs`, `idle.rs`, `mod.rs` và thư mục test riêng.
 
 ## Kiểm thử
 
-Chứng minh dựa trên ba bất biến kiểm bằng máy, cộng một phép đo để quyết định có ship hay không. Unit
-test chỉ phủ phần đặc tả.
+Bảo đảm "không ảnh hưởng chức năng chính" bằng bốn bất biến kiểm bằng máy, cộng một phép đo để quyết
+định có ship hay không.
 
 | # | Bất biến | Cách kiểm |
 | --- | --- | --- |
-| I0 | Tự động tắt: kết quả trùng từng byte với `main` ở cả Telex, Telex nâng cao và VNI | bộ diff 70k chuỗi phím, so với worktree baseline (`funput dev run`) |
-| I1 | Tự động bật, chuỗi không có chữ số: trùng từng byte với nền Telex tương ứng | cùng bộ diff, lọc bỏ chuỗi có chữ số |
-| I2 | Từ khoá VNI cho kết quả bằng VNI cố định gõ cùng chuỗi phím của từ đó | property test sinh từ ngẫu nhiên. Ngoại lệ tìm được thì ghi lại, không ép cho khớp |
-| I3 | Khi `lock == VniFresh`: `keys` bằng buffer trước chữ số cộng chữ số | `debug_assert!` trong `after_transform` và property test |
+| I0 | Tự động tắt: kết quả trùng từng byte với `main` ở Telex, Telex nâng cao và VNI | bộ diff 70k chuỗi phím so với worktree baseline (`funput dev run`) |
+| I1 | Tự động bật, phiên không có chữ số: trùng từng byte với nền Telex tương ứng | cùng bộ diff, lọc bỏ chuỗi có chữ số, chạy cả phiên liền mạch chứ không reset giữa các từ |
+| I2 | Từ phím chuyển sang VNI trở đi, kết quả bằng VNI cố định gõ cùng chuỗi phím tính từ đầu từ đó | property test. Điều kiện 1 của bằng chứng VNI là thứ làm bất biến này đúng |
+| I3 | `configure` gọi lại với cùng cài đặt không đổi trạng thái nhận biết, không xoá từ đang gõ. `update_config` không làm mất nền Telex | unit test, gồm vòng đi về qua FFI byte `3`/`4` |
 
-**Unit test** (`compose/auto/tests/`): mỗi dòng trong bảng ví dụ và bảng ca khó ở mục Đặc tả hành vi
-là một test. Thêm test chuyển trạng thái cho đủ các cặp `(WordLock, TransformKind)`, và test cho mỗi
-chỗ trong bảng Tầng ranh giới từ: một từ khoá VNI và một từ khoá Telex đi qua đúng luật của kiểu cố
-định.
+**Unit test** (`compose/auto/tests/`): mỗi dòng trong bảng Ví dụ và bảng Ca khó là một test. Thêm test
+cho mọi cạnh của sơ đồ trạng thái, cho bộ đếm bị xoá khi xen từ cùng chiều, và cho rảnh đúng 5 phút
+(dùng `Instant` dựng sẵn).
 
 **Phép đo quyết định:** chạy một kho văn bản tiếng Anh, code và chuỗi có số (username, mã đơn,
-`iphone15`, `covid19`) qua Telex, VNI và Tự động. Đếm số từ bị bỏ dấu nhầm sau ranh giới từ, chia theo
-nguyên nhân: chữ số hay chữ cái. Theo quy tắc không tụt hậu tiếng Anh của dự án, Tự động không được
-tệ hơn Telex ở phần chữ cái. Phần chữ số được báo cáo để chốt ngưỡng (xem câu hỏi mở).
+`U23`, `iphone15`, `covid19`, `tuan1990`) qua Tự động, mô phỏng hai người dùng:
 
-**Nền tảng:** Linux chạy vòng build và test trong Docker. Windows kiểm chéo bằng `windows-gnu` cộng
-mingw. iOS và Android thử tay trên máy thật theo một checklist ngắn (gõ xen kẽ, Backspace trả số, mở
-lại từ), vì Android không còn golden ảnh chụp màn hình.
+- Người gõ Telex: đếm số lần bị chuyển nhầm sang VNI.
+- Người gõ VNI: đếm số lần bị chuyển nhầm sang Telex, và số từ gõ sai trước khi được nhận ra.
+
+Theo quy tắc không tụt hậu tiếng Anh của dự án, người gõ Telex dùng Tự động không được thấy chữ tiếng
+Anh nào khác Telex cố định. Các con số chuyển nhầm được ghi vào tài liệu này để chốt ngưỡng.
+
+**Nền tảng:** chỉ có thay đổi cài đặt, nên mỗi nền tảng thử tay theo một checklist ngắn: chọn Tự động,
+gõ VNI, gõ Telex, khởi động lại, kiểm tra cài đặt cũ vẫn giữ.
 
 ## Kế hoạch triển khai theo PR
 
-Bốn PR Rust đi nối tiếp nhau, xen một điểm dừng để đo. Sau đó các PR nền tảng chạy song song. PR đầu
-tiên là refactor không đổi hành vi, để phần rủi ro nhất (8 chỗ đọc kiểu gõ) được review riêng và được
-I0 bảo vệ.
+1. **`feat(engine): auto typing method detected per session`.** Thêm `compose/auto/`,
+   `EngineConfig::auto_method`, luật trong `configure` và `set_method`, `reset_auto_method`,
+   `auto_method_state`. Kèm unit test, I0 đến I3 và các cổng ngân sách cấp phát, bench, kích thước
+   `Session`. Tiêu chí xong: I0 và I1 sạch trên bộ diff 70k.
+2. **Điểm dừng đo.** Chạy phép đo chuyển nhầm trên bản PR 1, ghi kết quả vào đây. Ngưỡng có vấn đề thì
+   chỉnh trước khi đi tiếp.
+3. **`feat(config): auto typing method in settings and wire protocols`.** Gồm `funput-config`,
+   `CONFIG_FORMAT.md`, byte `3`/`4` ở FFI và JNI, getter trạng thái, phím xoay vòng của `funput-term`.
+   Phụ thuộc PR 1.
+4. **PR nền tảng, độc lập với nhau, sau PR 3:** `feat(macos)`, `feat(windows)`, `feat(linux)`. iOS và
+   Android chỉ làm khi quyết định hiện Tự động trên di động.
 
-1. **`refactor(engine): judge words by their own typing method`.** Thêm `word_method()`, lúc này luôn
-   trả `config.method`. Chuyển 8 chỗ trong bảng Tầng ranh giới từ sang dùng nó, đổi chữ ký
-   `Collision::matching`, thêm script `check-word-method.sh`. Tiêu chí xong: I0 sạch.
-2. **`feat(engine): auto typing method with a per-word lock`.** Thêm `WordLock`, `key_method`,
-   `after_transform`, luật Backspace với khoá, `EngineConfig::auto_method`, `Engine::set_auto_method`.
-   Kèm unit test, I1, I2, I3 và các cổng ngân sách cấp phát, bench, kích thước `Session`. Phụ thuộc
-   PR 1.
-3. **Điểm dừng đo.** Chạy phép đo bỏ dấu nhầm trên bản PR 2, ghi kết quả vào tài liệu này. Nếu phần
-   chữ số quá ngưỡng thì xem lại thiết kế trước khi làm tiếp.
-4. **`feat(engine): backspace hands back a locking digit`.** Thêm `take_digit_undo` và
-   `has_backspace_undo`. Phụ thuộc PR 2.
-5. **`feat(config): auto typing method in settings and wire protocols`.** Gồm `funput-config`,
-   `CONFIG_FORMAT.md`, giá trị byte `3`/`4` ở FFI và JNI, `funput_engine_has_backspace_undo`, phím xoay
-   vòng của `funput-term`. Phụ thuộc PR 4.
-6. **PR nền tảng**, độc lập với nhau, sau PR 5: `feat(macos)`, `feat(windows)`, `feat(linux)` trước.
-   `feat(ios)`, `feat(android)` sau khi trả lời câu hỏi về trang 123.
-
-PR 1, 2, 4 và 5 chồng lên nhau, nên mỗi lần squash merge một PR thì phải rebase PR kế tiếp.
+Rủi ro tập trung ở PR 1, và PR này được I0 bảo vệ: Tự động tắt thì mọi điểm móc trả về ngay ở lần kiểm
+tra bool đầu tiên.
 
 ## Rủi ro và câu hỏi mở
 
 | Rủi ro | Giảm nhẹ | Nếu xảy ra |
 | --- | --- | --- |
-| Người gõ Telex bị bỏ dấu vào số dính sau chữ (`tuan1`, `lan2`) | luật Backspace, đối chiếu bằng phép đo | mất một lần bấm, không mất chữ |
-| Người gõ VNI lần đầu gặp lỗi tiếng Anh kiểu Telex (`boss`) | danh sách khôi phục tiếng Anh, collision, doubled. Chế độ này chỉ bật khi người dùng tự chọn | người dùng quay về VNI cố định |
-| Bất biến I3 sai ở ca hiếm (`w` chờ giải, khôi phục sớm làm buffer khác `keys`) | `take_digit_undo` kiểm tra điều kiện và trả `None`, property test tìm ca | Backspace xóa bình thường |
-| Host chưa nối `has_backspace_undo` | tính năng gõ vẫn chạy đầy đủ | Backspace xóa bình thường, không hỏng gì |
-| Luật mới viết sau đọc nhầm `config.method` | script `check-word-method.sh` | CI đỏ |
+| Người gõ Telex vừa mở máy gõ `tuan1990` làm từ đầu tiên, bị chuyển nhầm sang VNI | điều kiện 2 và 4, phép đo ở PR 2 | thấy `tuán1990`. Hai từ Telex có dấu liên tiếp sau đó đưa về Telex |
+| Người gõ VNI gặp hai chữ tiếng Anh hiếm liền nhau (`rows sees`) | đòi cả dấu thanh lẫn dấu hình chữ, 2 lần liên tiếp | chuyển sang Telex. Chữ số VNI kế tiếp bắt đầu đếm để đưa về |
+| Người thứ hai ngồi vào trong vòng 5 phút | bằng chứng ngược chiều 2 lần liên tiếp | 1 đến 2 từ đầu gõ sai, sau đó đúng |
+| Host lưu lại `config().method` làm cài đặt | getter FFI và JNI trả `3`/`4`. Tài liệu API ghi rõ `config().method` là kiểu đang dùng | cài đặt bị đổi sang VNI cố định. Test I3 chặn ở tầng cầu nối |
+| Luật mới sau này đọc `base` thay vì `config.method` | `base` là `pub(crate)` trong `compose/auto/`, không lộ ra ngoài module | không áp dụng |
 
 **Câu hỏi mở**
 
-- [ ] Chấp nhận được không: người gõ VNI bấm Backspace ngay sau `á` sẽ thấy `a1` thay vì chữ bị xóa?
-- [ ] Giao diện có hiện Tự động nền Telex nâng cao (byte `4`), hay chỉ nền Telex?
-- [ ] Ngưỡng bỏ dấu nhầm do chữ số là bao nhiêu thì chấp nhận được? Chốt sau phép đo ở PR 3.
-- [ ] Từ còn chưa rõ khi đi vào sửa lỗi gõ: dùng bảng chữ cái Telex, hay dùng kiểu của từ khoá gần
-      nhất (thêm 1 byte sống qua `clear()`)?
-- [ ] Tên trên giao diện là "Tự động" hay "Telex và VNI"? Chữ "Tự động" dễ bị hiểu là Funput tự đoán
-      và đổi kiểu gõ trong cài đặt.
-- [ ] Trên iOS, chuyển sang trang 123 giữa chừng một từ có giữ nguyên từ đang gõ không?
+- [ ] Thời gian rảnh 5 phút có hợp lý không, hay nên dài hơn (ví dụ 10 phút)?
+- [ ] Có hiện Tự động trên iOS và Android ở bản đầu không?
+- [ ] Có cần hiện kiểu đang dùng trên menu hoặc khay hệ thống ngay từ bản đầu không?
+- [ ] Giao diện có cho chọn Tự động nền Telex nâng cao (byte `4`), hay chỉ nền Telex?
+- [ ] Tên trên giao diện: "Tự động" hay "Tự nhận Telex hoặc VNI"?
+- [ ] Khi chuyển sang Telex ở ranh giới từ, có nên sửa lại luôn từ vừa gõ (`dduowcj` thành `được`)
+      không? Bản này chọn không, để ranh giới từ giữ nguyên đường chạy của VNI cố định.
