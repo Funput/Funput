@@ -10,7 +10,7 @@ Các góp ý khác trong issue được bàn riêng: file `.txt` ở [shortcut-f
 
 ## 1. Viết hoa khi bung
 
-Trạng thái: đã làm (PR #…).
+Trạng thái: đã làm (PR #699).
 
 ### Hiện trạng
 
