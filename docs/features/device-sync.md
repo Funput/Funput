@@ -166,6 +166,7 @@ flowchart TB
     ime["Android :ime<br/>đọc file của app"]
     fx["Addon fcitx5, ibus<br/>đọc file cấu hình"]
   end
+  serde ~~~ excluded
   style core stroke-width:3px
   style excluded stroke-dasharray: 5 4
 ```
