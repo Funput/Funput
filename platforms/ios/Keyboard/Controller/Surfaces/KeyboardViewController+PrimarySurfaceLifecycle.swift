@@ -19,6 +19,7 @@ extension KeyboardViewController {
             surface.accessibilityIdentifier = "funput.keyboard.surface"
 #endif
             surface.translatesAutoresizingMaskIntoConstraints = false
+            KeyboardLifetimeCensus.track(surface, as: .surface)
             surface.onKeyEvent = { [weak self] event in
                 self?.handleKeyEvent(event)
             }

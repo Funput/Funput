@@ -5,8 +5,8 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A6 đã hiện thực; A7 đã duyệt
-> hướng, chưa hiện thực.
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A7 đã hiện thực. A8 (leak surface, phát hiện nhờ A7)
+> chưa sửa.
 >
 > **Cập nhật:** 04/11/2026
 >
@@ -177,7 +177,8 @@ Hai ràng buộc đã biết, **không sửa được**, chỉ quản lý:
 | Vùng nhớ | Trần | Thả khi nào |
 |---|---|---|
 | Primary surface | Cố định theo layout | Sống cùng controller |
-| Controller cũ khi đổi app host | **Chưa có gì gác, xem §3.4 và A7** | Phải `deinit` khi host đổi |
+| Controller cũ khi đổi app host | Được thả đúng; `KeyboardLifetimeCensus` đếm và báo fault (A7) | `deinit` khi host đổi |
+| Surface cũ khi đổi app host | **Leak: mỗi lần đổi app giữ lại nguyên một surface, ~2,5 MB. Xem A8** | Không bao giờ |
 | Emoji/kaomoji/clipboard panel | Theo panel | Rời panel nào thả panel đó; giữ cặp emoji↔kaomoji khi chuyển qua lại; `viewDidDisappear` thả hết |
 | Emoji catalog đã decode | Nhỏ (model, không ảnh) | `viewDidDisappear`, memory warning |
 | Ảnh nền theme | Pixel budget theo width | Memory warning khi đang ẩn (`releaseBackgroundImageIfHidden`) |
@@ -208,8 +209,8 @@ leak duy nhất có thể làm bàn phím chết "sau một lúc dùng".
 - Handle Rust được giải phóng trong `deinit` (`FunputComposer`,
   `PersonalSuggestionEngine`, `PersonalDictionarySnapshot`).
 
-Nhưng **không có gì gác**: một closure bắt `self` mạnh thêm vào sau này sẽ không bị
-phát hiện. Xem A7.
+A7 thêm bộ đếm và nó cho thấy controller được thả đúng, nhưng **surface thì không**:
+xem A8.
 
 ### 3.5. Signpost sẵn có
 
@@ -589,6 +590,58 @@ vẫn xanh.
 20 lần, xen kẽ mở emoji và clipboard panel. Mọi `Footprint("Appeared")` có
 `controllers=1`; không có log `fault`; Memory Graph của Xcode không còn instance
 `KeyboardViewController` nào ngoài cái đang hiện.
+
+**Đã đổi khi hiện thực.**
+
+- Đếm cả **surface**, không chỉ controller: `KeyboardLifetimeCensus`
+  (`Keyboard/Diagnostics/Memory/KeyboardLifetimeCensus.swift`) có hai loại
+  `controller` và `surface`. Controller giữ một `Enrollment` làm stored property,
+  nên không cần `init`/`deinit` riêng (file controller đang ở 149/150 dòng). Surface
+  được gắn `Enrollment` qua associated object trong `makePrimarySurface()`, không
+  phải sửa package.
+- `Footprint` có thêm `controllers=` và `surfaces=`; mỗi lần thả ghi signpost
+  `Released`. Leak ghi bằng `os_log(.fault)` "Keyboard leak: … controllers and …
+  surfaces alive after settling".
+- Kịch bản tay chạy bằng `simctl launch` xen kẽ harness và Settings thay vì 3 app,
+  trên máy ảo iPhone 17 Pro Max iOS 27.2. Controller đạt (luôn về 1 sau 2s), surface
+  **không đạt**, dẫn tới A8.
+
+### A8: Surface cũ không được thả khi đổi app (chưa sửa)
+
+**Phát hiện bằng A7**, 11/2026, máy ảo iPhone 17 Pro Max iOS 27.2, bản Debug:
+
+- Đổi qua lại harness ↔ Settings 10 lần: `Footprint("Appeared")` tăng đều khoảng
+  2,5 MB mỗi lần (23,6 → 46,4 MB). Controller luôn về 1, nhưng surface tăng 1 mỗi lần
+  (2, 3, … 7), và lần nào cũng có log fault.
+- `heap` sau 11 lần hiện: 1 `KeyboardViewController` nhưng 11 `KeyboardSurfaceView`,
+  11 `KeyboardAudioInputView` (`inputView` của controller), 473 `KeyboardKeyControl`
+  (~43 phím × 11).
+- **Có sẵn trên `main`:** code trước A1 cho cùng kết quả (7 surface và 7 `inputView`
+  sau 7 lần hiện, 1 controller). Không do chuỗi PR này gây ra.
+- `leaks --traceTree` trên một `inputView` cũ: được giữ qua `NSISEngine` (Auto Layout)
+  ← `UIVisualEffectView._layoutEngine` ← `_UITypedStorage` ← observation tracking của
+  UIKit ← một `ObservationRegistrar` dùng chung có dictionary observation ~98 KB.
+  Funput không dùng `@Observable` ở đâu, nên đây là vòng giữ bên trong UIKit, nhiều khả
+  năng do `UIVisualEffectView` (kính/hiệu ứng trên phím) đăng ký observation tracking
+  mà không huỷ khi view rời màn hình.
+
+**Vì sao quan trọng.** 2,5 MB mỗi lần đổi app, không bao giờ trả lại cho tới khi
+process chết. Sau vài chục lần đổi app trong một ngày, footprint có thể chạm trần
+jetsam của keyboard extension, và iOS thay bằng bàn phím hệ thống: đúng triệu chứng
+"lúc được lúc không" của #641.
+
+**Hướng điều tra.**
+
+1. Xác nhận trên máy thật, bản Release (Memory Graph của Xcode, hoặc đọc `surfaces=`
+   trong `log stream`).
+2. Tìm view nào đăng ký observation: thử tắt lần lượt glass/`UIVisualEffectView` trên
+   phím, toolbar và backdrop rồi đếm lại surface.
+3. Cách chữa có thể: khi controller rời màn hình lần cuối (`viewDidDisappear` hoặc
+   lúc controller `deinit`), tháo cây view và cắt các tham chiếu tới surface, để phần
+   UIKit giữ lại chỉ còn một view rỗng thay vì cả bàn phím; hoặc đổi cách dùng
+   `UIVisualEffectView` cho khỏi kích hoạt observation tracking.
+4. Nghiệm thu: cùng kịch bản 10 lần đổi app, `surfaces=` luôn về 1, `physicalMB` đi
+   ngang, không có log fault.
 
 ---
 
