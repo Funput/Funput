@@ -5,7 +5,7 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). A1 đã hiện thực; A2–A7 đã duyệt
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A2 đã hiện thực; A3–A7 đã duyệt
 > hướng, chưa hiện thực.
 >
 > **Cập nhật:** 04/11/2026
@@ -100,6 +100,9 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
   (`Packages/FunputKit/Sources/KeyboardRenderer/Toolbar/KeyboardClipboardChipView.swift`),
   một `UIPasteControl`, nên dán không bao giờ bị hỏi.
   `Scripts/Quality/check-pasteboard-reads.sh` gác việc này trong CI.
+- Mark đã dán nằm trong file riêng `clipboard-marks.json` (A2): `begin()` lúc +300ms
+  chỉ đọc vài chục byte, không decode lịch sử
+  (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardStoreMarks.swift`).
 
 **Lệch:**
 
@@ -107,7 +110,6 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 |---|---|---|
 | `init` | `var clipboardStore = ClipboardStore()` gọi `AppGroupDirectory.prepare` (`createDirectory` + `setAttributes` + `setResourceValues`), rồi `adoptConfiguration` tạo lại ngay trong bootstrap | A6 |
 | `viewWillAppear` | `activateKeyboardForAppearance()` gọi `loadActivationSource` **lần thứ hai** (`Keyboard/Controller/Activation/KeyboardViewController+Activation.swift`); `adoptConfiguration` sau đó thấy identity không đổi nên không build lại gì. Lần đọc chỉ có nghĩa cho warm re-activation | A5 |
-| Sau `viewDidAppear` (+300ms) | `begin()` của clipboard đọc change-count mark; **mỗi lần decode toàn bộ `clipboard.json`**, kích thước tùy user (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardStoreMarks.swift`) | A2 |
 | Sau `viewDidAppear`, suốt lúc gõ | `ClipboardChangeMonitor` cứ 500ms đọc đủ 4 trường metadata pasteboard trên main (`changeCount`, `hasStrings`, `hasURLs`, `contains(pasteboardTypes:)`), đo được ~3ms mỗi lần trên máy thật | A4 |
 | Khi lưu clipboard | `ClipboardStore.record()` đọc + decode toàn bộ file, encode lại, ghi, trên main actor; file không có trần | A3 |
 
@@ -391,7 +393,20 @@ lệ với lịch sử của user, rơi đúng lúc user bắt đầu gõ. Sau A
 **Nghiệm thu.** Test `FunputShared`: `lastPastedChangeCount()` trả đúng giá trị khi
 `clipboard.json` không tồn tại hoặc hỏng; mark đọc được từ file cũ sau migration;
 `clear()` xoá cả mark; mark của boot trước vẫn bị bỏ (`marksAreCurrent`); các test
-còn lại trong `ClipboardStoreTests` và `ClipboardCaptureStoreTests` vẫn xanh.
+còn lại trong `ClipboardStoreTests` và `ClipboardRecordStoreTests` vẫn xanh.
+
+**Đã đổi khi hiện thực.**
+
+- `clear()` ghi một file marks rỗng thay vì xoá nó: xoá thì lần đọc sau lại đi tìm
+  mark cũ trong `clipboard.json` để migrate. Ngữ nghĩa không đổi, sau khi xoá không
+  file nào nói đã thấy pasteboard này.
+- Mỗi lần ghi lịch sử (`write(_:)`) xoá luôn hai field mark cũ khỏi `clipboard.json`,
+  nên file cũ tự sạch ở lần ghi kế tiếp.
+- `ClipboardMarks` là struct riêng (`ClipboardMarks.swift`), giữ `stampThisBoot()` và
+  `marksAreCurrent` chuyển từ `Payload` sang. Hai file dùng chung
+  `ClipboardStore.persist(_:to:)` để cùng protection class.
+- Test: `ClipboardMarksFileTests` (đọc mark khi lịch sử hỏng, đánh dấu không ghi lại
+  lịch sử, migrate một lần, ghi lịch sử bỏ mark cũ, xoá không migrate lại).
 
 ### A3: Trần dung lượng lịch sử clipboard
 

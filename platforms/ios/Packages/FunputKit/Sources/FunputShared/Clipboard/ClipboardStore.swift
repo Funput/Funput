@@ -9,33 +9,23 @@ import Foundation
 public struct ClipboardStore {
     public static let limit = 50
 
-    /// The pasted mark and the boot it belongs to. On disk, not in the session: the
-    /// keyboard is rebuilt in every app it appears in. Files written while the
-    /// keyboard still captured on its own also carry `lastCapturedChangeCount`;
-    /// decoding ignores it.
+    /// The history file. `bootTime` and `lastPastedChangeCount` are what older builds
+    /// kept here before the mark moved to its own file (``ClipboardMarks``); they are
+    /// only ever read, once, to migrate it, and never written again. Files from the
+    /// builds that captured on their own also carry `lastCapturedChangeCount`, which
+    /// decoding ignores.
     struct Payload: Codable {
         var bootTime: Int?
         var lastPastedChangeCount: Int?
         var items: [ClipboardItem]
 
         static let empty = Payload(bootTime: nil, lastPastedChangeCount: nil, items: [])
-
-        /// Claims the mark for this boot, dropping one the previous boot left: its
-        /// change count names a generation that no longer exists and could collide.
-        mutating func stampThisBoot() {
-            if !marksAreCurrent { lastPastedChangeCount = nil }
-            bootTime = ClipboardBootTime.current
-        }
-
-        /// Change counts restart at boot, so a mark written before this one names a
-        /// generation that no longer exists.
-        var marksAreCurrent: Bool {
-            guard let bootTime, let current = ClipboardBootTime.current else { return false }
-            return bootTime == current
-        }
     }
 
     private let fileURL: URL?
+    /// Next to the history rather than inside it, so reading the mark never decodes
+    /// the history. See `ClipboardStoreMarks.swift`.
+    let marksURL: URL?
     /// How long an unpinned entry survives. Comes from the user's settings, so the
     /// store carries it rather than hard-coding one.
     private let expiry: TimeInterval
@@ -49,6 +39,7 @@ public struct ClipboardStore {
 
     public init(directory: URL?, expiry: ClipboardExpiry = .hour) {
         fileURL = directory?.appendingPathComponent("clipboard.json")
+        marksURL = directory?.appendingPathComponent("clipboard-marks.json")
         self.expiry = expiry.interval
     }
 
@@ -79,9 +70,11 @@ public struct ClipboardStore {
     }
 
     /// Drops every entry, pinned included, and the pasted mark with them: after a wipe
-    /// nothing on disk claims to have seen this pasteboard.
+    /// nothing on disk claims to have seen this pasteboard. The mark is emptied rather
+    /// than deleted, so the next read does not go looking for one to migrate.
     public func clear() {
         write(.empty)
+        writeMarks(.empty)
     }
 
     /// Newest first. Expired unpinned entries go, then the oldest unpinned ones until
@@ -128,11 +121,22 @@ public struct ClipboardStore {
         return (try? JSONDecoder().decode(Payload.self, from: data)) ?? .empty
     }
 
+    /// Drops the legacy mark on the way out: once the history is rewritten, the only
+    /// copy of the mark is the one in its own file.
     @discardableResult
     func write(_ payload: Payload) -> Bool {
+        var payload = payload
+        payload.bootTime = nil
+        payload.lastPastedChangeCount = nil
         guard let fileURL, let data = try? JSONEncoder().encode(payload) else { return false }
+        return Self.persist(data, to: fileURL)
+    }
+
+    /// Both files hold what the user pasted, or a trace of it, so both get the same
+    /// protection class. The directory already keeps them out of backups.
+    static func persist(_ data: Data, to url: URL) -> Bool {
         do {
-            try data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+            try data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
             return true
         } catch { return false }
     }
