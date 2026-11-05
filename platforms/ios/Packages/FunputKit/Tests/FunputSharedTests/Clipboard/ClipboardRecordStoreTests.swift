@@ -2,36 +2,36 @@ import Foundation
 import FunputShared
 import Testing
 
-struct ClipboardCaptureStoreTests {
-    @Test func recopyKeepsIdentityAndPinAndMovesToFront() throws {
+struct ClipboardRecordStoreTests {
+    @Test func repasteKeepsIdentityAndPinAndMovesToFront() throws {
         let dir = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = ClipboardStore(directory: dir)
         let pinned = ClipboardItem(text: "pin", isPinned: true, sourceChangeCount: 1)
-        #expect(store.capture(pinned))
-        #expect(store.capture(ClipboardItem(text: "other", sourceChangeCount: 2)))
-        #expect(store.capture(ClipboardItem(text: "pin", sourceChangeCount: 3)))
+        #expect(store.record(pinned))
+        #expect(store.record(ClipboardItem(text: "other", sourceChangeCount: 2)))
+        #expect(store.record(ClipboardItem(text: "pin", sourceChangeCount: 3)))
         let items = store.load()
         #expect(items.map(\.text) == ["pin", "other"])
         #expect(items.first?.id == pinned.id)
         #expect(items.first?.isPinned == true)
         let bytes = try Data(contentsOf: dir.appendingPathComponent("clipboard.json"))
-        #expect(store.capture(ClipboardItem(text: "pin", sourceChangeCount: 3)))
+        #expect(store.record(ClipboardItem(text: "pin", sourceChangeCount: 3)))
         #expect(try Data(contentsOf: dir.appendingPathComponent("clipboard.json")) == bytes)
     }
 
-    @Test func sameCountWithDifferentTextAfterRestartIsNotSuppressed() throws {
+    @Test func sameCountWithDifferentTextAfterRestartIsKept() throws {
         let dir = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = ClipboardStore(directory: dir)
-        #expect(store.capture(ClipboardItem(text: "before reboot", sourceChangeCount: 1)))
-        #expect(store.capture(ClipboardItem(text: "after reboot", sourceChangeCount: 1)))
+        #expect(store.record(ClipboardItem(text: "before reboot", sourceChangeCount: 1)))
+        #expect(store.record(ClipboardItem(text: "after reboot", sourceChangeCount: 1)))
         #expect(store.load().count == 2)
     }
 
-    /// History written before automatic capture shipped: the same file, but every
-    /// change count in it belongs to a previous boot.
-    @Test func historyWrittenByAnOlderBuildStillLoadsAndAcceptsCapture() throws {
+    /// History written while the keyboard still captured on its own: the same file,
+    /// with a captured mark nothing reads anymore and change counts from a past boot.
+    @Test func historyWrittenByAnOlderBuildStillLoadsAndAcceptsPastes() throws {
         let dir = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let legacy = """
@@ -44,25 +44,24 @@ struct ClipboardCaptureStoreTests {
         #expect(loaded.map(\.text) == ["ghim cu"])
         #expect(loaded.first?.isPinned == true)
         // A fresh boot can hand out a change count the old file already used.
-        #expect(store.capture(ClipboardItem(text: "moi", sourceChangeCount: 4)))
+        #expect(store.record(ClipboardItem(text: "moi", sourceChangeCount: 4)))
         #expect(store.load().map(\.text) == ["moi", "ghim cu"])
     }
 
-    /// The marks are what keep the next session from re-reading the pasteboard,
-    /// which the user sees as a system paste banner in every app.
-    @Test func marksSurviveTheSessionAndSpareTheNextOneARead() throws {
+    /// The mark is what keeps the toolbar from inviting the same paste again in the
+    /// next app, where the keyboard is rebuilt from scratch.
+    @Test func pastedMarkSurvivesTheSession() throws {
         let dir = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = ClipboardStore(directory: dir)
-        #expect(store.capture(ClipboardItem(text: "da dan", sourceChangeCount: 7)))
+        #expect(store.record(ClipboardItem(text: "da dan", sourceChangeCount: 7)))
         #expect(store.markPasted(7))
-        #expect(ClipboardStore(directory: dir).lastCapturedChangeCount() == 7)
         #expect(ClipboardStore(directory: dir).lastPastedChangeCount() == 7)
     }
 
     /// Change counts restart at boot, so a mark written before it names a generation
-    /// that no longer exists: the keyboard has to read once and earn the mark again.
-    @Test func marksFromAnotherBootAreNotTrusted() throws {
+    /// that no longer exists and must not suppress an offer.
+    @Test func pastedMarkFromAnotherBootIsNotTrusted() throws {
         let dir = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let stale = """
@@ -70,29 +69,24 @@ struct ClipboardCaptureStoreTests {
         """
         try Data(stale.utf8).write(to: dir.appendingPathComponent("clipboard.json"))
         let store = ClipboardStore(directory: dir)
-        #expect(store.lastCapturedChangeCount() == nil)
         #expect(store.lastPastedChangeCount() == nil)
-
-        // Re-reading text the file already holds must still re-stamp the mark,
-        // otherwise every session after a reboot reads the pasteboard again.
-        #expect(store.capture(ClipboardItem(text: "cu", sourceChangeCount: 7)))
-        #expect(store.lastCapturedChangeCount() == 7)
-        #expect(store.lastPastedChangeCount() == nil)
+        #expect(store.markPasted(7))
+        #expect(store.lastPastedChangeCount() == 7)
     }
 
-    @Test func clearingHistoryDropsBothMarks() throws {
+    @Test func clearingHistoryDropsThePastedMark() throws {
         let dir = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = ClipboardStore(directory: dir)
-        #expect(store.capture(ClipboardItem(text: "bi mat", sourceChangeCount: 3)))
+        #expect(store.record(ClipboardItem(text: "bi mat", sourceChangeCount: 3)))
         #expect(store.markPasted(3))
         store.clear()
         #expect(store.lastPastedChangeCount() == nil)
-        #expect(store.lastCapturedChangeCount() == nil)
+        #expect(store.load().isEmpty)
     }
 
     @Test func missingContainerReportsFailure() {
-        #expect(!ClipboardStore(directory: nil).capture(ClipboardItem(text: "text", sourceChangeCount: 1)))
+        #expect(!ClipboardStore(directory: nil).record(ClipboardItem(text: "text", sourceChangeCount: 1)))
     }
 
     private func makeDirectory() throws -> URL {

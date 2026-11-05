@@ -1,10 +1,11 @@
 import Foundation
 
-/// One captured clipboard entry.
+/// One clipboard history entry: text the user pasted through Funput.
 ///
-/// `sourceChangeCount` is the `UIPasteboard.changeCount` the text came from. It is
-/// what lets the keyboard tell an already-captured item from a genuinely new one
-/// without ever reading the pasteboard's contents again.
+/// `sourceChangeCount` is the `UIPasteboard.changeCount` the text came from, or -1
+/// when the paste could not be tied to one. It is what lets the store tell a repeat
+/// of the same paste from a genuinely new one. `capturedAt` keeps its name because
+/// it is the on-disk key; it is when the entry was recorded.
 public struct ClipboardItem: Codable, Equatable, Identifiable, Sendable {
     public let id: UUID
     public let text: String

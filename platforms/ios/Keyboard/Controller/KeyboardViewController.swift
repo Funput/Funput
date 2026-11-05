@@ -44,10 +44,9 @@ final class KeyboardViewController: UIInputViewController {
     let bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
     var clipboardRetryTask: Task<Void, Never>?
     let clipboardChangeMonitor = ClipboardChangeMonitor()
-    let clipboardIdleGate = ClipboardIdleGate()
     var clipboardStartTask: Task<Void, Never>?
     var isClipboardMonitoring = false
-    lazy var clipboardCapture = makeClipboardCapture()
+    lazy var clipboardRecorder = makeClipboardRecorder()
     var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
     var adoptedIdentity: KeyboardActivationIdentity?
     var resolvedBackgroundRequest: KeyboardBackgroundRequest?

@@ -5,8 +5,8 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). Đề xuất A1–A7 đã duyệt hướng, chưa
-> hiện thực.
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1 đã hiện thực; A2–A7 đã duyệt
+> hướng, chưa hiện thực.
 >
 > **Cập nhật:** 04/11/2026
 >
@@ -93,20 +93,23 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
   (`Keyboard/Controller/Surfaces/KeyboardViewController+PrimarySurfaceLifecycle.swift`).
   Đây là việc nặng nhất của bootstrap và *cố ý* nằm ở đây.
 - Emoji, kaomoji và panel clipboard đều lazy (bảng §2.3).
-- Nút dán trên thanh công cụ dùng `UIPasteControl`
+- Bàn phím không đọc nội dung pasteboard ở bất kỳ đâu (A1).
+  `ClipboardGateway` (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardGateway.swift`)
+  chỉ có `snapshot()`. Nút dán trên thanh công cụ và dòng dán của panel cùng là
+  `KeyboardClipboardChipView`
   (`Packages/FunputKit/Sources/KeyboardRenderer/Toolbar/KeyboardClipboardChipView.swift`),
-  nên dán qua nút không bao giờ bị hỏi.
+  một `UIPasteControl`, nên dán không bao giờ bị hỏi.
+  `Scripts/Quality/check-pasteboard-reads.sh` gác việc này trong CI.
 
 **Lệch:**
 
 | Chặng | Việc lệch | Đề xuất |
 |---|---|---|
-| Mọi chặng sau khi hiện | Auto-capture tự đọc `UIPasteboard.general.string` (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardGateway.swift`), làm iOS hiện hộp thoại xin phép dán, kể cả giữa lúc gõ; mở panel clipboard cũng đọc | A1 |
 | `init` | `var clipboardStore = ClipboardStore()` gọi `AppGroupDirectory.prepare` (`createDirectory` + `setAttributes` + `setResourceValues`), rồi `adoptConfiguration` tạo lại ngay trong bootstrap | A6 |
 | `viewWillAppear` | `activateKeyboardForAppearance()` gọi `loadActivationSource` **lần thứ hai** (`Keyboard/Controller/Activation/KeyboardViewController+Activation.swift`); `adoptConfiguration` sau đó thấy identity không đổi nên không build lại gì. Lần đọc chỉ có nghĩa cho warm re-activation | A5 |
 | Sau `viewDidAppear` (+300ms) | `begin()` của clipboard đọc change-count mark; **mỗi lần decode toàn bộ `clipboard.json`**, kích thước tùy user (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardStoreMarks.swift`) | A2 |
 | Sau `viewDidAppear`, suốt lúc gõ | `ClipboardChangeMonitor` cứ 500ms đọc đủ 4 trường metadata pasteboard trên main (`changeCount`, `hasStrings`, `hasURLs`, `contains(pasteboardTypes:)`), đo được ~3ms mỗi lần trên máy thật | A4 |
-| Khi lưu clipboard | `ClipboardStore.capture()` đọc + decode toàn bộ file, encode lại, ghi, trên main actor; file không có trần | A3 |
+| Khi lưu clipboard | `ClipboardStore.record()` đọc + decode toàn bộ file, encode lại, ghi, trên main actor; file không có trần | A3 |
 
 ### 2.2. Ảnh nền: giữ decode đồng bộ (đã quyết định)
 
@@ -126,14 +129,14 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 | Emoji catalog (JSON 1898 mục) | Lần đầu bấm phím emoji | `EmojiCatalogCache.load()` lazy, `release()` khi disappear/memory warning | `Packages/FunputKit/Sources/KeyboardRenderer/Emoji/Catalog/EmojiCatalogCache.swift` |
 | Emoji panel + search engine | Mở panel / bắt đầu tìm | Tạo khi vào, giải phóng khi rời (PR #642) | `Keyboard/Controller/Surfaces/` |
 | Panel clipboard | Mở panel | Tạo khi vào, giải phóng khi rời | `Keyboard/Clipboard/KeyboardViewController+ClipboardPanel.swift` |
-| Clipboard monitor (chỉ metadata) | 300ms sau `viewDidAppear` | `clipboardStartDelay` | `Keyboard/Clipboard/KeyboardViewController+ClipboardCapture.swift` |
+| Clipboard monitor (chỉ metadata) | 300ms sau `viewDidAppear` | `clipboardStartDelay` | `Keyboard/Clipboard/KeyboardViewController+ClipboardMonitoring.swift` |
 | Từ điển sửa typo (lexicon mmap) | Sau activation | `Task.detached(priority: .utility)`; chưa sẵn sàng thì **từ chối sửa** (hướng an toàn) | `Packages/FunputKit/Sources/PersonalSuggestions/Correction/CorrectionWordSource.swift` |
 | Personal suggestions engine + store | Sau activation | Serial queue riêng của `PersonalSuggestionWorker`; store mở off-main | `Keyboard/Suggestions/PersonalSuggestionWorker.swift` |
 | Shortcuts (gõ tắt) | Sau activation | Actor async, có `cancel()` ở disappear | `Keyboard/Shortcuts/KeyboardViewController+Shortcuts.swift` |
 | Vá bootstrap snapshot | `viewDidAppear` | `Task.detached(priority: .utility)` | `Keyboard/Configuration/KeyboardViewController+Configuration.swift` |
 
-Đọc nội dung clipboard (hiện chờ user ngừng gõ 2s, `ClipboardIdleGate`) không nằm
-trong bảng: A1 bỏ hẳn nó.
+Đọc nội dung clipboard không nằm trong bảng: từ A1 bàn phím không bao giờ tự đọc,
+kể cả khi đã trì hoãn.
 
 ---
 
@@ -171,7 +174,6 @@ Hai ràng buộc đã biết, **không sửa được**, chỉ quản lý:
 | Ảnh nền theme | Pixel budget theo width | Memory warning khi đang ẩn (`releaseBackgroundImageIfHidden`) |
 | Lexicon `en.lex` | mmap read-only, trang clean, OS tự thu hồi | Không cần thả |
 | Personal suggestion store | `max_words: 5_000` (`crates/funput-suggestions/src/engine/config.rs`) | Flush định kỳ, engine sống trên queue riêng |
-| Nội dung pasteboard đã đọc | **Không có trần: auto-capture kéo toàn văn vào bộ nhớ, kể cả văn bản chục MB. Xem A1** | Sau khi lưu |
 | Clipboard history | **Không có trần: 50 mục unpinned + pinned không giới hạn số lượng, mỗi mục text không giới hạn độ dài. Xem A3** | Expiry theo cấu hình (pinned không bao giờ expire) |
 
 ### 3.3. Memory warning
@@ -190,7 +192,7 @@ leak duy nhất có thể làm bàn phím chết "sau một lúc dùng".
 Đã đọc trong source, **chưa thấy đường giữ controller nào**:
 
 - Closure lưu lâu (`onCandidates`, `onSuggestionSelected`, closure của
-  `ClipboardCaptureController`, các `Task` lặp) đều bắt `[weak self]`.
+  `ClipboardPasteRecorder`, các `Task` lặp) đều bắt `[weak self]`.
 - Observer `NotificationCenter` dùng dạng selector, không giữ target.
 - Timer của `BackspaceRepeatController` và `RunLoopDeadlineScheduler` giữ closure
   action; an toàn chừng nào nơi gọi bắt `weak` và `invalidate` khi tắt.
@@ -209,8 +211,7 @@ Subsystem `app.funput.keyboard`:
   `ThemeResolve`, `PrimarySurfaceCreation`, `SurfaceApply`, `EngineConfiguration`,
   `AssetRead`, `AssetDecode`, `HeightReady`, `FirstNonZeroLayout`, `PanelCreation`,
   `PanelFirstOpen`, `PanelReleased`; clipboard (`Keyboard/Diagnostics/ClipboardSignpost.swift`):
-  `ClipboardStart`, `ClipboardRead`, `ClipboardCaptureDeferred` (hai mốc sau bỏ cùng
-  A1).
+  `ClipboardStart`.
 - Category `Memory` (`Keyboard/Diagnostics/Memory/KeyboardMemoryTrace.swift`): event
   `Footprint` với `physicalMB`/`peakMB`/`availableMB` tại các mốc `Appeared`,
   `Disappeared`, `PanelCreated/PanelReleased <surface>`, `MemoryWarning`.
@@ -309,6 +310,35 @@ không còn tự ghi mọi thứ user copy.
      thiết bị."
    - `ClipboardEmptyStateView`, trạng thái `.nothingSaved`: "Bấm Dán trên thanh công
      cụ của Funput, nội dung sẽ được lưu vào đây."
+
+**Đã đổi khi hiện thực.**
+
+- Dòng dán của panel **dùng lại nguyên `KeyboardClipboardChipView`** thay vì tách
+  riêng phần tạo `UIPasteControl`: cùng một view, cùng theme, không có code control
+  thứ hai. Chữ trên dòng vì thế là chữ của chip ("Đã sao chép văn bản" / "Đã sao
+  chép một liên kết"), không phải "Nội dung vừa sao chép". Dòng nằm ở chỗ của
+  `ClipboardRetryBanner` cũ. Dán từ dòng này thì quay về bàn phím chữ, giống dán từ
+  lịch sử. Toolbar và panel nhận cùng một hint từ `refreshClipboardOffer`, nên panel
+  không bao giờ mời một lần dán mà toolbar đã rút lại.
+- `UIPasteControl` báo `intrinsicContentSize` bằng 0 cho tới khi nó tự layout một
+  lượt trên màn hình, mà lượt đó chạy sau lượt của chip. Toolbar được layout lại liên
+  tục nên không lộ; panel thì được dựng khi đang ẩn và chỉ layout một lần, nên nút
+  Dán co về 0 và biến mất (UI test bắt được, máy ảo iPhone 17 Pro Max iOS 27.2).
+  `KeyboardClipboardChipView` vì thế xin thêm tối đa 3 lượt layout khi còn đọc được
+  kích thước 0, và `ClipboardKeyboardView` gọi `pasteChip.remeasure()` khi chuyển từ
+  ẩn sang hiện. Unit test không kiểm được chuyện này: không có app host thì mọi
+  `UIPasteControl` đều báo kích thước 0.
+- Chữ trống của panel thành "Nội dung bạn dán bằng nút Dán của Funput sẽ được lưu ở
+  đây.", vì panel giờ cũng có nút Dán của riêng nó.
+- `ClipboardStore.capture(_:now:)` đổi tên thành `record(_:now:)`. Khái niệm "capture"
+  không còn.
+- `allowsClipboardCapture` đổi thành `allowsClipboardOffer` ngay trong A1, không chờ
+  tới A4. File `KeyboardViewController+ClipboardCapture.swift` đổi tên thành
+  `+ClipboardMonitoring.swift`.
+- Test mới: `ClipboardPasteRecorderTests`, `ClipboardPasteFixture`,
+  `ClipboardRecordStoreTests` (thay `ClipboardCaptureStoreTests`),
+  `ClipboardPastePresentationTests`. UI test đổi tên thành
+  `FunputUITests/ClipboardPasteUITests.swift`.
 
 **Nghiệm thu.**
 
@@ -426,9 +456,8 @@ thay đổi do process host làm.
    lời, xem doc comment của `ClipboardSnapshot`; phải hỏi lại cho tới khi có câu trả
    lời thật).
 2. Đường notification (`clipboardChanged`) và `refresh()` vẫn đọc đủ snapshot.
-3. `readChangeCount` trả nil cùng điều kiện với `readSnapshot` (sau A1 đổi tên
-   `allowsClipboardCapture` thành `allowsClipboardOffer`), để ô password không truy
-   vấn pasteboard.
+3. `readChangeCount` trả nil cùng điều kiện với `readSnapshot`
+   (`allowsClipboardOffer`), để ô password không truy vấn pasteboard.
 
 **Nghiệm thu.** Test `FunputShared` với nguồn metadata giả đếm số lần đọc: 10 tick
 không đổi `changeCount` thì đọc snapshot đúng 1 lần; `changeCount` đổi thì
@@ -511,11 +540,21 @@ riêng tư & Bảo mật > Phân tích & Cải tiến > Dữ liệu phân tích*
   phải thêm, sửa bảng §2 trong cùng PR và ghi lý do.
 - Không thêm lần đọc nội dung pasteboard nào; `check-pasteboard-reads.sh` gác việc
   này sau A1.
-- Giữ mọi signpost hiện có (trừ hai mốc A1 bỏ); thêm mốc mới nếu đường code mới cần
-  quan sát.
-- `Scripts/check-swift-loc.sh`: mỗi file Swift ≤ 150 dòng; tách file theo đúng phong
-  cách extension hiện tại. File Swift mới copy bộ `import` từ file cùng thư mục
-  (Swift 6 `MemberImportVisibility` bắt lỗi cứng khi thiếu import).
+- Giữ mọi signpost hiện có; thêm mốc mới nếu đường code mới cần quan sát.
+- Hai script giới hạn kích thước:
+  - `Scripts/check-swift-loc.sh` (chạy trong CI): mỗi file Swift ≤ 150 dòng.
+  - `Scripts/Quality/check-keyboard-touch-layout.sh` (chưa chạy trong CI): thêm giới
+    hạn ≤ 5 file Swift mỗi thư mục trong các thư mục nó liệt kê, gồm
+    `Keyboard/Controller`, `Keyboard/Diagnostics`, `Keyboard/Document`,
+    `Packages/FunputKit/Sources/KeyboardInput`,
+    `Packages/FunputKit/Sources/FunputShared/Persistence`. Đầy thì tách thư mục con.
+    Lúc viết, script này đã đỏ sẵn ở hai thư mục test
+    (`Packages/FunputKit/Tests/KeyboardInputTests/Coordinator`,
+    `FunputTests/Suggestions/Service`); PR mới không được thêm vi phạm nào.
+
+  Tách file theo đúng phong cách extension hiện tại. File Swift mới copy bộ `import`
+  từ file cùng thư mục (Swift 6 `MemberImportVisibility` bắt lỗi cứng khi thiếu
+  import).
 - Code và comment bằng tiếng Anh; comment giải thích *ràng buộc* (tại sao phải thế),
   không kể lại code làm gì, theo đúng giọng các doc comment đang có. Chữ trên giao
   diện bằng tiếng Việt, câu tự nhiên, không dùng `·` hay `—`.

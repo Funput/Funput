@@ -23,7 +23,7 @@ public enum ClipboardEmptyState: Equatable, Sendable {
         case .needsFullAccess:
             "Bật trong Cài đặt › Bàn phím › Funput để dùng lịch sử clipboard."
         case .nothingSaved:
-            "Sao chép văn bản khi Funput đang mở. Khi được phép đọc clipboard, Funput tự lưu vào lịch sử mà không cần bấm Dán."
+            "Nội dung bạn dán bằng nút Dán của Funput sẽ được lưu ở đây."
         }
     }
 }

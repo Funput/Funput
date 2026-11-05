@@ -231,6 +231,10 @@ jobs:
   # job costs a checkout. It does not build or test either mobile shell — the
   # Android module in particular has no CI at all, which is its own problem and a
   # much larger one than this job.
+  #
+  # The iOS pasteboard check rides along for the same reason: it is a grep over
+  # sources, needs no toolchain, and catches a keyboard read that would raise the
+  # iOS paste prompt before it can reach main.
   shell-line-budget:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -239,6 +243,9 @@ jobs:
 
       - name: Swift, iOS
         run: bash platforms/ios/Scripts/check-swift-loc.sh
+
+      - name: Swift, iOS keyboard pasteboard reads
+        run: bash platforms/ios/Scripts/Quality/check-pasteboard-reads.sh
 
       - name: Swift, macOS
         run: bash platforms/macos/scripts/check-swift-loc.sh

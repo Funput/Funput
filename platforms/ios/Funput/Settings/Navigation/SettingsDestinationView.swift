@@ -3,7 +3,6 @@ import SwiftUI
 
 /// The page behind each ``SettingsDestination``, built from the existing section cards.
 struct SettingsDestinationView: View {
-    @Environment(\.openURL) private var openURL
     let destination: SettingsDestination
     @ObservedObject var model: SettingsModel
 
@@ -32,8 +31,7 @@ struct SettingsDestinationView: View {
             ClipboardSettingsCard(
                 isEnabled: model.boolBinding(\.clipboardEnabled),
                 expiryLabel: model.clipboardExpiryLabel,
-                selectExpiry: { select(.clipboardExpiry) },
-                openSettings: { openURL(.funputSystemSettings) }
+                selectExpiry: { select(.clipboardExpiry) }
             )
         case .data:
             SettingsDataCard(

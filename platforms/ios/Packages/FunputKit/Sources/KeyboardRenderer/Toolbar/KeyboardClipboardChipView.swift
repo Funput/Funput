@@ -17,6 +17,8 @@ final class KeyboardClipboardChipView: UIView {
     private var pasteControl: UIPasteControl?
     private var accent: UIColor = .systemBlue
     private var foreground: UIColor = .white
+    private var measureAttempts = 0
+    private static let maxMeasureAttempts = 3
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -40,6 +42,11 @@ final class KeyboardClipboardChipView: UIView {
         super.layoutSubviews()
         guard let pasteControl else { return }
         let intrinsic = pasteControl.intrinsicContentSize
+        guard intrinsic.width > 0 else {
+            requestMeasuredLayout()
+            return
+        }
+        measureAttempts = 0
         // The compact toolbar band is shorter than the 38.33pt the control asks for,
         // so it is scaled down rather than clipped. Under a transform the frame is
         // meaningless — position with bounds and center.
@@ -59,7 +66,24 @@ final class KeyboardClipboardChipView: UIView {
         isHidden = hint == nil
         hintLabel.text = hint?.title
         hintLabel.accessibilityLabel = hint?.title
+        remeasure()
+    }
+
+    /// Lays the control out again from scratch, for a host that has just put the chip
+    /// on screen after laying it out out of sight.
+    func remeasure() {
+        measureAttempts = 0
         setNeedsLayout()
+    }
+
+    /// `UIPasteControl` reports no size until it has been through a layout pass of its
+    /// own on screen, and that pass runs after this view's. Laying it out as nothing
+    /// would remove it from the screen, so ask for one more pass instead. Bounded: a
+    /// control that never measures, such as one with no window, must not spin.
+    private func requestMeasuredLayout() {
+        guard window != nil, measureAttempts < Self.maxMeasureAttempts else { return }
+        measureAttempts += 1
+        DispatchQueue.main.async { [weak self] in self?.setNeedsLayout() }
     }
 
     func apply(theme: ResolvedTheme, traits: UITraitCollection) {

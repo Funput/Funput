@@ -7,16 +7,27 @@ extension ClipboardKeyboardView {
         presentation: KeyboardPresentation,
         entries: [KeyboardClipboardEntry],
         hasFullAccess: Bool,
-        needsRetry: Bool = false,
         now: Date = Date()
     ) {
-        retryBanner.isHidden = !hasFullAccess || !needsRetry
-        setNeedsLayout()
         self.presentation = presentation
         self.now = now
+        self.hasFullAccess = hasFullAccess
         emptyState = hasFullAccess ? .nothingSaved : .needsFullAccess
         groups = hasFullAccess ? ClipboardHistorySection.make(from: entries) : []
+        applyPasteHint()
         applyPresentation()
+    }
+
+    /// What the paste row may say, worked out by the keyboard alongside the toolbar's
+    /// own offer. Without full access nothing pasted could be kept, so there is no row.
+    public func updatePasteHint(_ hint: KeyboardClipboardHint?) {
+        pasteHint = hint
+        applyPasteHint()
+    }
+
+    private func applyPasteHint() {
+        pasteChip.update(hint: hasFullAccess ? pasteHint : nil)
+        setNeedsLayout()
     }
 
     public func apply(
@@ -42,9 +53,9 @@ extension ClipboardKeyboardView {
         bottomBar.onReturn = { [weak self] in self?.onReturn?() }
         bottomBar.onDelete = { [weak self] in self?.onDelete?() }
         bottomBar.onClearAll = { [weak self] in self?.onClearAll?() }
-        retryBanner.isHidden = true
-        retryBanner.onRetry = { [weak self] in self?.onRetry?() }
-        [backdropView, collectionView, emptyStateView, bottomBar, retryBanner].forEach(addSubview)
+        pasteChip.update(hint: nil)
+        pasteChip.onPaste = { [weak self] in self?.onPaste?($0) }
+        [backdropView, collectionView, emptyStateView, bottomBar, pasteChip].forEach(addSubview)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(accessibilityAppearanceDidChange),
@@ -67,7 +78,7 @@ extension ClipboardKeyboardView {
         collectionView.isHidden = isEmpty
         emptyStateView.apply(state: emptyState, theme: theme, traits: traitCollection)
         bottomBar.apply(color: label, canClear: !isEmpty)
-        retryBanner.tintColor = label
+        pasteChip.apply(theme: theme, traits: traitCollection)
         collectionView.reloadData()
     }
 

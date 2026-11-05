@@ -9,16 +9,18 @@ extension KeyboardViewController {
     /// work starts: enough to draw the first frame and take the first keys.
     static let clipboardStartDelay: Duration = .milliseconds(300)
 
-    var allowsClipboardCapture: Bool {
+    /// Whether the toolbar may invite a paste and a paste may enter the history.
+    /// Password fields never get either, whatever the settings say.
+    var allowsClipboardOffer: Bool {
         activationState.isActive && hasFullAccess && configuration.clipboardEnabled
             && !inputCoordinator.state.editorMode.isPassword
     }
 
-    func makeClipboardCapture() -> ClipboardCaptureController {
-        ClipboardCaptureController(
-            gateway: TracedClipboardGateway(),
-            allowsCapture: { [weak self] in self?.allowsClipboardCapture == true },
-            save: { [weak self] item in self?.clipboardStore.capture(item) == true },
+    func makeClipboardRecorder() -> ClipboardPasteRecorder {
+        ClipboardPasteRecorder(
+            gateway: SystemClipboardGateway(),
+            allowsRecording: { [weak self] in self?.allowsClipboardOffer == true },
+            save: { [weak self] item in self?.clipboardStore.record(item) == true },
             // Resolved through `self`, not captured: activation replaces the store,
             // and `ClipboardStore` is a struct, so a copy taken here would freeze.
             marks: KeyboardClipboardMarks { [weak self] in self?.clipboardStore },
@@ -26,11 +28,8 @@ extension KeyboardViewController {
         )
     }
 
-    /// Typing comes first. Clipboard work used to run synchronously in
-    /// `viewDidAppear` and read the contents on the spot. A clipboard copied on a
-    /// Mac then held the main thread while it was fetched, and the system paste
-    /// prompt popped up before the user could type. Now the monitor starts only
-    /// after the keyboard is on screen.
+    /// Typing comes first. The monitor only samples pasteboard metadata, which
+    /// raises no prompt, but even that waits until the keyboard is on screen.
     func scheduleClipboardMonitoringStart() {
         cancelClipboardMonitoringStart()
         let generation = activationState.generation
@@ -51,18 +50,16 @@ extension KeyboardViewController {
     func startClipboardMonitoring() {
         ClipboardSignpost.measure("ClipboardStart") {
             isClipboardMonitoring = true
-            clipboardCapture.begin()
+            clipboardRecorder.begin()
             refreshClipboardOffer()
             clipboardChangeMonitor.start(
                 readSnapshot: { [weak self] in
-                    guard self?.allowsClipboardCapture == true else { return nil }
+                    guard self?.allowsClipboardOffer == true else { return nil }
                     return ClipboardSnapshot(.general)
                 },
-                onChange: { [weak self] in
-                    // Metadata only, so the paste chip can show at once.
-                    self?.refreshClipboardOffer()
-                    self?.requestIdleClipboardCapture()
-                }
+                // Metadata only: the offer changes, the contents stay unread until
+                // the user taps a paste control.
+                onChange: { [weak self] in self?.refreshClipboardOffer() }
             )
         }
     }
@@ -71,27 +68,15 @@ extension KeyboardViewController {
         cancelClipboardMonitoringStart()
         isClipboardMonitoring = false
         clipboardChangeMonitor.stop()
-        clipboardIdleGate.cancel()
-        clipboardCapture.end()
-    }
-
-    /// Reading the contents can stall on a remote clipboard and raises the paste
-    /// prompt, so automatic capture waits until the user stops typing. Opening the
-    /// clipboard panel still captures immediately: that is the user asking for it.
-    private func requestIdleClipboardCapture() {
-        ClipboardSignpost.event("ClipboardCaptureDeferred")
-        clipboardIdleGate.requestCapture { [weak self] in
-            self?.clipboardCapture.synchronize()
-        }
+        clipboardRecorder.end()
     }
 }
 
 /// Reaches the controller's current ``ClipboardStore`` rather than a copy of
-/// whichever one existed when the capture controller was built.
+/// whichever one existed when the recorder was built.
 struct KeyboardClipboardMarks: ClipboardSessionMarkStoring {
     let store: () -> ClipboardStore?
 
-    func lastCapturedChangeCount() -> Int? { store()?.lastCapturedChangeCount() }
     func lastPastedChangeCount() -> Int? { store()?.lastPastedChangeCount() }
 
     @discardableResult
