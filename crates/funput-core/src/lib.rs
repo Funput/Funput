@@ -56,9 +56,10 @@ pub mod textcase;
 mod unicode;
 mod validation;
 
-pub use input_method::{KeyRole, key_role, telex_defers_w};
+pub use input_method::{KeyRole, key_role, key_tone, telex_defers_w};
 pub use options::{ComposeOptions, InputMethod, ToneStyle};
 pub use orthography::respell_tone;
+pub use unicode::marks::Tone;
 
 /// Result kind for a single keystroke transform.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
