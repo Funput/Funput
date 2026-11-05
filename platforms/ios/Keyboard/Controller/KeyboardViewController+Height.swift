@@ -2,6 +2,16 @@ import KeyboardRenderer
 import UIKit
 
 extension KeyboardViewController {
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        let shouldReactivate = heightController.deactivate()
+        coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+            guard let self, shouldReactivate else { return }
+            updatePreferredHeight()
+            activatePreferredHeight()
+        }
+    }
+
     func updatePreferredHeight() {
         let changed = heightController.update(
             for: currentPresentation,
