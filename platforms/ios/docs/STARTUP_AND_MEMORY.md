@@ -5,7 +5,7 @@
 > không leak. Đạt được **bằng cấu trúc**: một hợp đồng quy định việc gì được chạy
 > trên main ở chặng nào, và mọi vùng nhớ đều có trần ghi trong code.
 >
-> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A4 đã hiện thực; A5–A7 đã duyệt
+> **Trạng thái:** Hiện trạng đã audit (11/2026). A1–A5 đã hiện thực; A6–A7 đã duyệt
 > hướng, chưa hiện thực.
 >
 > **Cập nhật:** 04/11/2026
@@ -109,13 +109,14 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 - Polling pasteboard lúc gõ (A4): mỗi tick 500ms chỉ hỏi `changeCount`, một truy vấn;
   đủ 4 trường metadata chỉ đọc khi số đó đổi
   (`Packages/FunputKit/Sources/FunputShared/Clipboard/ClipboardChangeMonitor.swift`).
+- `viewWillAppear` đầu tiên dùng lại cấu hình `viewDidLoad` vừa đọc (A5,
+  `bootstrappedSource`), nên mỗi lần trình bày chỉ đọc cấu hình một lần.
 
 **Lệch:**
 
 | Chặng | Việc lệch | Đề xuất |
 |---|---|---|
 | `init` | `var clipboardStore = ClipboardStore()` gọi `AppGroupDirectory.prepare` (`createDirectory` + `setAttributes` + `setResourceValues`), rồi `adoptConfiguration` tạo lại ngay trong bootstrap | A6 |
-| `viewWillAppear` | `activateKeyboardForAppearance()` gọi `loadActivationSource` **lần thứ hai** (`Keyboard/Controller/Activation/KeyboardViewController+Activation.swift`); `adoptConfiguration` sau đó thấy identity không đổi nên không build lại gì. Lần đọc chỉ có nghĩa cho warm re-activation | A5 |
 
 ### 2.2. Ảnh nền: giữ decode đồng bộ (đã quyết định)
 
@@ -522,6 +523,24 @@ trong animation trình bày.
 **Nghiệm thu.** Signpost `ConfigurationLoad` xuất hiện đúng **một** lần trong một
 cold start (`log stream` category `Launch`); đổi settings trong containing app rồi
 quay lại host thì bàn phím nhận cấu hình mới.
+
+**Đã đổi khi hiện thực.**
+
+- Chỉ dùng lại khi còn "tươi": `KeyboardBootstrappedSource` giữ thời điểm đọc, và
+  `viewWillAppear` chỉ nhận nếu đến trong vòng 1 giây (từ `Bootstrap` tới
+  `viewDidAppear` đo được ~140ms, `viewWillAppear` còn sớm hơn). Chậm hơn nghĩa là controller đã nằm sẵn một lúc,
+  settings có thể đã đổi, nên đọc lại. Thiết kế ban đầu không có chốt này.
+- Đo trên máy ảo iPhone 17 Pro Max iOS 27.2 bằng
+  `xcrun simctl spawn <udid> log stream --signpost` (category `Launch`; trong zsh phải
+  gọi `/usr/bin/log`, vì `log` trùng tên một builtin): một cold start có đúng một cặp
+  begin/end `ConfigurationLoad`, nằm trong `Bootstrap`.
+- Về Home rồi mở lại app thì iOS dựng controller mới trong cùng process, nên lần
+  trình bày đó đọc cấu hình mới ở `viewDidLoad`, cũng chỉ một lần. Nhánh
+  `?? loadActivationSource` giữ cho trường hợp cùng một controller hiện lại mà không
+  qua `viewDidLoad`, hoặc source đã hết tươi.
+- `KeyboardHeightRefreshUITests.testWarmConfigurationRefreshMatchesKeyboardCycle`
+  đỏ trên máy ảo này, nhưng đỏ y hệt ở commit trước A1 (code `main`), nên đây là lỗi
+  có sẵn, không do A5. Cần điều tra riêng.
 
 ### A6: Bỏ lần tạo `ClipboardStore` thừa
 

@@ -14,6 +14,22 @@ struct KeyboardActivationSource {
     let repairSnapshot: KeyboardBootstrapSnapshot?
 }
 
+/// What `viewDidLoad` read, kept for the presentation that follows it.
+///
+/// That presentation's `viewWillAppear` lands inside the system's animation, so
+/// reading the configuration a second time there would sit on the critical path for
+/// nothing: no one can change the settings in between (bootstrap to `viewDidAppear`
+/// measured about 140ms on a cold start). The freshness bound covers a controller that iOS loads and only
+/// presents much later, by which time the settings may have moved.
+struct KeyboardBootstrappedSource {
+    static let freshness: Duration = .seconds(1)
+
+    let source: KeyboardActivationSource
+    let loadedAt: ContinuousClock.Instant
+
+    var isFresh: Bool { loadedAt.duration(to: .now) < Self.freshness }
+}
+
 /// What a presentation is built from, so an unchanged activation can skip the rebuild.
 struct KeyboardActivationIdentity: Equatable {
     let configuration: FunputConfiguration
@@ -24,7 +40,7 @@ extension KeyboardViewController {
     func activateKeyboardForAppearance() {
         cancelClipboardRetry()
         let generation = activationState.begin()
-        let source = loadActivationSource(hasFullAccess: hasFullAccess)
+        let source = takeBootstrappedSource() ?? loadActivationSource(hasFullAccess: hasFullAccess)
         // Ahead of the engine block: resolving the field's traits reads the
         // "Tự viết hoa" preference, and the document sync that follows turns those
         // traits into the initial Shift state.
@@ -48,6 +64,15 @@ extension KeyboardViewController {
             hasFullAccess: source.hasFullAccess,
             activationGeneration: generation
         )
+    }
+
+    /// The first appearance after `viewDidLoad` takes what bootstrap read, once and
+    /// only while fresh; every later appearance reads afresh, since the user may have
+    /// changed the settings while the keyboard was away.
+    private func takeBootstrappedSource() -> KeyboardActivationSource? {
+        defer { bootstrappedSource = nil }
+        guard let bootstrappedSource, bootstrappedSource.isFresh else { return nil }
+        return bootstrappedSource.source
     }
 
     /// Installs one activation's configuration and theme.
