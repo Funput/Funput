@@ -186,3 +186,86 @@ fn adopt_follows_the_syllable_rules() {
     widened.process_char('s');
     assert_eq!(widened.buffer(), "zố");
 }
+
+fn engine_with_trigger(trigger: &str) -> Engine {
+    let mut engine = engine(InputMethod::Telex);
+    engine.add_shortcut(trigger, "cơm tấm Sài Gòn");
+    engine
+}
+
+/// A gõ tắt trigger is no syllable, yet Backspace must re-open its start so a trigger
+/// mistyped before Space can be finished (`ctss` + Space, ⌫⌫, `g` + Space).
+#[test]
+fn adopts_the_start_of_a_shortcut_trigger() {
+    let mut engine = engine_with_trigger("ctsg");
+    assert!(engine.adopt("cts"));
+    assert_eq!(engine.buffer(), "cts");
+    assert_eq!(engine.keys(), "cts");
+    engine.process_char('g');
+    assert_eq!(engine.process_char(' ').output, "cơm tấm Sài Gòn ");
+}
+
+#[test]
+fn adopts_a_whole_shortcut_trigger() {
+    let mut engine = engine_with_trigger("ctsg");
+    assert!(engine.adopt("ctsg"));
+}
+
+#[test]
+fn refuses_a_word_no_trigger_starts_with() {
+    let mut engine = engine_with_trigger("ctsg");
+    for text in ["ctx", "ctsgx", "hello"] {
+        assert!(!engine.adopt(text), "should not adopt {text:?}");
+    }
+}
+
+/// The start of a trigger matches the way the trigger itself would: smart case folds
+/// `Cts`/`CTS`, and with it off only the exact spelling counts.
+#[test]
+fn a_trigger_start_follows_smart_case() {
+    let mut smart = engine_with_trigger("ctsg");
+    assert!(smart.adopt("Cts"));
+    assert!(smart.adopt("CTS"));
+    assert!(!smart.adopt("cTs"));
+
+    let mut exact = engine_with_trigger("ctsg");
+    exact.update_config(|config| config.shortcut_smart_case = false);
+    assert!(!exact.adopt("Cts"));
+    assert!(exact.adopt("cts"));
+}
+
+#[test]
+fn a_trigger_start_is_refused_while_shortcuts_are_off() {
+    let mut engine = engine_with_trigger("ctsg");
+    engine.update_config(|config| config.shortcuts_enabled = false);
+    assert!(!engine.adopt("cts"));
+}
+
+/// English mode re-opens a trigger start only while gõ tắt runs in English too, and
+/// never a syllable: there is nothing to retone with Vietnamese off.
+#[test]
+fn english_mode_adopts_only_a_trigger_start_and_only_with_english_shortcuts() {
+    let mut engine = engine_with_trigger("ctsg");
+    engine.set_enabled(false);
+    assert!(!engine.adopt("chào"));
+    assert!(engine.adopt("cts"));
+    engine.process_char('g');
+    assert_eq!(engine.process_char(' ').output, "cơm tấm Sài Gòn ");
+
+    engine.update_config(|config| config.shortcuts_in_english = false);
+    assert!(!engine.adopt("cts"));
+}
+
+/// Undo an expansion, then delete the space it left: the trigger re-opens, and the
+/// one-time refusal still holds, so the next Space keeps the trigger as typed.
+#[test]
+fn a_refused_trigger_stays_refused_when_reopened() {
+    let mut engine = engine_with_trigger("ctsg");
+    for key in "ctsg".chars() {
+        engine.process_char(key);
+    }
+    assert_eq!(engine.process_char(' ').output, "cơm tấm Sài Gòn ");
+    assert_eq!(engine.undo_shortcut().expect("armed").output, "ctsg ");
+    assert!(engine.adopt("ctsg"));
+    assert_eq!(engine.process_char(' ').action, funput_engine::Action::None);
+}

@@ -99,6 +99,8 @@ Hệ thống chủ phải biết chắc phần đã bung vẫn nằm ngay trư�
 
 ## 3. Sửa chữ tắt gõ nhầm sau ranh giới
 
+Trạng thái: đã làm (PR #…).
+
 ### Hiện trạng
 
 Bảng có `ctsg` → `cơm tấm Sài Gòn`.
@@ -112,14 +114,15 @@ Unikey vẫn bung được, kể cả khi người dùng đã gõ dài phía sau
 
 ### Quyết định
 
-`adopt` nhận thêm chữ là **phần đầu của một chữ tắt có trong bảng** (`cts` là phần đầu của `ctsg`), khi gõ tắt đang bật.
+`adopt` nhận thêm chữ là **phần đầu của một chữ tắt có trong bảng** (`cts` là phần đầu của `ctsg`), kể cả trọn chữ tắt (`ctsgx␣` ⌫⌫ về `ctsg` vẫn bung), khi gõ tắt đang bật. Ở chế độ tiếng Anh, chỉ nhận khi bật "Gõ tắt cả khi ở chế độ tiếng Anh", và không bao giờ nhận âm tiết.
 
-- Khớp theo cùng quy tắc tra chữ tắt hiện có: chữ đã gõ, phím, hoặc chữ đang hiện; có smart case thì `Cts` cũng tính.
+- Khớp chữ đang hiện theo cùng quy tắc hoa/thường của tra chữ tắt (`starts_a_trigger` trong [shortcut.rs](../../crates/funput-engine/src/compose/boundary/shortcut.rs), phần hoa/thường tách ra `shortcut/case.rs`): bật smart case thì `Cts`, `CTS` cũng tính, tắt thì chỉ đúng chữ đã lưu.
 - Chữ không phải âm tiết được mở lại thì phím thô chính là chữ đó, nên gõ tiếp `g` cho phím `ctsg` và ranh giới tra thấy chữ tắt như thường.
 - Chữ tiếng Anh như `hello` vẫn không được mở lại, trừ khi bảng có chữ tắt bắt đầu bằng nó. Khi đó gõ tiếp thì phím được ghép như một từ mới gõ, đây là hành vi mong muốn.
 - Cơ chế mở lại sau mỗi lần Backspace đã có (`a_refused_word_is_reopened_once_backspace_makes_it_a_syllable`), nên `ctss` → ⌫ → `cts` tự rơi vào điều kiện mới.
 - Áp dụng cho mọi nền tảng đang gọi `adopt`: Windows, Linux non-preedit, Android, iOS. macOS không mở lại từ đã commit nên không đổi.
-- Chi phí: chỉ tra bảng khi chữ **không** phải âm tiết, nên đường gõ tiếng Việt không tốn thêm. Phải giữ trong ngân sách cấp phát (`tests/alloc_budget/`).
+- Chi phí: chỉ duyệt bảng khi chữ **không** phải âm tiết, và `adopt` chỉ chạy khi Backspace lùi vào từ đã xong, nên đường gõ thường không tốn thêm.
+- Vừa hoàn tác một lần bung rồi xóa dấu cách: chữ tắt được mở lại nhưng lệnh bỏ qua một lần vẫn còn, nên Space tiếp theo giữ nguyên chữ tắt.
 
 ### Đoạn xóa dài
 
@@ -127,6 +130,6 @@ Unikey vẫn bung được, kể cả khi người dùng đã gõ dài phía sau
 
 ### Kiểm thử
 
-- Engine: `adopt` nhận `cts` khi bảng có `ctsg`, từ chối khi không có; `Cts` khi bật smart case.
-- `crates/funput-desktop/tests/retone.rs`: `ctss␣` ⌫ ⌫ `g␣` → `cơm tấm Sài Gòn␣`; `ctss␣ abc abc` xóa lùi về rồi sửa vẫn bung (trong 256 byte); `hello␣` ⌫ `s` vẫn ra `hellos` khi bảng không có chữ tắt bắt đầu bằng `hello`.
-- Chạy differential test của engine (so 70k chuỗi phím với worktree gốc) để chắc không đổi kết quả gõ thường.
+- `crates/funput-engine/tests/adopt.rs`: nhận phần đầu và trọn chữ tắt; từ chối chữ không mở đầu chữ tắt nào; theo smart case (`Cts`, `CTS` nhận, `cTs` không; tắt smart case thì chỉ `cts`); từ chối khi tắt gõ tắt; chế độ tiếng Anh chỉ nhận khi bật gõ tắt tiếng Anh; chữ tắt vừa bị hoàn tác vẫn giữ nguyên khi mở lại.
+- `crates/funput-desktop/tests/retone.rs`: `ctss␣` ⌫⌫ `g␣` → `cơm tấm Sài Gòn␣`; `Ctss␣` → `Cơm tấm Sài Gòn␣`; `ctsgx␣` ⌫⌫ Space bung; xóa lùi qua 160 byte `abc abc …` về chữ tắt rồi sửa vẫn bung (test này hỏng với 64 byte cũ); `hello␣` ⌫ `s` vẫn ra `hellos`.
+- Không chạy differential: `adopt` chỉ chạy khi Backspace lùi vào từ đã xong, đường gõ thường không đi qua.

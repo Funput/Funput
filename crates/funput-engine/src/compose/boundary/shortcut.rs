@@ -1,73 +1,10 @@
-//! Shortcut expansion at a word boundary, including case propagation when
-//! `shortcut_smart_case` is on.
+//! Shortcut expansion at a word boundary. Smart case lives in [`case`].
+
+mod case;
 
 use crate::ImeResult;
 use crate::compose::doubled;
 use crate::model::{NumberGlue, Session};
-
-/// The letter-casing pattern of typed keys, used to raise the expansion's case to
-/// match (`vn` → as stored, `Vn` → first letter capitalized, `VN` → UPPERCASE), the
-/// way UniKey does. Case is only ever raised, never lowered: what the user stored in
-/// the table is the floor. Only consulted while `shortcut_smart_case` is on.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum ShortcutCase {
-    Lower,
-    Upper,
-    Title,
-}
-
-/// Classify the case pattern of `keys` from its cased characters (letters), ignoring
-/// digits and punctuation. Returns `None` when the keys don't fit a clean pattern
-/// (e.g. `vNa`), so the caller falls back to an exact, unmodified lookup — this keeps
-/// deliberately mixed-case triggers (like `iOS`) working exactly as defined. That same
-/// `None` path is what the smart-case switch reuses when it is off.
-fn classify_case(keys: &str) -> Option<ShortcutCase> {
-    let mut letters = keys.chars().filter(|c| c.is_alphabetic());
-    let first = letters.next()?;
-    let rest: Vec<char> = letters.collect();
-    if first.is_lowercase() {
-        rest.iter()
-            .all(|c| c.is_lowercase())
-            .then_some(ShortcutCase::Lower)
-    } else if !rest.is_empty() && rest.iter().all(|c| c.is_uppercase()) {
-        Some(ShortcutCase::Upper)
-    } else if rest.iter().all(|c| c.is_lowercase()) {
-        // A single uppercase letter (`rest` empty) also lands here: capitalizing one
-        // word reads more naturally than shouting the whole expansion.
-        Some(ShortcutCase::Title)
-    } else {
-        None
-    }
-}
-
-/// Raise the case of `expansion` to match `case`. Nothing is ever lowered: a stored
-/// `TP. HCM` stays `TP. HCM` under `Tp`. Unicode-aware `to_uppercase` keeps accented
-/// Vietnamese letters right (`đ` → `Đ`, `ệ` → `Ệ`).
-fn apply_shortcut_case(expansion: &str, case: ShortcutCase) -> String {
-    match case {
-        ShortcutCase::Lower => expansion.to_string(),
-        ShortcutCase::Upper => expansion.to_uppercase(),
-        ShortcutCase::Title => capitalize_first_letter(expansion),
-    }
-}
-
-/// Uppercase the first letter of `expansion`, leaving every other char as stored.
-/// Leading non-alphanumerics (brackets, quotes, whitespace) are skipped over; an
-/// expansion whose first alphanumeric is a digit (`3 con mèo`) comes back unchanged.
-fn capitalize_first_letter(expansion: &str) -> String {
-    let Some((at, letter)) = expansion
-        .char_indices()
-        .find(|(_, c)| c.is_alphanumeric())
-        .filter(|(_, c)| c.is_alphabetic())
-    else {
-        return expansion.to_string();
-    };
-    let mut result = String::with_capacity(expansion.len());
-    result.push_str(&expansion[..at]);
-    result.extend(letter.to_uppercase());
-    result.push_str(&expansion[at + letter.len_utf8()..]);
-    result
-}
 
 pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<ImeResult> {
     // Gated here rather than by clearing the table: the rows stay loaded, so the
@@ -113,21 +50,23 @@ fn matched_expansion(session: &Session) -> Option<(String, String)> {
 
 /// The expansion `word` triggers, re-cased to match it.
 fn lookup(session: &Session, word: &str) -> Option<String> {
-    // Off, every trigger takes the exact-match path below: `tp` expands, `Tp`/`TP` do
-    // not, and the expansion is never re-cased. Reusing the mixed-case fallback rather
-    // than adding a second lookup keeps one description of "no case propagation".
-    let case = if session.config.shortcut_smart_case {
-        classify_case(word)
-    } else {
-        None
-    };
-    // A lowercase word already is its own key; only re-cased words pay for a copy.
-    let expansion = match case {
-        Some(ShortcutCase::Lower) | None => session.shortcuts.get(word)?,
-        Some(_) => session.shortcuts.get(&word.to_lowercase())?,
-    };
+    let (form, case) = case::table_form(word, session.config.shortcut_smart_case);
+    let expansion = session.shortcuts.get(form.as_ref())?;
     Some(match case {
-        Some(case) => apply_shortcut_case(expansion, case),
+        Some(case) => case::apply(expansion, case),
         None => expansion.clone(),
     })
+}
+
+/// Whether `word` begins a trigger (or is one), cased as a lookup would. Backspace
+/// re-opens such a word though it is no syllable, so `ctss` + Space, ⌫⌫, `g` + Space
+/// still reaches `ctsg`. Walks the whole table: never on the typing path.
+pub(crate) fn starts_a_trigger(session: &Session, word: &str) -> bool {
+    session.config.shortcuts_enabled && !word.is_empty() && {
+        let (form, _) = case::table_form(word, session.config.shortcut_smart_case);
+        session
+            .shortcuts
+            .keys()
+            .any(|trigger| trigger.starts_with(&*form))
+    }
 }
