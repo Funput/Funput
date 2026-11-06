@@ -99,7 +99,7 @@ Hệ thống chủ phải biết chắc phần đã bung vẫn nằm ngay trư�
 
 ## 3. Sửa chữ tắt gõ nhầm sau ranh giới
 
-Trạng thái: đã làm (PR #…).
+Trạng thái: đã làm (PR #702).
 
 ### Hiện trạng
 
