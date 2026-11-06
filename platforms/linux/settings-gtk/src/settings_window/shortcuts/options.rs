@@ -16,7 +16,7 @@ use crate::settings::Settings;
 fn description(smart_case: bool) -> &'static str {
     if smart_case {
         "Gõ chữ tắt rồi dấu cách để bung — ví dụ vn → việt nam. Tự nhận diện hoa/thường: \
-         Vn → Việt Nam, VN → VIỆT NAM."
+         Vn → Việt nam, VN → VIỆT NAM."
     } else {
         "Gõ chữ tắt rồi dấu cách để bung — ví dụ vn → việt nam. Đang tắt nhận diện \
          hoa/thường: chỉ đúng chữ tắt đã lưu mới bung, nội dung giữ nguyên."

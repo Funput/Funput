@@ -9,7 +9,7 @@ struct ShortcutInputTests {
     func vietnameseAndBoundaries(method: KeyboardInputMethod) {
         let rig = ShortcutTypingRig(language: .vietnamese, method: method)
         rig.type("vn,Vn\nVN ")
-        #expect(rig.writer.text == "việt nam,Việt Nam\nVIỆT NAM ")
+        #expect(rig.writer.text == "việt nam,Việt nam\nVIỆT NAM ")
     }
 
     @Test func englishOptionsAndExactCase() {

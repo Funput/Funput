@@ -3,8 +3,9 @@
 //! A trigger matches the raw keystrokes since the last word boundary (or, failing
 //! that, the composed word — see `shortcut_composed.rs`) and expands at the boundary — taking priority over English restore. Matching is smart-case: a
 //! trigger typed as lowercase, Title Case, or UPPERCASE all resolve to the same
-//! entry, and the expansion is re-cased to match. Keystrokes with a mixed case that
-//! doesn't fit one of those three patterns fall back to an exact match only. See
+//! entry, and the expansion's case is raised to match, never lowered below what the
+//! table stores. Keystrokes with a mixed case that doesn't fit one of those three
+//! patterns fall back to an exact match only. See
 //! `src/compose/boundary/shortcut.rs` for the matching logic.
 
 use funput_core::InputMethod;
@@ -79,15 +80,15 @@ fn uppercase_trigger_expands_to_uppercase() {
 }
 
 #[test]
-fn title_case_trigger_expands_to_title_case() {
+fn title_case_trigger_capitalizes_the_first_letter() {
     let text = app_text_with_shortcuts(InputMethod::Telex, &[("vn", "việt nam")], "Vn ");
-    assert_eq!(text, "Việt Nam ");
+    assert_eq!(text, "Việt nam ");
 }
 
 #[test]
-fn title_case_capitalizes_every_word_in_a_multi_word_expansion() {
+fn title_case_leaves_the_rest_of_a_multi_word_expansion_as_stored() {
     let text = app_text_with_shortcuts(InputMethod::Telex, &[("kg", "không có gì")], "Kg ");
-    assert_eq!(text, "Không Có Gì ");
+    assert_eq!(text, "Không có gì ");
 }
 
 #[test]
@@ -95,7 +96,44 @@ fn single_uppercase_letter_trigger_capitalizes_rather_than_shouts() {
     // A lone capital reads as "capitalize" (Title Case), not "shout the whole
     // expansion in uppercase" — that requires 2+ uppercase letters (`VN`, not `V`).
     let text = app_text_with_shortcuts(InputMethod::Telex, &[("v", "việt nam")], "V ");
-    assert_eq!(text, "Việt Nam ");
+    assert_eq!(text, "Việt nam ");
+}
+
+#[test]
+fn title_case_keeps_capitals_stored_mid_expansion() {
+    // Only ever raise case: the proper noun the user stored capitalized stays so, and
+    // nothing after the first letter is lowered.
+    let shortcuts = [("ct", "cơm tấm Sài Gòn")];
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "ct ");
+    assert_eq!(text, "cơm tấm Sài Gòn ");
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "Ct ");
+    assert_eq!(text, "Cơm tấm Sài Gòn ");
+}
+
+#[test]
+fn title_case_skips_leading_punctuation() {
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("vn", "(việt nam)")], "Vn ");
+    assert_eq!(text, "(Việt nam) ");
+}
+
+#[test]
+fn title_case_leaves_an_expansion_opening_with_a_digit_alone() {
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("m", "3 con mèo")], "M ");
+    assert_eq!(text, "3 con mèo ");
+}
+
+#[test]
+fn title_case_uppercases_a_leading_dd() {
+    // `đ` has no ASCII uppercase; Unicode-aware casing has to produce `Đ`.
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("dc", "được")], "Dc ");
+    assert_eq!(text, "Được ");
+}
+
+#[test]
+fn title_case_touches_only_the_first_sentence_of_an_expansion() {
+    let shortcuts = [("ok", "ok. cảm ơn\nnhé")];
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "Ok ");
+    assert_eq!(text, "Ok. cảm ơn\nnhé ");
 }
 
 #[test]
@@ -229,13 +267,11 @@ fn smart_case_off_leaves_a_differently_cased_trigger_alone() {
 }
 
 #[test]
-fn smart_case_off_keeps_the_expansion_verbatim() {
-    // The whole point of the switch: an expansion with a casing of its own comes out
-    // untouched, where smart case would have re-cased it to `Tp. Hcm`.
-    let text = app_text_without_smart_case(&[("tp", "TP. HCM")], "tp ");
+fn smart_case_keeps_a_stored_acronym_as_stored() {
+    // Smart case only raises: a Title Case trigger never lowers an expansion that
+    // already has a casing of its own.
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("tp", "TP. HCM")], "Tp ");
     assert_eq!(text, "TP. HCM ");
-    let smart = app_text_with_shortcuts(InputMethod::Telex, &[("tp", "TP. HCM")], "Tp ");
-    assert_eq!(smart, "Tp. Hcm ", "smart case still re-cases when it is on");
 }
 
 #[test]
@@ -278,7 +314,7 @@ fn english_mode_expansion_follows_smart_case() {
     );
     assert_eq!(
         drive(&mut english_engine(&[("vn", "việt nam")]), "Vn "),
-        "Việt Nam "
+        "Việt nam "
     );
 }
 
