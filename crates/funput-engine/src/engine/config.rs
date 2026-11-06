@@ -42,8 +42,8 @@ impl Engine {
 
     /// Turn Vietnamese composition on or off. Off does not silence the engine
     /// completely: gõ tắt still expands unless `shortcuts_in_english` is off or the
-    /// table is empty. Everything else — diacritics, English restore, auto-capitalize,
-    /// flip, `adopt` — stops.
+    /// table is empty, and `adopt` still re-opens the start of a trigger for it.
+    /// Everything else — diacritics, English restore, auto-capitalize, flip — stops.
     pub fn set_enabled(&mut self, enabled: bool) {
         self.session.enabled = enabled;
         if !enabled {

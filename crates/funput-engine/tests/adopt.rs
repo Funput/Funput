@@ -209,6 +209,73 @@ fn adopts_the_start_of_a_shortcut_trigger() {
 fn adopts_a_whole_shortcut_trigger() {
     let mut engine = engine_with_trigger("ctsg");
     assert!(engine.adopt("ctsg"));
+    assert_eq!(engine.process_char(' ').output, "cơm tấm Sài Gòn ");
+}
+
+/// `starts_with` runs from the trigger's side: a word re-opens when a trigger begins
+/// with it, never because it begins with a trigger.
+#[test]
+fn a_one_letter_trigger_reopens_only_itself() {
+    let mut engine = engine_with_trigger("k");
+    assert!(engine.adopt("k"));
+    assert!(engine.adopt("K"));
+    assert!(!engine.adopt("kx"));
+    assert!(!engine.adopt("x"));
+}
+
+#[test]
+fn a_trigger_spelled_in_vietnamese_reopens_from_its_screen_form() {
+    let mut engine = engine(InputMethod::Telex);
+    engine.add_shortcut("đc", "được");
+    assert!(engine.adopt("đ"));
+    engine.process_char('c');
+    assert_eq!(engine.process_char(' ').output, "được ");
+}
+
+/// Known limit: only the text on screen is matched, so a trigger stored as the keys
+/// that compose it (`ddc`, shown `đc`) cannot be finished this way.
+#[test]
+fn a_trigger_stored_as_keys_is_not_matched_by_its_screen_form() {
+    let mut engine = engine(InputMethod::Telex);
+    engine.add_shortcut("ddc", "được");
+    assert!(!engine.adopt("đc"));
+}
+
+#[test]
+fn a_mixed_case_trigger_reopens_from_its_exact_start() {
+    let mut engine = engine(InputMethod::Telex);
+    engine.add_shortcut("iOS", "iPhone OS");
+    assert!(engine.adopt("iO"));
+    engine.process_char('S');
+    assert_eq!(engine.process_char(' ').output, "iPhone OS ");
+}
+
+#[test]
+fn vni_reopens_a_trigger_start_too() {
+    let mut engine = engine(InputMethod::Vni);
+    engine.add_shortcut("ctsg", "cơm tấm Sài Gòn");
+    assert!(engine.adopt("cts"));
+    engine.process_char('g');
+    assert_eq!(engine.process_char(' ').output, "cơm tấm Sài Gòn ");
+}
+
+/// Typed fresh, `500k` is a number with a unit and never expands; re-opening `500`
+/// must not turn it into a trigger after all.
+#[test]
+fn a_word_opening_with_a_digit_is_not_reopened_for_a_trigger() {
+    let mut engine = engine(InputMethod::Vni);
+    engine.add_shortcut("500k", "năm trăm nghìn");
+    assert!(!engine.adopt("500"));
+}
+
+/// Hosts hand over a single word; text holding a boundary is refused even when a
+/// trigger with a space in it would match.
+#[test]
+fn text_with_a_word_boundary_is_not_reopened_for_a_trigger() {
+    let mut engine = engine(InputMethod::Telex);
+    engine.add_shortcut("x y", "xy");
+    assert!(!engine.adopt("x y"));
+    assert!(!engine.adopt("x."));
 }
 
 #[test]

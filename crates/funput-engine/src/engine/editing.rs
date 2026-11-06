@@ -30,8 +30,9 @@ impl Engine {
             return false;
         }
         // clear() + push_str refills the session strings in place, so seeding them
-        // costs nothing; the syllable check above builds a rhyme string, the same one
-        // every word boundary already pays, and only a non-syllable walks the table.
+        // costs nothing. The syllable check above builds a rhyme string, the same one
+        // every word boundary already pays; only a non-syllable walks the shortcut
+        // table, and only a re-cased one (`Cts`) pays one more copy to fold its case.
         self.session.clear();
         // The raw keys are being invented from the text, so there is no touch behind
         // them: the word stays out of typo correction until the user starts a new one.

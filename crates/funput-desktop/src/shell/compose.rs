@@ -23,7 +23,7 @@ impl ShellState {
         result
     }
 
-    /// Backspace while Vietnamese mode is on. The physical key always passes
+    /// Backspace while the hook is live. The physical key always passes
     /// through, so the app deletes its own visible char; this only keeps the shell
     /// in step with it.
     ///

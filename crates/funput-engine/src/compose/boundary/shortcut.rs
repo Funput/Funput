@@ -61,12 +61,22 @@ fn lookup(session: &Session, word: &str) -> Option<String> {
 /// Whether `word` begins a trigger (or is one), cased as a lookup would. Backspace
 /// re-opens such a word though it is no syllable, so `ctss` + Space, ⌫⌫, `g` + Space
 /// still reaches `ctsg`. Walks the whole table: never on the typing path.
+///
+/// A word that opens with a digit is refused: typed fresh it is a number with a unit
+/// glued on (`500k`), which never expands, and re-opening must not change that. So is
+/// one holding a word boundary, which no host offers as a single word.
 pub(crate) fn starts_a_trigger(session: &Session, word: &str) -> bool {
-    session.config.shortcuts_enabled && !word.is_empty() && {
-        let (form, _) = case::table_form(word, session.config.shortcut_smart_case);
-        session
-            .shortcuts
-            .keys()
-            .any(|trigger| trigger.starts_with(&*form))
+    let opens_with_digit = word.starts_with(|c: char| c.is_ascii_digit());
+    if !session.config.shortcuts_enabled
+        || word.is_empty()
+        || opens_with_digit
+        || word.chars().any(super::is_english_boundary)
+    {
+        return false;
     }
+    let (form, _) = case::table_form(word, session.config.shortcut_smart_case);
+    session
+        .shortcuts
+        .keys()
+        .any(|trigger| trigger.starts_with(&*form))
 }
