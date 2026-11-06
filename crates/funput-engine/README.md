@@ -95,6 +95,7 @@ Quy tắc ánh xạ kết quả của core sang hành động platform:
 | `Ignored` | `None` (pass phím) | `cũ + phím` (engine tự append) | 0 / — |
 | `Applied` | `Send` (nuốt phím) | `result.text` | diff(cũ, mới) |
 | `Reverted` | `Send` (nuốt phím) | `result.text` | diff(cũ, mới) |
+| `Reverted` bởi phím mũ gõ sau mũ tự thêm của `iê` (`viecj` + `e`) | `Send` (nuốt phím) | giữ nguyên | 0 / rỗng — `pipeline/confirm.rs` |
 
 `Pending`/`Ignored` đều biến phím thành ký tự thường để app ↔ buffer luôn đồng bộ — chỉ khác ở chỗ
 core đã append sẵn (`Pending`) hay engine tự ghép (`Ignored`). Khi `enabled = false`, engine bỏ qua
@@ -213,6 +214,7 @@ src/
 ├── result.rs     # Action, ImeResult
 ├── session.rs    # state: enabled, method, tone_style, buffer, keys, các toggle (restore/spell/autocap), shortcuts, flip override
 ├── pipeline.rs   # process(session, key): TransformKind → ImeResult
+├── compose/pipeline/confirm.rs  # phím mũ sau mũ tự thêm của `iê` là xác nhận, không gỡ
 ├── boundary.rs   # ranh giới từ + quyết định English restore
 ├── flip.rs       # lật VN ⇄ phím thô cho từ đang soạn (sticky override)
 └── diff.rs       # buffer diff → (backspace, output)

@@ -4,6 +4,8 @@ use super::{assert_counts_within_budget, measure};
 
 const CIRCUMFLEX_CANONICAL: &str = "chaan chaanf deem hoom chaats Chaan ";
 const CIRCUMFLEX_FREE: &str = "chana chanaf deme homo chatas Chana ";
+const IMPLIED_CIRCUMFLEX_TYPED: &str = "vieecj tieengs dieenj chieeuf hieeur ";
+const IMPLIED_CIRCUMFLEX_CONFIRMED: &str = "viecje tiengse dienje chieufe hieure ";
 const W_CANONICAL: &str = "lawms cown mowif muaw truowngf nguwowif ";
 const W_DEFERRED: &str = "lwams cwon mwoif mwua trwuongf ngwuoif ";
 const MULTI_CANONICAL: &str = "ddwuocj ddwuongf ddwon ddwoif ";
@@ -37,6 +39,17 @@ pub(super) fn assert_paired_allocations(engine: &mut Engine) {
     assert_pair(
         "free-position circumflex",
         CIRCUMFLEX_FREE,
+        canonical,
+        alternate,
+    );
+    let (canonical, alternate) = measure_pair(
+        engine,
+        IMPLIED_CIRCUMFLEX_TYPED,
+        IMPLIED_CIRCUMFLEX_CONFIRMED,
+    );
+    assert_pair(
+        "implied circumflex confirmed",
+        IMPLIED_CIRCUMFLEX_CONFIRMED,
         canonical,
         alternate,
     );

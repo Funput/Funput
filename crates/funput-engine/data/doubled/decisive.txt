@@ -139,7 +139,6 @@ disaste
 disastr
 discs
 disks
-disrespe
 dissat
 dissec
 dissemi
@@ -180,7 +179,6 @@ ferri
 ferrom
 ferrou
 ferry
-fireme
 fissi
 fissu
 forer
