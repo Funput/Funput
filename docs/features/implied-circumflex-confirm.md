@@ -1,6 +1,6 @@
 # Gõ `e` sau mũ tự thêm của `iê`
 
-> **Trạng thái:** đã làm (PR #…). Sửa lỗi, không thêm công tắc. Chưa thử tay trên Windows thật.
+> **Trạng thái:** đã làm (PR #701). Sửa lỗi, không thêm công tắc. Chưa thử tay trên Windows thật.
 
 Nguồn: issue #582 (Windows), mục "Về cách đặt dấu câu mới".
 
