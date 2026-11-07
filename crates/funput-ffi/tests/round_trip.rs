@@ -333,7 +333,7 @@ fn smart_case_is_on_by_default_and_the_setter_turns_it_off() {
 
         assert_eq!(
             app_text(engine, "Tp "),
-            "Tp. Hcm ",
+            "TP. HCM ",
             "default is smart case on"
         );
 

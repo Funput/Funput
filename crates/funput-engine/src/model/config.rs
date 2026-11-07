@@ -55,9 +55,9 @@ pub struct EngineConfig {
     /// Smart-case matching for gõ tắt ("Tự nhận diện hoa/thường"). On by default.
     ///
     /// On, a trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
-    /// entry and the expansion is re-cased to match (`tp`/`Tp`/`TP` → `TP. HCM`/
-    /// `Tp. Hcm`/`TP. HCM`). Off, only the exact trigger matches and the expansion
-    /// comes out verbatim — for users whose expansions have a casing of their own.
+    /// entry and the expansion's case is raised to match, never lowered (`vn`/`Vn`/
+    /// `VN` → `việt nam`/`Việt nam`/`VIỆT NAM`; `tp`/`Tp`/`TP` → `TP. HCM`). Off,
+    /// only the exact trigger matches and the expansion comes out verbatim.
     pub shortcut_smart_case: bool,
     /// Whether the gõ tắt table also expands in English mode ("Gõ tắt cả khi ở chế
     /// độ tiếng Anh"). On by default.

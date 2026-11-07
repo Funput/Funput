@@ -13,7 +13,7 @@ struct ShortcutsOptions: View {
                 ContentCard {
                     SettingsToggleRow(
                         title: "Tự nhận diện hoa/thường",
-                        summary: "Gõ vn → việt nam, Vn → Việt Nam, VN → VIỆT NAM. Tắt để chỉ khớp đúng chữ tắt đã lưu.",
+                        summary: "Gõ vn → việt nam, Vn → Việt nam, VN → VIỆT NAM. Tắt để chỉ khớp đúng chữ tắt đã lưu.",
                         isOn: model.binding(\.smartCase)
                     )
                     .accessibilityIdentifier("shortcuts.smartCase")

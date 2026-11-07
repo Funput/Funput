@@ -282,7 +282,7 @@
     <string name="shortcuts_options_title">Tuỳ chọn gõ tắt</string>
     <string name="shortcuts_done">Xong</string>
     <string name="shortcuts_smart_case">Tự nhận diện hoa/thường</string>
-    <string name="shortcuts_smart_case_summary">Gõ vn → việt nam, Vn → Việt Nam, VN → VIỆT NAM. Tắt để chỉ khớp đúng chữ tắt đã lưu.</string>
+    <string name="shortcuts_smart_case_summary">Gõ vn → việt nam, Vn → Việt nam, VN → VIỆT NAM. Tắt để chỉ khớp đúng chữ tắt đã lưu.</string>
     <string name="shortcuts_in_english">Gõ tắt khi dùng tiếng Anh</string>
     <string name="shortcuts_in_english_summary">Vẫn thay chữ tắt khi bàn phím ở chế độ tiếng Anh.</string>
 

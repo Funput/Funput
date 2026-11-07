@@ -195,9 +195,10 @@ Doubled keys above.
 A user-defined trigger → expansion table (`vn` → `việt nam`, `kg` → `không`). At a **word boundary**
 the engine tries, in order, the **keys as typed** (`doubled::typed_keys`, including any key a revert
 swallowed), the **raw keystrokes** (`keys`), then the composed buffer (`đc`) against the table using
-**smart-case** matching: typing `vn`/`Vn`/`VN` all resolve to the same trigger, and the expansion is
-re-cased to match —
-`vn` → `việt nam`, `Vn` → `Việt Nam` (capitalize every word), `VN` → `VIỆT NAM` (all uppercase). Keys
+**smart-case** matching: typing `vn`/`Vn`/`VN` all resolve to the same trigger, and the expansion's
+case is only ever raised to match, never lowered below what is stored —
+`vn` → `việt nam` (as stored), `Vn` → `Việt nam` (first letter capitalized, the rest as stored), `VN` →
+`VIỆT NAM` (all uppercase); with `tp` → `TP. HCM`, typing `Tp` still gives `TP. HCM`. Keys
 with a mixed case that don't fit one of those three patterns (e.g. `vNa`) fall back to an **exact**
 match only, so a deliberately mixed-case trigger (e.g. `iOS`) still works exactly as defined. See
 `classify_case`/`apply_shortcut_case` in `compose/boundary/shortcut.rs`.
