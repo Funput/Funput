@@ -101,7 +101,7 @@ fn leading_char(units: &[u16]) -> Option<&[u16]> {
 /// and the extra Backspace then takes a real character. Rare, immediately visible,
 /// and confined to a field the user cannot type into anyway.
 pub fn send_plan(plan: &InjectPlan) {
-    if plan.is_noop() {
+    if plan.is_empty() {
         return;
     }
     let lead = (plan.backspaces > 0 && lead::wanted())
