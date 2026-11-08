@@ -27,9 +27,11 @@ funput::KeyEvent toKeyEvent(const fcitx::Key &key) {
 
 void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &event) {
     const bool released = event.isRelease();
-    const funput::KeyEvent toggleEv = toKeyEvent(event.key());
-    if (toggleChord_.feed(toggleEv, released, composer_.settings().toggleHotkey)) {
+    const funput::KeyEvent ev = toKeyEvent(event.key());
+    funput::Trace &trace = funput::Trace::shared();
+    if (toggleChord_.feed(ev, released, composer_.settings().toggleHotkey)) {
         applyPlan(event.inputContext(), composer_.toggleEnabled());
+        trace.note(composer_.enabled() ? "toggle: vi" : "toggle: en");
         refreshStatus(event.inputContext());
         event.filterAndAccept();
         return;
@@ -38,12 +40,16 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // them, and each framework reports them differently.
     if (released) return;
 
+    // Pure, so asking once up front for both the trace and the Backspace test below
+    // changes nothing the composer decides.
+    const funput::KeyKind kind = funput::classify(ev, composer_.settings());
+    if (trace.enabled()) trace.key(kind, ev);
+
     // Between words, re-ask whether this client can take a document repair. Surrounding
     // text often arrives only after the client answers — Calc, an empty GTK field —
     // so unlike the old focus-in snapshot there is no single moment early enough.
     applyNonPreeditMode();
 
-    const funput::KeyEvent ev = toggleEv;
     // One read of the document, used twice. It lets the composer check that its last
     // repair actually landed — a client that takes commits but drops deletes turns
     // the mode off rather than appending to the user's text forever — and it is the
@@ -53,7 +59,10 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     const bool answered = std::exchange(surroundingFresh_, false);
     if (nonPreedit) {
         fcitx::InputContext *ic = event.inputContext();
-        composer_.observeDocument(before, hasSelection(ic), answered, selectedAfter(ic));
+        const bool selection = hasSelection(ic);
+        const uint32_t after = selectedAfter(ic);
+        const funput::Observation seen = composer_.observeDocument(before, selection, answered, after);
+        if (trace.enabled()) trace.reading(before, answered, selection, after, seen);
     }
 
     // A Backspace with nothing composing is about to eat a *committed* character. In
@@ -62,14 +71,18 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
     // Asking `classify()` rather than testing the keysym keeps Ctrl+Backspace (delete
     // word) out of this: that is a shortcut, not a Backspace.
     const bool reopen = composer_.nonPreedit() && !composer_.isComposing() &&
-                        funput::classify(ev, composer_.settings()) == funput::KeyKind::Backspace;
+                        kind == funput::KeyKind::Backspace;
 
     const funput::ComposePlan plan = composer_.onKey(ev);
     applyPlan(event.inputContext(), plan);
+    if (trace.enabled()) trace.plan(plan);
     if (plan.consumed) event.filterAndAccept();
 
     // After the plan, and never writing anything itself: the key passes through, the
     // app deletes its own character, and the engine simply takes ownership of what is
     // left so the next keystroke can edit it.
-    if (reopen) composer_.adoptWordBeforeBackspace(before);
+    if (reopen) {
+        const bool taken = composer_.adoptWordBeforeBackspace(before);
+        if (trace.enabled()) trace.adopt(taken);
+    }
 }

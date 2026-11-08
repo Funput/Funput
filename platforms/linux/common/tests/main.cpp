@@ -15,6 +15,9 @@ int main(int argc, char **argv) {
     std::filesystem::remove_all(sandbox, ec);
     std::filesystem::create_directories(sandbox / "Funput", ec);
     ::setenv("XDG_CONFIG_HOME", sandbox.c_str(), 1);
+    // The trace resolves its default file through XDG_CACHE_HOME the same way, and
+    // the trace tests build their own files under it — never under ~/.cache.
+    ::setenv("XDG_CACHE_HOME", (sandbox / "cache").c_str(), 1);
 
     return doctest::Context(argc, argv).run();
 }

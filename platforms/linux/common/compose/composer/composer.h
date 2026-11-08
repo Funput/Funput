@@ -70,9 +70,10 @@ public:
 
     // The document before the caret as it stands now, before this keystroke: checks
     // that the previous repair landed. `answered` is whether the client sent
-    // surrounding text since the last keystroke.
-    void observeDocument(const std::string &textBeforeCaret, bool selectionLive = false,
-                         bool answered = true, uint32_t selectedAfter = 0);
+    // surrounding text since the last keystroke. What the reading was worth comes
+    // back for the shell to trace; nothing else consumes it.
+    Observation observeDocument(const std::string &textBeforeCaret, bool selectionLive = false,
+                                bool answered = true, uint32_t selectedAfter = 0);
 
     // Whether a word is being composed right now. The shells ask before deciding
     // whether a Backspace is shortening a live word or eating a committed one.

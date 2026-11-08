@@ -116,3 +116,18 @@ TEST_CASE("a shell that narrows the mode puts the word back in a preedit") {
     CHECK(composer.onKey(ascii('t')).effect == Effect::Preedit);
     CHECK(type(composer, "ieengs").text == "tiếng");
 }
+
+// The seam the trace reads: `observeDocument()` hands back what the shell traces. A repair seen
+// to land reads as in sync; the reading after it, with nothing written since, does not.
+TEST_CASE("observeDocument reports a confirmed repair as in sync") {
+    Composer composer = composerFor(Method::Telex);
+    composer.setNonPreedit(true);
+    std::string document;
+    composer.observeDocument(document);
+    applyPlan(document, composer.onKey(ascii('a')), 'a');
+    CHECK(document == "a");
+    const Observation seen = composer.observeDocument(document);
+    CHECK(seen.verdict == Verdict::Unknown);
+    CHECK(seen.inSync);
+    CHECK_FALSE(composer.observeDocument(document).inSync);
+}

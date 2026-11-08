@@ -2,6 +2,8 @@
 
 #include <glib-unix.h>
 
+#include "trace/trace.h"
+
 struct _IBusFunputEngine {
     IBusEngine parent;
     funput_ibus::EngineState *state;
@@ -19,6 +21,16 @@ EngineState *stateOf(IBusEngine *engine) {
     return FUNPUT_ENGINE(engine)->state;
 }
 
+void settingsReloaded(EngineState *state) {
+    // One trace per process, however many engines ibus-daemon asks this process for.
+    // Every engine re-reads the same file, and each applies what it just read: the
+    // first to reload after an edit moves the switch, the rest find nothing to
+    // change. Only ever from a file that was read — a composer's defaults say
+    // `trace: false`, and would switch off a trace another engine turned on.
+    funput::Trace::shared().configure(state->composer.settings());
+    state->composer.applySettings();
+}
+
 } // namespace funput_ibus
 
 namespace {
@@ -26,7 +38,7 @@ namespace {
 gboolean settingsChanged(gint, GIOCondition, gpointer data) {
     auto *state = FUNPUT_ENGINE(data)->state;
     if (state->watcher.drain() && state->composer.reloadSettings()) {
-        state->composer.applySettings();
+        funput_ibus::settingsReloaded(state);
     }
     return G_SOURCE_CONTINUE;
 }
@@ -34,9 +46,12 @@ gboolean settingsChanged(gint, GIOCondition, gpointer data) {
 } // namespace
 
 static void ibus_funput_engine_init(IBusFunputEngine *self) {
-    // The composer pushes its (default) settings into the engine as it is built;
-    // the file itself is read on the first focusIn()/enable().
+    // The file itself is read on the first focusIn()/enable() and reaches the trace
+    // through settingsReloaded(). Until then the trace is whatever FUNPUT_TRACE says,
+    // applied by shared() itself — for an engine started by hand, since
+    // ibus-daemon's own has none. Naming the shell again is a no-op.
     self->state = new funput_ibus::EngineState();
+    funput::Trace::shared().start("ibus");
     if (self->state->watcher.fd() >= 0) {
         self->state->watcherSource =
             g_unix_fd_add(self->state->watcher.fd(), G_IO_IN, settingsChanged, self);
