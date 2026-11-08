@@ -34,14 +34,23 @@ void Composer::discard() {
 // reset()` → `FunputEngine::reset()`. Flushing here would type the word a second
 // time, and the guard puts the first word of a field into a preedit on exactly this
 // transport. Dropping the preedit is still the shell's job, so the plan says so. On
-// a direct transport nothing else commits the preedit, as the IBus shell's comment
-// on `reset` records for ibus-daemon's own commit, and it is flushed as before.
+// a direct transport nothing else commits the preedit, and it is flushed as before.
 ComposePlan Composer::onReset() {
     if (nonPreedit_.transport == Transport::Direct) return flush();
-    // The click moved the caret: the journal goes, as it does through `flush()`.
+    onResetCommitted();
+    return ComposePlan::flushThrough({});
+}
+
+// The IBus shell's every reset: ibus-daemon flushes a COMMIT-mode preedit before it
+// forwards `Reset` (bus/inputcontext.c `_ic_reset`, `bus_input_context_clear_preedit_text`),
+// or the client that asked to commit the preedit itself has. Either way the caret has
+// moved — a click, a caret key the app handled — so the journal goes, as it does
+// through `flush()`: RFC §6.1, invariant 7. The IBus shell used to discard only, so
+// the journal outlived the click and the next Backspace could be taken over on a
+// document the caret had left.
+void Composer::onResetCommitted() {
     nonPreedit_.forget();
     discard();
-    return ComposePlan::flushThrough({});
 }
 
 void Composer::armCapitalization() {

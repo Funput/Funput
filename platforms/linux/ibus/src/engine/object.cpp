@@ -73,8 +73,16 @@ static void ibus_funput_engine_class_init(IBusFunputEngineClass *klass) {
     IBusEngineClass *engine = IBUS_ENGINE_CLASS(klass);
     object->finalize = finalize;
     engine->process_key_event = funput_ibus::processKeyEvent;
+    // The daemon reads this engine's FocusId property once per engine name and then
+    // calls either pair, never both for one focus: the `_id` pair when the engine was
+    // built with `has-focus-id` (main.cpp), the plain pair otherwise — and always the
+    // plain pair from a daemon older than 1.5.27, whatever this engine says.
     engine->focus_in = funput_ibus::focusIn;
     engine->focus_out = funput_ibus::focusOut;
+#if FUNPUT_IBUS_FOCUS_ID
+    engine->focus_in_id = funput_ibus::focusInId;
+    engine->focus_out_id = funput_ibus::focusOutId;
+#endif
     engine->enable = funput_ibus::enable;
     engine->disable = funput_ibus::disable;
     engine->reset = funput_ibus::reset;

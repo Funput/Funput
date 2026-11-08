@@ -15,6 +15,17 @@
 
 #include <ibus.h>
 
+// Whether libibus can name the focused client: `focus-in-id` and the construct-only
+// `has-focus-id` property arrived in 1.5.27 (src/ibusengine.h at that tag has the
+// vfuncs; 1.5.26 has not). Below that, an engine is built the default way and the
+// daemon calls `focus-in` with no client, and the shell behaves as it did before
+// PR 5: unnamed, `Transport::Direct`, the gnome-shell guard inert. Overridable from
+// the compiler command line (`-DFUNPUT_IBUS_FOCUS_ID=0`) so that fallback path can be
+// compiled against a newer libibus and does not rot unseen.
+#ifndef FUNPUT_IBUS_FOCUS_ID
+#define FUNPUT_IBUS_FOCUS_ID IBUS_CHECK_VERSION(1, 5, 27)
+#endif
+
 G_BEGIN_DECLS
 
 // Named IBusFunputEngine (not FunputEngine) to avoid clashing with the FFI's

@@ -2,10 +2,12 @@
 // of transport/guard.h. The pipeline behind it is exercised in sim/bridge/; this
 // pins the rule itself, and that it is a rule about the transport, not about the
 // client: a direct path is never guarded, whatever the reading. With it, the other
-// thing the composer decides by transport: what a reset does to the composing word.
+// thing the composer decides by transport: what a reset does to the composing word —
+// and what it does to the journal, which is the same on every transport.
 
 #include <doctest/doctest.h>
 
+#include "compose/composer/nonpreedit/appedits/sync.h"
 #include "compose/transport/guard.h"
 #include "support.h"
 
@@ -84,4 +86,39 @@ TEST_CASE("a reset flushes on a direct transport and discards on the bridge") {
     CHECK(dropped.text.empty());
     CHECK_FALSE(dropped.consumed);
     CHECK_FALSE(bridged.isComposing());
+}
+
+// RFC §6.1, invariant 7: a reset is a click or a caret move, so the journal must not
+// outlive it on any transport, through either entry — Fcitx5's `onReset()`, which
+// flushes or drops by transport, and the IBus shell's `onResetCommitted()`. Pinned on
+// the Backspace that follows: in sync it is taken over and re-opens `phủ`; after a
+// reset it is the app's and re-opens nothing, since the document the journal
+// described is behind the caret. The IBus shell used to discard only.
+TEST_CASE("a reset forgets the journal on every transport") {
+    for (const char *program : {"firefox", "gnome-shell", ""}) {
+        CAPTURE(program);
+        for (const bool committedByFramework : {false, true}) {
+            CAPTURE(committedByFramework);
+            Composer composer = composerFor(Method::Telex);
+            composer.onFocusChanged(identifyProgram(program));
+            composer.setNonPreedit(true);
+            std::string document = typeInSync(composer, "phur ");
+            REQUIRE(document == "phủ ");
+            if (committedByFramework) {
+                composer.onResetCommitted();
+            } else {
+                composer.onReset();
+            }
+            CHECK_FALSE(composer.onKey(bare(keysym::BackSpace)).consumed);
+            popChars(document, 1);
+            CHECK_FALSE(composer.adoptWordBeforeBackspace());
+        }
+    }
+    // The control: the same keys with no reset between them.
+    Composer composer = composerFor(Method::Telex);
+    composer.setNonPreedit(true);
+    std::string document = typeInSync(composer, "phur ");
+    CHECK(composer.onKey(bare(keysym::BackSpace)).consumed);
+    popChars(document, 1);
+    CHECK(composer.adoptWordBeforeBackspace());
 }

@@ -4,33 +4,55 @@
 
 #include "engine/internal.h"
 
+#include "compose/transport.h"
 #include "trace/trace.h"
 
 namespace funput_ibus {
 
-void focusIn(IBusEngine *engine) {
+namespace {
+
+// A client took focus, under the name the daemon has for it: `gtk3-im:firefox` on
+// X11, XWayland or GTK_IM_MODULE=ibus, `gnome-shell` for every app on a GNOME Wayland
+// session, empty for a plain `focus-in`, which is all a daemon older than 1.5.27
+// sends. The raw string goes to the trace as Fcitx5 traces `program()` — seeing the
+// bridge there is the point — and compose/transport.h decides what it names.
+// `objectPath` is the input context's, empty for a plain `focus-in`.
+void focusInWith(IBusEngine *engine, const char *objectPath, const char *client) {
     EngineState *state = stateOf(engine);
-    // No name to give: IBus does not say which client this is (the README's "IBus
-    // không biết tên client"). The line still marks where one focus ends and the
-    // next begins.
-    funput::Trace::shared().focus({});
-    // A different client, which has said nothing yet. Whatever the last one did tells
-    // us nothing about this one.
-    state->sawSurroundingText = false;
-    state->surroundingFresh = false;
-    state->spokeSinceReset = false;
-    state->toggleChord.reset();
-    // A new client: forget whether the last one could be trusted with a repair. Kept
-    // out of applyNonPreeditMode(), which runs every keystroke — clearing there would
-    // wipe a verdict the moment it was reached. Unnamed, unlike Fcitx5: IBus gives an
-    // engine per input context and calls this only on a real focus change — and so
-    // on `Transport::Direct`, which keeps the bridge guard inert here until the
-    // client is named (compose/transport.h, `identifyIBusClient`).
-    state->composer.onFocusChanged();
+    funput::Trace::shared().focus(client);
+    // Forget whether the last client could be trusted with a repair, unless this is
+    // that client by name. Kept out of applyNonPreeditMode(), which runs every
+    // keystroke — clearing there would wipe a verdict the moment it was reached. The
+    // daemon calls this only on a real focus change — a capability change is not one
+    // here, as it is on Fcitx5 — and pairs it with a focus-out on the same engine
+    // when the global engine moves from one context to the next.
+    state->composer.onFocusChanged(funput::identifyIBusClient(client));
+    // The focus in hand named again (internal.h, `focusPath`) keeps what the client
+    // has said: the daemon will not repeat it. Any other focus starts from nothing.
+    const bool sameFocus = state->focused &&
+                           (state->focusPath.empty() || state->focusPath == objectPath);
+    state->focused = true;
+    state->focusPath = objectPath;
+    if (!sameFocus) {
+        state->sawSurroundingText = false;
+        state->surroundingFresh = false;
+        state->spokeSinceReset = false;
+        state->toggleChord.reset();
+        if (state->composer.settings().autoCapitalize) state->composer.armCapitalization();
+    }
     requestSurroundingText(engine);
     if (state->composer.reloadSettingsIfChanged()) settingsReloaded(state);
     applyNonPreeditMode(engine);
-    if (state->composer.settings().autoCapitalize) state->composer.armCapitalization();
+}
+
+} // namespace
+
+void focusIn(IBusEngine *engine) {
+    focusInWith(engine, "", "");
+}
+
+void focusInId(IBusEngine *engine, const gchar *objectPath, const gchar *client) {
+    focusInWith(engine, objectPath != nullptr ? objectPath : "", client != nullptr ? client : "");
 }
 
 void enable(IBusEngine *engine) {
@@ -65,7 +87,14 @@ void setSurroundingText(IBusEngine *engine, IBusText *text, guint cursorPos, gui
 // Committing again here would type the word twice, so only drop our own state.
 void focusOut(IBusEngine *engine) {
     funput::Trace::shared().note("focus-out");
-    stateOf(engine)->composer.discard();
+    EngineState *state = stateOf(engine);
+    state->focused = false;
+    state->focusPath.clear();
+    state->composer.discard();
+}
+
+void focusOutId(IBusEngine *engine, const gchar * /*objectPath*/) {
+    focusOut(engine);
 }
 
 void disable(IBusEngine *engine) {
@@ -79,9 +108,10 @@ void reset(IBusEngine *engine) {
     // bridge holds no surrounding text until the client answers again
     // (transport/guard.h). Count the answers from here. The word is committed by
     // then: by mutter on the bridge, elsewhere by ibus-daemon's `_ic_reset` or the
-    // client that asked to commit the preedit itself.
+    // client that asked to commit the preedit itself. The composer drops it and, since
+    // the caret moved, forgets the journal with it (Composer::onResetCommitted).
     state->spokeSinceReset = false;
-    state->composer.discard();
+    state->composer.onResetCommitted();
 }
 
 } // namespace funput_ibus
