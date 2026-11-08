@@ -29,14 +29,25 @@ add_executable(funput_linux_tests
     compose/composer/state/applied_tests.cpp
     compose/composer/nonpreedit_tests.cpp
     compose/composer/retone_tests.cpp
+    compose/composer/retone/scan_tests.cpp
     compose/composer/verify_tests.cpp
     compose/composer/english/shortcuts_tests.cpp
     compose/composer/nonpreedit/clients_tests.cpp
     compose/composer/nonpreedit/blind_tests.cpp
     compose/composer/nonpreedit/selection_tests.cpp
     compose/composer/nonpreedit/backspace_tests.cpp
-    compose/composer/nonpreedit/appedits_tests.cpp
-    compose/composer/nonpreedit/appedits_sync_tests.cpp
+    compose/composer/nonpreedit/appedits/appedits_tests.cpp
+    compose/composer/nonpreedit/appedits/sync_tests.cpp
+    compose/composer/nonpreedit/document/predicted_tests.cpp
+    compose/composer/nonpreedit/document/match_tests.cpp
+    compose/composer/nonpreedit/document/dropped_tests.cpp
+    compose/composer/nonpreedit/document/restart_tests.cpp
+    compose/composer/nonpreedit/sim/lag_tests.cpp
+    compose/composer/nonpreedit/sim/caret_tests.cpp
+    compose/composer/nonpreedit/sim/honest_tests.cpp
+    compose/composer/nonpreedit/sim/dropped_tests.cpp
+    compose/composer/nonpreedit/fuzz/honest_tests.cpp
+    compose/composer/nonpreedit/fuzz/broken_tests.cpp
     ffi/utf8_tests.cpp
     ffi/onsets_tests.cpp
     settings/lookup_tests.cpp

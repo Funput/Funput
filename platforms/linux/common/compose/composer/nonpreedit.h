@@ -12,7 +12,7 @@
 // forwards the same numbers, and Linux, Windows and macOS stay one behaviour.
 //
 // Writes are deliberately *not* serialized — waiting for each to be confirmed would
-// cost ~25ms a keystroke and stall on the 61% of commits a client never answers, and
+// cost ~25ms a keystroke and stall on the 39% of commits a client never answers, and
 // real typing cannot produce the burst that made waiting look necessary. The README
 // carries the measurements. But not waiting before a write is not the same as never
 // checking after one, and that is what this file is for.
@@ -20,8 +20,11 @@
 // # Judging a client
 //
 // The mode depends on `deleteSurroundingText` being honoured, and there is no way to
-// know whether it will be until one is dropped. After a repair "delete N, write T"
-// issued against document `D`, the next reading can only be one of three strings:
+// know whether it will be until one is dropped. Every edit Funput issues, or sees the
+// app about to make, goes into a short journal (nonpreedit/document/predicted.h), and
+// each reading is compared with the journal's prefixes: the document as it should read
+// after 0, 1, … n of those edits. With one edit "delete N, write T" on document `D`
+// the reading can only be one of three strings:
 //
 //   `D` less N, then `T`   it worked
 //   `D` then `T`           the delete was dropped
@@ -30,7 +33,9 @@
 // Only the middle is a verdict. Treating "not what I expected" as failure would stand
 // the mode down on most keystrokes, curing one broken client by breaking the feature
 // for everyone. A repair that deletes nothing makes the first two identical, so that
-// case is excluded rather than left to luck.
+// case is excluded rather than left to luck. More than one edit pending is the same
+// comparison per edit, and lets a client that answers a keystroke late still count as
+// following: `k` of `n` confirmed.
 //
 // Which leaves one client this can never judge: the one whose document reads empty
 // every time. All three strings collapse into one there, so no repair is ever worth a
@@ -49,6 +54,7 @@
 #include <string_view>
 
 #include "compose/composer/nonpreedit/clients.h"
+#include "compose/composer/nonpreedit/document/predicted.h"
 #include "compose/composer/nonpreedit/verdict.h"
 
 namespace funput {
@@ -69,8 +75,9 @@ struct NonPreeditState {
     // How often this client has answered with nothing while being written into.
     BlindWrites blind;
     bool retoneAllowed = true;
-    // Whether the client answered since the last keystroke. Only the shell can see it,
-    // and `BlindWrites` needs it to tell an empty answer from no answer at all.
+    // Whether the client answered since the last keystroke. Only the shell can see it.
+    // Without it a reading is the shell's cache of the previous answer: `observe()`
+    // then leaves the journal alone, and `BlindWrites` does not count it.
     bool answered = false;
     // Whether the client is holding a selection. Only the shell can see this, and the
     // Backspace path below needs it: taking a Backspace over while text is selected
@@ -79,18 +86,21 @@ struct NonPreeditState {
     // Selected characters after the caret — a Sheets/Excel autocomplete suffix.
     // Zero when the selection is a user highlight (select-all, a backward drag).
     uint32_t selectionAfter = 0;
-    // Whether the last repair was seen to land. Distinct from "no verdict", which also
-    // covers a client that has said nothing — see `observe()`. Only a confirmation
-    // proves the document we are holding is current, and only then is it safe to take
-    // a Backspace over instead of letting the app perform it.
+    // Every journaled edit was seen to land. Distinct from "no verdict", which also
+    // covers a client that has said nothing — see `observe()`. Only that proves the
+    // document we are holding is current, and only then is it safe to take a
+    // Backspace over instead of letting the app perform it.
     bool inSync = false;
+    // At least one journaled edit was seen to land: the client follows what is
+    // written, if a keystroke late. Enough to re-open a word, since that writes
+    // nothing and the word comes from `document.predicted()`, not from the reading.
+    bool onTrack = false;
+    // The key just handled was a Backspace and its one-character deletion is in the
+    // journal, whoever performs it. The only key a word may be re-opened over.
+    bool backspaceJournaled = false;
 
-    // The document as last seen and the repair last written into it — enough to say
-    // what it should read now, and what it would read had the delete been dropped.
-    std::string lastDoc;
-    std::string repairText;
-    uint32_t repairDeleted = 0;
-    bool repairAfterAdopt = false;
+    // The journal: the last confirmed reading plus the edits issued since.
+    PredictedDocument document;
     // Armed by a re-opened word, spent by the repair that follows it. That repair is
     // the one a client like the address bar drops.
     bool justAdopted = false;
@@ -106,29 +116,35 @@ struct NonPreeditState {
         retoneAllowed = true;
         selectionLive = false;
         selectionAfter = 0;
-        inSync = false;
-        lastDoc.clear();
-        repairText.clear();
-        repairDeleted = 0;
-        repairAfterAdopt = false;
-        justAdopted = false;
+        forget();
+        // The field as focus found it is current, so the journal may trust the
+        // reading that reports it; after a caret key it may not (predicted.h).
+        document.reset(PredictedDocument::Reset::Focus);
     }
 
-    // Record a repair just emitted, so the next reading can be judged against it.
+    // The caret may have moved on its own: a caret key, Enter, a shortcut, a VI/EN
+    // toggle, a flush. The journal describes a document the caret has left, so it
+    // goes, and with it every bit of evidence it had earned; the next answered
+    // reading restarts it from wherever the caret turns out to be. What Windows'
+    // `CommittedTail::clear` does for the same events (retone.rs). A modifier press
+    // is not one of them: Shift goes down before every capital letter.
+    void forget() {
+        inSync = onTrack = backspaceJournaled = justAdopted = false;
+        document.reset(PredictedDocument::Reset::CaretKey);
+    }
+
+    // Record an edit just issued, so the readings that follow can confirm it.
     void noteRepair(uint32_t deleted, const std::string &text) {
-        repairDeleted = deleted;
-        repairText = text;
-        repairAfterAdopt = justAdopted;
+        document.predict(deleted, text, justAdopted);
         justAdopted = false;
     }
 
-    // Judge `document` against that record and forget it either way — one reading is
-    // all a repair gets. Also remembers `document` as the latest.
-    Verdict observe(const std::string &document);
+    // Judge `reading` against the journal and keep what it leaves unconfirmed.
+    PredictedDocument::Ack observe(const std::string &reading);
 };
 
 } // namespace funput
 
-#include "compose/composer/nonpreedit/observe.h"
+#include "compose/composer/nonpreedit/document/observe.h"
 
 #endif // FUNPUT_COMPOSE_NONPREEDIT_H

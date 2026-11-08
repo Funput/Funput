@@ -1,71 +1,30 @@
 // Re-opening a finished word after Backspace, so its tone can still be fixed.
 //
 // The Linux counterpart of crates/funput-desktop/src/retone/tests.rs. The rule is
-// the same on both; what differs is where the word comes from — a hook shell keeps a
-// shadow copy of what it typed, while non-preedit here can just read the document.
+// the same on both, and so now is where the word comes from: a shadow copy of what
+// was typed — the hook shell's because it has no document to read, non-preedit's
+// because the document it reads may be a keystroke old. Which word the scan picks:
+// retone/scan_tests.cpp.
 
 #include <doctest/doctest.h>
 
-#include "compose/composer/nonpreedit/sync.h"
-#include "support.h"
+#include "compose/composer/nonpreedit/refusal.h"
+#include "compose/composer/nonpreedit/sim/client.h"
 
 using namespace funput;
 using namespace funput::test;
 
-namespace {
-
-// A client that takes the commit and drops the delete beside it.
-void applyIgnoringDeletes(std::string &document, const ComposePlan &plan, char key) {
-    if (plan.effect != Effect::Replace) {
-        applyPlan(document, plan, key);
-        return;
-    }
-    document += plan.text;
-}
-
-} // namespace
-
 TEST_CASE("backspace re-opens the finished word so its tone can be fixed") {
-    Composer composer = composerFor(Method::Telex);
-    composer.setNonPreedit(true);
-    // `phủ ` is in the document and the app is about to delete the trailing space.
-    REQUIRE(typeInSync(composer, "phur ") == "phủ ");
-    REQUIRE(composer.adoptWordBeforeBackspace("phủ "));
+    ClientSim sim;
+    // `phủ ` is in the document and the Backspace deletes the trailing space.
+    REQUIRE(sim.type("phur ") == "phủ ");
+    sim.pressBackspace();
+    REQUIRE(sim.adopted());
+    REQUIRE(sim.document() == "phủ");
 
-    std::string document = "phủ"; // what the app leaves once it has deleted
-    const ComposePlan plan = composer.onKey(ascii('s'));
+    const ComposePlan plan = sim.press(ascii('s'));
     CHECK(plan.effect == Effect::Replace);
-    applyPlan(document, plan, 's');
-    CHECK(document == "phú");
-}
-
-TEST_CASE("only a Vietnamese syllable is re-opened") {
-    Composer composer = composerFor(Method::Telex);
-    composer.setNonPreedit(true);
-    // English words stay literal — the engine refuses them.
-    CHECK_FALSE(composer.adoptWordBeforeBackspace("hello "));
-    // The caret lands on a separator, not on a word.
-    CHECK_FALSE(composer.adoptWordBeforeBackspace("phủ, "));
-    // Nothing in front of the caret at all.
-    CHECK_FALSE(composer.adoptWordBeforeBackspace(""));
-}
-
-TEST_CASE("the word scan splits on punctuation, as the hook shells do") {
-    Composer composer = composerFor(Method::Telex);
-    composer.setNonPreedit(true);
-    // `github.com` is not one word here: the scan stops at the dot and offers `com`,
-    // which really is a Vietnamese syllable, so it is re-opened. `CommittedTail`'s
-    // `is_separator` splits the same way on Windows. Pinned because it is a decision
-    // shared with the other platforms, not an accident of this one.
-    REQUIRE(typeInSync(composer, "github.com ") == "github.com ");
-    CHECK(composer.adoptWordBeforeBackspace("github.com "));
-}
-
-TEST_CASE("re-opening is a non-preedit affair only") {
-    Composer composer = composerFor(Method::Telex);
-    // A preedit shell has no committed word to re-open; Backspace shortens the
-    // composition instead.
-    CHECK_FALSE(composer.adoptWordBeforeBackspace("phủ "));
+    CHECK(sim.document() == "phú");
 }
 
 TEST_CASE("a client that only drops the repair after a re-open keeps the mode") {
@@ -84,7 +43,7 @@ TEST_CASE("a client that only drops the repair after a re-open keeps the mode") 
     // dropped — which is the one that client discards.
     composer.observeDocument(document);
     applyPlan(document, composer.onKey(bare(keysym::BackSpace)), '\b');
-    REQUIRE(composer.adoptWordBeforeBackspace("tiếng "));
+    REQUIRE(composer.adoptWordBeforeBackspace());
     REQUIRE(document == "tiếng");
 
     composer.observeDocument(document);
@@ -94,7 +53,9 @@ TEST_CASE("a client that only drops the repair after a re-open keeps the mode") 
     // Only re-toning is given up. Typing straight into the document still works here,
     // and throwing that away too would cost more than the failure did.
     CHECK(composer.nonPreedit());
-    CHECK_FALSE(composer.adoptWordBeforeBackspace("tiếng "));
+    composer.observeDocument(document);
+    composer.onKey(bare(keysym::BackSpace));
+    CHECK_FALSE(composer.adoptWordBeforeBackspace());
 }
 
 TEST_CASE("non-preedit does its own deleting on Backspace") {
@@ -119,6 +80,17 @@ TEST_CASE("non-preedit does its own deleting on Backspace") {
     CHECK(plan.deleteChars == 1);
     CHECK(plan.text.empty());
     CHECK(plan.consumed);
+}
+
+TEST_CASE("a word is re-opened only over the Backspace that was just journaled") {
+    // The offer is tied to the key `onKey()` just handled. Asked again for the same
+    // Backspace, or after a reading has moved the journal on, there is nothing to
+    // re-open — a shell cannot adopt twice, and a test cannot adopt out of order.
+    ClientSim sim;
+    sim.type("phur ");
+    sim.pressBackspace();
+    REQUIRE(sim.adopted());
+    CHECK_FALSE(sim.composer().adoptWordBeforeBackspace());
 }
 
 TEST_CASE("a live selection keeps its Backspace") {

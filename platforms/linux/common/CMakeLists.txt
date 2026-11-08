@@ -42,8 +42,10 @@ add_library(funput_linux_common STATIC
     settings/watch.cpp
     compose/key/classify.cpp
     compose/composer/keys.cpp
+    compose/composer/keys/boundary.cpp
     compose/composer/state.cpp
     compose/composer/nonpreedit.cpp
+    compose/composer/nonpreedit/appedits.cpp
     compose/composer/nonpreedit/backspace.cpp
     trace/trace.cpp
     trace/events.cpp

@@ -79,12 +79,15 @@ public:
     // whether a Backspace is shortening a live word or eating a committed one.
     bool isComposing() const { return !handle_.buffer().empty(); }
 
-    // A Backspace is about to delete the last character of `textBeforeCaret`; if that
-    // leaves the caret at the end of a finished Vietnamese word, re-open it so the next
-    // keystroke can still fix its tone. Returns whether a word was taken — nothing is
-    // written either way, so a refusal costs nothing. Refused over a live selection:
-    // the key deletes that, not one character. See nonpreedit/backspace.cpp.
-    bool adoptWordBeforeBackspace(const std::string &textBeforeCaret);
+    // Right after `onKey()` handled a Backspace with nothing composing: if the
+    // deletion leaves the caret at the end of a finished Vietnamese word, re-open it so
+    // the next keystroke can still fix its tone. The word comes from the document as
+    // the journal predicts it, not from a reading that may be a keystroke old. Returns
+    // whether a word was taken — nothing is written either way, so a refusal costs
+    // nothing. Refused over a live selection (the key deletes that, not one
+    // character) and on a reading that may be a deletion behind the prediction. See
+    // nonpreedit/backspace.cpp.
+    bool adoptWordBeforeBackspace();
 
     // --- settings & VI/EN -----------------------------------------------------
 
@@ -120,8 +123,8 @@ private:
     // A Backspace with nothing composing: who removes the character.
     ComposePlan backspaceOutsideWord();
     // An edit the app is about to make itself — `deleted` characters, then `typed`
-    // (0 for none) — journaled, while the document is in sync, so the next reading
-    // can confirm it. Always passes the key through.
+    // (0 for none) — journaled so the next reading can confirm it. Always passes
+    // the key through.
     ComposePlan appPerforms(uint32_t deleted, char32_t typed);
     // End the composition without committing: in non-preedit the word is already
     // in the document, so only the engine state is dropped.

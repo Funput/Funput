@@ -27,11 +27,14 @@ enum class Verdict : uint8_t {
 
 // What one reading told the composer, handed back to the shell. The composer does no
 // I/O of its own, so this is how its conclusion reaches the diagnostic trace
-// (common/trace/) without the composer knowing there is one. `inSync` is whether the
-// last repair was seen to land — the evidence Backspace handling asks for.
+// (common/trace/) without the composer knowing there is one. `inSync` is whether
+// every journaled edit was seen to land — the evidence Backspace handling asks for —
+// and `acked` of `pending` is the count behind it (nonpreedit/document/predicted.h).
 struct Observation {
     Verdict verdict = Verdict::Unknown;
     bool inSync = false;
+    size_t acked = 0;
+    size_t pending = 0;
 };
 
 // A document that stays empty while repairs are being written into it.
