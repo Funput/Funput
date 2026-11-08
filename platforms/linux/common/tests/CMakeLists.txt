@@ -35,6 +35,8 @@ add_executable(funput_linux_tests
     compose/composer/nonpreedit/blind_tests.cpp
     compose/composer/nonpreedit/selection_tests.cpp
     compose/composer/nonpreedit/backspace_tests.cpp
+    compose/composer/nonpreedit/appedits_tests.cpp
+    compose/composer/nonpreedit/appedits_sync_tests.cpp
     ffi/utf8_tests.cpp
     ffi/onsets_tests.cpp
     settings/lookup_tests.cpp
