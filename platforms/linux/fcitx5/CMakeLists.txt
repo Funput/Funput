@@ -34,11 +34,14 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../common"
 # --- Fcitx5 addon -> libfunput.so ------------------------------------------
 add_library(funput MODULE
     src/funput_engine.cpp
+    src/engine/focus.cpp
     src/funput_input.cpp
     src/funput_client.cpp
     src/hidden_preedit.cpp
 )
 add_dependencies(funput funput_ffi)
+# So src/engine/*.cpp can reach "funput_engine.h" one level up, as ibus/ does.
+target_include_directories(funput PRIVATE src)
 
 # funput_linux_common carries the FFI include dir + the .so transitively.
 target_link_libraries(funput PRIVATE

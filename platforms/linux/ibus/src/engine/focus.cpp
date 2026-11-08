@@ -18,11 +18,14 @@ void focusIn(IBusEngine *engine) {
     // us nothing about this one.
     state->sawSurroundingText = false;
     state->surroundingFresh = false;
+    state->spokeSinceReset = false;
     state->toggleChord.reset();
     // A new client: forget whether the last one could be trusted with a repair. Kept
     // out of applyNonPreeditMode(), which runs every keystroke — clearing there would
     // wipe a verdict the moment it was reached. Unnamed, unlike Fcitx5: IBus gives an
-    // engine per input context and calls this only on a real focus change.
+    // engine per input context and calls this only on a real focus change — and so
+    // on `Transport::Direct`, which keeps the bridge guard inert here until the
+    // client is named (compose/transport.h, `identifyIBusClient`).
     state->composer.onFocusChanged();
     requestSurroundingText(engine);
     if (state->composer.reloadSettingsIfChanged()) settingsReloaded(state);
@@ -49,6 +52,7 @@ void setSurroundingText(IBusEngine *engine, IBusText *text, guint cursorPos, gui
     EngineState *state = stateOf(engine);
     state->sawSurroundingText = true;
     state->surroundingFresh = true;
+    state->spokeSinceReset = true;
     const gchar *raw = text != nullptr ? ibus_text_get_text(text) : nullptr;
     state->surroundingText = raw != nullptr ? raw : "";
     state->surroundingCursor = cursorPos;
@@ -70,7 +74,14 @@ void disable(IBusEngine *engine) {
 
 void reset(IBusEngine *engine) {
     funput::Trace::shared().note("reset");
-    stateOf(engine)->composer.discard();
+    EngineState *state = stateOf(engine);
+    // On the gnome-shell bridge a reset is a click into the field, after which the
+    // bridge holds no surrounding text until the client answers again
+    // (transport/guard.h). Count the answers from here. The word is committed by
+    // then: by mutter on the bridge, elsewhere by ibus-daemon's `_ic_reset` or the
+    // client that asked to commit the preedit itself.
+    state->spokeSinceReset = false;
+    state->composer.discard();
 }
 
 } // namespace funput_ibus

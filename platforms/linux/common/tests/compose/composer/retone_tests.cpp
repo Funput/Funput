@@ -8,7 +8,7 @@
 
 #include <doctest/doctest.h>
 
-#include "compose/composer/nonpreedit/refusal.h"
+#include "compose/composer/nonpreedit/verdicts/refusal.h"
 #include "compose/composer/nonpreedit/sim/client.h"
 
 using namespace funput;
