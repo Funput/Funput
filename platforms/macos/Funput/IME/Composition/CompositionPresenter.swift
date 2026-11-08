@@ -8,7 +8,8 @@ enum CompositionOutcome: Equatable {
     case rewritten
     /// The word could not be updated safely and was given up. The document is unchanged.
     case dropped
-    /// The client cannot say where its caret is, so this presenter cannot work there.
+    /// The client cannot show where the word is: it has no caret, or it is a field that
+    /// takes typed text away. This presenter cannot work there until focus moves.
     case unsupported
 }
 

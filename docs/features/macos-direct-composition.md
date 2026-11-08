@@ -3,7 +3,7 @@
 | Thuộc tính | Nội dung |
 | :--- | :--- |
 | Trạng thái | **Đã hiện thực** ([PR #607](https://github.com/Funput/Funput/pull/607), issue #201), đã thử trên máy thật |
-| Cập nhật | 18/10/2026 |
+| Cập nhật | 08/11/2026 |
 | Phạm vi | Shell macOS (`platforms/macos`), không đụng engine Rust |
 | Quyết định đã chốt | Hai chế độ song song; công tắc trong Cài đặt **mặc định bật**; không có danh sách app; xoá cờ khi tính năng ổn định |
 
@@ -204,7 +204,7 @@ tin lời nhận đó: mọi lần đổi dấu đều bị bỏ từ, gõ tiế
 Cách chứng minh, không ghi gì trước khi chứng minh xong:
 
 - **Đầu từ**, nếu con trỏ không ở đầu văn bản: đọc ký tự ngay trước con trỏ
-  (`DirectPresenter.readsBeforeCaret`). Đọc được là đủ.
+  (`DirectPresenter.probe`). Đọc được là đủ, trừ khi đó là ô của Google Docs (xem dưới).
 - **Ô trống** (con trỏ ở 0, không phân biệt được với Warp): từ bắt đầu bằng marked text.
   Ở phím kế tiếp, nếu client báo đúng chữ marked đó ngay trước con trỏ
   (`DirectPresenter.locate`) thì client đã chứng minh, và từ chuyển sang ghi thẳng ngay:
@@ -212,12 +212,38 @@ Cách chứng minh, không ghi gì trước khi chứng minh xong:
 - Mỗi lần activate chỉ thử tối đa 4 lần (`ClientTrust.probesPerActivation`), nên client
   không bao giờ trả lời được (Warp) không bị hỏi ở mọi phím; nó dùng marked text như cũ.
 - Lời chứng minh được nhớ theo bundle id trong suốt vòng đời process (`ProvenClients`,
-  không lưu xuống đĩa), nên lần activate sau ghi thẳng ngay. Lần thay chữ đầu tiên không
-  đặt được của một client chỉ được tin nhờ trí nhớ sẽ xoá trí nhớ đó và bắt chứng minh lại.
+  không lưu xuống đĩa), nên lần activate sau ghi thẳng ngay, sau một lần đọc con trỏ (xem
+  dưới). Lần thay chữ đầu tiên không đặt được của một client chỉ được tin nhờ trí nhớ sẽ
+  xoá trí nhớ đó và bắt chứng minh lại.
 
 Nếu lúc thay chữ client trả `NSNotFound` cho vị trí con trỏ (`.unsupported`), mọi từ
 còn lại của lần activate đó dùng marked text, tránh mất dấu liên tục. Con trỏ đọc được
 nhưng lệch chỉ là `.dropped`: bản thử từng nhầm hai trường hợp này.
+
+**Ô nhập chuyển chữ đi ngay (Google Docs, issue #710).** Docs vẽ văn bản lên canvas và
+nhận chữ qua một ô ẩn. Mỗi chữ vừa ghi vào bị chuyển ngay sang tài liệu của Docs, nên
+không bao giờ thay được. Đo bằng log tạm (09/11/2026), dù tài liệu đang có gì, Chrome báo
+ô đó chỉ có một ký tự giữ chỗ (`" "` hoặc `"="`): lúc vừa bấm vào, ký tự đó đang được chọn
+(`{0, 1}`); từ khi đã gõ, con trỏ đứng sau nó (`{1, 0}`). Riêng lúc trang vừa mở, ô ẩn
+còn trống hẳn và báo `{0, 0}`, giống hệt một ô trống thật (kể cả các ký tự quanh con trỏ).
+Trước bản sửa, ký tự giữ chỗ (hoặc chữ marked đầu tiên) làm client được tin, rồi mọi lần
+đổi dấu đều bị bỏ từ: Telex ra chữ thô.
+
+`DirectPresenter.takesTypedTextAway` nhận ra `{0, 1}` và `{1, 0}`. Hai vị trí này cũng có
+thể gặp ở ô thật (Google Trang tính báo `{0, 1}` khi bắt đầu gõ vào một ô), nên chúng chỉ
+làm client bị **nghi** (`ClientTrust.Level.suspected`), không bị từ chối ngay:
+
+- Bước chứng minh (`probe`) hoặc lần đọc con trỏ của client được tin nhờ trí nhớ (một lần
+  mỗi activate) thấy vị trí đó: từ này gõ bằng marked text.
+- Đầu từ kế tiếp đọc con trỏ lại. Vẫn là vị trí đó thì đúng là ô kiểu Docs, client bị từ
+  chối tới hết lần activate. Thấy chữ trước con trỏ thì là ô thật, client được tin và gõ
+  thẳng như thường.
+- Lưới an toàn: lúc thay chữ mà không thấy từ và con trỏ như trên, kết quả là
+  `.unsupported` thay vì `.dropped`.
+
+Kết quả: Docs đúng dấu ngay từ chữ đầu khi quay lại một tab đã mở, và sau từ đầu tiên khi
+trang vừa mở (từ đó có thể mất dấu, vì không có tín hiệu nào trước khi ghi chữ). Ô thật
+trùng vị trí trên chỉ có từ đầu tiên bị gạch chân. Ô trống và ô có chữ không đổi gì.
 
 Gõ tắt ở chế độ English cũng đi qua session, nên cũng không còn gạch chân. Riêng ở chế
 độ English, từ chỉ được giữ làm composition (để bung gõ tắt) ở nơi nó sẽ được ghi thẳng
@@ -241,7 +267,7 @@ trip này là chỗ cầu nối text input của Chromium hay kẹt (xem
 | Gõ thêm chữ | 0 |
 | Đổi dấu, đổi chữ | 2 (`selectedRange` + `attributedSubstring`) |
 | Backspace giữa từ | 0 (app tự xoá) |
-| Bắt đầu từ, client đã chứng minh | 0 |
+| Bắt đầu từ, client đã chứng minh | 0 (từ đầu tiên của lần activate, client chỉ được nhớ: 1) |
 | Client chưa chứng minh | Tối đa 4 lần thử mỗi activate, mỗi lần 1 hoặc 2 lần đọc |
 | Retone sau Backspace | Như trước (của `Retone.plan`) |
 
@@ -270,6 +296,8 @@ nhất, marked text chỉ còn là đường dự phòng tự động cho app kh
 | Terminal | Gõ được |
 | Warp | Gõ tiếng Việt được, có gạch chân (Warp không chứng minh được, 3.8). Chế độ EN: Tab và mũi tên chạy. Chế độ VI: Tab và mũi tên chỉ chạy sau khi gõ xong từ |
 | Excel | Chưa thử |
+| Google Docs (Chrome) | Marked text (3.8). Quay lại tab đã mở: đúng từ chữ đầu. Trang vừa mở: từ đầu tiên có thể mất dấu |
+| Google Trang tính | Gõ thẳng. Lúc ô báo `{0, 1}` thì từ đầu tiên có gạch chân |
 
 Log Cursor sau khi sửa: các lần thay (`rewrite {2, 3} selection={5, 0}`, …) đều khớp,
 Backspace giữa từ và retone (`reopen {0, 5}`) chạy đúng.
@@ -284,6 +312,40 @@ Còn lại:
 1. Thử Excel (gợi ý tự điền bôi đen, mục 3.4).
 2. Theo dõi rủi ro vùng chọn giả (mục 7) sau khi phát hành.
 3. Khi ổn định: xoá công tắc (mục 4).
+4. Thử Google Docs trên Safari, Google Slides và các trình soạn thảo canvas khác.
+
+### Xem lại khi macOS hoặc Chromium có API mới (#710)
+
+Giới hạn còn lại của Google Docs, **từ đầu tiên ngay sau khi trang vừa mở có thể mất
+dấu**, là giới hạn của API chứ không phải của thiết kế. Ghi lại để lần sau khỏi đo lại từ
+đầu:
+
+- **Những gì bộ gõ thấy được hiện nay.** Qua IMKit, Chromium chỉ trả vị trí con trỏ và
+  một đoạn chữ quanh con trỏ lấy từ bộ nhớ đệm (`render_widget_host_view_cocoa.mm`).
+  `length()` không được hiện thực (luôn 0, kể cả ở ô thường). `firstRectForCharacterRange`
+  và `characterIndexForPoint` là IPC đồng bộ tới renderer, chính là chỗ hay kẹt trên
+  macOS 26/27, nên không dùng làm tín hiệu. Lúc Docs vừa mở, cả con trỏ (`{0, 0}`) lẫn
+  chữ quanh con trỏ đều giống hệt một ô trống thật (đo 09/11/2026).
+- **Đáng xem lại khi:**
+  - Apple mở API kiểu `com.apple.textinputmethod-services` (sửa thẳng tài liệu, mục 2)
+    cho bộ gõ bên thứ ba, hoặc thêm vào `NSTextInputClient` / IMKit cách biết loại ô
+    nhập hay nguồn web của ô đang gõ.
+  - Chromium hiện thực `length()` hoặc `attributedString`, hay đưa thêm thông tin về ô
+    nhập qua cầu nối IME.
+  - Google Docs chuyển sang EditContext (Google đã thử nghiệm). Khi đó ô ẩn có thể biến
+    mất, dấu hiệu `{0, 1}` / `{1, 0}` có thể hết đúng: đo lại, giữ lưới an toàn.
+- **Các hướng đã xét và loại** (cho tới khi có API mới):
+  - Đọc độ dài tài liệu: Chromium luôn trả 0.
+  - Ô trống luôn gạch chân từ đầu tiên: ảnh hưởng mọi app.
+  - Học theo app (nhớ app nào từng có ô kiểu Docs): vẫn mất một từ ở lần đầu, và ảnh
+    hưởng mọi ô trống của Chrome.
+  - Quyền Accessibility để đọc URL hay vai trò của ô: Funput không dùng quyền này.
+  - Ghi thẳng phụ âm đầu rồi kiểm tra: ô ẩn của Docs giữ lại chữ vừa gõ, nên phép kiểm
+    tra một ký tự bị qua mặt.
+- **Cách đo lại:** thêm `os_log` tạm ở `IMKCompositionSurface` (con trỏ, `markedRange`,
+  vài ký tự quanh con trỏ), cài bằng `scripts/install.sh`, rồi đọc bằng
+  `/usr/bin/log show --predicate 'subsystem == "..."'` (trong zsh, `log` là lệnh dựng sẵn,
+  phải gọi đúng `/usr/bin/log`).
 
 ## 7. Rủi ro đã biết
 
@@ -296,6 +358,9 @@ Còn lại:
 - **Undo** có thể tách theo từng lần ghi thay vì cả từ.
 - **App nhận sự kiện thay đổi văn bản ở mỗi phím** (tìm kiếm khi đang gõ chạy lại liên
   tục). Với marked text điều này cũng xảy ra ở nhiều app, nên không phải hồi quy lớn.
+- **Dấu hiệu của Google Docs dựa vào cách Docs làm hiện nay** (`{0, 1}` / `{1, 0}`, 3.8).
+  Docs đổi cách nhận chữ thì dấu hiệu có thể sai; lưới an toàn vẫn giới hạn thiệt hại ở
+  một từ mỗi lần activate.
 - **Chromium báo vị trí từ bộ nhớ đệm bất đồng bộ.** Gõ rất nhanh có thể làm lệch;
   thiết kế chọn bỏ từ chứ không ghi sai chỗ.
 

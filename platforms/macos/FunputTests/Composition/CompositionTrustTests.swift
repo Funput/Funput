@@ -63,7 +63,7 @@ final class CompositionTrustTests: XCTestCase {
         var next = makeSession()
         let other = FakeCompositionSurface()
         _ = next.show("a", on: other)
-        XCTAssertEqual(other.calls, [.supportsDocumentAccess, .insert("a", nil)], "no proof asked again")
+        XCTAssertEqual(other.calls, [.supportsDocumentAccess, .selection, .insert("a", nil)], "one caret read, no proof")
     }
 
     func testARememberedClientThatCannotPlaceAWordMustProveItselfAgain() {
@@ -76,6 +76,48 @@ final class CompositionTrustTests: XCTestCase {
         XCTAssertFalse(memory.contains("app.funput.tests.client"))
         _ = session.show("a", on: surface)
         XCTAssertEqual(surface.calls.last, .mark("a", nil))
+    }
+
+    func testAGoogleDocsFieldIsMarkedFromItsFirstWord() {
+        // #710: Docs' hidden field takes typed text away, so no word may be written into it.
+        // The first word is only suspected; the same caret at the next word refuses Docs.
+        var session = makeSession()
+        let surface = FakeCompositionSurface.googleDocsField()
+        for word in ["t", "ti", "tie", "tiê", "tiên", "tiến", "tiếng"] {
+            XCTAssertTrue(session.show(word, on: surface))
+            XCTAssertEqual(surface.calls.last, .mark(word, nil))
+        }
+        session.commit("tiếng", boundary: " ", on: surface)
+        XCTAssertEqual(surface.taken, "tiếng ")
+        for word in ["a", "b"] {
+            _ = session.show(word, on: surface)
+            XCTAssertEqual(surface.calls.last, .mark(word, nil))
+            session.commit(word, boundary: " ", on: surface)
+        }
+        XCTAssertEqual(surface.reads, [.selection, .selection], "one read per word until refused")
+    }
+
+    func testARealFieldAroundOneCharacterMarksOnlyItsFirstWord() {
+        // Such a field looks like Google Docs when typing starts, but keeps what is typed.
+        var session = makeSession()
+        let surface = FakeCompositionSurface(document: "a")
+        _ = session.show("b", on: surface)
+        XCTAssertEqual(surface.calls.last, .mark("b", nil))
+        session.commit("b", boundary: " ", on: surface)
+        _ = session.show("c", on: surface)
+        XCTAssertEqual(surface.calls.last, .insert("c", nil))
+        XCTAssertEqual(surface.document, "ab c")
+    }
+
+    func testAnAppProvenOnAnotherPageIsNotTrustedInGoogleDocs() {
+        // The browser proved itself elsewhere; its Docs field still starts marked, and the
+        // app keeps its proof for the fields that earned it.
+        memory.insert("app.funput.tests.client")
+        var session = makeSession()
+        let surface = FakeCompositionSurface.googleDocsField()
+        _ = session.show("t", on: surface)
+        XCTAssertEqual(surface.calls.last, .mark("t", nil))
+        XCTAssertTrue(memory.contains("app.funput.tests.client"))
     }
 
     func testTheClientIsAskedOncePerActivation() {

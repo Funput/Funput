@@ -29,7 +29,8 @@ struct DirectPresenter: CompositionPresenter {
             surface.insert(edit.text, replacing: DirectEdit.rewriteRange(edit, selection: selection))
             shown = text
             return .rewritten
-        case .moved: return .dropped
+        case .moved(let selection):
+            return Self.takesTypedTextAway(selection) ? .unsupported : .dropped
         case .unknown: return .unsupported
         }
     }
@@ -61,7 +62,7 @@ struct DirectPresenter: CompositionPresenter {
 
     enum Location: Equatable {
         case found(selection: NSRange)
-        case moved
+        case moved(selection: NSRange)
         case unknown
     }
 
@@ -72,17 +73,37 @@ struct DirectPresenter: CompositionPresenter {
         guard let selection = surface.selection() else { return .unknown }
         guard let range = DirectEdit.wordRange(length: text.utf16.count, selection: selection),
             surface.text(in: range) == text
-        else { return .moved }
+        else { return .moved(selection: selection) }
         return .found(selection: selection)
     }
 
-    /// Whether the client hands over the character right before its caret: the proof,
-    /// asked before anything is written, that its answers describe a real document.
-    static func readsBeforeCaret(on surface: CompositionSurface) -> Bool {
-        guard let selection = surface.selection(), selection.length == 0, selection.location > 0,
-            let before = surface.text(in: NSRange(location: selection.location - 1, length: 1))
-        else { return false }
-        return !before.isEmpty
+    /// What the client shows before its caret, asked before anything is written.
+    enum Probe: Equatable {
+        /// It hands over the character there: its answers describe a real document.
+        case readsText
+        case showsNothing
+        /// It is a field that hands typed text on at once (`takesTypedTextAway`).
+        case takesTextAway
+    }
+
+    static func probe(on surface: CompositionSurface) -> Probe {
+        guard let selection = surface.selection() else { return .showsNothing }
+        if takesTypedTextAway(selection) { return .takesTextAway }
+        guard selection.length == 0, selection.location > 0,
+            let before = surface.text(in: NSRange(location: selection.location - 1, length: 1)),
+            !before.isEmpty
+        else { return .showsNothing }
+        return .readsText
+    }
+
+    /// Whether `selection` belongs to a field that hands typed text on at once, so nothing
+    /// written into it can be rewritten. Google Docs takes input that way (#710): whatever
+    /// the document holds, Chrome reports its hidden field as the one placeholder character
+    /// it keeps, selected when focus arrives and before the caret once anything is typed.
+    /// A real field looks the same only around exactly one character, and is then merely
+    /// underlined.
+    static func takesTypedTextAway(_ selection: NSRange) -> Bool {
+        selection == NSRange(location: 0, length: 1) || selection == NSRange(location: 1, length: 0)
     }
 }
 
