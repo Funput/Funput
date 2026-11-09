@@ -52,10 +52,10 @@ internal fun LazyListScope.settingsPageItems(
         SettingsPage.FEEDBACK -> item(key = "feedback") {
             FeedbackSection(
                 hapticStrength = state.activeHapticStrength,
-                soundsEnabled = state.soundsEnabled,
+                soundStyle = state.activeSoundStyle,
                 keyPreviewsEnabled = state.keyPreviewsEnabled,
                 onOpenHapticStrength = { onOpenPicker(SettingsPicker.HAPTIC_STRENGTH) },
-                onSoundsChanged = state.onSoundsChanged,
+                onOpenKeySound = { onOpenPicker(SettingsPicker.KEY_SOUND) },
                 onKeyPreviewsChanged = state.onKeyPreviewsChanged,
             )
         }

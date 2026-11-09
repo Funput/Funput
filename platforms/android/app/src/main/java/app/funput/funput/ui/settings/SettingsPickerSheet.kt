@@ -8,6 +8,7 @@ import app.funput.funput.ui.kit.cards.FunputSection
 import app.funput.funput.ui.kit.overlays.FunputSheet
 import app.funput.funput.ui.kit.rows.ChoiceRow
 import app.funput.funput.ui.settings.feedback.HapticStrengthSheet
+import app.funput.funput.ui.settings.feedback.sound.KeySoundSheet
 
 /** Shows the sheet for [picker], bound to the matching value and action in [state]; nothing when null. */
 @Composable
@@ -44,6 +45,13 @@ internal fun SettingsPickerSheet(picker: SettingsPicker?, state: SettingsScreenS
         SettingsPicker.HAPTIC_STRENGTH -> HapticStrengthSheet(
             selected = state.activeHapticStrength,
             onSelect = state.onHapticStrengthSelected,
+            onDismiss = onDismiss,
+        )
+        SettingsPicker.KEY_SOUND -> KeySoundSheet(
+            selected = state.activeSoundStyle,
+            volume = state.soundVolume,
+            onSelect = state.onSoundStyleSelected,
+            onVolumeSelect = state.onSoundVolumeSelected,
             onDismiss = onDismiss,
         )
         null -> Unit
