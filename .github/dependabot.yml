@@ -11,7 +11,8 @@ version: 2
 updates:
   # The workflows themselves. Actions are pinned by major tag here, so this is
   # what notices a v6 -> v7; it is also the channel through which a compromised
-  # action's fix would arrive.
+  # action's fix would arrive. deploy-android.yml pins commit SHAs with a version
+  # comment instead; Dependabot bumps those too, SHA and comment together.
   - package-ecosystem: github-actions
     directory: /
     schedule:

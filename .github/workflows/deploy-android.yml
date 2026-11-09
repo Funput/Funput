@@ -12,6 +12,10 @@ name: Deploy Android
 # Uploading is not releasing to the public: the build reaches the track you pick,
 # and promoting it to production is still a deliberate act in the Play Console.
 #
+# The run's `android` artifact also carries a universal .apk for sideloading, built
+# by bundletool from the same .aab. It is signed with the upload key, so it cannot be
+# installed over a copy from Play without uninstalling first.
+#
 # Required secrets:
 #   ANDROID_UPLOAD_KEYSTORE   base64 of the upload keystore (.jks). This is the key
 #                             Play knows as the *upload* key; with Play App Signing,
@@ -84,16 +88,19 @@ jobs:
     defaults:
       run:
         working-directory: platforms/android
+    # Actions are pinned by commit SHA here, unlike the other workflows: this job holds
+    # the upload key and the Play service account, so a moved tag must not be able to
+    # run new code next to them. Dependabot still bumps the SHA and its version comment.
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # JavaVersion.VERSION_21 in every module's compileOptions.
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "21"
 
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       # Same packages, and the same reasoning, as ci.yml's `android` job: compileSdk
       # is `release(37)` and ime/build.gradle.kts names the NDK version literally, so
@@ -117,7 +124,7 @@ jobs:
       - name: Rust Android targets
         run: rustup target add aarch64-linux-android x86_64-linux-android
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       # This workflow runs on whatever branch you point it at, which is not
       # necessarily a branch the pull-request gate has ever seen. Run the same checks
@@ -154,8 +161,10 @@ jobs:
           # base64 on some platforms ignores characters it does not recognise and still
           # exits 0, so a mangled secret decodes to garbage and only surfaces as an
           # unhelpful Gradle failure. Ask keytool whether this is really a keystore,
-          # and whether it holds the alias the build is about to ask for.
-          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+          # and whether it holds the alias the build is about to ask for. `:env` makes
+          # keytool read the password from the environment instead of argv, where any
+          # process on the runner could read it.
+          if ! keytool -list -keystore "$KS" -storepass:env KEYSTORE_PASSWORD -alias "$KEY_ALIAS" > /dev/null 2>&1; then
             echo "::error::The decoded keystore is unreadable, the store password is wrong, or it has no key named '$KEY_ALIAS'. Check ANDROID_UPLOAD_KEYSTORE, ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS."
             exit 1
           fi
@@ -220,6 +229,47 @@ jobs:
                   archive.writestr(name, data)
           print(f"Prepared {output} with {len(symbols)} symbol files")
           PY
+
+      # Derived from the exact .aab above, so its code, resources and native libraries
+      # are the ones Play receives. It is signed with the *upload* key, not the app
+      # signing key Google re-signs Play installs with, so it cannot be installed over
+      # a copy from Play (or the other way round) without uninstalling first.
+      # Passwords reach bundletool through files so they never appear in the process
+      # list.
+      - name: Universal APK from the bundle
+        env:
+          BUNDLETOOL_VERSION: "1.18.3"
+          BUNDLETOOL_SHA256: a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          BT="$RUNNER_TEMP/bundletool.jar"
+          curl -sSfL --retry 3 -o "$BT" \
+            "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-all-$BUNDLETOOL_VERSION.jar"
+          echo "$BUNDLETOOL_SHA256  $BT" | sha256sum -c -
+
+          (umask 077
+           printf '%s' "$KEYSTORE_PASSWORD" > "$RUNNER_TEMP/ks.pass"
+           printf '%s' "$KEY_PASSWORD" > "$RUNNER_TEMP/key.pass")
+
+          BUNDLE_DIR=app/build/outputs/bundle/release
+          APKS="$RUNNER_TEMP/universal.apks"
+          rm -f "$APKS"
+          java -jar "$BT" build-apks --mode=universal \
+            --bundle="$BUNDLE_DIR/app-release.aab" --output="$APKS" \
+            --ks="$RUNNER_TEMP/upload-keystore.jks" --ks-key-alias="$KEY_ALIAS" \
+            --ks-pass="file:$RUNNER_TEMP/ks.pass" --key-pass="file:$RUNNER_TEMP/key.pass"
+          unzip -o -q "$APKS" universal.apk -d "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/universal.apk" "$BUNDLE_DIR/universal.apk"
+
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          if ! "$BUILD_TOOLS/apksigner" verify "$BUNDLE_DIR/universal.apk"; then
+            echo "::error::$BUNDLE_DIR/universal.apk is not validly signed."
+            exit 1
+          fi
+          echo "Universal APK built and signed."
 
       # The Play Developer API: mint a token from the service account key,
       # open an edit, upload the bundle, attach ProGuard and native symbols,
@@ -367,7 +417,8 @@ jobs:
 
       # Kept so a rejected or failed upload can be inspected, or retried by hand from
       # the Play Console without rebuilding. The mapping goes with it: without the
-      # exact mapping.txt of this build, its crash reports can never be read.
+      # exact mapping.txt of this build, its crash reports can never be read. The
+      # universal .apk rides along for installing the same build by hand.
       - name: Stage artifacts
         if: always()
         env:
@@ -386,8 +437,14 @@ jobs:
           if [ -f "$NATIVE_SYMBOLS" ]; then
             cp "$NATIVE_SYMBOLS" "$OUT/native-debug-symbols-$VERSION-$BUILD.zip"
           fi
+          APK=app/build/outputs/bundle/release/universal.apk
+          if [ -f "$APK" ]; then
+            cp "$APK" "$OUT/Funput-$VERSION-$BUILD.apk"
+            sha256sum "$OUT/Funput-$VERSION-$BUILD.apk" | awk '{print $1}' \
+              > "$OUT/Funput-$VERSION-$BUILD.apk.sha256"
+          fi
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: android
@@ -401,7 +458,8 @@ jobs:
           # play-response.json first held the token exchange's reply, which carries
           # the access token itself.
           rm -f "$RUNNER_TEMP/upload-keystore.jks" "$RUNNER_TEMP/play-sa.json" \
-            "$RUNNER_TEMP/play-key.pem" "$RUNNER_TEMP/play-response.json"
+            "$RUNNER_TEMP/play-key.pem" "$RUNNER_TEMP/play-response.json" \
+            "$RUNNER_TEMP/ks.pass" "$RUNNER_TEMP/key.pass"
 
       - name: Summary
         if: success()
@@ -417,4 +475,8 @@ jobs:
               echo "Uploaded to Google Play on the **$TRACK** track. Play processes the"
               echo "bundle for a few minutes, then it appears for testers."
             fi
+            echo
+            echo "The \`android\` artifact holds a universal \`Funput-$VERSION-$BUILD.apk\` for"
+            echo "sideloading. It is signed with the upload key, so uninstall any copy from"
+            echo "Play before installing it."
           } >> "$GITHUB_STEP_SUMMARY"
