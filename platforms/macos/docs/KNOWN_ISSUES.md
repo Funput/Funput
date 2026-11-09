@@ -10,6 +10,15 @@ underlined marked text. Design: [`docs/features/macos-direct-composition.md`](..
   Funput the text before their caret, fall back to marked text automatically. Warp is one:
   its text view answers every caret question with `(0, 0)`, hands over no text and ignores
   replacement ranges. That is the intended behaviour, not a bug.
+- **Google Docs underlines, and a freshly loaded Docs page can lose one tone mark.** Docs
+  takes input through a hidden field and moves typed text out of it at once, so a word
+  written there could never be rewritten. Chrome reports that field as one placeholder
+  character, selected (`{0, 1}`) or before the caret (`{1, 0}`), so Funput recognises it and
+  uses marked text there ([#710](https://github.com/Funput/Funput/issues/710)). Right after
+  the page loads, the field is empty and looks exactly like any empty field, so the first
+  word typed there can lose its tone mark before Funput switches. A real field with that
+  caret when typing starts (Google Sheets reports `{0, 1}`) has only its first word
+  underlined.
 - **Warp ignores Tab and the arrows in the middle of a Vietnamese word.** Warp turns its
   own shortcuts off while any input method has marked text open (its `IMEOpen` keymap
   context), and in Warp a Vietnamese word has to be marked text. Finish the word (Space)

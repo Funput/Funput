@@ -55,12 +55,41 @@ final class DirectPresenterTests: XCTestCase {
         XCTAssertEqual(surface.document, "tie")
     }
 
+    func testAFieldThatTakesTypedTextAwayIsUnsupported() {
+        // Google Docs (#710): typed text leaves its hidden input field at once, and the field
+        // keeps answering with the caret at 1, whatever was typed.
+        let surface = FakeCompositionSurface.googleDocsField()
+        var presenter = typed(["t", "ti", "tie"], into: surface)
+        XCTAssertEqual(presenter.show("tiê", on: surface), .unsupported)
+        XCTAssertEqual(surface.taken, "tie")
+        XCTAssertEqual(surface.calls.filter { if case .insert(_, .some) = $0 { true } else { false } }, [])
+    }
+
     func testTheCharacterBeforeTheCaretProvesAClient() {
-        XCTAssertTrue(DirectPresenter.readsBeforeCaret(on: FakeCompositionSurface(document: "a")))
-        XCTAssertFalse(DirectPresenter.readsBeforeCaret(on: FakeCompositionSurface()), "nothing to show yet")
-        let blind = FakeCompositionSurface(document: "a")
+        XCTAssertEqual(DirectPresenter.probe(on: FakeCompositionSurface(document: "a ")), .readsText)
+        XCTAssertEqual(DirectPresenter.probe(on: FakeCompositionSurface()), .showsNothing, "nothing to show yet")
+        let blind = FakeCompositionSurface(document: "a ")
         blind.blind = true
-        XCTAssertFalse(DirectPresenter.readsBeforeCaret(on: blind))
+        XCTAssertEqual(DirectPresenter.probe(on: blind), .showsNothing)
+    }
+
+    func testAGoogleDocsFieldIsRecognisedBeforeAndAfterTyping() {
+        let docs = FakeCompositionSurface.googleDocsField()
+        XCTAssertEqual(DirectPresenter.probe(on: docs), .takesTextAway, "placeholder selected")
+        XCTAssertEqual(docs.reads, [.selection], "decided on the caret alone")
+        docs.insert("t", replacing: nil)
+        XCTAssertEqual(DirectPresenter.probe(on: docs), .takesTextAway, "caret after the placeholder")
+        XCTAssertEqual(docs.taken, "t")
+    }
+
+    func testOnlyARealFieldAroundExactlyOneCharacterLooksLikeGoogleDocs() {
+        // The price: such a field has its first word underlined. An empty one is unaffected.
+        XCTAssertEqual(DirectPresenter.probe(on: FakeCompositionSurface(document: "a")), .takesTextAway)
+        let selected = FakeCompositionSurface(document: "ab")
+        selected.caret = 0
+        selected.selectionLength = 1
+        XCTAssertEqual(DirectPresenter.probe(on: selected), .takesTextAway)
+        XCTAssertEqual(DirectPresenter.probe(on: FakeCompositionSurface()), .showsNothing)
     }
 
     func testTextChangedBehindFunputIsLeftAlone() {
@@ -78,6 +107,7 @@ final class DirectPresenterTests: XCTestCase {
         surface.caret = 3
         XCTAssertEqual(presenter.show("chào", on: surface), .dropped)
     }
+
 
     func testAClientThatCannotPlaceItsCaretIsUnsupported() {
         let surface = FakeCompositionSurface()

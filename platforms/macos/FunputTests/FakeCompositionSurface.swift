@@ -27,6 +27,9 @@ final class FakeCompositionSurface: CompositionSurface {
     /// Positions are reported relative to this offset, the way Cursor's editor numbers
     /// from the start of a hidden text area it rebuilds between keystrokes.
     var windowStart = 0
+    /// What a Google Docs field (`googleDocsField()`) has taken out of itself.
+    private(set) var taken = ""
+    private var takesTypedText = false
     var clientID: String? = "app.funput.tests.client"
     private var marked: NSRange?
 
@@ -34,6 +37,20 @@ final class FakeCompositionSurface: CompositionSurface {
         self.document = document
         caret = document.utf16.count
     }
+
+    /// Google Docs' hidden input field, as Chrome reports it whatever the document holds: one
+    /// placeholder character, selected when focus arrives and before a caret at 1 once
+    /// anything is typed. Typed text leaves the field at once (into `taken`); marked text
+    /// stays until it is committed.
+    static func googleDocsField() -> FakeCompositionSurface {
+        let field = FakeCompositionSurface(document: docsPlaceholder)
+        field.caret = 0
+        field.selectionLength = docsPlaceholder.utf16.count
+        field.takesTypedText = true
+        return field
+    }
+
+    private static let docsPlaceholder = " "
 
     var reads: [Call] {
         calls.filter { if case .selection = $0 { true } else if case .text = $0 { true } else { false } }
@@ -43,6 +60,12 @@ final class FakeCompositionSurface: CompositionSurface {
         calls.append(.insert(text, range))
         write(text, over: blind ? nil : range)
         marked = nil
+        if takesTypedText {
+            // Everything but the placeholder leaves; typing over the selected one replaced it.
+            taken += document.hasPrefix(Self.docsPlaceholder)
+                ? String(document.dropFirst(Self.docsPlaceholder.count)) : document
+            replaceDocument(Self.docsPlaceholder)
+        }
     }
 
     func mark(_ text: String, replacing range: NSRange?) {

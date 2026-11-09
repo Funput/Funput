@@ -206,7 +206,8 @@ hẳn shell Windows).
 
 Chữ đang gõ đi ra app qua `CompositionSession` (`Funput/IME/Composition/`). Mặc định nó được
 **ghi thẳng** vào văn bản bằng `insertText` và thay tại chỗ khi đổi dấu, nên không có gạch chân.
-App không nhận `replacementRange`, hoặc khi người dùng tắt **Gõ không gạch chân**, thì quay về
+App không nhận `replacementRange`, ô nhập lấy chữ đi ngay (Google Docs), hoặc khi người dùng tắt
+**Gõ không gạch chân** (Cài đặt > Cách gõ, hoặc công tắc nhanh ở Tổng quan), thì quay về
 đường **preedit** cũ: chữ đang gõ là marked text (`setMarkedText`) và chỉ `insertText` khi từ đã
 chốt. Xem [thiết kế](../../docs/features/macos-direct-composition.md). Engine là Rust, vào qua
 [`funput-ffi`](../../crates/funput-ffi) dưới dạng static library `Vendor/libfunput_ffi.a`.

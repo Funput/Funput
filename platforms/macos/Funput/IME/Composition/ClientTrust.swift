@@ -14,6 +14,9 @@ struct ClientTrust {
     enum Level {
         case refused
         case unproven
+        /// A word started on a caret like Google Docs' (`DirectPresenter.takesTypedTextAway`):
+        /// that word is marked, and the caret at the next word start decides.
+        case suspected
         /// Proven in an earlier activation, not yet in this one.
         case remembered
         case proven
@@ -39,10 +42,29 @@ struct ClientTrust {
     /// Whether a word starting now may be written directly.
     mutating func allowsDirect(on surface: CompositionSurface) -> Bool {
         if level == nil { level = initialLevel(on: surface) }
-        if level == .unproven, spendProbe(), DirectPresenter.readsBeforeCaret(on: surface) {
-            prove(on: surface)
+        if level == .suspected {
+            level = settle(after: DirectPresenter.probe(on: surface), suspicion: .refused, on: surface)
+        } else if level == .unproven, spendProbe() {
+            level = settle(after: DirectPresenter.probe(on: surface), suspicion: .suspected, on: surface)
         }
         return level == .proven || level == .remembered
+    }
+
+    /// The level a probe at a word start leaves the client at. A caret like Google Docs'
+    /// first only marks the word (`suspicion` is `.suspected`): a real field that happens to
+    /// look the same has moved on by the next word, while Docs, seen again, is refused.
+    private mutating func settle(
+        after probe: DirectPresenter.Probe,
+        suspicion: Level,
+        on surface: CompositionSurface
+    ) -> Level {
+        switch probe {
+        case .readsText:
+            prove(on: surface)
+            return .proven
+        case .takesTextAway: return suspicion
+        case .showsNothing: return .unproven
+        }
     }
 
     /// Whether an unproven client shows the marked word `word` right before its caret.
@@ -68,16 +90,24 @@ struct ClientTrust {
         probesLeft = Self.probesPerActivation
     }
 
-    /// The client cannot place its caret at all.
+    /// The client cannot show where Funput's text is (no caret, or a field that takes typed
+    /// text away), so no word in this activation is written directly, and the app is
+    /// forgotten.
     mutating func refuse(on surface: CompositionSurface) {
         forget(on: surface)
         level = .refused
     }
 
+    /// A proof remembered for the app does not cover every field in it: a browser proven on
+    /// one page may now be in Google Docs. One caret read per activation keeps such a field
+    /// from being written into on the app's memory alone.
     private mutating func initialLevel(on surface: CompositionSurface) -> Level {
         guard surface.supportsDocumentAccess else { return .refused }
-        if let id = surface.clientID, memory.contains(id) { return .remembered }
         probesLeft = Self.probesPerActivation
+        if let id = surface.clientID, memory.contains(id) {
+            let takesTextAway = surface.selection().map(DirectPresenter.takesTypedTextAway) ?? false
+            return takesTextAway ? .suspected : .remembered
+        }
         return .unproven
     }
 
