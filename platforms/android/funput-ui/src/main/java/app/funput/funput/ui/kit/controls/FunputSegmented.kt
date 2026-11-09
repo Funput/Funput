@@ -14,12 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.funput.funput.ui.kit.theme.DisabledAlpha
 import app.funput.funput.ui.kit.theme.FunputMotion
 import app.funput.funput.ui.kit.theme.FunputUi
 import app.funput.funput.ui.kit.tokens.OpacityTokens
@@ -31,7 +33,8 @@ import app.funput.funput.ui.kit.tokens.OpacityTokens
  * better in both appearances. For more than three or four options, or long labels, use a picker.
  *
  * The control is 48dp tall; each segment is 42dp inside a 3dp inset, and TalkBack reads the
- * segments as radio buttons in one group.
+ * segments as radio buttons in one group. When not [enabled] it stays in place, dimmed, so a
+ * control that only applies sometimes does not shift the screen as it comes and goes.
  */
 @Composable
 fun FunputSegmented(
@@ -39,6 +42,7 @@ fun FunputSegmented(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val colors = FunputUi.colors
     val capsule = FunputUi.shapes.capsule
@@ -47,6 +51,7 @@ fun FunputSegmented(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
+            .alpha(if (enabled) 1f else DisabledAlpha)
             .clip(capsule)
             .background(colors.label.copy(alpha = OpacityTokens.tintFill / 2))
             .padding(3.dp)
@@ -66,7 +71,7 @@ fun FunputSegmented(
                     .heightIn(min = 42.dp)
                     .clip(capsule)
                     .background(fill)
-                    .selectable(selected = selected, role = Role.RadioButton, onClick = { onSelect(index) })
+                    .selectable(selected, enabled = enabled, role = Role.RadioButton, onClick = { onSelect(index) })
                     .padding(horizontal = FunputUi.spacing.small),
             ) {
                 val text by animateColorAsState(
