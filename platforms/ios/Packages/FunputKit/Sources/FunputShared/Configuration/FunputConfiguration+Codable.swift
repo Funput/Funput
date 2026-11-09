@@ -25,6 +25,9 @@ extension FunputConfiguration {
         // Lenient: a strength written by a newer build must not throw away every other setting.
         config.hapticFeedbackStrength = (try? container.decodeIfPresent(HapticFeedbackStrength.self, forKey: .hapticFeedbackStrength)) ?? config.hapticFeedbackStrength
         config.isKeySoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .isKeySoundEnabled) ?? config.isKeySoundEnabled
+        // Lenient like the haptic strength: a sound added by a newer build must not throw away every other setting.
+        config.keySoundStyle = (try? container.decodeIfPresent(KeySoundStyle.self, forKey: .keySoundStyle)) ?? config.keySoundStyle
+        config.keySoundVolume = (try? container.decodeIfPresent(KeySoundVolume.self, forKey: .keySoundVolume)) ?? config.keySoundVolume
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled
         config.returnsToLettersAfterPunctuation = try container.decodeIfPresent(Bool.self, forKey: .returnsToLettersAfterPunctuation) ?? config.returnsToLettersAfterPunctuation
@@ -111,6 +114,11 @@ extension FunputConfiguration {
         // needs nothing fixed up — it simply gains a switch.
         if config.schemaVersion < 17 {
             config.schemaVersion = 17
+        }
+        // v18 added `keySoundStyle` and `keySoundVolume`. Earlier builds only played the
+        // system click, which `.system` keeps, so like the `< 10` rung nothing needs fixing up.
+        if config.schemaVersion < 18 {
+            config.schemaVersion = 18
         }
         self = config
     }

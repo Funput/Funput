@@ -15,6 +15,8 @@ public struct KeyboardPresentation: Hashable, Sendable {
     public var isHapticFeedbackEnabled: Bool
     public var hapticFeedbackStrength: HapticFeedbackStrength
     public var isKeySoundEnabled: Bool
+    public var keySoundStyle: KeySoundStyle
+    public var keySoundVolume: KeySoundVolume
     public var showsKeyPreviews: Bool
     /// Double-tap space, spacebar cursor panning and swipe-to-delete-word.
     public var areSmartGesturesEnabled: Bool
@@ -32,6 +34,8 @@ public struct KeyboardPresentation: Hashable, Sendable {
         isHapticFeedbackEnabled: Bool = true,
         hapticFeedbackStrength: HapticFeedbackStrength = .light,
         isKeySoundEnabled: Bool = false,
+        keySoundStyle: KeySoundStyle = .system,
+        keySoundVolume: KeySoundVolume = .medium,
         showsKeyPreviews: Bool = true,
         areSmartGesturesEnabled: Bool = true,
         pinsAppearance: Bool = false
@@ -46,6 +50,8 @@ public struct KeyboardPresentation: Hashable, Sendable {
         self.isHapticFeedbackEnabled = isHapticFeedbackEnabled
         self.hapticFeedbackStrength = hapticFeedbackStrength
         self.isKeySoundEnabled = isKeySoundEnabled
+        self.keySoundStyle = keySoundStyle
+        self.keySoundVolume = keySoundVolume
         self.showsKeyPreviews = showsKeyPreviews
         self.areSmartGesturesEnabled = areSmartGesturesEnabled
         self.pinsAppearance = pinsAppearance
