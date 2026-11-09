@@ -1,6 +1,9 @@
 package app.funput.funput.ime.settings
 
 import app.funput.funput.keyboard.KeyboardHapticStrength
+import app.funput.funput.keyboard.sound.KeyboardSoundChoice
+import app.funput.funput.keyboard.sound.KeyboardSoundStyle
+import app.funput.funput.keyboard.sound.KeyboardSoundVolume
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -39,6 +42,27 @@ class KeyboardFeedbackSettingCodecTest {
         assertEquals(
             KeyboardHapticStrength.MEDIUM,
             KeyboardFeedbackSettingCodec.decode(true, false, hapticStrength = "unknown").hapticStrength,
+        )
+    }
+
+    @Test
+    fun `installs from before sound styles keep the system click at its old level`() {
+        val upgraded = KeyboardFeedbackSettingCodec.decode(true, true)
+
+        assertEquals(KeyboardSoundChoice(KeyboardSoundStyle.SYSTEM, KeyboardSoundVolume.MEDIUM), upgraded.activeSound)
+        val unknown = KeyboardFeedbackSettingCodec.decode(true, true, soundStyle = "piano", soundVolume = "max")
+        assertEquals(upgraded.activeSound, unknown.activeSound)
+    }
+
+    @Test
+    fun `restores the sound style and volume, and keeps them while sound is off`() {
+        val off = KeyboardFeedbackSettingCodec.decode(true, false, soundStyle = "marimba", soundVolume = "loud")
+
+        assertEquals(null, off.activeSound)
+        assertEquals(KeyboardSoundStyle.MARIMBA, off.soundStyle)
+        assertEquals(
+            KeyboardSoundChoice(KeyboardSoundStyle.MARIMBA, KeyboardSoundVolume.LOUD),
+            KeyboardFeedbackSettingCodec.decode(true, true, soundStyle = "marimba", soundVolume = "loud").activeSound,
         )
     }
 
