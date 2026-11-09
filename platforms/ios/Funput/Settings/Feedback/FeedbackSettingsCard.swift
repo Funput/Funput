@@ -5,7 +5,8 @@ import SwiftUI
 struct FeedbackSettingsCard: View {
     let hapticStrength: HapticFeedbackStrength?
     let selectHapticStrength: () -> Void
-    @Binding var sound: Bool
+    let soundStyle: KeySoundStyle?
+    let selectSoundStyle: () -> Void
     @Binding var keyPreviews: Bool
 
     var body: some View {
@@ -16,12 +17,7 @@ struct FeedbackSettingsCard: View {
         ) {
             HapticFeedbackPicker(selection: hapticStrength, select: selectHapticStrength)
             SettingsRowDivider()
-            SettingsToggleRow(
-                title: "Âm thanh khi gõ",
-                summary: "Phát tiếng click khi chạm phím.",
-                systemImage: "speaker.wave.2",
-                isOn: $sound
-            )
+            KeySoundPicker(selection: soundStyle, select: selectSoundStyle)
             SettingsRowDivider()
             SettingsToggleRow(
                 title: "Xem trước phím",

@@ -21,9 +21,9 @@ extension SettingsModel {
         case .haptics:
             return saveHapticStrength(configuration.hapticFeedbackStrength)
         case .sound:
-            if configuration.isKeySoundEnabled { return true }
-            update(\.isKeySoundEnabled, to: true)
-            return configuration.isKeySoundEnabled
+            return saveKeySoundStyle(configuration.keySoundStyle)
+        case .keySoundStyle(let style):
+            return saveKeySoundStyle(style)
         }
     }
 
