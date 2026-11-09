@@ -90,7 +90,7 @@ class SpeechPanelCatalogActivity : ComponentActivity() {
             keyboardTheme = theme()
             suggestions = listOf("xin", "chào", "bạn").asSuggestionChips()
             hapticsEnabled = false
-            soundsEnabled = false
+            sound = null
             callbacks.onSpeechRequested = ::showState
             callbacks.onSpeechAction = { action ->
                 when (action) {

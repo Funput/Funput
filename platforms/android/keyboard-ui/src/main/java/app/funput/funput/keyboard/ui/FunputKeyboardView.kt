@@ -103,7 +103,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     var hapticsEnabled: Boolean by feedbackController::hapticsEnabled
     var hapticStrength: KeyboardHapticStrength? by feedbackController::hapticStrength
     var keyPreviewsEnabled: Boolean by feedbackController::keyPreviewsEnabled
-    var soundsEnabled: Boolean by feedbackController::soundsEnabled
+    var sound by feedbackController::sound
     private val safeArea = KeyboardSafeAreaController(this)
     private val placement = KeyboardPlacementHostController(this, contentHost, safeArea, callbacks)
     private val hostMeasure = KeyboardHostMeasure(this, safeArea, placement)

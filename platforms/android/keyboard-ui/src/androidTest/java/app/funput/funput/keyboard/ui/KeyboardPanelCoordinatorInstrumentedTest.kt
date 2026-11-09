@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import app.funput.funput.keyboard.model.KeyboardLayoutMode
+import app.funput.funput.keyboard.sound.KeyboardSoundChoice
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import app.funput.funput.theme.KeyboardTheme
 import app.funput.funput.theme.KeyboardThemes
@@ -87,7 +88,7 @@ class KeyboardPanelCoordinatorInstrumentedTest {
         assertEquals(keyboard.suggestions, keyboard.surface().suggestions)
 
         keyboard.hapticsEnabled = false
-        keyboard.soundsEnabled = false
+        keyboard.sound = null
         keyboard.showEmojiPanel()
         val panel = keyboard.childOfType<EmojiPanelView>()
         panel.assertTheme(KeyboardThemes.GlassDark)
@@ -95,7 +96,7 @@ class KeyboardPanelCoordinatorInstrumentedTest {
         assertFalse(panel.soundsEnabled)
         keyboard.keyboardTheme = KeyboardThemes.GlassLight
         keyboard.hapticsEnabled = true
-        keyboard.soundsEnabled = true
+        keyboard.sound = KeyboardSoundChoice.Default
         panel.assertTheme(KeyboardThemes.GlassLight)
         assertTrue(panel.hapticsEnabled)
         assertTrue(panel.soundsEnabled)
