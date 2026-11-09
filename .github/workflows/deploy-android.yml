@@ -88,16 +88,19 @@ jobs:
     defaults:
       run:
         working-directory: platforms/android
+    # Actions are pinned by commit SHA here, unlike the other workflows: this job holds
+    # the upload key and the Play service account, so a moved tag must not be able to
+    # run new code next to them. Dependabot still bumps the SHA and its version comment.
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # JavaVersion.VERSION_21 in every module's compileOptions.
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "21"
 
-      - uses: gradle/actions/setup-gradle@v6
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       # Same packages, and the same reasoning, as ci.yml's `android` job: compileSdk
       # is `release(37)` and ime/build.gradle.kts names the NDK version literally, so
@@ -121,7 +124,7 @@ jobs:
       - name: Rust Android targets
         run: rustup target add aarch64-linux-android x86_64-linux-android
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       # This workflow runs on whatever branch you point it at, which is not
       # necessarily a branch the pull-request gate has ever seen. Run the same checks
@@ -158,8 +161,10 @@ jobs:
           # base64 on some platforms ignores characters it does not recognise and still
           # exits 0, so a mangled secret decodes to garbage and only surfaces as an
           # unhelpful Gradle failure. Ask keytool whether this is really a keystore,
-          # and whether it holds the alias the build is about to ask for.
-          if ! keytool -list -keystore "$KS" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null 2>&1; then
+          # and whether it holds the alias the build is about to ask for. `:env` makes
+          # keytool read the password from the environment instead of argv, where any
+          # process on the runner could read it.
+          if ! keytool -list -keystore "$KS" -storepass:env KEYSTORE_PASSWORD -alias "$KEY_ALIAS" > /dev/null 2>&1; then
             echo "::error::The decoded keystore is unreadable, the store password is wrong, or it has no key named '$KEY_ALIAS'. Check ANDROID_UPLOAD_KEYSTORE, ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS."
             exit 1
           fi
@@ -439,7 +444,7 @@ jobs:
               > "$OUT/Funput-$VERSION-$BUILD.apk.sha256"
           fi
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: android
