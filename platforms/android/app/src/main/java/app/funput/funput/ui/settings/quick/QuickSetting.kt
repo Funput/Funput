@@ -4,8 +4,10 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import app.funput.funput.R
 import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.settings.SettingsPicker
 import app.funput.funput.ui.settings.SettingsScreenState
 import app.funput.funput.ui.settings.feedback.HapticStrengthOption
+import app.funput.funput.ui.settings.feedback.sound.KeySoundOption
 
 /**
  * The tiles of the hub's quick settings, in grid order: the switches people flip by taste rather
@@ -21,7 +23,7 @@ internal enum class QuickSetting(
     private val read: (SettingsScreenState) -> Boolean,
     private val write: (SettingsScreenState) -> (Boolean) -> Unit,
 ) {
-    // Back on at the remembered strength, as on iOS; the hub opens the strength sheet instead.
+    // Back on at the remembered strength and style, as on iOS; tapping the tile opens their sheet instead.
     HAPTICS(
         R.string.quick_haptics, R.string.settings_haptics_title, FunputIcons.Haptics,
         { it.hapticsEnabled },
@@ -29,7 +31,8 @@ internal enum class QuickSetting(
     ),
     SOUNDS(
         R.string.quick_sounds, R.string.settings_sounds_title, FunputIcons.Sound,
-        { it.soundsEnabled }, { it.onSoundsChanged },
+        { it.soundsEnabled },
+        { state -> { on -> state.onSoundStyleSelected(state.soundStyle.takeIf { on }) } },
     ),
     AUTO_CAPITALIZE(
         R.string.quick_capitalize, R.string.settings_auto_capitalize_title, FunputIcons.Capitalize,
@@ -58,14 +61,32 @@ internal enum class QuickSetting(
     /** Whether the tile shows as on: a locked number row always is. */
     fun isOn(state: SettingsScreenState): Boolean = isLocked(state) || read(state)
 
-    /** Whether tapping the tile opens a choice rather than flipping it: vibration has strengths. */
-    val opensChoice: Boolean get() = this == HAPTICS
+    /**
+     * The sheet tapping the tile opens rather than flipping it, or null: vibration has strengths and
+     * sound has styles and volumes.
+     */
+    val choice: SettingsPicker?
+        get() = when (this) {
+            HAPTICS -> SettingsPicker.HAPTIC_STRENGTH
+            SOUNDS -> SettingsPicker.KEY_SOUND
+            else -> null
+        }
 
-    /** The tile's state line: "Bật", "Tắt", "Luôn bật" when locked, or the vibration strength. */
+    /** What TalkBack says tapping the tile does when it opens [choice], or null when it has none. */
+    @get:StringRes
+    val choiceLabel: Int?
+        get() = when (choice) {
+            SettingsPicker.HAPTIC_STRENGTH -> R.string.quick_haptics_choose
+            SettingsPicker.KEY_SOUND -> R.string.quick_sounds_choose
+            else -> null
+        }
+
+    /** The tile's state line: "Bật", "Tắt", "Luôn bật" when locked, the vibration strength or the sound style. */
     @StringRes
     fun stateLabel(state: SettingsScreenState): Int = when {
         isLocked(state) -> R.string.quick_locked
         this == HAPTICS -> HapticStrengthOption.of(state.activeHapticStrength).title
+        this == SOUNDS -> KeySoundOption.of(state.activeSoundStyle).title
         isOn(state) -> R.string.quick_on
         else -> R.string.quick_off
     }

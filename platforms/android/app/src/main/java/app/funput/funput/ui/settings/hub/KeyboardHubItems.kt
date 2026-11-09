@@ -43,7 +43,7 @@ internal fun LazyListScope.keyboardHubItems(
             )
         }
     }
-    quickSettingsItems(state, onOpenHapticStrength = { onOpenPicker(SettingsPicker.HAPTIC_STRENGTH) })
+    quickSettingsItems(state, onOpenChoice = onOpenPicker)
     item(key = "all") {
         SettingsNavigationCard(
             title = stringResource(R.string.settings_all_title),
