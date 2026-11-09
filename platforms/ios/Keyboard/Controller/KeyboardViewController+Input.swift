@@ -110,12 +110,12 @@ extension KeyboardViewController {
             && configuration.showsKeyPreviews
         presentation.areSmartGesturesEnabled = !state.editorMode.isPassword
             && configuration.smartGesturesEnabled
+        presentation.isKeySoundEnabled = hasFullAccess && configuration.isKeySoundEnabled
         return presentation
     }
 
     func applyPresentationToSurfaces(_ presentation: KeyboardPresentation) {
-        (inputView as? KeyboardAudioInputView)?.isKeySoundEnabled =
-            hasFullAccess && presentation.isKeySoundEnabled
+        (inputView as? KeyboardAudioInputView)?.isKeySoundEnabled = presentation.isKeySoundEnabled
         keyboardView.presentation = presentation
         applyPresentationToSupplementarySurfaces(presentation)
     }

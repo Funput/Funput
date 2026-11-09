@@ -21,23 +21,6 @@ final class KeyboardSurfaceInteractionController {
     typealias ContactEventHandler = (
         _ token: TouchToken, _ event: KeyboardKeyEvent
     ) -> Void
-    enum GestureClaim: Equatable {
-        case alternate
-        case repeatKey
-        case swipe
-        case trackpad
-        case wordDelete
-
-        /// Whether winning this claim takes the contact out of the pipeline entirely.
-        /// Detached contacts produce no key on release, which is what a gesture that has
-        /// already written to the document needs.
-        var detachesContact: Bool {
-            switch self {
-            case .repeatKey, .trackpad, .wordDelete: true
-            case .alternate, .swipe: false
-            }
-        }
-    }
 
     struct TouchState {
         let initialKey: KeySpec
@@ -74,6 +57,7 @@ final class KeyboardSurfaceInteractionController {
     static let trackpadActivation: CGFloat = 10
 
     let haptics: any KeyboardHapticPerforming
+    let sounds: any KeyboardSoundPlaying
     let onEvent: (KeyboardKeyEvent) -> Void
     let onContactEvent: ContactEventHandler
     /// Returns whether the pipeline handed the contact over. A refusal means this controller
@@ -123,9 +107,11 @@ final class KeyboardSurfaceInteractionController {
         onSwipeProgress: @escaping (KeySpec, CGFloat, Bool) -> Void = { _, _, _ in },
         repeatScheduler: @escaping BackspaceRepeatController.Scheduler =
             BackspaceRepeatController.schedule,
-        haptics: (any KeyboardHapticPerforming)? = nil
+        haptics: (any KeyboardHapticPerforming)? = nil,
+        sounds: (any KeyboardSoundPlaying)? = nil
     ) {
         self.haptics = haptics ?? KeyboardHaptics(view: feedbackView)
+        self.sounds = sounds ?? KeyboardKeySounds()
         self.onEvent = onEvent
         self.onContactEvent = onContactEvent ?? { _, event in onEvent(event) }
         self.onClaimGesture = onClaimGesture

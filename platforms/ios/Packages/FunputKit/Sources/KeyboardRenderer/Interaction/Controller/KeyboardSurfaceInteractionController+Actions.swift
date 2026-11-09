@@ -37,9 +37,9 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func performSuggestionFeedback(presentation: KeyboardPresentation) {
-        updateHapticFeedback(presentation)
+        updateFeedback(presentation)
         performHapticFeedback()
-        if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
+        performKeySound(.key, presentation: presentation)
     }
 
     func finishSwipe(token: TouchToken, state: TouchState, action: KeySwipeAction) {

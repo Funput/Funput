@@ -13,7 +13,7 @@ extension KeyboardSurfaceInteractionController {
         presentation: KeyboardPresentation
     ) {
         guard touches[token] == nil else { return }
-        updateHapticFeedback(presentation)
+        updateFeedback(presentation)
         let signpostID = OSSignpostID(log: KeyboardTouchSignpost.log)
         touches[token] = TouchState(
             initialKey: key,
@@ -38,7 +38,7 @@ extension KeyboardSurfaceInteractionController {
         touches[token]?.swipeDown = makeSwipeDownTracker(for: key, sourceFrame: sourceFrame)
         setHighlighted(key, true)
         if key.role != .placeholder { performHapticFeedback() }
-        if presentation.isKeySoundEnabled { UIDevice.current.playInputClick() }
+        performKeySound(KeySoundKind(role: key.role), presentation: presentation)
         armHeldKey(
             token: token,
             key: key,
@@ -59,7 +59,7 @@ extension KeyboardSurfaceInteractionController {
         presentation: KeyboardPresentation
     ) {
         guard var state = touches[token] else { return }
-        updateHapticFeedback(presentation)
+        updateFeedback(presentation)
         if state.trackpad != nil {
             updateSpaceTrackpad(token: token, translation: translation(for: state, at: point))
             return
