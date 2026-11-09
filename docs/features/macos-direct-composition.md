@@ -273,7 +273,8 @@ trip này là chỗ cầu nối text input của Chromium hay kẹt (xem
 
 ## 4. Cấu hình
 
-Công tắc **Gõ không gạch chân** ở Cài đặt > Cách gõ > Hiển thị chữ đang gõ, **mặc định
+Công tắc **Gõ không gạch chân** ở Cài đặt > Cách gõ > Hiển thị chữ đang gõ, có thêm bản
+truy cập nhanh ở Cài đặt > Tổng quan (cùng một view, `DirectCompositionRow`), **mặc định
 bật**. Lưu ở UserDefaults khoá `directComposition`, đi theo xuất/nhập cấu hình trong khối
 `platform.macos.directComposition` (thiết lập riêng macOS).
 
@@ -400,7 +401,7 @@ Chrome, Terminal.
 | `Funput/IME/Composition/CompositionSession.swift` | Chọn presenter, nhớ khả năng client, chốt từ khi click |
 | `Funput/IME/MouseClickCounter.swift` | Đếm click chuột toàn hệ thống, cài lười |
 | `Funput/IME/FunputInputController+Composition.swift` | `showComposition`, `showKey` (phát lại phím), commit qua session |
-| `Funput/Settings/Panes/TypingPane.swift` | Công tắc **Gõ không gạch chân** |
+| `Funput/Settings/Panes/DirectCompositionRow.swift` | Công tắc **Gõ không gạch chân**, dùng ở `TypingPane` và `OverviewPane` |
 
 ## 10. Nguồn tham khảo
 

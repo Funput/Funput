@@ -37,6 +37,10 @@ struct OverviewPane: View {
 
                     SettingsSurface {
                         VStack(spacing: Theme.Spacing.md) {
+                            DirectCompositionRow()
+
+                            Divider()
+
                             SettingsRow(
                                 title: "Khởi động cùng máy",
                                 subtitle: "Tự chạy Funput khi bạn đăng nhập",
