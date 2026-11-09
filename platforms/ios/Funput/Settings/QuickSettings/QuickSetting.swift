@@ -60,6 +60,9 @@ enum QuickSetting: CaseIterable, Identifiable {
         }
     }
 
+    /// Feedback tiles open their sheet rather than flip, so the level can be picked too.
+    var opensSheet: Bool { self == .haptics || self == .sound }
+
     /// Haptics and sound do nothing without Full Access; switching them on asks for it.
     var fullAccessFeature: FullAccessFeature? {
         switch self {

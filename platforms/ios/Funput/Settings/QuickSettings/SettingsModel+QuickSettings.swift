@@ -14,6 +14,7 @@ extension SettingsModel {
     func stateLabel(for setting: QuickSetting) -> String {
         if isLocked(setting) { return "Luôn bật" }
         if setting == .haptics { return selectedHapticStrength?.settingsTitle ?? "Tắt" }
+        if setting == .sound { return selectedKeySoundStyle?.settingsTitle ?? "Tắt" }
         return isOn(setting) ? "Bật" : "Tắt"
     }
 
@@ -28,6 +29,10 @@ extension SettingsModel {
         if enabling, !hasFullAccess, let feature = setting.fullAccessFeature { return feature }
         if setting == .haptics {
             selectHapticStrength(enabling ? configuration.hapticFeedbackStrength : nil)
+            return nil
+        }
+        if setting == .sound {
+            selectKeySoundStyle(enabling ? configuration.keySoundStyle : nil)
             return nil
         }
         update(setting.keyPath, to: enabling)
