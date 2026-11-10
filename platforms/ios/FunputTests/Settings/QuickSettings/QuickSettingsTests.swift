@@ -98,4 +98,24 @@ struct QuickSettingsTests {
         #expect(model.toggle(.haptics) == nil)
         #expect(model.selectedHapticStrength == .strong)
     }
+
+    @Test("The sound tile remembers and names the chosen style")
+    func soundRemembersStyle() {
+        var configuration = FunputConfiguration.default
+        configuration.keySoundStyle = .wood
+        let (model, store) = makeModel(configuration)
+
+        #expect(model.stateLabel(for: .sound) == "Tắt")
+        #expect(model.toggle(.sound) == nil)
+        #expect(model.stateLabel(for: .sound) == "Gỗ")
+        #expect(model.toggle(.sound) == nil)
+        #expect(!store.configuration.isKeySoundEnabled)
+        #expect(store.configuration.keySoundStyle == .wood)
+    }
+
+    @Test("Only the feedback tiles open a sheet")
+    func feedbackTilesOpenSheets() {
+        let sheets = QuickSetting.allCases.filter(\.opensSheet)
+        #expect(sheets == [.haptics, .sound])
+    }
 }

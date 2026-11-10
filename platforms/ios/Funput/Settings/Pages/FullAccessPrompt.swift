@@ -6,11 +6,12 @@ enum FullAccessFeature: Equatable {
     case haptics
     case hapticStrength(HapticFeedbackStrength)
     case sound
+    case keySoundStyle(KeySoundStyle)
 
     var message: String {
         let action = switch self {
         case .haptics, .hapticStrength: "Để rung hoạt động"
-        case .sound: "Để phát âm thanh khi gõ"
+        case .sound, .keySoundStyle: "Để phát âm thanh khi gõ"
         }
         return "\(action), hãy mở Funput trong Cài đặt, chọn Bàn phím và bật Cho phép truy cập đầy đủ."
     }

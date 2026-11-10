@@ -95,6 +95,9 @@ final class KeyboardPreviewSurface: UIView {
 }
 
 enum KeyboardPreviewPresentation {
+    /// Keeps the key sound settings, so typing on an interactive preview plays the
+    /// chosen bundled style. The system style stays silent here: `playInputClick()`
+    /// only sounds inside a keyboard.
     static func make(
         configuration: FunputConfiguration,
         catalog: ThemeCatalog = ThemeCatalog()

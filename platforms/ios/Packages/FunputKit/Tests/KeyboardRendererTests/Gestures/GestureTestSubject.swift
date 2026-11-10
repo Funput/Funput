@@ -51,6 +51,7 @@ final class HapticSpy: KeyboardHapticPerforming {
 final class GestureTestSubject {
     let scheduler = TestGestureScheduler()
     let haptics = HapticSpy()
+    let sounds = SoundSpy()
     var events: [(token: UInt64, event: KeyboardKeyEvent)] = []
     var claims: [KeyboardSurfaceInteractionController.GestureClaim] = []
     /// Pull-down progress the controller handed the key, in order.
@@ -63,6 +64,9 @@ final class GestureTestSubject {
     /// Off by default, as the setting itself is.
     var hapticFeedback = false
     var hapticStrength: HapticFeedbackStrength = .light
+    /// Off while nil, as the setting is by default.
+    var soundStyle: KeySoundStyle?
+    var soundVolume: KeySoundVolume = .medium
 
     lazy var controller = KeyboardSurfaceInteractionController(
         onEvent: { _ in },
@@ -77,7 +81,8 @@ final class GestureTestSubject {
         onPreview: { [weak self] key, _ in self?.previews.append(key?.id) },
         onSwipeProgress: { [weak self] _, progress, _ in self?.swipeProgress.append(progress) },
         repeatScheduler: scheduler.schedule,
-        haptics: haptics
+        haptics: haptics,
+        sounds: sounds
     )
 
     init(key: KeySpec) {
@@ -91,6 +96,9 @@ final class GestureTestSubject {
         value.isHapticFeedbackEnabled = hapticFeedback
         value.hapticFeedbackStrength = hapticStrength
         value.areSmartGesturesEnabled = smartGestures
+        value.isKeySoundEnabled = soundStyle != nil
+        value.keySoundStyle = soundStyle ?? .system
+        value.keySoundVolume = soundVolume
         return value
     }
 

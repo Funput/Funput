@@ -31,7 +31,7 @@ struct FunputConfigurationTests {
         #expect(config.keyboardAppearance == .system) // follow the host app, as before v12
         #expect(config.returnsToLettersAfterPunctuation)
         #expect(config.typoCorrection)
-        #expect(config.schemaVersion == 17)
+        #expect(config.schemaVersion == 18)
     }
 
     @Test("Configuration survives a JSON round-trip")

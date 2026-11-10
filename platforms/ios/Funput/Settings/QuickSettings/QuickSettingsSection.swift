@@ -8,6 +8,7 @@ struct QuickSettingsSection: View {
     @ObservedObject var model: SettingsModel
     @State private var pendingAccess: FullAccessFeature?
     @State private var showsHapticSheet = false
+    @State private var showsSoundSheet = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -33,6 +34,7 @@ struct QuickSettingsSection: View {
             }
         }
         .sheet(isPresented: $showsHapticSheet) { HapticFeedbackSheet(model: model) }
+        .sheet(isPresented: $showsSoundSheet) { KeySoundSheet(model: model) }
         .fullAccessPrompt($pendingAccess, model: model)
     }
 
@@ -55,10 +57,10 @@ struct QuickSettingsSection: View {
             isLocked: model.isLocked(setting),
             state: model.stateLabel(for: setting)
         ) {
-            if setting == .haptics {
-                showsHapticSheet = true
-            } else {
-                pendingAccess = model.toggle(setting)
+            switch setting {
+            case .haptics: showsHapticSheet = true
+            case .sound: showsSoundSheet = true
+            default: pendingAccess = model.toggle(setting)
             }
         }
     }

@@ -24,7 +24,7 @@ struct QuickSettingTile: View {
                         Text(setting.title)
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
-                        if setting == .haptics {
+                        if setting.opensSheet {
                             Image(systemName: "chevron.down")
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(.secondary)
@@ -55,6 +55,10 @@ struct QuickSettingTile: View {
 
     private var accessibilityHint: String {
         if isLocked { return "VNI dùng hàng số để bỏ dấu" }
-        return setting == .haptics ? "Chạm hai lần để chọn mức rung" : "Chạm hai lần để bật hoặc tắt"
+        return switch setting {
+        case .haptics: "Chạm hai lần để chọn mức rung"
+        case .sound: "Chạm hai lần để chọn kiểu âm và độ to"
+        default: "Chạm hai lần để bật hoặc tắt"
+        }
     }
 }
