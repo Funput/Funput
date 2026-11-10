@@ -66,7 +66,6 @@ internal fun previewSettingsState(
     onToneStyleSelected = {},
     onKeySizeSelected = {},
     onHapticsChanged = {},
-    onSoundsChanged = {},
     onSmartGesturesChanged = {},
     onSmartRestoreChanged = {},
     onSpellCheckChanged = {},

@@ -4,6 +4,7 @@
 Every sound is generated from code here, so the files carry the repository's MIT
 licence and can be rebuilt byte for byte. Each style has three sounds that mirror
 the system keyboard's split: a key, delete, and a modifier (space, shift, return).
+The iOS and Android keyboards bundle the same sounds.
 """
 
 import argparse
@@ -18,9 +19,11 @@ PEAK = 0.89  # About -1 dBFS, leaving headroom for resampling on device.
 FADE_IN_SECONDS = 0.0005
 FADE_OUT_SECONDS = 0.006
 KINDS = ("key", "delete", "modifier")
-DEFAULT_OUTPUT = (
-    Path(__file__).resolve().parents[1]
-    / "Packages/FunputKit/Sources/KeyboardRenderer/Resources/KeySounds"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+# Android resource names allow only lowercase letters, digits and underscores.
+TARGETS = (
+    ("platforms/ios/Packages/FunputKit/Sources/KeyboardRenderer/Resources/KeySounds", "{style}-{kind}.wav"),
+    ("platforms/android/keyboard-renderer/src/main/res/raw", "key_sound_{style}_{kind}.wav"),
 )
 
 # Delete sits lower and the modifier slightly lower and longer, as on the stock keyboard.
@@ -120,22 +123,24 @@ def write(path: Path, samples: list[int]) -> None:
         output.writeframes(struct.pack(f"<{len(samples)}h", *samples))
 
 
-def generate(output: Path) -> list[Path]:
-    output.mkdir(parents=True, exist_ok=True)
+def generate(root: Path) -> list[Path]:
+    sounds = {(style, kind): render(style, kind) for style in STYLES for kind in KINDS}
     paths = []
-    for style in STYLES:
-        for kind in KINDS:
-            path = output / f"{style}-{kind}.wav"
-            write(path, render(style, kind))
+    for directory, name in TARGETS:
+        output = root / directory
+        output.mkdir(parents=True, exist_ok=True)
+        for (style, kind), samples in sounds.items():
+            path = output / name.format(style=style, kind=kind)
+            write(path, samples)
             paths.append(path)
     return paths
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--root", type=Path, default=REPO_ROOT, help="repository root to write under")
     arguments = parser.parse_args()
-    for path in generate(arguments.output):
+    for path in generate(arguments.root):
         print(path)
 
 

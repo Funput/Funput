@@ -6,4 +6,5 @@ internal enum class SettingsPicker {
     KEYBOARD_PLACEMENT,
     CLIPBOARD_EXPIRY,
     HAPTIC_STRENGTH,
+    KEY_SOUND,
 }

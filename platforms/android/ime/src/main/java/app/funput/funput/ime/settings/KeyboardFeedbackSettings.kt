@@ -6,6 +6,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import app.funput.funput.keyboard.KeyboardHapticStrength
+import app.funput.funput.keyboard.sound.KeyboardSoundStyle
+import app.funput.funput.keyboard.sound.KeyboardSoundVolume
 import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -26,6 +28,8 @@ class KeyboardFeedbackSettings(context: Context) {
                 soundsEnabled = values[SoundsEnabledKey],
                 hapticStrength = values[HapticStrengthKey],
                 keyPreviewsEnabled = values[KeyPreviewsEnabledKey],
+                soundStyle = values[SoundStyleKey],
+                soundVolume = values[SoundVolumeKey],
             )
         }
         .distinctUntilChanged()
@@ -46,8 +50,16 @@ class KeyboardFeedbackSettings(context: Context) {
         dataStore.edit { it[KeyPreviewsEnabledKey] = enabled }
     }
 
-    suspend fun setSoundsEnabled(enabled: Boolean) {
-        dataStore.edit { it[SoundsEnabledKey] = enabled }
+    /** Sound off when [style] is null, otherwise on in [style], in one write. */
+    suspend fun selectSounds(style: KeyboardSoundStyle?) {
+        dataStore.edit { values ->
+            values[SoundsEnabledKey] = style != null
+            if (style != null) values[SoundStyleKey] = style.storageId
+        }
+    }
+
+    suspend fun setSoundVolume(volume: KeyboardSoundVolume) {
+        dataStore.edit { it[SoundVolumeKey] = volume.storageId }
     }
 
     private companion object {
@@ -55,6 +67,8 @@ class KeyboardFeedbackSettings(context: Context) {
         val SoundsEnabledKey = booleanPreferencesKey("sounds_enabled")
         val HapticStrengthKey = stringPreferencesKey("haptic_strength")
         val KeyPreviewsEnabledKey = booleanPreferencesKey("key_previews_enabled")
+        val SoundStyleKey = stringPreferencesKey("sound_style")
+        val SoundVolumeKey = stringPreferencesKey("sound_volume")
     }
 }
 
@@ -64,10 +78,14 @@ internal object KeyboardFeedbackSettingCodec {
         soundsEnabled: Boolean?,
         hapticStrength: String? = null,
         keyPreviewsEnabled: Boolean? = null,
+        soundStyle: String? = null,
+        soundVolume: String? = null,
     ) = KeyboardFeedbackPreferences(
         hapticsEnabled = hapticsEnabled ?: KeyboardFeedbackPreferences.Default.hapticsEnabled,
         soundsEnabled = soundsEnabled ?: KeyboardFeedbackPreferences.Default.soundsEnabled,
         hapticStrength = KeyboardHapticStrength.fromStorage(hapticStrength),
         keyPreviewsEnabled = keyPreviewsEnabled ?: true,
+        soundStyle = KeyboardSoundStyle.fromStorage(soundStyle),
+        soundVolume = KeyboardSoundVolume.fromStorage(soundVolume),
     )
 }

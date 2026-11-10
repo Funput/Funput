@@ -52,6 +52,21 @@ class ControlsSemanticsTest {
     }
 
     @Test
+    fun `disabled segments keep the selection but are announced as disabled and ignore taps`() {
+        var picked = -1
+        compose.setContent {
+            FunputUiTheme(isDark = false) {
+                FunputSegmented(listOf("Nhỏ", "To"), selectedIndex = 0, onSelect = { picked = it }, enabled = false)
+            }
+        }
+
+        compose.onNodeWithText("Nhỏ").assertIsSelected().assertIsNotEnabled()
+        compose.onNodeWithText("To").assertIsNotEnabled().performClick()
+
+        assertEquals(-1, picked)
+    }
+
+    @Test
     fun `a disabled button is announced as disabled and ignores taps`() {
         var taps = 0
         compose.setContent {

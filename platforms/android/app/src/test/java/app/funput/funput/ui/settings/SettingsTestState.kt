@@ -8,6 +8,7 @@ import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
+import app.funput.funput.keyboard.sound.KeyboardSoundStyle
 import app.funput.funput.theme.InstalledThemeRepository
 import app.funput.funput.ui.settings.setup.KeyboardSetupStatus
 
@@ -31,6 +32,8 @@ internal fun testSettingsState(
     hapticsEnabled: Boolean = true,
     hapticStrength: KeyboardHapticStrength = KeyboardHapticStrength.Default,
     soundsEnabled: Boolean = false,
+    soundStyle: KeyboardSoundStyle = KeyboardSoundStyle.Default,
+    onSoundStyleSelected: (KeyboardSoundStyle?) -> Unit = { onFeedbackChanged("sounds", it != null) },
     keyPreviewsEnabled: Boolean = true,
     speechAvailable: Boolean = false,
     smartComposition: SmartCompositionPreferences = SmartCompositionPreferences.Default,
@@ -47,6 +50,7 @@ internal fun testSettingsState(
     hapticsEnabled = hapticsEnabled,
     hapticStrength = hapticStrength,
     soundsEnabled = soundsEnabled,
+    soundStyle = soundStyle,
     keyPreviewsEnabled = keyPreviewsEnabled,
     smartComposition = smartComposition,
     personalSuggestionsEnabled = true,
@@ -60,7 +64,7 @@ internal fun testSettingsState(
     onToneStyleSelected = onToneStyleSelected,
     onKeySizeSelected = onKeySizeSelected,
     onHapticsChanged = { onFeedbackChanged("haptics", it) },
-    onSoundsChanged = { onFeedbackChanged("sounds", it) },
+    onSoundStyleSelected = onSoundStyleSelected,
     onKeyPreviewsChanged = { onFeedbackChanged("previews", it) },
     onHapticStrengthSelected = { onFeedbackChanged("haptics", it != null) },
     onSmartGesturesChanged = { onSmartChanged("gestures", it) },

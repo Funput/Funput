@@ -11,6 +11,8 @@ import app.funput.funput.keyboard.model.KeyboardInputMethod
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
 import app.funput.funput.keyboard.placement.OneHandedSide
+import app.funput.funput.keyboard.sound.KeyboardSoundStyle
+import app.funput.funput.keyboard.sound.KeyboardSoundVolume
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.ui.settings.extraonsets.ExtraOnsetsSectionState
 import app.funput.funput.ui.settings.hardware.HardwareKeyboardSectionState
@@ -30,6 +32,9 @@ internal class SettingsScreenState(
     /** Remembered while vibration is off; see [activeHapticStrength]. */
     val hapticStrength: KeyboardHapticStrength = KeyboardHapticStrength.Default,
     val soundsEnabled: Boolean,
+    /** Remembered while sound is off; see [activeSoundStyle]. */
+    val soundStyle: KeyboardSoundStyle = KeyboardSoundStyle.Default,
+    val soundVolume: KeyboardSoundVolume = KeyboardSoundVolume.Default,
     val keyPreviewsEnabled: Boolean = true,
     val smartComposition: SmartCompositionPreferences,
     val personalSuggestionsEnabled: Boolean,
@@ -53,7 +58,9 @@ internal class SettingsScreenState(
     val onHapticsChanged: (Boolean) -> Unit,
     /** Vibration off when null, otherwise on at the given strength. */
     val onHapticStrengthSelected: (KeyboardHapticStrength?) -> Unit = {},
-    val onSoundsChanged: (Boolean) -> Unit,
+    /** Sound off when null, otherwise on in the given style. */
+    val onSoundStyleSelected: (KeyboardSoundStyle?) -> Unit = {},
+    val onSoundVolumeSelected: (KeyboardSoundVolume) -> Unit = {},
     val onKeyPreviewsChanged: (Boolean) -> Unit = {},
     val onSmartGesturesChanged: (Boolean) -> Unit,
     val onReturnsToLettersChanged: (Boolean) -> Unit = {},
@@ -72,4 +79,8 @@ internal class SettingsScreenState(
     /** The strength key presses vibrate at, or null when vibration is off. */
     val activeHapticStrength: KeyboardHapticStrength?
         get() = hapticStrength.takeIf { hapticsEnabled }
+
+    /** The style key presses sound in, or null when sound is off. */
+    val activeSoundStyle: KeyboardSoundStyle?
+        get() = soundStyle.takeIf { soundsEnabled }
 }

@@ -203,8 +203,16 @@ jobs:
       - name: Verify iOS lexicon packaging
         run: python3 platforms/ios/Scripts/tests/test_build_lexicon.py
 
-      - name: Verify iOS key sounds match their generator
-        run: python3 platforms/ios/Scripts/tests/test_generate_key_sounds.py
+  # The key sounds the iOS and Android keyboards bundle are generated, but committed
+  # so neither build needs Python. This catches a WAV that no longer matches the
+  # script, or one platform's copy drifting from the other's.
+  key-sounds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify key sounds match their generator
+        run: python3 scripts/tests/test_generate_key_sounds.py
 
   # Partner Center upload command construction. Same idea as ios-release-signing:
   # exercise the scripts a stranger will run from deploy-windows-store.yml without

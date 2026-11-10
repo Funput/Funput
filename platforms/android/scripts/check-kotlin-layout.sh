@@ -71,6 +71,8 @@ readonly roots=(
     "$renderer_main/layout"
     "$renderer_main/placement"
     "$renderer_test/placement"
+    "$renderer_main/sound"
+    "$renderer_test/sound"
     "$android_root/keyboard-ui/src/main/java/app/funput/funput/keyboard/ui/placement"
     "$android_root/keyboard-ui/src/main/java/app/funput/funput/keyboard/ui/emoji/search"
     "$android_root/keyboard-ui/src/test/java/app/funput/funput/keyboard/ui/emoji/search"

@@ -71,5 +71,5 @@ internal fun FunputKeyboardView.configureForEditor(
     hapticsEnabled = feedback.hapticsEnabled
     hapticStrength = feedback.hapticStrength
     keyPreviewsEnabled = feedback.keyPreviewsEnabled
-    soundsEnabled = feedback.soundsEnabled
+    sound = feedback.activeSound
 }

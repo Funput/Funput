@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Key sound style and volume, as on iOS: the row, its sheet, and the quick settings tile. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="settings_sounds_style_summary">Chọn kiểu âm và độ to khi chạm phím.</string>
+    <string name="key_sound_hint">Chạm một kiểu để nghe thử. Âm thanh theo âm lượng hệ thống và im lặng khi điện thoại ở chế độ rung hoặc im lặng.</string>
+    <string name="key_sound_volume_header">Âm lượng</string>
+
+    <string name="key_sound_off">Tắt</string>
+    <string name="key_sound_off_summary">Không phát âm thanh khi gõ</string>
+    <string name="key_sound_system">Mặc định</string>
+    <string name="key_sound_system_summary">Tiếng click của Android</string>
+    <string name="key_sound_mechanical">Phím cơ</string>
+    <string name="key_sound_mechanical_summary">Lách cách như bàn phím cơ</string>
+    <string name="key_sound_wood">Gỗ</string>
+    <string name="key_sound_wood_summary">Trầm và ấm như gõ lên gỗ</string>
+    <string name="key_sound_bubble">Bong bóng</string>
+    <string name="key_sound_bubble_summary">Tròn và vui tai</string>
+    <string name="key_sound_typewriter">Máy chữ</string>
+    <string name="key_sound_typewriter_summary">Tách tách như máy chữ cổ</string>
+    <string name="key_sound_marimba">Marimba</string>
+    <string name="key_sound_marimba_summary">Mỗi phím một nốt nhạc gỗ ngắn</string>
+
+    <string name="key_sound_volume_soft">Nhỏ</string>
+    <string name="key_sound_volume_medium">Vừa</string>
+    <string name="key_sound_volume_loud">To</string>
+
+    <string name="quick_sounds_choose">chọn kiểu âm</string>
+</resources>

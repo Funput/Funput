@@ -4,16 +4,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
 import app.funput.funput.keyboard.KeyboardHapticStrength
+import app.funput.funput.keyboard.sound.KeyboardSoundStyle
 import app.funput.funput.ui.kit.theme.FunputUiTheme
 import app.funput.funput.ui.settings.clipboard.ClipboardSection
 import app.funput.funput.ui.settings.feedback.FeedbackSection
+import app.funput.funput.ui.settings.feedback.FeedbackSoundRowTag
 import app.funput.funput.uitesting.SCREENSHOT_SDK
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -77,30 +79,31 @@ class ClipboardAndFeedbackTest {
     }
 
     @Test
-    fun `feedback shows the vibration strength, opens its choice and switches sounds`() {
-        var opened = 0
-        val sounds = mutableListOf<Boolean>()
+    fun `feedback shows the vibration strength and sound style, each opening its choice`() {
+        var openedHaptics = 0
+        var openedSound = 0
         val previews = mutableListOf<Boolean>()
         compose.setContent {
             FunputUiTheme(isDark = false) {
                 FeedbackSection(
                     hapticStrength = KeyboardHapticStrength.STRONG,
-                    soundsEnabled = false,
+                    soundStyle = KeyboardSoundStyle.BUBBLE,
                     keyPreviewsEnabled = true,
-                    onOpenHapticStrength = { opened += 1 },
-                    onSoundsChanged = sounds::add,
+                    onOpenHapticStrength = { openedHaptics += 1 },
+                    onOpenKeySound = { openedSound += 1 },
                     onKeyPreviewsChanged = { previews += it },
                 )
             }
         }
 
         compose.onNodeWithText("Mạnh").assertExists()
+        compose.onNodeWithText("Bong bóng").assertExists()
         compose.onNodeWithText("Rung khi nhấn phím").performClick()
-        compose.onNodeWithText("Âm thanh phím").assertIsOff().performClick()
+        compose.onNodeWithTag(FeedbackSoundRowTag).performClick()
         compose.onNodeWithText("Xem trước phím").performClick()
 
-        assertEquals(1, opened)
-        assertEquals(listOf(true), sounds)
+        assertEquals(1, openedHaptics)
+        assertEquals(1, openedSound)
         assertEquals(listOf(false), previews)
     }
 }

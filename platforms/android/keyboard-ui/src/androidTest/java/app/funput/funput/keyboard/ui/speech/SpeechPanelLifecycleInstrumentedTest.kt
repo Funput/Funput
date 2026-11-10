@@ -9,6 +9,7 @@ import app.funput.funput.keyboard.model.KeyboardLanguage
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.placement.KeyboardPlacementMode
 import app.funput.funput.keyboard.placement.KeyboardPlacementPreferences
+import app.funput.funput.keyboard.sound.KeyboardSoundChoice
 import app.funput.funput.keyboard.ui.KeyboardPanel
 import app.funput.funput.keyboard.ui.support.childOfType
 import app.funput.funput.theme.KeyboardThemes
@@ -60,7 +61,7 @@ class SpeechPanelLifecycleInstrumentedTest {
             fixture.update { keyboard ->
                 keyboard.keyboardTheme = KeyboardThemes.GlassDark
                 keyboard.hapticsEnabled = false
-                keyboard.soundsEnabled = false
+                keyboard.sound = null
                 keyboard.placementPreferences = KeyboardPlacementPreferences.Default.copy(
                     activeMode = KeyboardPlacementMode.ONE_HANDED, oneHandedWidthFraction = 0.68f)
                 keyboard.speechPanelState = SpeechPanelState(SpeechPanelStage.LISTENING, preview = "mẫu")
@@ -73,7 +74,7 @@ class SpeechPanelLifecycleInstrumentedTest {
                 keyboard.showLettersPanel()
                 keyboard.keyboardTheme = KeyboardThemes.GlassLight
                 keyboard.hapticsEnabled = true
-                keyboard.soundsEnabled = true
+                keyboard.sound = KeyboardSoundChoice.Default
                 val height = keyboard.measuredHeight
                 keyboard.showSpeechPanel()
                 assertSame(panel, keyboard.childOfType<SpeechPanelView>())

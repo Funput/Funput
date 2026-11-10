@@ -52,6 +52,8 @@ internal fun rememberSettingsScreenState(
         hapticsEnabled = settings.feedback.hapticsEnabled,
         hapticStrength = settings.feedback.hapticStrength,
         soundsEnabled = settings.feedback.soundsEnabled,
+        soundStyle = settings.feedback.soundStyle,
+        soundVolume = settings.feedback.soundVolume,
         keyPreviewsEnabled = settings.feedback.keyPreviewsEnabled,
         smartComposition = settings.smartComposition,
         personalSuggestionsEnabled = settings.personalSuggestions.enabled,
@@ -96,8 +98,11 @@ internal fun rememberSettingsScreenState(
         onKeyPreviewsChanged = { enabled ->
             scope.launch { settings.feedbackStore.setKeyPreviewsEnabled(enabled) }
         },
-        onSoundsChanged = { enabled ->
-            scope.launch { settings.feedbackStore.setSoundsEnabled(enabled) }
+        onSoundStyleSelected = { style ->
+            scope.launch { settings.feedbackStore.selectSounds(style) }
+        },
+        onSoundVolumeSelected = { volume ->
+            scope.launch { settings.feedbackStore.setSoundVolume(volume) }
         },
         onSmartGesturesChanged = { enabled ->
             scope.launch { settings.smartGestureStore.setEnabled(enabled) }
