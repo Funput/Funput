@@ -11,7 +11,7 @@ final class FakeCompositionSurface: CompositionSurface {
         case selection
         case text(NSRange)
         case supportsDocumentAccess
-        case holdsMarkedText
+        case markedRange
     }
 
     private(set) var calls: [Call] = []
@@ -31,8 +31,8 @@ final class FakeCompositionSurface: CompositionSurface {
     /// What a Google Docs field (`googleDocsField()`) has taken out of itself.
     private(set) var taken = ""
     private var takesTypedText = false
-    /// A `passwordField()` types marks; `typedAMark` once it has typed the word's first one.
-    private var typesMarks = false
+    /// How the field treats marked text; `typedAMark` once a password field typed one.
+    private var marking = Marking.holds
     private var typedAMark = false
     var clientID: String? = "app.funput.tests.client"
     private var marked: NSRange?
@@ -56,11 +56,27 @@ final class FakeCompositionSurface: CompositionSurface {
 
     private static let docsPlaceholder = " "
 
-    /// A password field (`NSSecureTextView`): it holds no marked text, types the first mark
-    /// of a word as plain text and ignores later ones until text is inserted.
+    enum Marking {
+        /// Holds marked text and reports its range, like `NSTextView`.
+        case holds
+        /// `NSSecureTextView`: types the first mark of a word as plain text, ignores later
+        /// ones until text is inserted, and reports an empty marked range at its caret.
+        case typesFirst
+        /// Holds marked text but never reports a marked range, like Warp.
+        case holdsUnreported
+    }
+
+    /// A password field that cannot hold marked text (`Marking.typesFirst`).
     static func passwordField() -> FakeCompositionSurface {
         let field = FakeCompositionSurface()
-        field.typesMarks = true
+        field.marking = .typesFirst
+        return field
+    }
+
+    /// A field that shows marked text without ever reporting it (`Marking.holdsUnreported`).
+    static func unreportedMarksField() -> FakeCompositionSurface {
+        let field = FakeCompositionSurface()
+        field.marking = .holdsUnreported
         return field
     }
 
@@ -83,7 +99,7 @@ final class FakeCompositionSurface: CompositionSurface {
 
     func mark(_ text: String, replacing range: NSRange?) {
         calls.append(.mark(text, range))
-        if typesMarks {
+        if marking == .typesFirst {
             if !typedAMark, !text.isEmpty { write(text, over: range); typedAMark = true }
             return
         }
@@ -91,9 +107,18 @@ final class FakeCompositionSurface: CompositionSurface {
         marked = text.isEmpty ? nil : NSRange(location: start, length: text.utf16.count)
     }
 
-    func holdsMarkedText() -> Bool {
-        calls.append(.holdsMarkedText)
-        return marked != nil
+    func markedRange() -> NSRange? {
+        calls.append(.markedRange)
+        switch marking {
+        case .holds: return marked
+        case .typesFirst: return typedAMark ? NSRange(location: caret, length: 0) : nil
+        case .holdsUnreported: return nil
+        }
+    }
+
+    /// The marked text on screen, whether or not the field reports it.
+    var shownMarkedText: String? {
+        marked.map { (document as NSString).substring(with: $0) }
     }
 
     func selection() -> NSRange? {

@@ -7,10 +7,7 @@ extension FunputInputController {
     /// direct composition is switched off. The disabled engine still handles shortcut
     /// matching; it never adds diacritics.
     func handleEnglish(_ event: NSEvent, client: IMKTextInput) -> Bool {
-        let settings = AppSettings.shared
-        guard settings.shortcutsEnabled, settings.shortcutsInEnglish,
-            hasSyncedShortcuts
-        else { commit(into: client); return false }
+        guard holdsEnglishWords else { commit(into: client); return false }
 
         guard !InputEventPolicy.passesThroughEnglish(keyCode: event.keyCode, modifiers: event.modifierFlags)
         else { commit(into: client); return false }
@@ -31,6 +28,13 @@ extension FunputInputController {
         else { commit(into: client); return false }
 
         return applyEnglish(EnglishComposition.process(scalar, composer: composer), client: client)
+    }
+
+    /// Whether English typing holds the raw word for gõ tắt. Otherwise every English key
+    /// reaches the app as typed.
+    var holdsEnglishWords: Bool {
+        let settings = AppSettings.shared
+        return settings.shortcutsEnabled && settings.shortcutsInEnglish && hasSyncedShortcuts
     }
 
     /// English never rewrites letters as they are typed, so a word the session drops (only

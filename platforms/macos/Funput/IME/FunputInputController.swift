@@ -55,11 +55,7 @@ final class FunputInputController: IMKInputController {
             return true
         }
 
-        switch secureFieldDecision(event, client: client) {
-        case .compose: break
-        case .handOver: return false
-        case .typed: return true
-        }
+        if let handled = handleSecureField(event, client: client) { return handled }
 
         guard AppSettings.shared.vietnameseEnabled else {
             return handleEnglish(event, client: client)

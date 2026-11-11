@@ -11,10 +11,16 @@ enum InputEventPolicy {
     /// navigation and function keys, Command/Control shortcuts and dead keys.
     static func typedText(_ characters: String?, modifiers: NSEvent.ModifierFlags) -> String? {
         guard modifiers.isDisjoint(with: [.command, .control, .function]),
-            let characters, let value = characters.unicodeScalars.first?.value,
-            value >= 0x20, value != 0x7F, !(0xF700...0xF8FF).contains(value)
+            let characters, !characters.isEmpty,
+            characters.unicodeScalars.allSatisfy(isPrintable)
         else { return nil }
         return characters
+    }
+
+    /// Not a control character, and not one of the function-key characters AppKit puts in
+    /// the private-use area for arrows, F-keys, Home, End and the like.
+    private static func isPrintable(_ scalar: Unicode.Scalar) -> Bool {
+        scalar.value >= 0x20 && scalar.value != 0x7F && !(0xF700...0xF8FF).contains(scalar.value)
     }
 
     static func isBoundary(_ scalar: Unicode.Scalar, method: InputMethod) -> Bool {

@@ -31,13 +31,21 @@ extension FunputInputController {
         return !composer.buffer().isEmpty && showComposition(client)
     }
 
-    /// Whether the focused field refuses marked text (`SecureInputGuard`). A key it gets
-    /// raw never reaches the engine, so no word is left composing behind it.
-    func secureFieldDecision(_ event: NSEvent, client: IMKTextInput) -> SecureInputGuard.Decision {
+    /// Keys for a password field that refuses marked text (`SecureInputGuard`): nil when the
+    /// key is handled as usual, otherwise whether the key was handled. Only keys Funput
+    /// would compose are guarded; English keys that go to the app as typed need no answer.
+    func handleSecureField(_ event: NSEvent, client: IMKTextInput) -> Bool? {
+        guard AppSettings.shared.vietnameseEnabled || holdsEnglishWords else { return nil }
         let key = InputEventPolicy.typedText(event.characters, modifiers: event.modifierFlags)
-        let decision = secureInput.decide(typing: key, on: IMKCompositionSurface(client: client))
-        if decision != .compose { composer.clear() }
-        return decision
+        let surface = IMKCompositionSurface(client: client)
+        let decision = secureInput.decide(typing: key, on: surface, composing: !composer.buffer().isEmpty) {
+            commit(into: client)
+        }
+        switch decision {
+        case .compose: return nil
+        case .handOver: return false
+        case .typed: return true
+        }
     }
 
     func commit(into client: IMKTextInput) {
