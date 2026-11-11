@@ -11,6 +11,7 @@ final class FakeCompositionSurface: CompositionSurface {
         case selection
         case text(NSRange)
         case supportsDocumentAccess
+        case holdsMarkedText
     }
 
     private(set) var calls: [Call] = []
@@ -30,6 +31,9 @@ final class FakeCompositionSurface: CompositionSurface {
     /// What a Google Docs field (`googleDocsField()`) has taken out of itself.
     private(set) var taken = ""
     private var takesTypedText = false
+    /// A `passwordField()` types marks; `typedAMark` once it has typed the word's first one.
+    private var typesMarks = false
+    private var typedAMark = false
     var clientID: String? = "app.funput.tests.client"
     private var marked: NSRange?
 
@@ -52,6 +56,14 @@ final class FakeCompositionSurface: CompositionSurface {
 
     private static let docsPlaceholder = " "
 
+    /// A password field (`NSSecureTextView`): it holds no marked text, types the first mark
+    /// of a word as plain text and ignores later ones until text is inserted.
+    static func passwordField() -> FakeCompositionSurface {
+        let field = FakeCompositionSurface()
+        field.typesMarks = true
+        return field
+    }
+
     var reads: [Call] {
         calls.filter { if case .selection = $0 { true } else if case .text = $0 { true } else { false } }
     }
@@ -60,6 +72,7 @@ final class FakeCompositionSurface: CompositionSurface {
         calls.append(.insert(text, range))
         write(text, over: blind ? nil : range)
         marked = nil
+        typedAMark = false
         if takesTypedText {
             // Everything but the placeholder leaves; typing over the selected one replaced it.
             taken += document.hasPrefix(Self.docsPlaceholder)
@@ -70,8 +83,17 @@ final class FakeCompositionSurface: CompositionSurface {
 
     func mark(_ text: String, replacing range: NSRange?) {
         calls.append(.mark(text, range))
+        if typesMarks {
+            if !typedAMark, !text.isEmpty { write(text, over: range); typedAMark = true }
+            return
+        }
         let start = write(text, over: blind ? nil : range)
         marked = text.isEmpty ? nil : NSRange(location: start, length: text.utf16.count)
+    }
+
+    func holdsMarkedText() -> Bool {
+        calls.append(.holdsMarkedText)
+        return marked != nil
     }
 
     func selection() -> NSRange? {

@@ -18,6 +18,10 @@ protocol CompositionSurface {
     /// The document text in `range`, or nil when the client will not hand it over.
     func text(in range: NSRange) -> String?
 
+    /// Whether the client reports marked text right now. AppKit's password field answers
+    /// false even right after `mark`: it typed the text instead (see `SecureInputGuard`).
+    func holdsMarkedText() -> Bool
+
     /// Whether the client claims to honour `replacing:` on `insert` (see `ClientTrust`).
     var supportsDocumentAccess: Bool { get }
 
@@ -57,6 +61,11 @@ struct IMKCompositionSurface: CompositionSurface {
 
     func text(in range: NSRange) -> String? {
         client.attributedSubstring(from: range)?.string
+    }
+
+    func holdsMarkedText() -> Bool {
+        let range = client.markedRange()
+        return range.location != NSNotFound && range.length > 0
     }
 
     /// Only clients speaking TSM's document-access protocol apply a replacement range;

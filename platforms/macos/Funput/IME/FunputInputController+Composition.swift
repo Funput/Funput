@@ -31,6 +31,15 @@ extension FunputInputController {
         return !composer.buffer().isEmpty && showComposition(client)
     }
 
+    /// Whether the focused field refuses marked text (`SecureInputGuard`). A key it gets
+    /// raw never reaches the engine, so no word is left composing behind it.
+    func secureFieldDecision(_ event: NSEvent, client: IMKTextInput) -> SecureInputGuard.Decision {
+        let key = InputEventPolicy.typedText(event.characters, modifiers: event.modifierFlags)
+        let decision = secureInput.decide(typing: key, on: IMKCompositionSurface(client: client))
+        if decision != .compose { composer.clear() }
+        return decision
+    }
+
     func commit(into client: IMKTextInput) {
         let text = composer.finishComposition()
         session.commit(text, boundary: "", on: IMKCompositionSurface(client: client))
