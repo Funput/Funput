@@ -41,6 +41,19 @@ underlined marked text. Design: [`docs/features/macos-direct-composition.md`](..
 If an app misbehaves, turning the switch off restores the previous underlined behaviour
 everywhere.
 
+## Password fields
+
+macOS keeps Funput selected in password fields. AppKit's password field, used by native
+apps and system password prompts, cannot hold marked text, so Funput hands it every key
+untouched, the way a keyboard layout would ([#720](https://github.com/Funput/Funput/issues/720)).
+A password field that does hold marked text, as a browser's may, is still composed as
+Vietnamese, gõ tắt included. Switch to English before typing a password there.
+
+Funput tells the two apart by marking the first key typed while secure input is on and
+asking the field for its marked text. A field that never reports marked text (Warp) cannot
+answer, so it keeps composing as it did before; if such a field is a password field that
+cannot hold marked text, the first letter of each word can still be typed twice there.
+
 ## Backspace does not retone in Cursor
 
 **Symptom:** `chào` + Space + ⌫ + `s` gives `cháo` in TextEdit, Notes, Mail, Safari,

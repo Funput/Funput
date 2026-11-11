@@ -23,6 +23,8 @@ final class FunputInputController: IMKInputController {
         clicks: { MouseClickCounter.shared.clicks },
         memory: .shared
     )
+    /// Hands password fields that refuse marked text every key untouched.
+    var secureInput = SecureInputGuard()
 
     private enum KeyCode {
         static let backspace: UInt16 = 51
@@ -52,6 +54,8 @@ final class FunputInputController: IMKInputController {
             syncSettings(client: client)
             return true
         }
+
+        if let handled = handleSecureField(event, client: client) { return handled }
 
         guard AppSettings.shared.vietnameseEnabled else {
             return handleEnglish(event, client: client)
@@ -127,6 +131,7 @@ final class FunputInputController: IMKInputController {
         super.activateServer(sender)
         composer.clear()
         session.reset()
+        secureInput.reset()
         applyPerAppDefault()
         syncSettings()
         // Focus on a field is the start of input: arm so the first letter is capitalized.
