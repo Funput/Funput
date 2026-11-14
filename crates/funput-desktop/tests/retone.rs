@@ -297,3 +297,74 @@ fn a_refused_word_is_reopened_once_backspace_makes_it_a_syllable() {
     shell.key('s');
     assert_eq!(shell.app, "dúng");
 }
+
+fn shell_with_ctsg() -> Shell {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("ctsg", "cơm tấm Sài Gòn");
+    shell
+}
+
+/// Reported in #582: a trigger mistyped and committed with Space is fixed by deleting
+/// back into it. The start of a trigger re-opens like a syllable does, so the fixed
+/// trigger expands at the next Space.
+#[test]
+fn a_mistyped_trigger_is_fixed_after_space() {
+    let mut shell = shell_with_ctsg();
+    shell.type_str("ctss ");
+    assert_eq!(shell.app, "ctss ");
+
+    shell.backspace(); // the space; `ctss` begins no trigger, so it stays committed
+    shell.backspace(); // the stray `s`; `cts` begins `ctsg` and re-opens
+    shell.type_str("g ");
+    assert_eq!(shell.app, "cơm tấm Sài Gòn ");
+}
+
+#[test]
+fn a_fixed_trigger_keeps_its_smart_case() {
+    let mut shell = shell_with_ctsg();
+    shell.type_str("Ctss ");
+    shell.backspace();
+    shell.backspace();
+    shell.type_str("g ");
+    assert_eq!(shell.app, "Cơm tấm Sài Gòn ");
+}
+
+/// Deleting a stray last key lands on the whole trigger, which re-opens too.
+#[test]
+fn deleting_a_stray_key_lands_on_the_whole_trigger() {
+    let mut shell = shell_with_ctsg();
+    shell.type_str("ctsgx ");
+    assert_eq!(shell.app, "ctsgx ");
+
+    shell.backspace();
+    shell.backspace();
+    shell.key(' ');
+    assert_eq!(shell.app, "cơm tấm Sài Gòn ");
+}
+
+/// The shadow remembers a short phrase, so the trigger can be reached by deleting back
+/// over the words typed after it.
+#[test]
+fn a_trigger_is_reached_back_over_several_words() {
+    let mut shell = shell_with_ctsg();
+    let after = "abc ".repeat(40); // 160 bytes: past the old 64-byte shadow
+    shell.type_str("ctss ");
+    shell.type_str(&after);
+
+    for _ in 0..after.chars().count() + 2 {
+        shell.backspace(); // every `abc `, then the space and the stray `s`
+    }
+    assert_eq!(shell.app, "cts");
+    shell.type_str("g ");
+    assert_eq!(shell.app, "cơm tấm Sài Gòn ");
+}
+
+/// A word that begins no trigger stays as literal as before.
+#[test]
+fn a_word_no_trigger_starts_with_is_not_reopened() {
+    let mut shell = shell_with_ctsg();
+    shell.type_str("hello ");
+    shell.backspace();
+    shell.key('s');
+    assert_eq!(shell.app, "hellos");
+}

@@ -983,3 +983,41 @@ fn full_telex_keeps_its_leading_w() {
     state.set_method(InputMethod::TelexAdvanced);
     assert_eq!(app_text(&mut state, "wa wwas "), "ưa wá ");
 }
+
+/// A shell holding one finished row, `ctsg` → `cơm tấm Sài Gòn`.
+fn shell_with_ctsg() -> ShellState {
+    let mut state = shell();
+    state.add_shortcut();
+    state.set_shortcut_trigger(0, "ctsg".into());
+    state.set_shortcut_expansion(0, "cơm tấm Sài Gòn".into());
+    state
+}
+
+/// English mode keeps gõ tắt live, so a mistyped trigger is fixable there too: the
+/// shell's own Backspace path re-opens its start with Vietnamese off.
+#[test]
+fn a_mistyped_trigger_is_fixed_in_english_mode() {
+    let mut state = shell_with_ctsg();
+    state.set_enabled(false);
+    let mut app = app_text(&mut state, "ctss ");
+    backspace_into(&mut state, &mut app);
+    backspace_into(&mut state, &mut app);
+    type_into(&mut state, &mut app, "g ");
+    assert_eq!(app, "cơm tấm Sài Gòn ");
+}
+
+/// The visible cost of the repair: the start of a trigger re-opens like a syllable, so
+/// a key typed after deleting the space composes onto it (`d` + `d` → `đ`), the same
+/// as `a` + Space, ⌫, `a` gives `â`.
+#[test]
+fn a_reopened_trigger_start_composes_the_next_key() {
+    let mut state = shell();
+    state.set_method(InputMethod::Telex);
+    state.add_shortcut();
+    state.set_shortcut_trigger(0, "dc".into());
+    state.set_shortcut_expansion(0, "được".into());
+    let mut app = app_text(&mut state, "d ");
+    backspace_into(&mut state, &mut app);
+    type_into(&mut state, &mut app, "d ");
+    assert_eq!(app, "đ ");
+}

@@ -99,8 +99,8 @@ bool Composer::adoptWordBeforeBackspace() {
 
     std::string word;
     for (size_t i = start; i < chars.size(); ++i) appendUtf8(word, chars[i]);
-    // The engine refuses anything that is not a Vietnamese syllable, which is what
-    // keeps English words and URLs literal.
+    // The engine takes only a Vietnamese syllable or the start of a gõ tắt trigger,
+    // which is what keeps other English words and URLs literal.
     if (!handle_.adopt(word)) return false;
     // The repair this arms is the one a client like Chrome's address bar drops.
     nonPreedit_.justAdopted = true;

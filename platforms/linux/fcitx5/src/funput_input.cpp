@@ -70,7 +70,7 @@ void FunputEngine::keyEvent(const fcitx::InputMethodEntry &, fcitx::KeyEvent &ev
 
     // A Backspace with nothing composing is about to eat a *committed* character. In
     // non-preedit the word it lands in is right there in the document, so the composer
-    // is offered it and decides whether it is a Vietnamese syllable worth re-opening.
+    // is offered it and decides whether it is worth re-opening (a syllable, a trigger).
     // Asking `classify()` rather than testing the keysym keeps Ctrl+Backspace (delete
     // word) out of this: that is a shortcut, not a Backspace.
     const bool reopen = composer_.nonPreedit() && !composer_.isComposing() &&
