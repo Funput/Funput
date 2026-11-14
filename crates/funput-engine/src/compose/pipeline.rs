@@ -4,6 +4,7 @@
 //! the zero-allocation pass-through exit; session strings (`vn_form`, `keys`)
 //! are refilled in place so their capacity is reused across keystrokes.
 
+mod confirm;
 mod display;
 mod rescue;
 
@@ -34,6 +35,14 @@ pub(crate) fn process(
     // abandoned (`hoxc` + `j` → `học`); every other key composes on the buffer.
     let mut result = rescue::retone_after_restore(session, key)
         .unwrap_or_else(|| apply_with(&session.buffer, key, session.config.compose_options()));
+
+    // A mũ key reverting a circumflex the composer added itself (`viecj` → `việc`,
+    // then `e`) confirms it. The key is swallowed and nothing else moves: the
+    // buffer and `vn_form` keep the word, and `keys` keeps the key, so Flip and
+    // English restore see exactly what was typed.
+    if result.kind == TransformKind::Reverted && confirm::confirmed(session, key) {
+        return ImeResult::send(0, String::new());
+    }
     if capitalize_shortcut && result.kind == TransformKind::Applied {
         uppercase_direct_vowel(&mut result.text);
     }

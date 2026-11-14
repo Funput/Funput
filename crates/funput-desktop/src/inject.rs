@@ -17,24 +17,29 @@ pub struct InjectPlan {
 }
 
 impl InjectPlan {
-    /// Nothing to inject — the key should pass through to the app unchanged.
-    pub fn is_noop(&self) -> bool {
+    /// Nothing to emit: no deletions and no text. Says nothing about the key that
+    /// produced the plan — whether it passes through or is swallowed is decided by
+    /// [`plan_inject`] returning `None` or `Some`.
+    pub fn is_empty(&self) -> bool {
         self.backspaces == 0 && self.units.is_empty()
     }
 }
 
 /// Translate an engine result into an [`InjectPlan`].
 ///
-/// - [`Action::None`] → empty plan: let the key reach the app untouched.
-/// - [`Action::Send`] / [`Action::Restore`] → delete `backspace` chars, then type
-///   `output`. The triggering key is swallowed by the shell.
-pub fn plan_inject(result: &ImeResult) -> InjectPlan {
+/// - [`Action::None`] → `None`: let the key reach the app untouched.
+/// - [`Action::Send`] / [`Action::Restore`] → `Some`: delete `backspace` chars, then
+///   type `output`, and the shell swallows the triggering key. The plan may be
+///   empty — a key the engine swallowed without changing the text, such as the mũ
+///   key confirming a circumflex the composer added — and the key is still
+///   swallowed then.
+pub fn plan_inject(result: &ImeResult) -> Option<InjectPlan> {
     match result.action {
-        Action::None => InjectPlan::default(),
-        Action::Send | Action::Restore => InjectPlan {
+        Action::None => None,
+        Action::Send | Action::Restore => Some(InjectPlan {
             backspaces: result.backspace,
             units: result.output.encode_utf16().collect(),
-        },
+        }),
     }
 }
 
@@ -45,13 +50,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn plan_none_is_noop() {
+    fn plan_none_lets_the_key_through() {
         let plan = plan_inject(&ImeResult {
             action: Action::None,
             backspace: 0,
             output: String::new(),
         });
-        assert!(plan.is_noop());
+        assert_eq!(plan, None);
+    }
+
+    #[test]
+    fn an_empty_send_still_swallows_the_key() {
+        let plan = plan_inject(&ImeResult {
+            action: Action::Send,
+            backspace: 0,
+            output: String::new(),
+        })
+        .expect("a Send is a plan");
+        assert!(plan.is_empty());
     }
 
     #[test]
@@ -60,7 +76,8 @@ mod tests {
             action: Action::Send,
             backspace: 1,
             output: "á".into(),
-        });
+        })
+        .expect("a Send is a plan");
         assert_eq!(plan.backspaces, 1);
         assert_eq!(plan.units, "á".encode_utf16().collect::<Vec<_>>());
         assert_eq!(plan.units.len(), 1); // BMP: one unit
@@ -72,7 +89,8 @@ mod tests {
             action: Action::Restore,
             backspace: 3,
             output: "card ".into(),
-        });
+        })
+        .expect("a Restore is a plan");
         assert_eq!(plan.backspaces, 3);
         assert_eq!(plan.units, "card ".encode_utf16().collect::<Vec<_>>());
     }

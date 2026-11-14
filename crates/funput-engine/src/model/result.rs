@@ -9,7 +9,8 @@ pub enum Action {
     /// Pass the key through to the app — no inject.
     None,
     /// Delete `backspace` chars in the app, then inject `output`. The current key
-    /// is swallowed (not passed through).
+    /// is swallowed (not passed through) — also when there is nothing to delete
+    /// and nothing to inject: an empty `Send` means the key was consumed.
     Send,
     /// Restore pre-composition text (e.g. ESC) — reserved for phase E5+.
     Restore,
@@ -41,7 +42,8 @@ impl ImeResult {
     }
 
     /// Delete `backspace` chars, then inject `output`. The key that triggered this
-    /// result is swallowed by the platform.
+    /// result is swallowed by the platform, even when `backspace` is 0 and `output`
+    /// is empty.
     pub(crate) fn send(backspace: usize, output: String) -> Self {
         Self {
             action: Action::Send,

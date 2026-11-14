@@ -2,6 +2,8 @@
 
 mod support;
 
+#[path = "diacritics/implied_circumflex.rs"]
+mod implied_circumflex;
 #[path = "diacritics/placement.rs"]
 mod placement;
 #[path = "diacritics/remove_tone.rs"]
