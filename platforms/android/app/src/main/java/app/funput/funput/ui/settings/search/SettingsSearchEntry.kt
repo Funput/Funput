@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import app.funput.funput.R
 import app.funput.funput.ui.kit.icons.FunputIcons
+import app.funput.funput.ui.kit.icons.FunputListIcons
 import app.funput.funput.ui.settings.pages.SettingsPage
 import app.funput.funput.ui.settings.smart.SmartInputToggle
 
@@ -40,6 +41,8 @@ private val rows = listOf(
     entry(R.string.extra_onsets_section, FunputIcons.ToneMarks, SettingsPage.TYPING,
         "z f w j", "teencode", "zo", "fai"),
     entry(R.string.settings_number_row_title, FunputIcons.NumberRow, SettingsPage.LAYOUT, "number row", "123", "so"),
+    entry(R.string.settings_section_toolbar_layout, FunputListIcons.Sort, SettingsPage.LAYOUT,
+        "toolbar", "thanh cong cu", "mic", "emoji", "clipboard", "sap xep"),
     entry(R.string.settings_section_enter_key, FunputIcons.Send, SettingsPage.ENTER_KEY,
         "enter", "gui", "send", "xuong dong", "new line", "messenger", "nhan tin", "chat"),
     entry(R.string.settings_enter_key_shift_title, FunputIcons.HardwareKeyboard, SettingsPage.ENTER_KEY,

@@ -9,6 +9,8 @@ import app.funput.funput.ui.settings.extraonsets.ExtraOnsetsSection
 import app.funput.funput.ui.settings.feedback.FeedbackSection
 import app.funput.funput.ui.settings.hardware.HardwareKeyboardSection
 import app.funput.funput.ui.settings.keyboard.LayoutSection
+import app.funput.funput.ui.settings.keyboard.toolbar.ToolbarLayoutSection
+import app.funput.funput.ui.settings.keyboard.toolbar.rememberToolbarLayoutSectionState
 import app.funput.funput.ui.settings.smart.SmartSection
 import app.funput.funput.ui.settings.typing.TypingSection
 
@@ -34,19 +36,24 @@ internal fun LazyListScope.settingsPageItems(
             }
             item(key = "extra-onsets") { ExtraOnsetsSection(state.extraOnsets) }
         }
-        SettingsPage.LAYOUT -> item(key = "layout") {
-            LayoutSection(
-                inputMethod = state.inputMethod,
-                showsNumberRow = state.showsNumberRow,
-                keySizeProfile = state.keySizeProfile,
-                placement = state.placement,
-                onShowsNumberRowChanged = state.onShowsNumberRowChanged,
-                onKeySizeSelected = state.onKeySizeSelected,
-                onOpenPlacement = { onOpenPicker(SettingsPicker.KEYBOARD_PLACEMENT) },
-                onElevationSelected = state.onElevationSelected,
-                onOneHandedWidthSelected = state.onOneHandedWidthSelected,
-                onOneHandedSideSelected = state.onOneHandedSideSelected,
-            )
+        SettingsPage.LAYOUT -> {
+            item(key = "layout") {
+                LayoutSection(
+                    inputMethod = state.inputMethod,
+                    showsNumberRow = state.showsNumberRow,
+                    keySizeProfile = state.keySizeProfile,
+                    placement = state.placement,
+                    onShowsNumberRowChanged = state.onShowsNumberRowChanged,
+                    onKeySizeSelected = state.onKeySizeSelected,
+                    onOpenPlacement = { onOpenPicker(SettingsPicker.KEYBOARD_PLACEMENT) },
+                    onElevationSelected = state.onElevationSelected,
+                    onOneHandedWidthSelected = state.onOneHandedWidthSelected,
+                    onOneHandedSideSelected = state.onOneHandedSideSelected,
+                )
+            }
+            item(key = "toolbar-layout") {
+                ToolbarLayoutSection(rememberToolbarLayoutSectionState())
+            }
         }
         SettingsPage.SMART_INPUT -> item(key = "smart") { SmartSection(state, onOpenDictionary) }
         SettingsPage.FEEDBACK -> item(key = "feedback") {

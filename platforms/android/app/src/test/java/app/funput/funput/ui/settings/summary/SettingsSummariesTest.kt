@@ -43,7 +43,10 @@ class SettingsSummariesTest {
 
     @Test
     fun `layout names the placement mode and the key height`() {
-        assertEquals("Chế độ thường, phím cao 100%", summaries.of(SettingsPage.LAYOUT, testSettingsState()))
+        assertEquals(
+            "Chế độ thường, phím cao 100%, sắp xếp thanh công cụ",
+            summaries.of(SettingsPage.LAYOUT, testSettingsState()),
+        )
     }
 
     @Test
