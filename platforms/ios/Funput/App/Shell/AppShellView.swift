@@ -8,18 +8,20 @@ struct AppShellView: View {
     @StateObject private var settings = SettingsModel.makeForApp()
     @StateObject private var shortcuts = ShortcutsModel(store: ShortcutsStoreFactory.make())
     @StateObject private var news = NewsModel.makeForApp()
+    @State private var fullAccessRefresh: FullAccessRefresh?
 
     var body: some View {
         tabs
             .tint(.accentColor)
+            .onAppear { syncFullAccess(for: scenePhase) }
             .background {
                 if #available(iOS 17, *) {
                     Color.clear
-                        .onChange(of: scenePhase) { _, phase in reloadIfActive(phase) }
+                        .onChange(of: scenePhase) { _, phase in syncFullAccess(for: phase) }
                         .onChange(of: selectedTab) { settings.reload() }
                 } else {
                     Color.clear
-                        .onChange(of: scenePhase) { phase in reloadIfActive(phase) }
+                        .onChange(of: scenePhase) { phase in syncFullAccess(for: phase) }
                         .onChange(of: selectedTab) { _ in settings.reload() }
                 }
             }
@@ -47,10 +49,20 @@ struct AppShellView: View {
         AppTabRoot(tab: tab, settings: settings, shortcuts: shortcuts, news: news)
     }
 
-    /// The keyboard and the Appearance tab write the same configuration, so the copy
-    /// held here is refreshed whenever it may have changed underneath it.
-    private func reloadIfActive(_ phase: ScenePhase) {
-        if phase == .active { settings.reload() }
+    /// Configuration can change under this shell; Full Access also needs a short
+    /// observe window because the keyboard writes it from another process.
+    private func syncFullAccess(for phase: ScenePhase) {
+        if fullAccessRefresh == nil {
+            fullAccessRefresh = FullAccessRefresh(
+                reload: { settings.reload() },
+                hasFullAccess: { settings.hasFullAccess }
+            )
+        }
+        if phase == .active {
+            fullAccessRefresh?.start()
+        } else {
+            fullAccessRefresh?.stop()
+        }
     }
 }
 

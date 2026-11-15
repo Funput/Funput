@@ -25,6 +25,10 @@ public enum FunputAppGroup {
     /// Set by the keyboard after iOS confirms that Full Access is active.
     public static let observedFullAccessKey = "observed-full-access"
 
+    /// Darwin notify posted when ``observedFullAccessKey`` first latches to true.
+    public static let observedFullAccessChangedNotification =
+        "app.funput.funput.observed-full-access-changed"
+
     /// Reset command acknowledged only by the keyboard extension writer.
     public static let personalSuggestionAppliedResetKey = "personal-suggestion-applied-reset"
 
