@@ -38,7 +38,6 @@ internal class ImeClipboardHistoryController(
     private val session = ClipboardSessionGuard()
     private var opened = false
     private var operation: Job? = null
-
     init { scope.launch { preferences.collect { updatePreferences(it) } } }
 
     fun start(editorMode: KeyboardEditorMode) {
@@ -103,6 +102,8 @@ internal class ImeClipboardHistoryController(
     }
 
     fun close() { stop(); scope.cancel() }
+    /** Reloads the open panel after system capture wrote history. */
+    fun entriesChanged() { if (opened && allowed()) refresh() }
 
     private fun mutate(block: (ClipboardHistoryStore) -> List<ClipboardEntry>) {
         if (!allowed() || operation?.isActive == true) return
@@ -142,9 +143,7 @@ internal class ImeClipboardHistoryController(
     private fun publishAvailability() {
         mutableState.value = if (allowed()) mutableState.value.copy(available = true) else ClipboardHistoryState()
     }
-
     private fun valid(token: Long, expectedStore: ClipboardHistoryStore) =
         session.matches(token) && store === expectedStore && allowed()
-
     private fun allowed() = session.allows(prefs.enabled)
 }

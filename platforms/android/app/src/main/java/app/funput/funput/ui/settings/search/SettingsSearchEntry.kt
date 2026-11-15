@@ -55,6 +55,8 @@ private val rows = listOf(
         "preview", "phong to", "popup"),
     entry(R.string.settings_clipboard_enabled_title, FunputIcons.Clipboard, SettingsPage.CLIPBOARD,
         "clipboard", "copy", "sao chep", "dan", "paste"),
+    entry(R.string.settings_clipboard_capture_title, FunputIcons.Clipboard, SettingsPage.CLIPBOARD,
+        "clipboard", "copy", "cut", "he thong", "system", "laban"),
     entry(R.string.speech_settings_title, FunputIcons.Microphone, SettingsPage.SPEECH,
         "voice", "micro", "speech", "noi"),
     entry(R.string.settings_hardware_keyboard_show_title, FunputIcons.HardwareKeyboard, SettingsPage.HARDWARE_KEYBOARD,

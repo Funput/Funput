@@ -128,6 +128,9 @@ internal fun rememberSettingsScreenState(
         onClipboardEnabledChanged = { enabled ->
             scope.launch { settings.clipboardStore.setEnabled(enabled) }
         },
+        onClipboardCaptureSystemCopiesChanged = { enabled ->
+            scope.launch { settings.clipboardStore.setCaptureSystemCopies(enabled) }
+        },
         onClipboardExpirySelected = { expiry ->
             scope.launch { settings.clipboardStore.setExpiry(expiry) }
         },
