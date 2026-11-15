@@ -94,6 +94,8 @@ readonly roots=(
     "$ime_main/settings/layout"
     "$ime_main/hardware"
     "$ime_main/clipboard/session"
+    "$ime_main/clipboard/capture"
+    "$ime_test/clipboard/capture"
     "$ime_main/localtext"
     "$ime_test/localtext"
     "$ime_test/editing/capitalization"

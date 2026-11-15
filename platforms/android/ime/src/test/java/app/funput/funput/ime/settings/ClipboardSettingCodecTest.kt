@@ -12,6 +12,7 @@ class ClipboardSettingCodecTest {
         assertEquals(ClipboardPreferences.Default, ClipboardSettingCodec.decode(null, null))
         assertEquals(ClipboardExpiry.HOUR, ClipboardSettingCodec.decode(true, "invalid").expiry)
         assertTrue(ClipboardSettingCodec.decode(null, "day").enabled)
+        assertTrue(ClipboardSettingCodec.decode(true, "hour", null).captureSystemCopies)
     }
 
     @Test
@@ -20,6 +21,13 @@ class ClipboardSettingCodecTest {
             val decoded = ClipboardSettingCodec.decode(false, ClipboardSettingCodec.encode(expiry))
             assertFalse(decoded.enabled)
             assertEquals(expiry, decoded.expiry)
+            assertTrue(decoded.captureSystemCopies)
         }
+    }
+
+    @Test
+    fun `system copy capture flag round trips`() {
+        assertTrue(ClipboardSettingCodec.decode(true, "day", true).captureSystemCopies)
+        assertFalse(ClipboardSettingCodec.decode(true, "day", false).captureSystemCopies)
     }
 }
