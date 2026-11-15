@@ -38,13 +38,16 @@ class ClipboardAndFeedbackTest {
     @Test
     fun `the clipboard group shows its expiry and dispatches both actions`() {
         var enabled = true
+        var capture = false
         var openedExpiry = false
         compose.setContent {
             FunputUiTheme(isDark = false) {
                 ClipboardSection(
                     enabled = true,
+                    captureSystemCopies = false,
                     expiry = ClipboardExpiry.DAY,
                     onEnabledChanged = { enabled = it },
+                    onCaptureSystemCopiesChanged = { capture = it },
                     onOpenExpiry = { openedExpiry = true },
                 )
             }
@@ -52,9 +55,11 @@ class ClipboardAndFeedbackTest {
 
         compose.onNodeWithText("CLIPBOARD").assertExists()
         compose.onNodeWithText("1 ngày").assertExists()
+        compose.onNodeWithText("Lưu mọi nội dung sao chép").performClick()
         compose.onNodeWithText("Lưu lịch sử bảng nhớ tạm").performClick()
         compose.onNodeWithText("Tự xoá sau").performClick()
 
+        assertTrue(capture)
         assertFalse(enabled)
         assertTrue(openedExpiry)
     }
@@ -66,8 +71,10 @@ class ClipboardAndFeedbackTest {
                 Box(Modifier.width(320.dp)) {
                     ClipboardSection(
                         enabled = true,
+                        captureSystemCopies = false,
                         expiry = ClipboardExpiry.WEEK,
                         onEnabledChanged = {},
+                        onCaptureSystemCopiesChanged = {},
                         onOpenExpiry = {},
                     )
                 }

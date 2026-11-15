@@ -123,7 +123,7 @@ Tab **Bàn phím** là mục lục, từ trên xuống:
 | **Bố cục và kích thước** | Chế độ bàn phím, hàng phím số, kích thước phím, sắp xếp phím thanh công cụ (lên/xuống hoặc chuyển trái/phải) |
 | **Thông minh** | Khôi phục từ, kiểm tra chính tả, tự viết hoa, gợi ý từ, cử chỉ thông minh, tự về bảng chữ |
 | **Phản hồi khi chạm** | Mức rung (Tắt, Nhẹ, Trung bình, Mạnh), âm thanh khi gõ, xem trước phím |
-| **Clipboard** | Bật lịch sử clipboard và thời gian tự xoá; trên bàn phím, chạm phím copy để dán, giữ để mở lịch sử |
+| **Clipboard** | Bật lịch sử; mặc định lưu mọi copy hệ thống khi Funput là IME (có thể tắt), thời gian tự xoá; trên bàn phím, chạm phím copy để dán, giữ để mở lịch sử |
 | **Nhập bằng giọng nói** | Quyền micro và dữ liệu nhận dạng (chỉ ở bản có tính năng này) |
 | **Bàn phím rời** | Hiện Funput khi có bàn phím rời, phím tắt Alt + Space |
 | **Dữ liệu** (mở từ tab **Tôi**) | Xoá từ đã học và lịch sử clipboard |

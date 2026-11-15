@@ -181,7 +181,9 @@
     <string name="settings_personal_suggestions_reset_confirm">Xóa từ</string>
     <string name="settings_clipboard_section">Clipboard</string>
     <string name="settings_clipboard_enabled_title">Lưu lịch sử bảng nhớ tạm</string>
-    <string name="settings_clipboard_enabled_summary">Chỉ lưu những gì bạn đã dán qua Funput, trên thiết bị.</string>
+    <string name="settings_clipboard_enabled_summary">Lưu lịch sử trên thiết bị. Tắt để dừng mọi ghi nhận mới.</string>
+    <string name="settings_clipboard_capture_title">Lưu mọi nội dung sao chép</string>
+    <string name="settings_clipboard_capture_summary">Ghi cả copy/cut hệ thống khi Funput là bàn phím đang chọn. Có thể gồm mật khẩu hoặc OTP nếu app không đánh dấu nhạy cảm.</string>
     <string name="settings_clipboard_expiry_title">Tự xoá sau</string>
     <string name="settings_clipboard_expiry_summary">Mục đã ghim không bao giờ tự xoá</string>
     <string name="settings_clipboard_expiry_hour">1 giờ</string>

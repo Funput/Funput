@@ -70,6 +70,7 @@ internal class SettingsScreenState(
     val onTypoCorrectionChanged: (Boolean) -> Unit = {},
     val onPersonalSuggestionsChanged: (Boolean) -> Unit,
     val onClipboardEnabledChanged: (Boolean) -> Unit,
+    val onClipboardCaptureSystemCopiesChanged: (Boolean) -> Unit = {},
     val onClipboardExpirySelected: (ClipboardExpiry) -> Unit,
     val onClearClipboardHistory: () -> Unit,
     val onResetPersonalSuggestions: () -> Unit,

@@ -16,14 +16,17 @@ import app.funput.funput.ui.kit.theme.FunputTint
 import app.funput.funput.ui.settings.label
 import app.funput.funput.ui.settings.sectionTitle
 
-/** Clipboard history: whether Funput keeps it, and how long unpinned items last. One green group. */
+/** Clipboard history: keep it, optionally record system copies, and retention for unpinned items. */
 @Composable
 internal fun ClipboardSection(
     enabled: Boolean,
+    captureSystemCopies: Boolean,
     expiry: ClipboardExpiry,
     onEnabledChanged: (Boolean) -> Unit,
+    onCaptureSystemCopiesChanged: (Boolean) -> Unit,
     onOpenExpiry: () -> Unit,
 ) {
+    val divider = @Composable { FunputDivider(startInset = FunputRowDefaults.IconDividerInset) }
     FunputSection(
         title = sectionTitle(R.string.settings_clipboard_section),
         modifier = Modifier.testTag(ClipboardSettingsSectionTag),
@@ -36,7 +39,17 @@ internal fun ClipboardSection(
             icon = FunputIcons.Clipboard,
             tint = FunputTint.GREEN,
         )
-        FunputDivider(startInset = FunputRowDefaults.IconDividerInset)
+        divider()
+        ToggleRow(
+            title = stringResource(R.string.settings_clipboard_capture_title),
+            summary = stringResource(R.string.settings_clipboard_capture_summary),
+            checked = captureSystemCopies,
+            onCheckedChange = onCaptureSystemCopiesChanged,
+            enabled = enabled,
+            icon = FunputIcons.Clipboard,
+            tint = FunputTint.GREEN,
+        )
+        divider()
         LinkRow(
             title = stringResource(R.string.settings_clipboard_expiry_title),
             summary = stringResource(R.string.settings_clipboard_expiry_summary),

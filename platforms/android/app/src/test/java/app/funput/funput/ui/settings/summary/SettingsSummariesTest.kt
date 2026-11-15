@@ -80,8 +80,18 @@ class SettingsSummariesTest {
         val day = testSettingsState(clipboardExpiry = ClipboardExpiry.DAY)
         val off = testSettingsState(clipboardPreferences = ClipboardPreferences.Default.copy(enabled = false))
 
-        assertEquals("Lưu lịch sử trong 1 ngày", summaries.of(SettingsPage.CLIPBOARD, day))
+        assertEquals(
+            "Lưu lịch sử trong 1 ngày, gồm mọi nội dung sao chép",
+            summaries.of(SettingsPage.CLIPBOARD, day),
+        )
         assertEquals("Không lưu lịch sử", summaries.of(SettingsPage.CLIPBOARD, off))
+        val pasteOnly = testSettingsState(
+            clipboardPreferences = ClipboardPreferences.Default.copy(
+                expiry = ClipboardExpiry.DAY,
+                captureSystemCopies = false,
+            ),
+        )
+        assertEquals("Lưu lịch sử trong 1 ngày", summaries.of(SettingsPage.CLIPBOARD, pasteOnly))
     }
 
     @Test

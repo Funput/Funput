@@ -101,7 +101,12 @@ internal class SettingsSummaries(private val resources: Resources) {
                 ClipboardExpiry.WEEK -> R.string.settings_clipboard_expiry_week
             },
         )
-        return resources.getString(R.string.settings_summary_clipboard_on, expiry)
+        val summary = if (state.clipboardPreferences.captureSystemCopies) {
+            R.string.settings_summary_clipboard_on_system
+        } else {
+            R.string.settings_summary_clipboard_on
+        }
+        return resources.getString(summary, expiry)
     }
 }
 

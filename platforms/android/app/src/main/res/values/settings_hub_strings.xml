@@ -27,6 +27,7 @@
     <string name="settings_summary_sounds">âm thanh</string>
 
     <string name="settings_summary_clipboard_on">Lưu lịch sử trong %1$s</string>
+    <string name="settings_summary_clipboard_on_system">Lưu lịch sử trong %1$s, gồm mọi nội dung sao chép</string>
     <string name="settings_summary_clipboard_off">Không lưu lịch sử</string>
 
     <string name="settings_summary_hardware_show">hiện bàn phím trên màn hình</string>

@@ -69,8 +69,10 @@ internal fun LazyListScope.settingsPageItems(
         SettingsPage.CLIPBOARD -> item(key = "clipboard") {
             ClipboardSection(
                 enabled = state.clipboardPreferences.enabled,
+                captureSystemCopies = state.clipboardPreferences.captureSystemCopies,
                 expiry = state.clipboardPreferences.expiry,
                 onEnabledChanged = state.onClipboardEnabledChanged,
+                onCaptureSystemCopiesChanged = state.onClipboardCaptureSystemCopiesChanged,
                 onOpenExpiry = { onOpenPicker(SettingsPicker.CLIPBOARD_EXPIRY) },
             )
         }
