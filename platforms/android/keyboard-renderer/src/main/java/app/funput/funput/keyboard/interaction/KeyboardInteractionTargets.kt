@@ -15,18 +15,14 @@ internal object SuggestionTargetIds {
     }
 }
 
-internal const val ClipboardTargetId = "clipboard-paste"
-
 internal fun ResolvedKeyboard.interactionTargetAt(
     x: Float,
     y: Float,
     suggestionCount: Int,
-    clipboardVisible: Boolean = false,
 ): String? {
     keyAt(x, y)?.let { return it.spec.id }
     val bar = suggestionBar ?: return null
-    if (!bar.suggestionsHitBounds.contains(x, y)) return null
-    if (suggestionCount <= 0) return ClipboardTargetId.takeIf { clipboardVisible }
+    if (!bar.suggestionsHitBounds.contains(x, y) || suggestionCount <= 0) return null
 
     // Segments follow what is drawn, not the wider hit region: a tap in the slack around
     // the band belongs to the nearest candidate instead of shifting every boundary.

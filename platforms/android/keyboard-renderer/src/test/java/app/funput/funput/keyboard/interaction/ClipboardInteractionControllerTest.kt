@@ -11,39 +11,66 @@ import org.junit.Test
 
 class ClipboardInteractionControllerTest {
     @Test
-    fun `touch and accessibility dispatch clipboard exactly once with control feedback`() {
-        var requests = 0
-        val haptics = mutableListOf<KeyboardHapticType>()
-        val controller = controller({ requests++ }, {}, haptics::add)
-
-        controller.onPointerStarted(1, ClipboardTargetId, 40f, 20f)
-        controller.onKeyReleased(1, ClipboardTargetId, 40f, 20f, 10L)
-        controller.emitClick(ClipboardTargetId, 11L)
-
-        assertEquals(2, requests)
-        assertEquals(listOf(KeyboardHapticType.CONTROL, KeyboardHapticType.CONTROL), haptics)
+    fun `tap pastes when offer is present and opens panel when empty`() {
+        val actions = mutableListOf<String>()
+        val withOffer = controller(actions::add, hasOffer = true)
+        withOffer.onKeyReleased(1, "clipboard", 40f, 20f, 10L)
+        val withoutOffer = controller(actions::add, hasOffer = false)
+        withoutOffer.onKeyReleased(2, "clipboard", 40f, 20f, 11L)
+        assertEquals(listOf("paste", "panel"), actions)
     }
 
     @Test
-    fun `toolbar clipboard key opens panel exactly once`() {
+    fun `accessibility click pastes exactly once with control feedback`() {
         var requests = 0
-        val controller = controller({}, { requests++ }, {})
-        controller.onKeyReleased(1, "clipboard", 40f, 20f, 10L)
+        val haptics = mutableListOf<KeyboardHapticType>()
+        val controller = controller({ if (it == "paste") requests++ }, hasOffer = true, onHaptic = haptics::add)
+        controller.emitClick("clipboard", 11L)
         assertEquals(1, requests)
+        assertEquals(listOf(KeyboardHapticType.CONTROL), haptics)
+    }
+
+    @Test
+    fun `holding clipboard opens panel and skips the release paste`() {
+        val actions = mutableListOf<String>()
+        val pending = mutableListOf<Runnable>()
+        val controller = controller(
+            actions::add,
+            hasOffer = true,
+            schedule = { task, _ -> pending += task },
+            cancel = { pending.remove(it) },
+        )
+        controller.onPointerStarted(1, "clipboard", 40f, 20f)
+        pending.toList().forEach(Runnable::run)
+        assertEquals(listOf("panel"), actions)
+        controller.onKeyReleased(1, "clipboard", 40f, 20f, 10L)
+        assertEquals(listOf("panel"), actions)
+    }
+
+    @Test
+    fun `accessibility history action opens panel with control feedback`() {
+        val actions = mutableListOf<String>()
+        val haptics = mutableListOf<KeyboardHapticType>()
+        val controller = controller(actions::add, hasOffer = true, onHaptic = haptics::add)
+        controller.emitClipboardPanel()
+        assertEquals(listOf("panel"), actions)
+        assertEquals(listOf(KeyboardHapticType.CONTROL), haptics)
     }
 
     private fun controller(
-        onClipboard: () -> Unit,
-        onPanel: () -> Unit,
-        onHaptic: (KeyboardHapticType) -> Unit,
+        onAction: (String) -> Unit,
+        hasOffer: Boolean,
+        onHaptic: (KeyboardHapticType) -> Unit = {},
+        schedule: (Runnable, Long) -> Unit = { _, _ -> },
+        cancel: (Runnable) -> Unit = {},
     ) = KeyboardInteractionController(
-        keySpec = { id -> KeySpec(id, "", KeyRole.CLIPBOARD, accessibilityLabel = "Clipboard") },
+        keySpec = { id -> KeySpec(id, "", KeyRole.CLIPBOARD, accessibilityLabel = "Dán") },
         suggestionSelection = { null },
         onAction = {},
         utilities = KeyboardUtilityDispatcher {
             when (it) {
-                KeyboardUtilityAction.CLIPBOARD_PASTE -> onClipboard()
-                KeyboardUtilityAction.CLIPBOARD_PANEL -> onPanel()
+                KeyboardUtilityAction.CLIPBOARD_PASTE -> onAction("paste")
+                KeyboardUtilityAction.CLIPBOARD_PANEL -> onAction("panel")
                 else -> Unit
             }
         },
@@ -51,13 +78,14 @@ class ClipboardInteractionControllerTest {
         onHapticFeedback = onHaptic,
         onVisualStateChanged = {},
         onSemanticStateChanged = {},
-        schedule = { _, _ -> },
-        cancel = {},
+        schedule = schedule,
+        cancel = cancel,
         keyBounds = { KeyBounds(0f, 0f, 100f, 40f) },
         surfaceBounds = { KeyBounds(0f, 0f, 320f, 260f) },
         touchSlop = 8f,
         onPointerCaptured = {},
         doubleTapTimeoutMillis = 300L,
         density = 1f,
+        hasPasteOffer = { hasOffer },
     )
 }

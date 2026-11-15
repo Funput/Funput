@@ -5,7 +5,6 @@ import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.ShiftState
 import app.funput.funput.keyboard.interaction.SuggestionTargetIds
-import app.funput.funput.keyboard.interaction.ClipboardTargetId
 import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.popover.accessibility.AlternateAccessibilityAction
@@ -18,7 +17,6 @@ internal class KeyboardAccessibilitySnapshot(
     keyboard: ResolvedKeyboard,
     shiftState: ShiftState,
     suggestions: List<SuggestionChip> = emptyList(),
-    clipboardLabel: String? = null,
     clipboardKeyLabel: String? = null,
     smartGesturesEnabled: Boolean = true,
     breaksLineOnEnterHold: Boolean = false,
@@ -36,7 +34,7 @@ internal class KeyboardAccessibilitySnapshot(
                 alternateActions = key.spec.alternateAccessibilityActions(shiftState),
                 customActions = SmartGestureAccessibility.actions(
                     key.spec.role, smartGesturesEnabled, breaksLineOnEnterHold,
-                ),
+                ) + ClipboardAccessibility.actions(key.spec.role),
             ).let(::add)
         }
         val bar = keyboard.suggestionBar
@@ -46,15 +44,20 @@ internal class KeyboardAccessibilitySnapshot(
         if (bounds != null && hit != null && suggestions.isNotEmpty()) {
             val width = bounds.width / suggestions.size
             suggestions.forEachIndexed { index, chip ->
-                val segment = KeyBounds(bounds.left + width * index, bounds.top, bounds.left + width * (index + 1), bounds.bottom)
+                val segment = KeyBounds(
+                    bounds.left + width * index, bounds.top,
+                    bounds.left + width * (index + 1), bounds.bottom,
+                )
                 val target = KeyBounds(segment.left, hit.top, segment.right, hit.bottom)
                 val id = SuggestionTargetIds.id(index)
                 // TalkBack cannot long-press a slot, so a learned word carries its actions instead.
-                val actions = if (suggestions.selectionForTarget(id)?.let(suggestionEditable) == true) suggestionActions else emptyList()
+                val actions = if (suggestions.selectionForTarget(id)?.let(suggestionEditable) == true) {
+                    suggestionActions
+                } else {
+                    emptyList()
+                }
                 add(KeyboardAccessibilityNode(size, id, chip.accessibilityLabel, segment, target, false, customActions = actions))
             }
-        } else if (bounds != null && hit != null && clipboardLabel != null) {
-            add(KeyboardAccessibilityNode(size, ClipboardTargetId, clipboardLabel, bounds, hit, false))
         }
     }
 

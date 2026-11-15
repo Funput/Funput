@@ -29,7 +29,6 @@ internal class KeyboardSurfaceAccessibilityController(
         keyboard: ResolvedKeyboard?,
         shiftState: ShiftState,
         suggestions: List<SuggestionChip> = emptyList(),
-        clipboardLabel: String? = null,
         clipboardKeyLabel: String? = null,
         smartGesturesEnabled: Boolean = true,
         breaksLineOnEnterHold: Boolean = false,
@@ -37,7 +36,7 @@ internal class KeyboardSurfaceAccessibilityController(
     ) {
         snapshot = keyboard?.let {
             KeyboardAccessibilitySnapshot(
-                it, shiftState, suggestions, clipboardLabel, clipboardKeyLabel, smartGesturesEnabled,
+                it, shiftState, suggestions, clipboardKeyLabel, smartGesturesEnabled,
                 breaksLineOnEnterHold, suggestionEditable,
             )
         }

@@ -30,7 +30,6 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val keyRenderer = KeyRenderer(metrics)
     private val keyPopupRenderer = KeyPopupRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
-    private val clipboardChipRenderer = ClipboardChipRenderer(resources, metrics)
     private val backgroundImageRenderer = KeyboardBackgroundImageRenderer()
     private val liquidGlassBackdrop = LiquidGlassBackdropPainter()
     private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
@@ -39,7 +38,6 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         this.theme = theme
         keyRenderer.updateTheme(theme, width, height)
         suggestionBarRenderer.updateTheme(theme)
-        clipboardChipRenderer.updateTheme(theme)
         keyPopupRenderer.updateTheme(theme)
         liquidGlassBackdrop.updateTheme(theme, width, height)
         if (width > 0 && height > 0) {
@@ -91,19 +89,12 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
                     ?: SuggestionBand.chips(suggestions, bar.suggestionsBounds)
                 suggestionBarRenderer.draw(canvas, bar.suggestionsBounds, segments, pressedKeys)
             }
-            if (suggestions.isEmpty() && clipboardHint != null && bar.clipboardHintFits) {
-                clipboardChipRenderer.draw(canvas, bar.suggestionsBounds, clipboardHint, pressedKeys)
-            }
         }
+        val clipboardOfferActive = clipboardHint != null
         keyboard.keys.forEach { key ->
             keyRenderer.draw(
-                canvas,
-                key,
-                theme,
-                pressedKeys.isPressed(key.spec.id),
-                shiftState,
-                language,
-                enterAction,
+                canvas, key, theme, pressedKeys.isPressed(key.spec.id), shiftState, language,
+                enterAction, clipboardOfferActive,
             )
         }
         val alternatePreview = interaction?.alternatePreview

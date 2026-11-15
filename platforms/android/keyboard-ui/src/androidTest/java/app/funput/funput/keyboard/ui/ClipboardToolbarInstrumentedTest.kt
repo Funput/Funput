@@ -42,8 +42,9 @@ class ClipboardToolbarInstrumentedTest {
     }
 
     @Test
-    fun clipboardChipChangesToolbarPixelsAndVietnameseLabelsMatchIos() = withKeyboard { keyboard ->
+    fun clipboardOfferChangesToolbarPixelsAndLabelsStayVietnamese() = withKeyboard { keyboard ->
         val surface = keyboard.surface()
+        surface.clipboardKeyVisible = true
         val before = surface.bitmap()
         keyboard.clipboardHint = KeyboardClipboardHint.TEXT
         val after = surface.bitmap()
@@ -57,10 +58,11 @@ class ClipboardToolbarInstrumentedTest {
         assertEquals("Đã sao chép văn bản", resources.getString(R.string.clipboard_hint_text))
         assertEquals("Đã sao chép một liên kết", resources.getString(R.string.clipboard_hint_link))
         assertEquals("Đã sao chép nội dung nhạy cảm", resources.getString(R.string.clipboard_hint_sensitive))
+        assertEquals("Lịch sử bảng nhớ tạm", resources.getString(R.string.clipboard_open_accessibility))
     }
 
     @Test
-    fun clipboardChipRendersAcrossEveryPresetTheme() = withKeyboard { keyboard ->
+    fun clipboardBadgeRendersAcrossEveryPresetTheme() = withKeyboard { keyboard ->
         val themes = listOf(
             KeyboardThemes.Slate,
             KeyboardThemes.Ink,
@@ -71,6 +73,7 @@ class ClipboardToolbarInstrumentedTest {
             KeyboardThemes.Blossom,
             KeyboardThemes.Orchid,
         )
+        keyboard.surface().clipboardKeyVisible = true
         keyboard.clipboardHint = KeyboardClipboardHint.LINK
         themes.forEach { theme ->
             keyboard.keyboardTheme = theme
