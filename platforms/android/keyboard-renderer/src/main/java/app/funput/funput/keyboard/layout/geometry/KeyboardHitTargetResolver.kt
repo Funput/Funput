@@ -35,21 +35,23 @@ internal object KeyboardHitTargetResolver {
         keyboard: ResolvedKeyboard,
         bar: ResolvedSuggestionBar,
     ): ResolvedSuggestionBar {
-        // Left to right: voice input, keyboard mode, suggestions, then the right-hand utilities.
-        val leading = listOfNotNull(bar.microphoneKey, bar.placementKey)
-        val trailing = listOfNotNull(bar.systemInputMethodKey, bar.clipboardKey, bar.emojiKey)
+        // Neighbours follow on-screen left-to-right order, not a fixed role list.
+        val controls = listOfNotNull(
+            bar.microphoneKey, bar.placementKey, bar.systemInputMethodKey,
+            bar.clipboardKey, bar.emojiKey,
+        ).sortedBy { it.bounds.left }
         val hitBottom = midpoint(bar.bounds.bottom, keyboard.rows.first().first().bounds.top)
-        // Ordered spans of the toolbar; the suggestions area is a span too when enabled.
-        val spans = leading.map { it.bounds } +
-            (if (bar.suggestionsEnabled) listOf(bar.suggestionsBounds) else emptyList()) +
-            trailing.map { it.bounds }
+        val spans = (
+            controls.map { it.bounds } +
+                listOfNotNull(bar.suggestionsBounds.takeIf { bar.suggestionsEnabled })
+            ).sortedBy { it.left }
         fun edges(bounds: KeyBounds): Pair<Float, Float> {
             val index = spans.indexOf(bounds)
             val left = spans.getOrNull(index - 1)?.let { midpoint(it.right, bounds.left) } ?: 0f
             val right = spans.getOrNull(index + 1)?.let { midpoint(bounds.right, it.left) } ?: keyboard.width
             return left to right
         }
-        val resolvedControls = (leading + trailing).map { key ->
+        val resolvedControls = controls.map { key ->
             val (left, right) = edges(key.bounds)
             resolveToolbarKey(key, left, right, hitBottom)
         }
