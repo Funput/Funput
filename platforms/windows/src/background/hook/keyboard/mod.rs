@@ -82,9 +82,10 @@ fn fire(hit: Hit) -> bool {
             }
             // The hotkey's own modifiers are still held on this keydown, so the
             // Backspaces must go out with them cleared — [`inject::send_plan_unmodified`].
-            let plan = plan_inject(&shell::flip_composing());
-            inject::send_plan_unmodified(&plan, keymap::read_mods());
-            true // swallow even on a no-op, so the hotkey never leaks to the app
+            if let Some(plan) = plan_inject(&shell::flip_composing()) {
+                inject::send_plan_unmodified(&plan, keymap::read_mods());
+            }
+            true // swallow even with nothing to flip, so the hotkey never leaks to the app
         }
     }
 }

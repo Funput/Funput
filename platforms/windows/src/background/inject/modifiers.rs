@@ -20,7 +20,7 @@ use super::send_plan;
 /// time would find the chord no longer matches, because the OS would believe those
 /// keys had come up.
 pub fn send_plan_unmodified(plan: &InjectPlan, held: Mods) {
-    if plan.is_noop() {
+    if plan.is_empty() {
         return;
     }
     let down: Vec<VIRTUAL_KEY> = [

@@ -29,7 +29,7 @@ Dù vậy thiết kế ở đây vẫn đi xa hơn cái tên: Linux port nó san
 |---|---|
 | `key` | `classify(&KeyEvent) -> KeyKind` — một phím nghĩa là gì |
 | `caret` | `Caret` — shell biết gì về chỗ caret rơi xuống sau khi nó nhảy mà không qua phím gõ |
-| `inject` | `plan_inject(&ImeResult) -> InjectPlan` — cần xoá bao nhiêu, gõ gì |
+| `inject` | `plan_inject(&ImeResult) -> Option<InjectPlan>` — nuốt phím không, cần xoá bao nhiêu, gõ gì |
 | `layout` | `is_foreign_layout(u32)` — bàn phím đang focus có gõ được tiếng Việt không |
 | `retone` | `CommittedTail` — bản bóng của chữ đã gõ, thay cho tài liệu không đọc được |
 | `shell` | `ShellState` — trạng thái mà năm thứ trên được quyết định trên đó |
@@ -82,11 +82,13 @@ pub struct InjectPlan {
     pub backspaces: usize,  // số ký tự cần xoá lùi
     pub units: Vec<u16>,    // UTF-16 code unit để gõ sau khi xoá
 }
-// is_noop() = backspaces == 0 && units.is_empty()
+// is_empty() = backspaces == 0 && units.is_empty() — chỉ nói "không có gì để gửi"
 ```
 
-`Action::None` cho plan rỗng: để phím tới app nguyên vẹn. `Action::Send` / `Action::Restore` xoá
-`backspace` ký tự rồi gõ `output`, và host nuốt phím gốc.
+`plan_inject` trả `Option`: `Action::None` cho `None`, để phím tới app nguyên vẹn. `Action::Send` /
+`Action::Restore` cho `Some`: xoá `backspace` ký tự rồi gõ `output`, và host **nuốt phím gốc kể cả
+khi plan rỗng**. Engine có phím bị nuốt mà chữ không đổi (phím mũ xác nhận mũ tự thêm của `iê`,
+`viecj` + `e`); host đọc plan rỗng là "cho phím đi qua" sẽ ra `việce`.
 
 `units` là **UTF-16** vì đó là thứ Windows `SendInput` (`KEYEVENTF_UNICODE`) nhận. Chữ Việt NFC nằm
 trong BMP nên mỗi ký tự một unit, nhưng surrogate pair vẫn đúng cho text khác. Đây là chỗ duy nhất
@@ -159,11 +161,12 @@ tưởng một session đang bị treo là một lần lật VI/EN từ process 
 WH_KEYBOARD_LL callback
   ├─ tổ hợp toggle? → hỏi lại app đang ở trước (note/clear_foreground),
   │                   state.toggle_enabled_hotkey(), nuốt phím       (trước classify)
-  ├─ tổ hợp flip?   → plan_inject(state.flip_composing()), nuốt phím
+  ├─ tổ hợp flip?   → if let Some(plan) = plan_inject(state.flip_composing()), nuốt phím
   ├─ !state.hook_active()? → để phím đi qua, không classify
   └─ dựng KeyEvent (mods, ToUnicodeEx → ch, backspace/navigation, numpad?)
        match classify(&ev):
-         Compose(c, src) → plan_inject(state.process_key(c, src)) → SendInput; nuốt phím
+         Compose(c, src) → match plan_inject(state.process_key(c, src)):
+                             None → để phím đi qua; Some(plan) → SendInput, nuốt phím (cả plan rỗng)
          Backspace       → state.on_backspace(); để Backspace vật lý đi qua (app tự xoá)
          Flush(caret)    → state.caret_moved(caret); để phím đi qua
          PassThrough     → để phím đi qua
@@ -188,7 +191,7 @@ tháo hook nào chạy quá `LowLevelHooksTimeout`.
 | funput-desktop | Host (`platforms/windows`) |
 |---|---|
 | `classify` — phím → ý nghĩa | Đọc phím thô (LL hook), map keycode → `KeyEvent` |
-| `plan_inject` — `ImeResult` → `InjectPlan` | Gửi Backspace/Unicode (`SendInput`), chống đệ quy |
+| `plan_inject` — `ImeResult` → `Option<InjectPlan>` | Gửi Backspace/Unicode (`SendInput`), chống đệ quy |
 | `is_foreign_layout` — layout này gõ được không | Hỏi Windows layout nào đang focus (`GetKeyboardLayout`) |
 | `ShellState` — settings, bộ nhớ theo app, gõ tắt | Global + mutex, tray, cửa sổ Slint, singleton |
 | Pure, OS-neutral, unit-test được | Mọi thứ chạm Win32 |

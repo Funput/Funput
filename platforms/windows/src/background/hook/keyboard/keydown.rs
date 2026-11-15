@@ -67,15 +67,15 @@ pub(super) fn handle(kbd: &KBDLLHOOKSTRUCT) -> bool {
 /// Act on a key the engine is meant to see. Returns true when it was swallowed.
 fn dispatch(kind: KeyKind) -> bool {
     match kind {
-        KeyKind::Compose(c, source) => {
-            let plan = plan_inject(&shell::process_key(c, source));
-            if plan.is_noop() {
-                false // Action::None — the literal key reaches the app
-            } else {
-                inject::send_plan(&plan); // delete + retype the composed text
+        KeyKind::Compose(c, source) => match plan_inject(&shell::process_key(c, source)) {
+            None => false, // Action::None — the literal key reaches the app
+            Some(plan) => {
+                // Delete + retype the composed text. An empty plan still swallows
+                // the key: the engine took it without changing what is on screen.
+                inject::send_plan(&plan);
                 true
             }
-        }
+        },
         KeyKind::Backspace => {
             // Sync Funput's model of the text; the app deletes its own char. When the
             // deletion puts the caret back on a finished word, this re-opens it so the

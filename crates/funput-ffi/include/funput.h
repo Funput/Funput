@@ -127,7 +127,9 @@
 #define CHARS_CAP 64
 
 /**
- * Platform action: `0 = None`, `1 = Send`, `2 = Restore`.
+ * Platform action: `0 = None`, `1 = Send`, `2 = Restore`. A `Send` with
+ * `backspace == 0` and `count == 0` still means the key was consumed: the host
+ * must not pass it through.
  */
 #define ACTION_NONE 0
 
