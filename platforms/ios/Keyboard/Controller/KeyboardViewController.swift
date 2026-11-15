@@ -106,7 +106,7 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidAppear(animated)
         launchTrace.finish()
         releaseSystemGestureTouchDelay()
-        if hasFullAccess { accessStateStore.recordFullAccess() }
+        accessStateStore.record(hasFullAccess: hasFullAccess)
 #if DEBUG
         touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif

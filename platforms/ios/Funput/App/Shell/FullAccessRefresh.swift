@@ -1,68 +1,70 @@
-import FunputShared
 import Foundation
+import FunputShared
 
-/// Reloads settings when Full Access may have been confirmed while the app was away
-/// or while the Funput keyboard was shown over the app.
+/// Keeps the app's Full Access state in step with the keyboard, which is the only
+/// process that can ask iOS for it.
+///
+/// Changes made while the app was away are picked up by the reload on activation. A
+/// change made while the app is open (the Funput keyboard shown over one of its text
+/// fields) arrives as a Darwin signal. The keyboard posts that signal once per change,
+/// right after its defaults write, and the app's read can still return the old value,
+/// so a signal that finds nothing new is re-checked a few times instead of dropped.
 @MainActor
 final class FullAccessRefresh {
-    private let reload: () -> Void
-    private let hasFullAccess: () -> Bool
-    private let observe: (@escaping () -> Void) -> any ObservedFullAccessObserving
-    private let pollAttempts: Int
-    private let pollInterval: Duration
-    private var pollTask: Task<Void, Never>?
-    private var observer: (any ObservedFullAccessObserving)?
-    private var isActive = false
+    typealias Observe =
+        @MainActor (@escaping @MainActor () -> Void) -> any ObservedFullAccessObserving
 
+    private let reloadSettings: () -> Void
+    private let refreshAccess: () -> Bool
+    private let observe: Observe
+    private let retryAttempts: Int
+    private let retryInterval: Duration
+    private var observer: (any ObservedFullAccessObserving)?
+    private(set) var retryTask: Task<Void, Never>?
+
+    /// - Parameters:
+    ///   - reloadSettings: Re-reads everything the keyboard may have written.
+    ///   - refreshAccess: Re-reads only the Full Access flag; returns whether it changed.
     init(
-        reload: @escaping () -> Void,
-        hasFullAccess: @escaping () -> Bool,
-        pollAttempts: Int = 6,
-        pollInterval: Duration = .milliseconds(500),
-        observe: @escaping (@escaping () -> Void) -> any ObservedFullAccessObserving =
-            ObservedFullAccessSignal.observe
+        reloadSettings: @escaping () -> Void,
+        refreshAccess: @escaping () -> Bool,
+        retryAttempts: Int = 6,
+        retryInterval: Duration = .milliseconds(500),
+        observe: @escaping Observe = ObservedFullAccessSignal.observe
     ) {
-        self.reload = reload
-        self.hasFullAccess = hasFullAccess
-        self.pollAttempts = pollAttempts
-        self.pollInterval = pollInterval
+        self.reloadSettings = reloadSettings
+        self.refreshAccess = refreshAccess
+        self.retryAttempts = retryAttempts
+        self.retryInterval = retryInterval
         self.observe = observe
     }
 
+    var isActive: Bool { observer != nil }
+
+    /// Reloads once and listens for the keyboard. Repeated calls are no-ops.
     func start() {
-        cancelPoll()
-        isActive = true
-        reload()
-        if observer == nil {
-            observer = observe { [weak self] in
-                Task { @MainActor in self?.handleSignal() }
-            }
-        }
-        guard !hasFullAccess() else { return }
-        pollTask = Task { [weak self] in
-            guard let self else { return }
-            for _ in 0..<self.pollAttempts {
-                try? await Task.sleep(for: self.pollInterval)
-                guard !Task.isCancelled, self.isActive else { return }
-                self.reload()
-                if self.hasFullAccess() { return }
-            }
-        }
+        guard !isActive else { return }
+        reloadSettings()
+        observer = observe { [weak self] in self?.handleSignal() }
     }
 
     func stop() {
-        isActive = false
-        cancelPoll()
+        observer = nil
+        retryTask?.cancel()
+        retryTask = nil
     }
 
     private func handleSignal() {
         guard isActive else { return }
-        reload()
-        if hasFullAccess() { cancelPoll() }
-    }
-
-    private func cancelPoll() {
-        pollTask?.cancel()
-        pollTask = nil
+        retryTask?.cancel()
+        retryTask = nil
+        guard !refreshAccess() else { return }
+        retryTask = Task { [weak self, retryAttempts, retryInterval] in
+            for _ in 0..<retryAttempts {
+                do { try await Task.sleep(for: retryInterval) } catch { return }
+                guard let self, self.isActive else { return }
+                if self.refreshAccess() { return }
+            }
+        }
     }
 }
