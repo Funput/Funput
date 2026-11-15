@@ -16,6 +16,9 @@ class CompositionCompatibilityPolicyTest {
             "com.instagram.android",
             "com.instagram.barcelona",
             "com.reddit.frontpage",
+            "com.zhiliaoapp.musically",
+            "com.ss.android.ugc.trill",
+            "com.ss.android.ugc.aweme",
         )
 
         packages.forEach { packageName ->
