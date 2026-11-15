@@ -9,7 +9,8 @@ import app.funput.funput.ime.editing.keyevent.KeyEventHosts
  * OEM sandbox engines can be added without growing this dispatcher.
  *
  * Prefixes cover release variants such as Firefox Beta, Facebook Lite, Messenger, Instagram,
- * Threads, Reddit, and ONLYOFFICE Documents without coupling the pipeline to product names.
+ * Threads, Reddit, TikTok/Douyin, and ONLYOFFICE Documents without coupling the pipeline to
+ * product names.
  */
 internal object CompositionCompatibilityPolicy {
     private val committedPackagePrefixes = listOf(
@@ -17,6 +18,8 @@ internal object CompositionCompatibilityPolicy {
         "com.facebook.",
         "com.instagram.",
         "com.reddit.",
+        "com.zhiliaoapp.",
+        "com.ss.android.ugc.",
     )
 
     private val keyDeletePackagePrefixes = listOf(
