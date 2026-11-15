@@ -70,6 +70,7 @@ class FunputKeyboardView @JvmOverloads constructor(
     var microphone by keyboardSurface::microphone
     var speechPanelState by speech::state
     var placementKeyVisible: Boolean by keyboardSurface::placementKeyVisible
+    var toolbarArrangement by keyboardSurface::toolbarArrangement
     var showsNumberRow: Boolean by keyboardSurface::showsNumberRow
     var suggestionBarEnabled: Boolean
         get() = keyboardSurface.suggestionBarEnabled
@@ -121,15 +122,13 @@ class FunputKeyboardView @JvmOverloads constructor(
 
     fun showSpeechPanel(): Unit = panelCoordinator.showSpeech()
     fun showEmojiPanel(): Unit = panelCoordinator.showEmoji()
+    fun showLettersPanel(): Unit = panelCoordinator.showLetters()
     fun showClipboardPanel() {
         if (!clipboardState.available() || activePanel == KeyboardPanel.CLIPBOARD) return
         panelCoordinator.showClipboard(); callbacks.dispatchClipboardPanelOpened()
     }
-
     fun showSymbolsPanel(mode: KeyboardLayoutMode = KeyboardLayoutMode.SYMBOLS_PRIMARY) =
         panelCoordinator.showSymbols(mode)
-
-    fun showLettersPanel(): Unit = panelCoordinator.showLetters()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val size = hostMeasure.resolve(widthMeasureSpec, heightMeasureSpec,
@@ -143,8 +142,9 @@ class FunputKeyboardView @JvmOverloads constructor(
     }
 
     private fun syncSuggestions() {
-        val visible = activePanel == KeyboardPanel.LETTERS && suggestionBarEnabled
-        keyboardSurface.suggestions = suggestions.takeIf { visible }.orEmpty()
+        keyboardSurface.suggestions = suggestions.takeIf {
+            activePanel == KeyboardPanel.LETTERS && suggestionBarEnabled
+        }.orEmpty()
     }
     private fun matchParentLayoutParams() = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 }

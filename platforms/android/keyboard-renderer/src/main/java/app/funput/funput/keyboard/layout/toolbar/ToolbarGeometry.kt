@@ -5,10 +5,13 @@ import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 import app.funput.funput.keyboard.model.KeyboardLayout
+import app.funput.funput.keyboard.model.SuggestionBarSpec
 import app.funput.funput.keyboard.utility.KeyboardMicrophoneState
 
-/** Emoji and microphone reserve their space before optional utilities and candidates. */
+/** Places toolbar slots from [ToolbarArrangement], yielding optional keys when the row is tight. */
 internal object ToolbarGeometry {
+    private const val TooNarrow = "Keyboard is too narrow for its required toolbar actions"
+
     fun resolve(
         layout: KeyboardLayout,
         width: Float,
@@ -16,67 +19,85 @@ internal object ToolbarGeometry {
         showClipboard: Boolean = false,
         showPlacement: Boolean = true,
         microphone: KeyboardMicrophoneState = KeyboardMicrophoneState(),
+        arrangement: ToolbarArrangement = ToolbarArrangement.Default,
     ): ResolvedSuggestionBar? {
         val bar = layout.suggestionBar ?: return null
         val top = spec.verticalPadding
         val bottom = top + spec.suggestionBarHeight
-        val right = width - spec.horizontalPadding
-        val emoji = boundsBefore(right, top, bottom, spec, separated = false)
         val cell = spec.suggestionBarHeight
-        // Left side mirrors the right: voice input sits at the edge like emoji, keyboard mode
-        // beside it like clipboard, every action in the same square cell so the spacing matches.
-        var leftAnchor = spec.horizontalPadding
-        fun leftKey(): KeyBounds {
-            val bounds = KeyBounds(leftAnchor, top, leftAnchor + cell, bottom)
-            leftAnchor = bounds.right + spec.horizontalGap
-            return bounds
+        val ordered = arrangement.normalize(availableSlots(bar, showClipboard, showPlacement, microphone.visible))
+        val pending = (ordered.leading + ordered.trailing).toMutableList()
+        val placed = linkedMapOf<ToolbarSlot, KeyBounds>()
+        var left = spec.horizontalPadding
+        var right = width - spec.horizontalPadding
+        // Last trailing entry is flush right; list order stays left-to-right on screen.
+        ordered.trailing.asReversed().forEachIndexed { index, slot ->
+            placeTrailing(slot.yieldsWhenNarrow, index == 0, cell, top, bottom, spec, left, right, reserve(pending, slot, cell, spec.horizontalGap))
+                ?.let { placed[slot] = it; right = it.left; pending.remove(slot) }
         }
-        val showMic = microphone.visible && bar.microphoneKey != null
-        val mic = if (showMic) leftKey() else null
-        // The microphone is required; keyboard mode yields first when the row is too narrow.
-        val placementFits = leftAnchor + cell + spec.horizontalGap <= emoji.left
-        val placement = if (showPlacement && placementFits) leftKey() else null
-        require(emoji.left >= leftAnchor - spec.horizontalGap) {
-            "Keyboard is too narrow for its required toolbar actions"
+        // Host-owned system IME switcher sits left of the trailing group when present.
+        val systemBounds = bar.systemInputMethodKey?.let {
+            placeTrailing(true, false, cell, top, bottom, spec, left, right, reserveRequired(pending, cell, spec.horizontalGap))
+                ?.also { right = it.left }
         }
-        // Right side, right to left: emoji (fixed), then optional clipboard and system keys.
-        var anchor = emoji.left
-        fun optional(visible: Boolean): KeyBounds? {
-            if (!visible) return null
-            val bounds = boundsBefore(anchor, top, bottom, spec)
-            if (bounds.left < leftAnchor + spec.horizontalGap) return null
-            anchor = bounds.left
-            return bounds
+        ordered.leading.forEach { slot ->
+            placeLeading(slot, cell, top, bottom, spec, left, right, reserve(pending, slot, cell, spec.horizontalGap))
+                ?.let { placed[slot] = it; left = it.right + spec.horizontalGap; pending.remove(slot) }
         }
-        val clipboard = optional(showClipboard && bar.clipboardKey != null)
-        val system = optional(bar.systemInputMethodKey != null)
-        val suggestionsLeft = leftAnchor.coerceAtMost(anchor)
-        val suggestionsRight = (anchor - if (bar.suggestionsEnabled) spec.horizontalGap else 0f)
-            .coerceAtLeast(suggestionsLeft)
+        require(ToolbarSlot.EMOJI in placed) { TooNarrow }
+        val suggestionsLeft = left.coerceAtMost(right)
+        val suggestionsRight = (right - if (bar.suggestionsEnabled) spec.horizontalGap else 0f).coerceAtLeast(suggestionsLeft)
         return ResolvedSuggestionBar(
-            bounds = KeyBounds(spec.horizontalPadding, top, right, bottom),
+            bounds = KeyBounds(spec.horizontalPadding, top, width - spec.horizontalPadding, bottom),
             suggestionsBounds = KeyBounds(suggestionsLeft, top, suggestionsRight, bottom),
-            systemInputMethodKey = system?.let { ResolvedKey(requireNotNull(bar.systemInputMethodKey), it) },
-            clipboardKey = clipboard?.let { ResolvedKey(requireNotNull(bar.clipboardKey), it) },
-            placementKey = placement?.let { ResolvedKey(bar.placementKey, it) },
-            emojiKey = ResolvedKey(bar.emojiKey, emoji),
-            microphoneKey = mic?.let {
-                ResolvedKey(requireNotNull(bar.microphoneKey).copy(accessibilityLabel = microphone.accessibilityLabel),
-                    it, active = microphone.active)
+            systemInputMethodKey = systemBounds?.let { ResolvedKey(requireNotNull(bar.systemInputMethodKey), it) },
+            clipboardKey = placed[ToolbarSlot.CLIPBOARD]?.let { ResolvedKey(requireNotNull(bar.clipboardKey), it) },
+            placementKey = placed[ToolbarSlot.PLACEMENT]?.let { ResolvedKey(bar.placementKey, it) },
+            emojiKey = ResolvedKey(bar.emojiKey, requireNotNull(placed[ToolbarSlot.EMOJI])),
+            microphoneKey = placed[ToolbarSlot.MICROPHONE]?.let {
+                ResolvedKey(requireNotNull(bar.microphoneKey).copy(accessibilityLabel = microphone.accessibilityLabel), it, active = microphone.active)
             },
             suggestionsEnabled = bar.suggestionsEnabled,
         )
     }
 
-    private fun boundsBefore(
-        right: Float,
-        top: Float,
-        bottom: Float,
-        spec: KeyboardGeometrySpec,
-        separated: Boolean = true,
-        keyWidth: Float = spec.suggestionBarHeight,
-    ): KeyBounds {
-        val keyRight = right - if (separated) spec.horizontalGap else 0f
-        return KeyBounds(keyRight - keyWidth, top, keyRight, bottom)
+    private fun reserve(pending: List<ToolbarSlot>, slot: ToolbarSlot, cell: Float, gap: Float) =
+        if (slot.yieldsWhenNarrow) reserveRequired(pending.filter { it != slot }, cell, gap) else 0f
+
+    private fun reserveRequired(pending: List<ToolbarSlot>, cell: Float, gap: Float): Float {
+        val n = pending.count { !it.yieldsWhenNarrow }
+        return if (n == 0) 0f else n * cell + (n - 1).coerceAtLeast(0) * gap
+    }
+
+    private fun availableSlots(
+        bar: SuggestionBarSpec, showClipboard: Boolean, showPlacement: Boolean, microphoneVisible: Boolean,
+    ) = buildSet {
+        add(ToolbarSlot.EMOJI)
+        if (microphoneVisible && bar.microphoneKey != null) add(ToolbarSlot.MICROPHONE)
+        if (showPlacement) add(ToolbarSlot.PLACEMENT)
+        if (showClipboard && bar.clipboardKey != null) add(ToolbarSlot.CLIPBOARD)
+    }
+
+    private fun placeLeading(
+        slot: ToolbarSlot, cell: Float, top: Float, bottom: Float, spec: KeyboardGeometrySpec,
+        leftAnchor: Float, rightAnchor: Float, reserve: Float,
+    ): KeyBounds? {
+        val bounds = KeyBounds(leftAnchor, top, leftAnchor + cell, bottom)
+        val limit = rightAnchor - reserve
+        if (bounds.right + spec.horizontalGap > limit && slot.yieldsWhenNarrow) return null
+        require(bounds.right <= limit + 0.01f || !slot.yieldsWhenNarrow) { TooNarrow }
+        return bounds.takeUnless { it.right > limit + 0.01f }
+    }
+
+    private fun placeTrailing(
+        yields: Boolean, flush: Boolean, cell: Float, top: Float, bottom: Float, spec: KeyboardGeometrySpec,
+        leftAnchor: Float, rightAnchor: Float, reserve: Float,
+    ): KeyBounds? {
+        val keyRight = rightAnchor - if (flush) 0f else spec.horizontalGap
+        val bounds = KeyBounds(keyRight - cell, top, keyRight, bottom)
+        val limit = leftAnchor + reserve
+        if (bounds.left < limit + spec.horizontalGap && yields) return null
+        require(bounds.left >= limit - 0.01f || !yields) { TooNarrow }
+        return bounds.takeUnless { it.left < limit - 0.01f }
     }
 }

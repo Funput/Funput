@@ -19,6 +19,15 @@
     <string name="settings_input_method_title">Kiểu gõ</string>
     <string name="settings_number_row_title">Hàng phím số</string>
     <string name="settings_number_row_summary">Hiển thị các số từ 0 đến 9 với các kiểu Telex. VNI luôn cần hàng số để nhập dấu.</string>
+    <string name="settings_section_toolbar_layout">Thanh công cụ</string>
+    <string name="settings_toolbar_layout_summary">Sắp xếp phím trên thanh gợi ý theo thứ tự trái sang phải trong mỗi phía: lên, xuống, hoặc chuyển sang phía kia.</string>
+    <string name="settings_toolbar_side_leading">Phía trái</string>
+    <string name="settings_toolbar_side_trailing">Phía phải</string>
+    <string name="settings_toolbar_move_up">Lên</string>
+    <string name="settings_toolbar_move_down">Xuống</string>
+    <string name="settings_toolbar_slot_microphone">Micro</string>
+    <string name="settings_toolbar_slot_clipboard">Clipboard</string>
+    <string name="settings_toolbar_slot_emoji">Biểu tượng cảm xúc</string>
     <string name="settings_key_size_title">Kích thước phím</string>
     <string name="settings_keyboard_mode_title">Chế độ bàn phím</string>
     <string name="keyboard_mode_standard">Thường</string>

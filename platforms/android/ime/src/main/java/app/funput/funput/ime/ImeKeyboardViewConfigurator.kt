@@ -37,6 +37,7 @@ internal fun FunputKeyboardView.applyImeState(
         keyboardTheme = descriptor.theme,
         keyboardThemeBackgroundImage = descriptor.backgroundImage,
         showsNumberRow = settings.showsNumberRow,
+        toolbarArrangement = settings.toolbarArrangement,
     )
 }
 
@@ -50,6 +51,7 @@ internal fun FunputKeyboardView.configureForEditor(
     keyboardTheme: KeyboardTheme,
     keyboardThemeBackgroundImage: KeyboardThemeBackgroundImage?,
     showsNumberRow: Boolean,
+    toolbarArrangement: app.funput.funput.keyboard.layout.toolbar.ToolbarArrangement,
 ) {
     showLettersPanel()
     this.inputMethod = inputMethod
@@ -58,6 +60,7 @@ internal fun FunputKeyboardView.configureForEditor(
     this.placementPreferences = placementPreferences
     this.keyboardTheme = keyboardTheme
     this.keyboardThemeBackgroundImage = keyboardThemeBackgroundImage
+    this.toolbarArrangement = toolbarArrangement
     systemInputMethodSwitcherVisible = false
     editorMode = policy.editorMode
     suggestionBarEnabled = KeyboardFeatures.SuggestionsEnabled && policy.showsSuggestionBar

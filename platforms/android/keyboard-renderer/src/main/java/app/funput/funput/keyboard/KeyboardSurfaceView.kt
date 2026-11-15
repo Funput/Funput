@@ -57,6 +57,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var clipboardKeyVisible: Boolean by geometry::clipboardKeyVisible
     var microphone by geometry::microphone
     var placementKeyVisible: Boolean by geometry::placementKeyVisible
+    var toolbarArrangement by geometry::arrangement
     var showsNumberRow: Boolean by layoutState::showsNumberRow
     var keyboardTheme by render::keyboardTheme
     var keyboardThemeBackgroundImage by render::keyboardThemeBackgroundImage

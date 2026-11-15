@@ -19,7 +19,7 @@
     <string name="settings_summary_tone_traditional">Đặt dấu kiểu cũ</string>
     <string name="settings_summary_typing_extra_onsets">%1$s, cho phép %2$s đầu từ</string>
 
-    <string name="settings_summary_layout">Chế độ %1$s, phím cao %2$d%%</string>
+    <string name="settings_summary_layout">Chế độ %1$s, phím cao %2$d%%, sắp xếp thanh công cụ</string>
     <string name="settings_summary_mode_standard">thường</string>
     <string name="settings_summary_mode_elevated">trên cao</string>
     <string name="settings_summary_mode_one_handed">một tay</string>

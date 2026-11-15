@@ -5,6 +5,7 @@ import app.funput.funput.keyboard.utility.KeyboardMicrophoneState
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.geometry.resolveGeometry
+import app.funput.funput.keyboard.layout.toolbar.ToolbarArrangement
 import app.funput.funput.keyboard.model.KeyboardLayout
 
 /** Owns resolved geometry and utility visibility without transcript or session knowledge. */
@@ -38,6 +39,13 @@ internal class KeyboardSurfaceGeometry(
             resolve()
             host.invalidate()
         }
+    var arrangement = ToolbarArrangement.Default
+        set(value) {
+            if (field == value) return
+            field = value
+            resolve()
+            host.invalidate()
+        }
 
     fun resolve() {
         keyboard = layout().resolveGeometry(
@@ -48,6 +56,7 @@ internal class KeyboardSurfaceGeometry(
             showClipboard = clipboardKeyVisible && utilitiesVisible(),
             showPlacement = placementKeyVisible && utilitiesVisible(),
             microphone = microphone.copy(visible = microphone.visible && microphoneAllowed()),
+            arrangement = arrangement,
         )
         changed()
     }

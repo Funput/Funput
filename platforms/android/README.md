@@ -120,7 +120,7 @@ Tab **Bàn phím** là mục lục, từ trên xuống:
 | Trang | Chỉnh được gì |
 |---|---|
 | **Gõ tiếng Việt** | Kiểu gõ, kiểu đặt dấu, phụ âm đầu mở rộng `z`, `f`, `w`, `j` |
-| **Bố cục và kích thước** | Chế độ bàn phím, hàng phím số, kích thước phím |
+| **Bố cục và kích thước** | Chế độ bàn phím, hàng phím số, kích thước phím, sắp xếp phím thanh công cụ (lên/xuống hoặc chuyển trái/phải) |
 | **Thông minh** | Khôi phục từ, kiểm tra chính tả, tự viết hoa, gợi ý từ, cử chỉ thông minh, tự về bảng chữ |
 | **Phản hồi khi chạm** | Mức rung (Tắt, Nhẹ, Trung bình, Mạnh), âm thanh khi gõ, xem trước phím |
 | **Clipboard** | Bật lịch sử clipboard và thời gian tự xoá; trên bàn phím, chạm phím copy để dán, giữ để mở lịch sử |

@@ -17,7 +17,9 @@ import app.funput.funput.ime.settings.SmartCompositionSettings
 import app.funput.funput.ime.settings.ToneStyle
 import app.funput.funput.ime.settings.ToneStyleSettings
 import app.funput.funput.ime.settings.gestures.SmartGestureSettings
+import app.funput.funput.ime.settings.layout.ToolbarLayoutSettings
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
+import app.funput.funput.keyboard.layout.toolbar.ToolbarArrangement
 import app.funput.funput.keyboard.model.KeyboardInputMethod
 import kotlinx.coroutines.CoroutineScope
 
@@ -39,6 +41,8 @@ internal class ImeSettingsController(
     var feedback = KeyboardFeedbackPreferences.Default
         private set
     var showsNumberRow = NumberRowSettings.DefaultShowsNumberRow
+        private set
+    var toolbarArrangement = ToolbarArrangement.Default
         private set
     var smartGesturesEnabled = SmartGestureSettings.DefaultEnabled
         private set
@@ -75,6 +79,10 @@ internal class ImeSettingsController(
         KeyboardThemeSettings(context).selection.collectIn(scope, ::applyThemeSelection)
         KeyboardFeedbackSettings(context).preferences.collectIn(scope, ::applyFeedback)
         NumberRowSettings(context).showsNumberRow.collectIn(scope, ::applyShowsNumberRow)
+        ToolbarLayoutSettings(context).preferences.collectIn(scope) { prefs ->
+            val next = prefs.toArrangement()
+            if (next != toolbarArrangement) { toolbarArrangement = next; onViewSettingsChanged() }
+        }
         SmartGestureSettings(context).enabled.collectIn(scope, ::applySmartGestures)
         PersonalSuggestionSettings(context).preferences.collectIn(scope, onPersonalSuggestionsChanged)
     }
@@ -111,31 +119,26 @@ internal class ImeSettingsController(
 
     private fun applySizingProfile(value: KeyboardSizingProfile) {
         if (value == sizingProfile) return
-        sizingProfile = value
-        onViewSettingsChanged()
+        sizingProfile = value; onViewSettingsChanged()
     }
 
     private fun applyThemeSelection(value: KeyboardThemeSelection) {
         if (value == themeSelection) return
-        themeSelection = value
-        onViewSettingsChanged()
+        themeSelection = value; onViewSettingsChanged()
     }
 
     private fun applyFeedback(value: KeyboardFeedbackPreferences) {
         if (value == feedback) return
-        feedback = value
-        onViewSettingsChanged()
+        feedback = value; onViewSettingsChanged()
     }
 
     private fun applyShowsNumberRow(value: Boolean) {
         if (value == showsNumberRow) return
-        showsNumberRow = value
-        onViewSettingsChanged()
+        showsNumberRow = value; onViewSettingsChanged()
     }
 
     private fun applySmartGestures(value: Boolean) {
         if (value == smartGesturesEnabled) return
-        smartGesturesEnabled = value
-        onViewSettingsChanged()
+        smartGesturesEnabled = value; onViewSettingsChanged()
     }
 }

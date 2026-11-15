@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.layout
 
 import app.funput.funput.keyboard.layout.geometry.KeyboardHitTargetResolver
+import app.funput.funput.keyboard.layout.toolbar.ToolbarArrangement
 import app.funput.funput.keyboard.layout.toolbar.ToolbarGeometry
 import app.funput.funput.keyboard.utility.KeyboardMicrophoneState
 import app.funput.funput.keyboard.model.KeyboardLayout
@@ -17,6 +18,7 @@ object KeyboardGeometry {
         showClipboard: Boolean = false,
         showPlacement: Boolean = true,
         microphone: KeyboardMicrophoneState = KeyboardMicrophoneState(),
+        arrangement: ToolbarArrangement = ToolbarArrangement.Default,
     ): ResolvedKeyboard {
         require(width > 0f) { "Keyboard width must be positive" }
         require(height > 0f) { "Keyboard height must be positive" }
@@ -43,7 +45,7 @@ object KeyboardGeometry {
         )
 
         val suggestionBar = ToolbarGeometry.resolve(
-            layout, width, resolvedSpec, showClipboard, showPlacement, microphone,
+            layout, width, resolvedSpec, showClipboard, showPlacement, microphone, arrangement,
         )
         val rowsTop = suggestionBar?.bounds?.bottom?.plus(resolvedSpec.suggestionBarGap)
             ?: spec.verticalPadding
