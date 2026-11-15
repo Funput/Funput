@@ -96,10 +96,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     private val interaction: app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
         host = this,
         callbacks = callbacks,
-        keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(
-            x, y, suggestions.size, clipboardHint != null && suggestions.isEmpty() &&
-                resolvedKeyboard?.suggestionBar?.clipboardHintFits == true,
-        ) },
+        keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(x, y, suggestions.size) },
         keyboard = { resolvedKeyboard },
         suggestions = { suggestions },
         onHapticFeedback = { type ->
@@ -112,6 +109,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         },
         onSemanticStateChanged = accessibility::refresh,
         surfaceBounds = popoverGeometry::resolve,
+        hasPasteOffer = { render.clipboardHint != null },
     )
     private val events = KeyboardSurfaceEventDispatcher(
         host = this,

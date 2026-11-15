@@ -72,11 +72,6 @@ class MicrophoneToolbarTest {
         assertEquals(KeyRole.MICROPHONE, mic.spec.role)
     }
 
-    @Test fun clipboardHintYieldsWhenItsLabelCannotFitBesideTheMicrophone() {
-        assertFalse(requireNotNull(resolve(120f, false).suggestionBar).clipboardHintFits)
-        assertTrue(requireNotNull(resolve(240f, false).suggestionBar).clipboardHintFits)
-    }
-
     @Test fun defaultAndToolbarlessLayoutsHaveNoMicrophone() {
         val layout = KeyboardLayouts.telex
         val spec = KeyboardGeometrySpec.fromDensity(1f)

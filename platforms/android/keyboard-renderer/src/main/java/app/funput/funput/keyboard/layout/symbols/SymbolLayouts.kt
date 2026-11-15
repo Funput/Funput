@@ -62,7 +62,7 @@ internal object SymbolLayouts {
         inputMethod = inputMethod,
         suggestionBar = if (KeyboardFeatures.EmojiToolbarEnabled && !secure) {
             SuggestionBarSpec(
-                clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Lịch sử clipboard"),
+                clipboardKey = specialKey("clipboard-$id", "", KeyRole.CLIPBOARD, accessibilityLabel = "Dán"),
                 placementKey = specialKey("placement-$id", "", KeyRole.PLACEMENT, accessibilityLabel = "Chế độ bàn phím"),
                 microphoneKey = specialKey("microphone-$id", "", KeyRole.MICROPHONE, accessibilityLabel = "Nhập bằng giọng nói"),
                 emojiKey = specialKey("emoji-$id", "", KeyRole.EMOJI, accessibilityLabel = "Biểu tượng cảm xúc"),

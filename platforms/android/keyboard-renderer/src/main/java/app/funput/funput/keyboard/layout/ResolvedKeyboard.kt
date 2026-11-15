@@ -41,7 +41,6 @@ data class ResolvedSuggestionBar(
     val emojiKey: ResolvedKey,
     val suggestionsEnabled: Boolean,
     val microphoneKey: ResolvedKey? = null,
-    val clipboardHintFits: Boolean = true,
 )
 
 data class ResolvedKeyboard(

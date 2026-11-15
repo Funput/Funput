@@ -30,6 +30,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         shiftState: ShiftState,
         language: KeyboardLanguage,
         enterAction: KeyboardEnterAction,
+        clipboardOfferActive: Boolean = false,
     ) {
         if (key.spec.role == KeyRole.PLACEHOLDER) return
         val isActivated = key.active || (key.spec.role == KeyRole.SHIFT && shiftState.isActive)
@@ -42,7 +43,7 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
                 language,
                 customLabel = key.spec.spaceLabelOverride,
             )
-            !iconRenderer.draw(canvas, key, shiftState, enterAction) ->
+            !iconRenderer.draw(canvas, key, shiftState, enterAction, clipboardOfferActive) ->
                 drawLabels(canvas, key, theme, shiftState)
         }
     }

@@ -8,7 +8,7 @@
     <string name="clipboard_pinned">Đã ghim</string>
     <string name="clipboard_recent">Gần đây</string>
     <string name="clipboard_empty_title">Chưa có gì trong lịch sử</string>
-    <string name="clipboard_empty_detail">Sao chép văn bản rồi chạm nút Dán trên thanh công cụ. Lịch sử chỉ lưu những gì bạn đã dán qua Funput.</string>
+    <string name="clipboard_empty_detail">Sao chép văn bản rồi chạm phím dán trên thanh công cụ. Giữ phím để mở lịch sử. Lịch sử chỉ lưu những gì bạn đã dán qua Funput.</string>
     <string name="clipboard_loading">Đang tải lịch sử bảng nhớ tạm</string>
     <string name="clipboard_just_now">Vừa xong</string>
     <string name="clipboard_minutes_ago">%1$d phút trước</string>

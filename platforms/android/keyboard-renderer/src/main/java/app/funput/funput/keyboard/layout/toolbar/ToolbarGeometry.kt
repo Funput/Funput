@@ -22,7 +22,6 @@ internal object ToolbarGeometry {
         val bottom = top + spec.suggestionBarHeight
         val right = width - spec.horizontalPadding
         val emoji = boundsBefore(right, top, bottom, spec, separated = false)
-        val density = spec.suggestionBarHeight / spec.heightScale / ToolbarMetrics.SuggestionBarHeightDp
         val cell = spec.suggestionBarHeight
         // Left side mirrors the right: voice input sits at the edge like emoji, keyboard mode
         // beside it like clipboard, every action in the same square cell so the spacing matches.
@@ -66,7 +65,6 @@ internal object ToolbarGeometry {
                     it, active = microphone.active)
             },
             suggestionsEnabled = bar.suggestionsEnabled,
-            clipboardHintFits = suggestionsRight - suggestionsLeft >= density * ToolbarMetrics.ClipboardPasteWidthDp,
         )
     }
 

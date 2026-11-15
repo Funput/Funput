@@ -2,7 +2,6 @@ package app.funput.funput.keyboard.accessibility
 
 import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import app.funput.funput.keyboard.KeyboardDimensions
-import app.funput.funput.keyboard.interaction.ClipboardTargetId
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.geometry.resolveGeometry
@@ -63,17 +62,11 @@ class KeyboardAccessibilitySnapshotTest {
     }
 
     @Test
-    fun `clipboard is one accessible node and suggestions take priority`() {
-        val clipboard = snapshot(clipboardLabel = "Dán, Đã sao chép văn bản")
-        val withSuggestions = snapshot(
-            suggestions = listOf("xin"),
-            clipboardLabel = "Dán, Đã sao chép văn bản",
-        )
-
-        assertEquals("Dán, Đã sao chép văn bản", clipboard.nodes.single {
-            it.keyId == ClipboardTargetId
-        }.label)
-        assertFalse(withSuggestions.nodes.any { it.keyId == ClipboardTargetId })
+    fun `clipboard key exposes paste label and history action`() {
+        val node = snapshot(clipboardKeyLabel = "Dán, Đã sao chép văn bản")
+            .nodes.single { it.keyId == "clipboard" }
+        assertEquals("Dán, Đã sao chép văn bản", node.label)
+        assertTrue(node.customActions.any { it.actionId == ClipboardAccessibility.OpenHistory })
     }
 
     @Test
@@ -119,7 +112,7 @@ class KeyboardAccessibilitySnapshotTest {
         editorMode: KeyboardEditorMode = KeyboardEditorMode.TEXT,
         systemSwitcherVisible: Boolean = false,
         suggestions: List<String> = emptyList(),
-        clipboardLabel: String? = null,
+        clipboardKeyLabel: String? = null,
     ): KeyboardAccessibilitySnapshot {
         val profile = KeyboardSizingProfile.Normal
         val layout = KeyboardLayoutResolver.resolve(
@@ -133,7 +126,10 @@ class KeyboardAccessibilitySnapshotTest {
             height = KeyboardDimensions.recommendedHeightDp(KeyboardInputMethod.VNI, editorMode, profile).toInt(),
             density = 1f,
             profile = profile,
+            showClipboard = true,
         ))
-        return KeyboardAccessibilitySnapshot(keyboard, shiftState, suggestions.asSuggestionChips(), clipboardLabel)
+        return KeyboardAccessibilitySnapshot(
+            keyboard, shiftState, suggestions.asSuggestionChips(), clipboardKeyLabel,
+        )
     }
 }

@@ -4,6 +4,7 @@ import app.funput.funput.keyboard.suggestion.SuggestionChip
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
+import app.funput.funput.keyboard.accessibility.ClipboardAccessibility
 import app.funput.funput.keyboard.accessibility.KeyboardSurfaceAccessibilityController
 import app.funput.funput.keyboard.accessibility.SmartGestureAccessibility
 import app.funput.funput.keyboard.KeyboardClipboardHint
@@ -32,11 +33,18 @@ internal class KeyboardSurfaceAccessibilityBinding(
             interaction().performAccessibilityAlternate(keyId, index)
         },
         activateCustom = { keyId, actionId ->
-            val suggestionAction = SuggestionAction.forAccessibilityAction(actionId)
-            if (suggestionAction != null) {
-                interaction().performAccessibilitySuggestionAction(keyId, suggestionAction)
-            } else {
-                SmartGestureAccessibility.keyAction(actionId)?.let { interaction().performAccessibilityAction(it) }
+            when {
+                ClipboardAccessibility.isOpenHistory(actionId) ->
+                    interaction().performAccessibilityClipboardPanel()
+                else -> {
+                    val suggestion = SuggestionAction.forAccessibilityAction(actionId)
+                    if (suggestion != null) {
+                        interaction().performAccessibilitySuggestionAction(keyId, suggestion)
+                    } else {
+                        SmartGestureAccessibility.keyAction(actionId)
+                            ?.let { interaction().performAccessibilityAction(it) }
+                    }
+                }
             }
         },
     )
@@ -47,13 +55,20 @@ internal class KeyboardSurfaceAccessibilityBinding(
         keyboard(),
         shiftState(),
         suggestions(),
-        clipboardHint().takeIf { suggestions().isEmpty() && keyboard()?.suggestionBar?.clipboardHintFits == true }
-            ?.accessibilityLabel(resources),
-        resources.getString(R.string.clipboard_open_accessibility),
+        clipboardKeyLabel(),
         interaction().areSmartGesturesEnabled,
         interaction().breaksLineOnEnterHold,
         interaction()::isSuggestionEditable,
     )
+
+    private fun clipboardKeyLabel(): String {
+        val hint = clipboardHint()
+        return if (hint != null) {
+            hint.accessibilityLabel(resources)
+        } else {
+            resources.getString(R.string.clipboard_open_accessibility)
+        }
+    }
 
     private fun activate(keyId: String) {
         val selection = suggestions().selectionForTarget(keyId)

@@ -99,8 +99,10 @@ Mặc định lần đầu chạy là **VNI**. Đổi trong **Bàn phím → Gõ
 | **Gõ đúp phím cách** | Chèn dấu chấm và một khoảng trắng |
 | **Giữ phím cách rồi kéo** | Rê con trỏ **theo mọi hướng**, không chỉ trái phải |
 | **Vuốt trái trên phím xoá** | Xoá cả từ thay vì từng ký tự |
+| **Chạm phím copy trên thanh công cụ** | Dán nội dung vừa sao chép (chấm sáng khi có gì để dán); nếu trống thì mở lịch sử |
+| **Giữ phím copy** | Mở lịch sử clipboard |
 
-Cả ba nằm chung một công tắc **Cử chỉ thông minh**.
+Ba cử chỉ đầu nằm chung một công tắc **Cử chỉ thông minh**. Phím copy không thuộc công tắc đó.
 
 ### Cài đặt có gì
 
@@ -121,7 +123,7 @@ Tab **Bàn phím** là mục lục, từ trên xuống:
 | **Bố cục và kích thước** | Chế độ bàn phím, hàng phím số, kích thước phím |
 | **Thông minh** | Khôi phục từ, kiểm tra chính tả, tự viết hoa, gợi ý từ, cử chỉ thông minh, tự về bảng chữ |
 | **Phản hồi khi chạm** | Mức rung (Tắt, Nhẹ, Trung bình, Mạnh), âm thanh khi gõ, xem trước phím |
-| **Clipboard** | Lưu lịch sử clipboard và thời gian tự xoá |
+| **Clipboard** | Bật lịch sử clipboard và thời gian tự xoá; trên bàn phím, chạm phím copy để dán, giữ để mở lịch sử |
 | **Nhập bằng giọng nói** | Quyền micro và dữ liệu nhận dạng (chỉ ở bản có tính năng này) |
 | **Bàn phím rời** | Hiện Funput khi có bàn phím rời, phím tắt Alt + Space |
 | **Dữ liệu** (mở từ tab **Tôi**) | Xoá từ đã học và lịch sử clipboard |

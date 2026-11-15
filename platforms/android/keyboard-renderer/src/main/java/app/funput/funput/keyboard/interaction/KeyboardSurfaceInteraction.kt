@@ -39,6 +39,7 @@ internal class KeyboardSurfaceInteraction(
     touchSlop: Float,
     keyBounds: (keyId: String) -> KeyBounds?,
     surfaceBounds: () -> KeyBounds,
+    hasPasteOffer: () -> Boolean = { false },
 ) : PressedKeyState {
     private lateinit var touchHandler: KeyboardTouchHandler
     private val touches = KeyTouchRecorder(keyboard)
@@ -66,6 +67,7 @@ internal class KeyboardSurfaceInteraction(
         keyBounds = keyBounds,
         surfaceBounds = surfaceBounds,
         onPointerCaptured = { pointerId -> touchHandler.capture(pointerId) },
+        hasPasteOffer = hasPasteOffer,
     )
     init {
         touchHandler = KeyboardTouchHandler(
@@ -118,6 +120,8 @@ internal class KeyboardSurfaceInteraction(
         controller.emitAlternate(keyId, index)
 
     fun performAccessibilityAction(action: KeyAction) = controller.emitAction(action)
+
+    fun performAccessibilityClipboardPanel() = controller.emitClipboardPanel()
 
     fun performAccessibilitySuggestionAction(targetId: String, action: SuggestionAction) =
         suggestionActions.perform(targetId, action)

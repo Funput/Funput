@@ -20,6 +20,7 @@ internal fun createKeyboardSurfaceInteraction(
     onVisualStateChanged: () -> Unit,
     onSemanticStateChanged: () -> Unit,
     surfaceBounds: () -> KeyBounds,
+    hasPasteOffer: () -> Boolean = { false },
 ): KeyboardSurfaceInteraction = KeyboardSurfaceInteraction(
     keyAt = keyAt,
     keyboard = keyboard,
@@ -41,4 +42,5 @@ internal fun createKeyboardSurfaceInteraction(
     touchSlop = ViewConfiguration.get(host.context).scaledTouchSlop.toFloat(),
     keyBounds = { id -> keyboard()?.keys?.firstOrNull { it.spec.id == id }?.bounds },
     surfaceBounds = surfaceBounds,
+    hasPasteOffer = hasPasteOffer,
 )

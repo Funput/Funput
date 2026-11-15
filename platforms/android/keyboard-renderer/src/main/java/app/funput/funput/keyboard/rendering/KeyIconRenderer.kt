@@ -29,6 +29,7 @@ internal class KeyIconRenderer(metrics: RenderMetrics) {
         key: ResolvedKey,
         shiftState: ShiftState,
         enterAction: KeyboardEnterAction,
+        clipboardOfferActive: Boolean = false,
     ): Boolean {
         when (key.spec.role) {
             KeyRole.SHIFT -> navigationIcons.drawShift(canvas, key, shiftState)
@@ -36,7 +37,7 @@ internal class KeyIconRenderer(metrics: RenderMetrics) {
             KeyRole.BACKSPACE -> utilityIcons.drawBackspace(canvas, key)
             KeyRole.SYSTEM_INPUT_METHOD -> utilityIcons.drawSystemInputMethod(canvas, key)
             KeyRole.PLACEMENT -> utilityIcons.drawPlacement(canvas, key)
-            KeyRole.CLIPBOARD -> clipboardIcon.draw(canvas, key)
+            KeyRole.CLIPBOARD -> clipboardIcon.draw(canvas, key, clipboardOfferActive)
             KeyRole.MICROPHONE -> microphoneIcon.draw(canvas, key)
             KeyRole.EMOJI -> utilityIcons.drawEmoji(canvas, key)
             else -> return false
