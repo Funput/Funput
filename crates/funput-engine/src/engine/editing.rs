@@ -1,4 +1,4 @@
-use crate::compose::{RestoreOverride, diff, doubled, flip};
+use crate::compose::{RestoreOverride, boundary, diff, doubled, flip};
 use crate::correction;
 use crate::{Engine, ImeResult};
 
@@ -7,25 +7,32 @@ impl Engine {
     /// keystroke edits it — the host uses this when the caret lands back on a word
     /// (Android: Backspace over the space after `chào`, then `s` gives `cháo`).
     ///
-    /// Returns whether `text` was taken. Only a Vietnamese syllable is — including
-    /// one still missing a diacritic, whether the tone its stop coda requires
-    /// (`chuc` + `s` → `chúc`) or its vowel shape (`dien` + `e` → `diên`), which is
-    /// how a word looks when the user commits it before finishing it. English words
-    /// and URLs never become editable; the host should leave the document untouched
-    /// when this is `false`.
+    /// Returns whether `text` was taken. A Vietnamese syllable is — including one
+    /// still missing a diacritic, whether the tone its stop coda requires (`chuc` +
+    /// `s` → `chúc`) or its vowel shape (`dien` + `e` → `diên`), which is how a word
+    /// looks when the user commits it before finishing it. So is the start of a gõ
+    /// tắt trigger, even in English mode when gõ tắt runs there: a trigger mistyped
+    /// before Space can be finished (`ctss` + Space, ⌫⌫, `g` + Space → `ctsg`).
+    /// Other English words and URLs never become editable; the host should leave the
+    /// document untouched when this is `false`.
     ///
     /// The raw keystrokes that produced `text` are gone, so they are seeded from the
     /// text itself — the same state `on_backspace` leaves behind. Composition only
     /// ever reads the buffer, so tone and shape edits work from here; there is no raw
     /// form to flip back to, which makes the flip hotkey a no-op on an adopted word.
     pub fn adopt(&mut self, text: &str) -> bool {
-        let rules = self.session.config.syllable_rules;
-        if !self.session.enabled || text.is_empty() || !rules.is_reopenable_syllable(text) {
+        let session = &self.session;
+        let takes = !text.is_empty()
+            && (session.enabled && session.config.syllable_rules.is_reopenable_syllable(text)
+                || (session.enabled || session.english_shortcuts())
+                    && boundary::starts_a_trigger(session, text));
+        if !takes {
             return false;
         }
         // clear() + push_str refills the session strings in place, so seeding them
-        // costs nothing; the syllable check above is the only allocation here (it
-        // builds a rhyme string), the same one every word boundary already pays.
+        // costs nothing. The syllable check above builds a rhyme string, the same one
+        // every word boundary already pays; only a non-syllable walks the shortcut
+        // table, and only a re-cased one (`Cts`) pays one more copy to fold its case.
         self.session.clear();
         // The raw keys are being invented from the text, so there is no touch behind
         // them: the word stays out of typo correction until the user starts a new one.

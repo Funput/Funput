@@ -21,10 +21,10 @@
 
 use funput_engine::{Action, ImeResult};
 
-/// How much committed text to keep, in bytes. Only the last word and whatever
-/// separates it from the caret is ever read, so this only has to outlast a word:
-/// the longest Vietnamese syllable (`nghiêng`) is 9 bytes in NFC.
-const CAPACITY: usize = 64;
+/// How much committed text to keep, in bytes. Only the word at the caret is read,
+/// but Backspace may walk back over several words to reach a mistyped gõ tắt
+/// trigger (`ctss abc abc` ⌫…), so this outlasts a short phrase, not just a word.
+const CAPACITY: usize = 256;
 
 /// The tail of the text Funput has typed into the focused app, up to the live
 /// composition. Fed by the shell on every keystroke; queried on Backspace.

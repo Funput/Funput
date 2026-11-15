@@ -38,8 +38,9 @@ pub unsafe extern "C" fn funput_flip_composing(engine: *mut FunputEngine) -> Fun
 
 /// Re-open an already-committed word as the live composition, so the next keystroke
 /// edits it (Backspace back onto `chào`, then `s` gives `cháo`). `word` is UTF-32, as in
-/// [`funput_add_shortcut`](crate::funput_add_shortcut). Returns whether it was taken — only
-/// a Vietnamese syllable is, so leave the document alone on `false`.
+/// [`funput_add_shortcut`](crate::funput_add_shortcut). Returns whether it was taken — a
+/// Vietnamese syllable or the start of a gõ tắt trigger is, so leave the document alone
+/// on `false`.
 ///
 /// # Safety
 /// `engine` must be a valid handle or null; `word` must point to `len` `u32` values or

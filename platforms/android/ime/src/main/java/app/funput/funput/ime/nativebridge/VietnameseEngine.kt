@@ -52,8 +52,8 @@ internal interface VietnameseEngine : AutoCloseable {
 
     /**
      * Re-opens an already-committed [word] as the live composition so the next
-     * keystroke edits it. Returns false when the word is not a Vietnamese syllable —
-     * the caller must then leave the document alone.
+     * keystroke edits it. Returns false unless the word is a Vietnamese syllable or the
+     * start of a gõ tắt trigger; the caller must then leave the document alone.
      */
     fun adopt(word: String): Boolean
     fun process(codePoint: Int): String

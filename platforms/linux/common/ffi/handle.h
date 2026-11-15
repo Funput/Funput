@@ -103,9 +103,9 @@ public:
     FunputResult backspace() { return funput_backspace(engine_); }
 
     // Re-open an already-committed word as the live composition, so the next key
-    // edits it. Returns whether it was taken: only a Vietnamese syllable is, which
-    // is what keeps English words and URLs literal. Leave the document alone on
-    // false — the engine has not taken ownership of anything.
+    // edits it. Returns whether it was taken: a Vietnamese syllable or the start of
+    // a gõ tắt trigger is, which keeps other words and URLs literal. Leave the
+    // document alone on false — the engine has not taken ownership of anything.
     bool adopt(const std::string &word) {
         const std::vector<uint32_t> cps = decodeUtf8(word);
         return funput_adopt(engine_, cps.data(), cps.size());

@@ -115,25 +115,30 @@ fn assert_within_budget(label: &str, engine: &mut Engine) {
 /// swapping them for `to_string()` (three more allocations) trips this.
 const MAX_ADOPT_ALLOCS_PER_CALL: usize = 1;
 
-fn assert_adopt_within_budget(engine: &mut Engine) {
+/// The start of a gõ tắt trigger re-opens through the same call (`Cts` for `ctsg`):
+/// the syllable gate refuses it, then folding its case to look it up in the table is
+/// one more copy. Walking the table must not add any.
+const MAX_TRIGGER_ADOPT_ALLOCS_PER_CALL: usize = 2;
+
+fn assert_adopt_within_budget(engine: &mut Engine, word: &str, budget: usize) {
     engine.clear();
-    assert!(engine.adopt("chào")); // first call may still grow a string's capacity
+    assert!(engine.adopt(word)); // first call may still grow a string's capacity
     engine.clear();
 
     let calls = 64;
     let before_allocs = ALLOCS.load(Ordering::Relaxed);
     let before_bytes = BYTES.load(Ordering::Relaxed);
     for _ in 0..calls {
-        std::hint::black_box(engine.adopt("chào"));
+        std::hint::black_box(engine.adopt(word));
     }
     let allocs = ALLOCS.load(Ordering::Relaxed) - before_allocs;
     let bytes = BYTES.load(Ordering::Relaxed) - before_bytes;
-    println!("adopt: {allocs} allocs, {bytes} bytes over {calls} calls");
+    println!("adopt {word:?}: {allocs} allocs, {bytes} bytes over {calls} calls");
     assert!(
-        allocs <= calls * MAX_ADOPT_ALLOCS_PER_CALL,
-        "adopt allocated {allocs} times over {calls} calls (budget \
-         {MAX_ADOPT_ALLOCS_PER_CALL}/call) — it must refill the session strings in \
-         place instead of building new ones"
+        allocs <= calls * budget,
+        "adopt({word:?}) allocated {allocs} times over {calls} calls (budget \
+         {budget}/call) — it must refill the session strings in place instead of \
+         building new ones"
     );
 }
 
@@ -163,7 +168,10 @@ fn keystroke_alloc_budget() {
         c.spell_check = false;
         c.syllable_rules = SyllableRules::STANDARD;
     });
-    assert_adopt_within_budget(&mut engine);
+    assert_adopt_within_budget(&mut engine, "chào", MAX_ADOPT_ALLOCS_PER_CALL);
+    engine.add_shortcut("ctsg", "cơm tấm Sài Gòn");
+    assert_adopt_within_budget(&mut engine, "Cts", MAX_TRIGGER_ADOPT_ALLOCS_PER_CALL);
+    engine.remove_shortcut("ctsg");
     pairs::assert_paired_allocations(&mut engine);
     shortcut::assert_shortcut_expansion_within_budget(&mut engine);
     collision::assert_collision_check_is_free(&mut engine);
