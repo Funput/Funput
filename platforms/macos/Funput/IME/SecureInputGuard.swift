@@ -18,6 +18,9 @@ import Foundation
 /// - No range at all: the field does not say (Warp never reports marked text), so it may
 ///   be showing the probe. The probe is cleared and the field composes as it always has.
 ///
+/// The system's own password prompts are not asked: their answer is known
+/// (`systemPasswordPrompts`), and every key goes to them raw.
+///
 /// The probe never lands on a composition: a word in progress ends first. A field that held
 /// marked text is asked again at the next word, since focus may have moved to another field
 /// of the same client. Nothing before the caret is read, and no permission beyond being the
@@ -36,6 +39,19 @@ struct SecureInputGuard {
         case holdsMarkedText
         case refusesMarkedText
     }
+
+    /// Processes that show nothing but a password field when secure input is on: the lock
+    /// screen, the authorization dialogs (System Settings' own, and the older SecurityAgent
+    /// one), and Touch ID's password fallback. Their fields refuse marked text, yet the probe
+    /// misreads them: the lock screen hides its field until the first key arrives, and
+    /// System Settings' dialog answers as if it held the probe. The first letter of the
+    /// password was then typed twice.
+    private static let systemPasswordPrompts: Set<String> = [
+        "com.apple.loginwindow",
+        "com.apple.LocalAuthenticationRemoteService",
+        "com.apple.SecurityAgent",
+        "com.apple.LocalAuthentication.UIAgent",
+    ]
 
     private let secureInputEnabled: () -> Bool
     /// What the focused field answered, kept while secure input stays on.
@@ -71,6 +87,10 @@ struct SecureInputGuard {
         // Until the field has answered, a key that types nothing reaches it untouched, so
         // nothing before the caret of a password field is read.
         guard let key else { return .handOver }
+        if let client = surface.clientID, Self.systemPasswordPrompts.contains(client) {
+            answer = .refusesMarkedText
+            return .handOver
+        }
         return probe(with: key, on: surface)
     }
 

@@ -54,6 +54,13 @@ asking the field for its marked text. A field that never reports marked text (Wa
 answer, so it keeps composing as it did before; if such a field is a password field that
 cannot hold marked text, the first letter of each word can still be typed twice there.
 
+The system's own password prompts are never probed: the lock screen (`loginwindow`), the
+authorization dialogs (System Settings' `LocalAuthenticationRemoteService` and the older
+`SecurityAgent`) and Touch ID's password fallback always get every key untouched. The probe
+misread both of the first two: the lock screen hides its password field until the first key
+arrives, and System Settings' dialog answers as if it held the marked probe. Either way the
+first letter of the password was typed twice.
+
 ## Backspace does not retone in Cursor
 
 **Symptom:** `chào` + Space + ⌫ + `s` gives `cháo` in TextEdit, Notes, Mail, Safari,
