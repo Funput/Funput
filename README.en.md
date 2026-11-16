@@ -1,40 +1,34 @@
 <p align="right">
-  <a href="README.md">Tiếng Việt</a> · <strong>English</strong>
+  <a href="README.md">Tiếng Việt</a> | <strong>English</strong>
 </p>
 
 <p align="center">
-  <img
-    src="assets/horizontal-lockup/gradient.png"
-    width="520"
-    alt="Funput"
-  >
+  <img src="assets/horizontal-lockup/gradient.png" width="480" alt="Funput">
 </p>
 
----
+<h3 align="center">An open-source Vietnamese keyboard for every device</h3>
 
 <p align="center">
-  <strong>Funput</strong> is an open-source Vietnamese input method and keyboard that is lightweight and privacy-focused.<br>
-  It supports Telex and VNI across iOS, Android, macOS, Windows, and Linux, delivering a familiar and consistent Vietnamese typing experience across all your devices.
+  <a href="https://github.com/Funput/Funput/releases/latest"><img src="https://img.shields.io/github/v/release/Funput/Funput?label=release&color=22C55E" alt="Latest release"></a>
+  <a href="https://github.com/Funput/Funput/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Funput/Funput/ci.yml?branch=main&label=CI" alt="CI status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Funput/Funput?color=2563EB" alt="MIT license"></a>
+  <a href="https://github.com/Funput/Funput/stargazers"><img src="https://img.shields.io/github/stars/Funput/Funput?color=F59E0B" alt="GitHub stars"></a>
 </p>
-
-## Get started
 
 <p align="center">
-  <a href="https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS">
-    <img src="https://img.shields.io/badge/Windows-Microsoft_Store-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Get Funput for Windows on Microsoft Store">
-  </a>
-  <a href="https://github.com/Funput/Funput/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Latest_release-22C55E?style=for-the-badge&logo=github&logoColor=white" alt="Download the latest Funput release">
-  </a>
-  <a href="https://docs.funput.app/docs/install/">
-    <img src="https://img.shields.io/badge/Documentation-Installation_guide-2563EB?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Read the Funput installation guide">
-  </a>
-  <a href="https://github.com/Funput/Funput/issues">
-    <img src="https://img.shields.io/badge/Support-Report_an_issue-E11D48?style=for-the-badge&logo=github&logoColor=white" alt="Report a Funput issue">
-  </a>
+  <a href="https://funput.app"><strong>Website</strong></a> &nbsp;|&nbsp;
+  <a href="https://docs.funput.app/docs/install/"><strong>Installation guide</strong></a> &nbsp;|&nbsp;
+  <a href="https://github.com/Funput/Funput/issues"><strong>Report an issue</strong></a>
 </p>
 
-## Install by platform
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/typing-demo-dark.svg">
+    <img src="assets/readme/typing-demo-light.svg" width="760" alt="Typing Tiếng Việt in Telex and Xin chào in VNI">
+  </picture>
+</p>
+
+<br>
 
 <div align="center">
   <table>
@@ -66,7 +60,7 @@
             <img src="https://funput.app/apple.svg" alt="macOS" width="40" height="40">
           </picture>
           <br><strong>macOS</strong><br>
-          <sub>Download</sub>
+          <sub>GitHub download</sub>
         </a>
       </td>
       <td align="center" valign="top" width="20%">
@@ -86,16 +80,18 @@
             <img src="https://funput.app/linux.svg" alt="Linux" width="40" height="40">
           </picture>
           <br><strong>Linux</strong><br>
-          <sub>Install guide</sub>
+          <sub>Fcitx5 and IBus</sub>
         </a>
       </td>
     </tr>
   </table>
 </div>
 
-**Windows:** install Funput for free from [Microsoft Store](https://apps.microsoft.com/store/detail/9NR3WL5PD4ZS) and receive updates through the Store. The [portable `.exe` build](https://github.com/Funput/Funput/releases/latest) remains available on GitHub. See the [Windows guide](https://docs.funput.app/docs/install/windows/) for installation details.
+<p align="center">
+  <sub>Windows also has a no-install version on the <a href="https://github.com/Funput/Funput/releases/latest">Releases</a> page.</sub>
+</p>
 
-## Interface
+## Screenshots
 
 <div align="center">
   <table>
@@ -104,13 +100,13 @@
         <a href="assets/screenshot/ios.png">
           <img src="assets/screenshot/ios.png" alt="Funput keyboard on iOS" height="380">
         </a>
-        <br><strong>iOS</strong>
+        <br><sub><strong>iOS</strong></sub>
       </td>
       <td align="center" valign="middle" width="50%">
         <a href="assets/screenshot/android.png">
           <img src="assets/screenshot/android.png" alt="Funput keyboard on Android" height="380">
         </a>
-        <br><strong>Android</strong>
+        <br><sub><strong>Android</strong></sub>
       </td>
     </tr>
   </table>
@@ -118,110 +114,99 @@
     <tr>
       <td align="center" valign="middle" width="33%">
         <a href="assets/screenshot/macOS.png">
-          <img src="assets/screenshot/macOS.png" alt="Funput on macOS" height="210">
+          <img src="assets/screenshot/macOS.png" alt="Funput on macOS" height="200">
         </a>
-        <br><strong>macOS</strong>
+        <br><sub><strong>macOS</strong></sub>
       </td>
       <td align="center" valign="middle" width="33%">
         <a href="assets/screenshot/windows.png">
-          <img src="assets/screenshot/windows.png" alt="Funput on Windows" height="210">
+          <img src="assets/screenshot/windows.png" alt="Funput on Windows" height="200">
         </a>
-        <br><strong>Windows</strong>
+        <br><sub><strong>Windows</strong></sub>
       </td>
       <td align="center" valign="middle" width="33%">
         <a href="assets/screenshot/linux.png">
-          <img src="assets/screenshot/linux.png" alt="Funput on Linux" height="210">
+          <img src="assets/screenshot/linux.png" alt="Funput on Linux" height="200">
         </a>
-        <br><strong>Linux</strong>
+        <br><sub><strong>Linux</strong></sub>
       </td>
     </tr>
   </table>
 </div>
 
-## Architecture
+<br>
 
-All five platforms share one Rust core. Each shell talks to the core through the
-right bridge: [`funput-ffi`](crates/funput-ffi) (C ABI) for iOS, macOS, and Linux;
-[`funput-jni`](crates/funput-jni) for Android; a direct
-[`funput-engine`](crates/funput-engine) link for Windows.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/pillars-en-dark.svg">
+    <img src="assets/readme/pillars-en-light.svg" width="820" alt="Free. Private. Five platforms.">
+  </picture>
+</p>
 
+<p align="center">
+  Plenty of small touches are waiting for you in Settings.
+</p>
+
+<details>
+<summary><strong>Our privacy promises</strong></summary>
+<br>
+
+An input method sees everything you type, so Funput keeps these promises, and you can check each one in the source:
+
+- **No data collection.** No analytics, ads or automatic crash reporting SDKs. No account needed.
+- **What you type stays on your device.** Suggestions, the personal dictionary and everything the keyboard learns are stored locally.
+- **The Android keyboard has no network access.** The Internet permission is stripped from the keyboard process at build time. Only the settings app goes online, to fetch news.
+- **No automatic clipboard reads.** On iOS the keyboard pastes only when you tap the system Paste button.
+
+</details>
+
+## For developers
+
+All five platforms share one Rust core. iOS, macOS and Linux call it through [`funput-ffi`](crates/funput-ffi) (C ABI), Android through [`funput-jni`](crates/funput-jni), and Windows links [`funput-engine`](crates/funput-engine) directly.
+
+<details>
+<summary><strong>Show the architecture diagram</strong></summary>
+<br>
 <p align="center">
   <a href="assets/design/architecture.png">
-    <img
-      src="assets/design/architecture.png"
-      width="960"
-      alt="Funput architecture: iOS, macOS, and Linux via funput-ffi; Android via funput-jni; Windows via direct link; all converging on funput-engine and funput-core"
-    >
+    <img src="assets/design/architecture.png" width="900" alt="Funput architecture: iOS, macOS and Linux through funput-ffi; Android through funput-jni; Windows links directly; all converge on funput-engine and funput-core">
   </a>
-  <br>
-  <sub><a href="assets/design/architecture.png">Click for full-size image</a></sub>
 </p>
+</details>
 
-## Project status
+Run the core test suite:
 
-Funput is under active development. Features and architecture may continue to
-evolve during the project's early releases.
+```bash
+cargo test --workspace
+```
 
-Bug reports, discussions, and contributions are welcome.
+Each platform has its own build guide:
+[iOS](platforms/ios/README.md), [Android](platforms/android/README.md), [macOS](platforms/macos/README.md), [Windows](platforms/windows/README.md), [Linux](platforms/linux/README.md).
+Feature designs live in [`docs/features`](docs/features).
 
-## Support
+Funput is under active development and ships often. Bug reports, discussions and pull requests are all welcome.
 
-Funput is a community project — free for everyone.
-If you find Funput useful, you're welcome to support the project via [GitHub Sponsors](https://github.com/sponsors/Funput) or bank transfer — or simply open the [repo](https://github.com/Funput/Funput) and click Star in the top right.
+## Support the project
+
+Funput is free for everyone. If you find it useful, you can support it through GitHub Sponsors, a bank transfer, or simply by starring the repo.
 
 <p align="center">
-  <a href="https://github.com/sponsors/Funput">
-    <img src="https://img.shields.io/badge/GitHub-Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor Funput on GitHub">
-  </a>
-  <a href="https://github.com/Funput/Funput">
-    <img src="https://img.shields.io/github/stars/Funput/Funput?style=for-the-badge&logo=github&logoColor=white&color=F59E0B" alt="Star Funput on GitHub">
-  </a>
+  <a href="https://github.com/sponsors/Funput"><img src="https://img.shields.io/badge/GitHub-Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor Funput on GitHub"></a>
+  <a href="https://github.com/Funput/Funput"><img src="https://img.shields.io/github/stars/Funput/Funput?style=for-the-badge&logo=github&logoColor=white&color=F59E0B" alt="Star Funput on GitHub"></a>
 </p>
 
+<details>
+<summary><strong>Bank transfer by QR code</strong></summary>
+<br>
 <p align="center">
-  <img src="assets/donate/qr.png" width="360" alt="Donate to Funput">
-  <br>
-  <sub>Made with ❤️ by Funput</sub>
+  <img src="assets/donate/qr.png" width="280" alt="Funput donation QR code">
 </p>
-
-## Acknowledgements
-
-Funput exists thanks to the community.
-Special thanks to:
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center" valign="top" width="25%">
-        <a href="https://github.com/zenfas">
-          <img src="https://github.com/zenfas.png?size=160" width="80" height="80" alt="zenfas">
-          <br><strong>zenfas</strong>
-        </a>
-      </td>
-      <td align="center" valign="top" width="25%">
-        <a href="https://github.com/quyleanh">
-          <img src="https://github.com/quyleanh.png?size=160" width="80" height="80" alt="Quy Le Anh">
-          <br><strong>Quy Le Anh</strong><br>
-          <sub>@quyleanh</sub>
-        </a>
-      </td>
-      <td align="center" valign="top" width="25%">
-        <a href="https://github.com/huyle0406">
-          <img src="https://github.com/huyle0406.png?size=160" width="80" height="80" alt="huyle0406">
-          <br><strong>huyle0406</strong>
-        </a>
-      </td>
-      <td align="center" valign="top" width="25%">
-        <a href="https://github.com/grayfind">
-          <img src="https://github.com/grayfind.png?size=160" width="80" height="80" alt="grayfind">
-          <br><strong>grayfind</strong>
-        </a>
-      </td>
-    </tr>
-  </table>
-</div>
+</details>
 
 ## License
 
-[MIT](LICENSE) — © Funput
+Released under the [MIT](LICENSE) license. © Funput.
 
+<p align="center">
+  <sub>Made with ❤️ by Funput</sub>
+</p>
