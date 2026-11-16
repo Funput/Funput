@@ -71,7 +71,7 @@ Ngoài engine, các test đang khẳng định hành vi cũ cũng đổi theo: `
 
 ## 2. Backspace hoàn tác gõ tắt trên desktop
 
-Trạng thái: đã làm trên Windows (PR #…). macOS và Linux chưa.
+Trạng thái: đã làm trên Windows (PR #733). macOS và Linux chưa.
 
 ### Hiện trạng
 
