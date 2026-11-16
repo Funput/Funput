@@ -1,6 +1,6 @@
 # Windows: ô Nội dung gõ tắt bỏ qua vị trí con trỏ
 
-> **Trạng thái:** lỗi đã rõ nguyên nhân, chưa sửa. Đã chọn hướng sửa (bộ ghép biết vị trí con trỏ).
+> **Trạng thái:** đã sửa (PR #734), chưa thử tay trên Windows. Bộ ghép biết vị trí con trỏ, chuyển vào `funput-desktop` ([field/](../../crates/funput-desktop/src/field)) để test được ngoài Windows.
 
 Nguồn: issue #582 (Windows), mục "Báo lỗi": trong bảng gõ tắt, không thêm hay xóa được ký tự ở giữa ô Nội dung, bôi đen cũng không được, con trỏ luôn nhảy về cuối.
 
@@ -44,13 +44,20 @@ Global `Compose` đổi chữ ký cho phù hợp, ví dụ `key(text, cursor, an
 - `cursor` có thể nhỏ hơn `anchor` (chọn ngược từ phải sang trái). Luôn lấy `min` và `max`.
 - `smart_restore` vẫn tắt trong ô này như hiện nay.
 
+### Đã làm
+
+- `FieldComposer` nằm ở `funput-desktop/src/field/`: `mod.rs` (gõ phím, Backspace), `sync.rs` (dựng lại mô hình khi ô khác cái bộ ghép đã trả về), `view.rs` (`FieldView` và kẹp offset). Bản cũ trong `platforms/windows/src/ui/compose.rs` đã xóa.
+- Global `Compose`: `key(text, cursor, anchor, typed) -> FieldEdit`, `backspace(text, cursor, anchor) -> FieldEdit`, `reset()`. `FieldEdit.accepted` là `false` với phím không phải chữ (Shift, phím F): `TextInput` tự xử lý, nên giữ Shift để chọn không còn làm mất vùng chọn.
+- `reset()` chỉ nạp lại cài đặt và đánh dấu cần đọc lại ô. Phím gõ kế tiếp dựng mô hình từ nội dung và con trỏ thật, nên click, mũi tên, Ctrl+Z, dán đều không cần xử lý riêng.
+- `cursor-position-byte-offset` và `anchor-position-byte-offset` là property "internal" của Slint, có trong bản 1.17.1 đang khóa. Kiểm tra lại khi nâng Slint.
+
 ### Không chọn
 
 Chỉ ghép khi con trỏ ở cuối và không có vùng chọn, còn lại để `TextInput` tự chèn ký tự thô. Sửa được chuyện con trỏ nhảy, nhưng gõ ở giữa không có dấu. Với ô chứa nội dung tiếng Việt thì chưa đủ.
 
 ## Kiểm thử
 
-- `FieldComposer` (test đơn vị đã có trong [compose.rs](../../platforms/windows/src/ui/compose.rs)), thêm:
+- `crates/funput-desktop/tests/field.rs` (chạy được trên mọi máy, giả lập `TextInput`):
   - gõ ở giữa, gõ ở đầu;
   - gõ đè vùng chọn, chọn xuôi và chọn ngược;
   - Backspace ở giữa, Backspace xóa vùng chọn;

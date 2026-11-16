@@ -12,7 +12,8 @@
 //! concern; moving it to `shared` would only force `ui`'s window modules public.
 //!
 //! Keystrokes typed into these windows never reach the global hook — winit ignores
-//! synthetic input — so the Vietnamese fields compose in-process via [`compose`].
+//! synthetic input — so the Vietnamese fields compose in-process through
+//! [`funput_desktop::FieldComposer`] (wired in `settings_callbacks`).
 
 mod control_center;
 mod convert;
@@ -22,7 +23,6 @@ mod onboarding;
 mod settings_callbacks;
 mod settings_window;
 
-pub mod compose;
 pub mod mica;
 pub mod recorder;
 pub mod system_accent;

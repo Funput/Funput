@@ -1,8 +1,11 @@
-// Single-line field that composes Vietnamese via the Compose global.
+// Single-line field that composes Vietnamese via the Compose global, at the caret.
+//
+// The caret and anchor offsets are TextInput properties Slint marks internal; they
+// exist in the pinned 1.17.1. Re-check them when upgrading Slint.
 
 import { Palette } from "std-widgets.slint";
 import { Theme } from "../theme/tokens.slint";
-import { Compose } from "compose.slint";
+import { Compose, FieldEdit } from "compose.slint";
 
 export component ComposingInput inherits Rectangle {
     in-out property <string> text;
@@ -34,9 +37,16 @@ export component ComposingInput inherits Rectangle {
         text <=> root.text;
         color: Palette.foreground;
 
+        // Show what the composer made of the key, caret right after the composed text.
+        function show(edit: FieldEdit) {
+            self.text = edit.text;
+            self.set-selection-offsets(edit.cursor, edit.cursor);
+            root.edited(self.text);
+        }
+
         changed has-focus => {
             if self.has-focus {
-                Compose.reset(self.text);
+                Compose.reset();
             }
         }
         edited => { root.edited(self.text); }
@@ -52,25 +62,25 @@ export component ComposingInput inherits Rectangle {
                 }
                 if event.text == "x" || event.text == "\u{18}" {
                     self.cut();
-                    Compose.reset(self.text);
+                    Compose.reset();
                     root.edited(self.text);
                     return accept;
                 }
                 if event.text == "v" || event.text == "\u{16}" {
                     self.paste();
-                    Compose.reset(self.text);
+                    Compose.reset();
                     root.edited(self.text);
                     return accept;
                 }
                 if event.text == "z" || event.text == "\u{1a}" {
                     self.undo();
-                    Compose.reset(self.text);
+                    Compose.reset();
                     root.edited(self.text);
                     return accept;
                 }
                 if event.text == "y" || event.text == "\u{19}" {
                     self.redo();
-                    Compose.reset(self.text);
+                    Compose.reset();
                     root.edited(self.text);
                     return accept;
                 }
@@ -80,9 +90,7 @@ export component ComposingInput inherits Rectangle {
                 return reject;
             }
             if event.text == Key.Backspace {
-                self.text = Compose.backspace();
-                self.set-selection-offsets(1000000, 1000000);
-                root.edited(self.text);
+                self.show(Compose.backspace(self.text, self.cursor-position-byte-offset, self.anchor-position-byte-offset));
                 return accept;
             }
             if event.text == Key.LeftArrow || event.text == Key.RightArrow
@@ -90,12 +98,14 @@ export component ComposingInput inherits Rectangle {
                 || event.text == Key.Home || event.text == Key.End
                 || event.text == Key.Return || event.text == Key.Tab
                 || event.text == Key.Escape || event.text == Key.Delete {
-                Compose.reset(self.text);
+                Compose.reset();
                 return reject;
             }
-            self.text = Compose.key(event.text);
-            self.set-selection-offsets(1000000, 1000000);
-            root.edited(self.text);
+            let edit = Compose.key(self.text, self.cursor-position-byte-offset, self.anchor-position-byte-offset, event.text);
+            if !edit.accepted {
+                return reject;
+            }
+            self.show(edit);
             return accept;
         }
     }
