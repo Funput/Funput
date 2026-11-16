@@ -1,6 +1,6 @@
 # Windows: ô Nội dung gõ tắt bỏ qua vị trí con trỏ
 
-> **Trạng thái:** đã sửa (PR #…), chưa thử tay trên Windows. Bộ ghép biết vị trí con trỏ, chuyển vào `funput-desktop` ([field/](../../crates/funput-desktop/src/field)) để test được ngoài Windows.
+> **Trạng thái:** đã sửa (PR #734), chưa thử tay trên Windows. Bộ ghép biết vị trí con trỏ, chuyển vào `funput-desktop` ([field/](../../crates/funput-desktop/src/field)) để test được ngoài Windows.
 
 Nguồn: issue #582 (Windows), mục "Báo lỗi": trong bảng gõ tắt, không thêm hay xóa được ký tự ở giữa ô Nội dung, bôi đen cũng không được, con trỏ luôn nhảy về cuối.
 
