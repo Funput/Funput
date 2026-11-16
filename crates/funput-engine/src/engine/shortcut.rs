@@ -1,11 +1,12 @@
-//! One-tap undo of a gõ tắt expansion: Backspace right after it puts the trigger back.
+//! Gõ tắt calls a host makes itself: one-tap undo, where Backspace right after an
+//! expansion puts the trigger back, and expansion before Enter or Tab.
 //!
-//! [`Engine::on_backspace`] does not take it, because only the host knows whether
+//! [`Engine::on_backspace`] does not take the undo, because only the host knows whether
 //! the expansion still sits before the caret. Android and iOS check the document;
 //! the desktop shell checks its shadow of what it typed. Each then asks
 //! [`Engine::undo_shortcut`] when Backspace is still the next key.
 
-use crate::compose::boundary::shortcut_undo;
+use crate::compose::boundary::{self, shortcut_undo};
 use crate::{Engine, ImeResult};
 
 impl Engine {
@@ -28,6 +29,23 @@ impl Engine {
     /// The trigger is then kept once, the next time it is typed.
     pub fn undo_shortcut(&mut self) -> Option<ImeResult> {
         shortcut_undo::undo(&mut self.session)
+    }
+
+    /// Expand the live word if it is a gõ tắt trigger, for a key that ends the word
+    /// but that the host sends on to the app itself: Enter, which may send a message,
+    /// or Tab, which may move focus. The result has no boundary character, so the host
+    /// injects it and then the real key. `None` leaves the word as typed.
+    ///
+    /// Only gõ tắt runs: no English restore and no typo correction, and no undo is
+    /// armed. On a match the word is committed; otherwise the host commits it as it
+    /// does for any key that moves the caret.
+    pub fn expand_shortcut(&mut self) -> Option<ImeResult> {
+        if !self.session.enabled && !self.session.english_shortcuts() {
+            return None;
+        }
+        let result = boundary::expansion_in_place(&mut self.session)?;
+        self.session.clear();
+        Some(result)
     }
 
     /// Drop the undo and any one-time refusal. The caret has left this field.

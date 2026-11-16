@@ -41,7 +41,7 @@ pub use access_keys::AccessKeys;
 pub use caret::Caret;
 pub use funput_engine::{ImeResult, KeySource};
 pub use inject::{InjectPlan, plan_inject};
-pub use key::{KeyEvent, KeyKind, Mods, classify};
+pub use key::{KeyEvent, KeyKind, Mods, TriggerKey, classify};
 pub use layout::is_foreign_layout;
 pub use retone::{CommittedTail, Removed};
 pub use shell::ShellState;

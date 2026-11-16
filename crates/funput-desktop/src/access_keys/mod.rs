@@ -81,7 +81,7 @@ impl AccessKeys {
             }
             // Enter, Esc, arrows or a real shortcut: the menu is done with, and the
             // shell's own flush still has to run for it.
-            KeyKind::Flush(_) => {
+            KeyKind::Flush(_) | KeyKind::Trigger(_) => {
                 self.cancel();
                 false
             }

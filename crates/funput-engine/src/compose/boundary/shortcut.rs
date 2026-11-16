@@ -6,7 +6,42 @@ use crate::ImeResult;
 use crate::compose::doubled;
 use crate::model::{NumberGlue, Session};
 
+/// What the live word expands to: the trigger form that matched, the expansion
+/// cased to match it, and how many characters on screen it replaces.
+struct Rewrite {
+    matched: String,
+    cased: String,
+    backspace: usize,
+}
+
 pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<ImeResult> {
+    let Rewrite {
+        matched,
+        cased,
+        backspace,
+    } = rewrite(session)?;
+    let shown = super::shortcut_undo::plain_form(session);
+    let mut written = cased;
+    written.push(boundary_key);
+    super::shortcut_undo::arm(session, &matched, &shown, &written, boundary_key);
+    Some(ImeResult::send(backspace, written))
+}
+
+/// Expand the live word without typing a boundary character, for a key the host
+/// sends on to the app itself (Enter, Tab). No undo is armed: by the time Backspace
+/// could ask, the line is sent or the focus has moved on. A trigger the user just
+/// took back stays as typed, the same as at Space.
+pub(crate) fn expansion_in_place(session: &mut Session) -> Option<ImeResult> {
+    if super::shortcut_undo::declined(session) {
+        return None;
+    }
+    let Rewrite {
+        cased, backspace, ..
+    } = rewrite(session)?;
+    Some(ImeResult::send(backspace, cased))
+}
+
+fn rewrite(session: &Session) -> Option<Rewrite> {
     // Gated here rather than by clearing the table: the rows stay loaded, so the
     // switch is instant in both directions and nothing has to be re-pushed. A word
     // glued to a number (`500k`) is a unit on that number, never a trigger.
@@ -21,11 +56,11 @@ pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<Ime
     // Undo restores the word, not the raw keys: `ddc` composes to `đc` before it
     // expands. What has to be deleted is what the app shows right now: `buffer`.
     let backspace = session.buffer.chars().count();
-    let shown = super::shortcut_undo::plain_form(session);
-    let mut written = cased;
-    written.push(boundary_key);
-    super::shortcut_undo::arm(session, &matched, &shown, &written, boundary_key);
-    Some(ImeResult::send(backspace, written))
+    Some(Rewrite {
+        matched,
+        cased,
+        backspace,
+    })
 }
 
 /// The expansion and the form that matched it: typed keys, then `keys`, then buffer.

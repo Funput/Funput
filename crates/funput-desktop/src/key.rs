@@ -36,6 +36,8 @@ pub struct KeyEvent {
     /// Enter. Flagged on its own because it is the one key after which the shell
     /// knows where the caret sits — the start of a line — and says so to the engine.
     pub is_enter: bool,
+    /// Tab, which like Enter may expand a gõ tắt trigger before it goes on.
+    pub is_tab: bool,
     /// Where the key physically came from. A numpad digit carries
     /// [`KeySource::Numpad`] so the engine keeps it a literal number instead of a
     /// VNI tone/shape modifier; ordinary keys are [`KeySource::Standard`].
@@ -51,6 +53,9 @@ pub enum KeyKind {
     Compose(char, KeySource),
     /// Backspace pressed — call `engine.backspace()` and apply its result.
     Backspace,
+    /// Enter or Tab on its own (Shift+Enter included): the shell may expand a gõ tắt
+    /// trigger before the key goes on, then flushes as for [`KeyKind::Flush`].
+    Trigger(TriggerKey),
     /// Flush the composition (commit/clear) and let the key pass through —
     /// navigation, function keys, or a system shortcut. Carries where the key
     /// leaves the caret, for [`crate::ShellState::caret_moved`].
@@ -58,6 +63,24 @@ pub enum KeyKind {
     /// Irrelevant key (no character, not navigation) — pass through, leave the
     /// composition as-is.
     PassThrough,
+}
+
+/// A key that ends the word but that the app must still receive as itself, since
+/// it may send a message, move focus or accept a suggestion.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TriggerKey {
+    Enter,
+    Tab,
+}
+
+impl TriggerKey {
+    /// Where the key leaves the caret: Enter at the start of a line.
+    pub fn caret(self) -> Caret {
+        match self {
+            Self::Enter => Caret::LineStart,
+            Self::Tab => Caret::Unknown,
+        }
+    }
 }
 
 /// Decide what a key means for composition. Toggle (VI/EN) is handled by the shell
@@ -68,6 +91,13 @@ pub fn classify(ev: &KeyEvent) -> KeyKind {
     }
     if ev.is_backspace {
         return KeyKind::Backspace;
+    }
+    // Shift+Tab moves focus backwards or un-indents: it never ends a word typed in.
+    if ev.is_enter {
+        return KeyKind::Trigger(TriggerKey::Enter);
+    }
+    if ev.is_tab && !ev.mods.shift {
+        return KeyKind::Trigger(TriggerKey::Tab);
     }
     if ev.is_navigation {
         return KeyKind::Flush(landing(ev));
@@ -102,8 +132,16 @@ mod tests {
             is_backspace: false,
             is_navigation: false,
             is_enter: false,
+            is_tab: false,
             source: KeySource::Standard,
         }
+    }
+
+    fn tab() -> KeyEvent {
+        let mut ev = key(Some('\t'));
+        ev.is_navigation = true;
+        ev.is_tab = true;
+        ev
     }
 
     fn enter() -> KeyEvent {
@@ -156,21 +194,47 @@ mod tests {
     }
 
     #[test]
-    fn enter_leaves_the_caret_at_a_line_start() {
-        assert_eq!(classify(&enter()), KeyKind::Flush(Caret::LineStart));
+    fn enter_is_a_trigger_key_that_starts_a_line() {
+        assert_eq!(classify(&enter()), KeyKind::Trigger(TriggerKey::Enter));
+        assert_eq!(TriggerKey::Enter.caret(), Caret::LineStart);
     }
 
-    /// Alt+Enter and Shift+Enter are how some apps break a line where plain Enter
-    /// submits, so the modifier does not change where the caret lands.
+    /// Shift+Enter breaks a line in chat apps where plain Enter sends: it ends the
+    /// word the same way, so it may expand gõ tắt too.
     #[test]
-    fn enter_with_a_modifier_still_starts_a_line() {
-        let mut alt = enter();
-        alt.mods.alt = true;
-        assert_eq!(classify(&alt), KeyKind::Flush(Caret::LineStart));
-
+    fn shift_enter_is_a_trigger_key() {
         let mut shift = enter();
         shift.mods.shift = true;
-        assert_eq!(classify(&shift), KeyKind::Flush(Caret::LineStart));
+        assert_eq!(classify(&shift), KeyKind::Trigger(TriggerKey::Enter));
+    }
+
+    /// Ctrl+Enter and Alt+Enter are app shortcuts: they only flush. They still start
+    /// a line in the apps that use Alt+Enter as a line break.
+    #[test]
+    fn enter_with_ctrl_or_alt_only_flushes() {
+        for set in [|m: &mut Mods| m.ctrl = true, |m: &mut Mods| m.alt = true] {
+            let mut ev = enter();
+            set(&mut ev.mods);
+            assert_eq!(classify(&ev), KeyKind::Flush(Caret::LineStart));
+        }
+    }
+
+    #[test]
+    fn tab_is_a_trigger_key() {
+        assert_eq!(classify(&tab()), KeyKind::Trigger(TriggerKey::Tab));
+        assert_eq!(TriggerKey::Tab.caret(), Caret::Unknown);
+    }
+
+    /// Shift+Tab steps back a field or un-indents; Ctrl+Tab and Alt+Tab switch tabs
+    /// and windows. None of them ends a word typed in.
+    #[test]
+    fn tab_with_any_modifier_only_flushes() {
+        let setters: [fn(&mut Mods); 3] = [|m| m.shift = true, |m| m.ctrl = true, |m| m.alt = true];
+        for set in setters {
+            let mut ev = tab();
+            set(&mut ev.mods);
+            assert_eq!(classify(&ev), KeyKind::Flush(Caret::Unknown));
+        }
     }
 
     #[test]

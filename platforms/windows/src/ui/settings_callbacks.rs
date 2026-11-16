@@ -97,6 +97,8 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_shortcuts_enabled(commands::set_shortcuts_enabled);
     window.on_set_shortcut_smart_case(commands::set_shortcut_smart_case);
     window.on_set_shortcuts_in_english(commands::set_shortcuts_in_english);
+    window.on_set_shortcut_on_enter(commands::set_shortcut_on_enter);
+    window.on_set_shortcut_on_tab(commands::set_shortcut_on_tab);
 
     // A Store build's startup task can be held off (or on) by the user or an
     // organization; put the switch back and say where to change it.

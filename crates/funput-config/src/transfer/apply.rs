@@ -69,6 +69,12 @@ fn apply_preferences(s: &mut Settings, prefs: &Preferences) {
     if let Some(v) = prefs.shortcuts_in_english {
         s.shortcuts_in_english = v;
     }
+    if let Some(v) = prefs.shortcut_on_enter {
+        s.shortcut_on_enter = v;
+    }
+    if let Some(v) = prefs.shortcut_on_tab {
+        s.shortcut_on_tab = v;
+    }
 }
 
 /// Merge by `trigger`: a matching trigger takes the incoming expansion, a new one

@@ -32,6 +32,8 @@ export component SettingsContent inherits ScrollView {
     in-out property <bool> shortcuts-enabled;
     in-out property <bool> shortcut-smart-case;
     in-out property <bool> shortcuts-in-english;
+    in-out property <bool> shortcut-on-enter;
+    in-out property <bool> shortcut-on-tab;
     in property <string> version;
     in property <string> update-state: "idle";
     in property <string> update-version;
@@ -54,6 +56,8 @@ export component SettingsContent inherits ScrollView {
     callback set-shortcuts-enabled(bool);
     callback set-shortcut-smart-case(bool);
     callback set-shortcuts-in-english(bool);
+    callback set-shortcut-on-enter(bool);
+    callback set-shortcut-on-tab(bool);
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
     callback edit-expansion(int, string);
@@ -122,10 +126,14 @@ export component SettingsContent inherits ScrollView {
                 shortcuts-enabled <=> root.shortcuts-enabled;
                 shortcut-smart-case <=> root.shortcut-smart-case;
                 shortcuts-in-english <=> root.shortcuts-in-english;
+                shortcut-on-enter <=> root.shortcut-on-enter;
+                shortcut-on-tab <=> root.shortcut-on-tab;
                 add-shortcut() => { root.add-shortcut(); }
                 set-shortcuts-enabled(v) => { root.set-shortcuts-enabled(v); }
                 set-shortcut-smart-case(v) => { root.set-shortcut-smart-case(v); }
                 set-shortcuts-in-english(v) => { root.set-shortcuts-in-english(v); }
+                set-shortcut-on-enter(v) => { root.set-shortcut-on-enter(v); }
+                set-shortcut-on-tab(v) => { root.set-shortcut-on-tab(v); }
                 remove-shortcut(i) => { root.remove-shortcut(i); }
                 edit-trigger(i, t) => { root.edit-trigger(i, t); }
                 edit-expansion(i, t) => { root.edit-expansion(i, t); }

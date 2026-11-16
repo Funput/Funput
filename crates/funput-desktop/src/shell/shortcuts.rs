@@ -28,6 +28,19 @@ impl ShellState {
             && !self.settings.shortcuts.is_empty()
     }
 
+    /// Let Enter expand a gõ tắt trigger before it goes on. Read by the hook at each
+    /// Enter, so it needs no engine config of its own.
+    pub fn set_shortcut_on_enter(&mut self, on: bool) {
+        self.settings.shortcut_on_enter = on;
+        self.save();
+    }
+
+    /// Let Tab expand a gõ tắt trigger before it goes on.
+    pub fn set_shortcut_on_tab(&mut self, on: bool) {
+        self.settings.shortcut_on_tab = on;
+        self.save();
+    }
+
     /// Persist and push the complete rows, keeping drafts in memory for the UI.
     fn commit_shortcuts(&mut self) {
         let complete: Vec<Shortcut> = self

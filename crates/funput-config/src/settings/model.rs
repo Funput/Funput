@@ -102,6 +102,15 @@ pub struct Settings {
     /// tracks the raw keys and expands them, and does nothing else.
     #[serde(default = "default_true")]
     pub shortcuts_in_english: bool,
+    /// Whether Enter also expands a gõ tắt trigger, before the key goes on to the
+    /// app. Off by default: in a chat app Enter sends, and an expansion the user did
+    /// not want cannot be taken back once the message is gone.
+    #[serde(default)]
+    pub shortcut_on_enter: bool,
+    /// Whether Tab also expands a gõ tắt trigger. Off by default: Tab is how an IDE
+    /// or a search box accepts its own suggestion.
+    #[serde(default)]
+    pub shortcut_on_tab: bool,
     /// Whether focusing a keyboard layout Vietnamese cannot be typed on — a CJK
     /// IME, or a non-Latin script — suspends Vietnamese for as long as it is
     /// active. Defaults to **on**, including for a file written before this field

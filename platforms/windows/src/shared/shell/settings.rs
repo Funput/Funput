@@ -1,11 +1,16 @@
 //! What the Settings window and the tray call: read the current configuration,
 //! and change one piece of it. Every setter persists — see
-//! `funput_desktop::ShellState`, which owns the actual rules.
+//! `funput_desktop::ShellState`, which owns the actual rules. The gõ tắt table and
+//! its switches live in [`shortcuts`].
 
-use funput_config::{ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Settings, Shortcut};
+use funput_config::{ExtraOnsetLetters, FlipHotkey, Hotkey, KeyCombo, Settings};
 use funput_core::{InputMethod, ToneStyle as CoreToneStyle};
 
 use super::with;
+
+mod shortcuts;
+
+pub use shortcuts::*;
 
 /// Every write below goes through here: pick up the VI/EN state and app pins the
 /// keyboard-hook process has written since this one read the file, *then* make
@@ -24,9 +29,6 @@ fn write<R>(f: impl FnOnce(&mut funput_desktop::ShellState) -> R) -> R {
 
 pub fn snapshot() -> Settings {
     with(|s| s.settings().clone())
-}
-pub fn shortcuts() -> Vec<Shortcut> {
-    with(|s| s.shortcuts().to_vec())
 }
 pub fn enabled() -> bool {
     with(|s| s.enabled())
@@ -53,9 +55,6 @@ pub fn toggle_combo() -> Option<KeyCombo> {
 }
 pub fn flip_combo() -> Option<KeyCombo> {
     with(|s| s.flip_combo().cloned())
-}
-pub fn can_add_shortcut() -> bool {
-    with(|s| s.can_add_shortcut())
 }
 
 // --- writes (each persists) ------------------------------------------------
@@ -95,15 +94,6 @@ pub fn set_auto_capitalize(on: bool) {
 pub fn set_extra_onsets(letters: ExtraOnsetLetters) {
     write(|s| s.set_extra_onsets(letters));
 }
-pub fn set_shortcuts_enabled(on: bool) {
-    write(|s| s.set_shortcuts_enabled(on));
-}
-pub fn set_shortcut_smart_case(on: bool) {
-    write(|s| s.set_shortcut_smart_case(on));
-}
-pub fn set_shortcuts_in_english(on: bool) {
-    write(|s| s.set_shortcuts_in_english(on));
-}
 pub fn set_auto_english_on_foreign_layout(on: bool) {
     write(|s| s.set_auto_english_on_foreign_layout(on));
 }
@@ -127,19 +117,4 @@ pub fn set_launch_at_login(on: bool) {
 }
 pub fn complete_onboarding() {
     write(|s| s.complete_onboarding());
-}
-pub fn add_shortcut() {
-    write(|s| s.add_shortcut());
-}
-pub fn prune_incomplete_shortcuts() {
-    write(|s| s.prune_incomplete_shortcuts());
-}
-pub fn remove_shortcut(index: usize) {
-    write(|s| s.remove_shortcut(index));
-}
-pub fn set_shortcut_trigger(index: usize, trigger: String) {
-    write(|s| s.set_shortcut_trigger(index, trigger));
-}
-pub fn set_shortcut_expansion(index: usize, expansion: String) {
-    write(|s| s.set_shortcut_expansion(index, expansion));
 }

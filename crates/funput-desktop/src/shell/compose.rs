@@ -7,7 +7,7 @@
 use funput_engine::{ImeResult, KeySource};
 
 use super::ShellState;
-use crate::{Caret, undo_shortcut};
+use crate::{Caret, TriggerKey, undo_shortcut};
 
 impl ShellState {
     /// Feed one character to the engine, tagged with its physical [`KeySource`] so
@@ -61,6 +61,20 @@ impl ShellState {
     /// Flip the word being composed VN↔raw; returns the delete+inject to apply.
     pub fn flip_composing(&mut self) -> ImeResult {
         self.engine.flip_composing()
+    }
+
+    /// Enter or Tab ended the word. When the Settings switch for that key is on and
+    /// the word is a gõ tắt trigger, returns the expansion to inject; the hook then
+    /// sends the real key itself, so Enter still sends or breaks the line. Either way
+    /// the composition is committed as for any key that moves the caret.
+    pub fn trigger_key(&mut self, key: TriggerKey) -> Option<ImeResult> {
+        let wanted = match key {
+            TriggerKey::Enter => self.settings.shortcut_on_enter,
+            TriggerKey::Tab => self.settings.shortcut_on_tab,
+        };
+        let expansion = wanted.then(|| self.engine.expand_shortcut()).flatten();
+        self.caret_moved(key.caret());
+        expansion
     }
 
     /// The caret moved without typing — a caret key, Enter, a mouse click, a focus
