@@ -80,6 +80,11 @@ pub struct Preferences {
     /// the same reason.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcuts_in_english: Option<bool>,
+    /// Whether Enter, then Tab, also expand gõ tắt. Portable for the same reason.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcut_on_enter: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcut_on_tab: Option<bool>,
 }
 
 /// Comparable and printable because it is also what [`crate::unikey`] parses a

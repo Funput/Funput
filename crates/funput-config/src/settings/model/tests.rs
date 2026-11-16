@@ -292,3 +292,36 @@ fn the_per_app_switch_round_trips_when_turned_off_and_keeps_the_pins() {
     assert!(!back.app_language_memory_enabled);
     assert_eq!(back.app_language_memory.get("code.exe"), Some(&false));
 }
+
+/// Enter and Tab expanding gõ tắt is new behaviour nobody asked for by keeping a
+/// table: absent means off, unlike the switches above.
+#[test]
+fn a_file_without_the_enter_and_tab_switches_leaves_them_off() {
+    let legacy = r#"{
+      "method": "vni",
+      "enabled": true,
+      "smartRestore": true,
+      "eagerRestore": true,
+      "toggleHotkey": "ctrl_backtick",
+      "launchAtLogin": false,
+      "hasCompletedOnboarding": false
+    }"#;
+    let s: Settings = serde_json::from_str(legacy).expect("legacy settings.json must decode");
+
+    assert!(!s.shortcut_on_enter);
+    assert!(!s.shortcut_on_tab);
+}
+
+#[test]
+fn the_enter_and_tab_switches_round_trip_when_turned_on() {
+    let s = Settings {
+        shortcut_on_enter: true,
+        shortcut_on_tab: true,
+        ..Settings::default()
+    };
+    let text = serde_json::to_string(&s).expect("serialize");
+    assert!(text.contains("\"shortcutOnEnter\":true"));
+    assert!(text.contains("\"shortcutOnTab\":true"));
+    let back: Settings = serde_json::from_str(&text).expect("deserialize");
+    assert!(back.shortcut_on_enter && back.shortcut_on_tab);
+}

@@ -9,6 +9,8 @@ export component ShortcutsPage inherits VerticalLayout {
     in-out property <bool> shortcuts-enabled;
     in-out property <bool> shortcut-smart-case;
     in-out property <bool> shortcuts-in-english;
+    in-out property <bool> shortcut-on-enter;
+    in-out property <bool> shortcut-on-tab;
     callback add-shortcut();
     callback remove-shortcut(int);
     callback edit-trigger(int, string);
@@ -16,6 +18,8 @@ export component ShortcutsPage inherits VerticalLayout {
     callback set-shortcuts-enabled(bool);
     callback set-shortcut-smart-case(bool);
     callback set-shortcuts-in-english(bool);
+    callback set-shortcut-on-enter(bool);
+    callback set-shortcut-on-tab(bool);
 
     spacing: Theme.sp-lg;
     width: 100%;
@@ -63,6 +67,26 @@ export component ShortcutsPage inherits VerticalLayout {
             AccentSwitch {
                 checked <=> root.shortcuts-in-english;
                 toggled => { root.set-shortcuts-in-english(root.shortcuts-in-english); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            icon: @image-url("../../icons/row/enter.svg");
+            title: "Bung gõ tắt khi bấm Enter";
+            subtitle: "Bung xong, Enter vẫn xuống dòng hoặc gửi tin như thường. Không hoàn tác được bằng Backspace, vì tin có thể đã gửi.";
+            AccentSwitch {
+                checked <=> root.shortcut-on-enter;
+                toggled => { root.set-shortcut-on-enter(root.shortcut-on-enter); }
+            }
+        }
+        Rectangle { height: 1px; background: Theme.divider; }
+        Row {
+            icon: @image-url("../../icons/row/tab.svg");
+            title: "Bung gõ tắt khi bấm Tab";
+            subtitle: "Bung xong, Tab vẫn chuyển ô hoặc thụt dòng như thường. Shift+Tab không bung.";
+            AccentSwitch {
+                checked <=> root.shortcut-on-tab;
+                toggled => { root.set-shortcut-on-tab(root.shortcut-on-tab); }
             }
         }
     }

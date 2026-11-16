@@ -6,7 +6,7 @@ use funput_config::{ExtraOnsetLetters, Method, Settings};
 use funput_engine::{Action, KeySource};
 
 use super::*;
-use crate::Caret;
+use crate::{Caret, TriggerKey};
 
 /// In memory only — no settings file, so nothing touches the disk.
 fn shell() -> ShellState {
@@ -1020,4 +1020,89 @@ fn a_reopened_trigger_start_composes_the_next_key() {
     backspace_into(&mut state, &mut app);
     type_into(&mut state, &mut app, "d ");
     assert_eq!(app, "đ ");
+}
+
+/// Enter or Tab through the hook: inject the expansion if there is one, then the
+/// real key reaches the app either way.
+fn press_into(state: &mut ShellState, app: &mut String, key: TriggerKey) {
+    if let Some(expansion) = state.trigger_key(key) {
+        for _ in 0..expansion.backspace {
+            app.pop();
+        }
+        app.push_str(&expansion.output);
+    }
+    app.push(match key {
+        TriggerKey::Enter => '\n',
+        TriggerKey::Tab => '\t',
+    });
+}
+
+#[test]
+fn enter_and_tab_leave_a_trigger_alone_by_default() {
+    let mut state = shell_with_tp();
+    let mut app = app_text(&mut state, "tp");
+    press_into(&mut state, &mut app, TriggerKey::Enter);
+    type_into(&mut state, &mut app, "tp");
+    press_into(&mut state, &mut app, TriggerKey::Tab);
+    assert_eq!(app, "tp\ntp\t");
+}
+
+#[test]
+fn enter_expands_a_trigger_when_switched_on() {
+    let mut state = shell_with_tp();
+    state.set_shortcut_on_enter(true);
+    let mut app = app_text(&mut state, "tp");
+    press_into(&mut state, &mut app, TriggerKey::Enter);
+    assert_eq!(app, "TP. HCM\n");
+    assert!(!state.is_composing());
+}
+
+#[test]
+fn tab_expands_a_trigger_when_switched_on() {
+    let mut state = shell_with_tp();
+    state.set_shortcut_on_tab(true);
+    let mut app = app_text(&mut state, "tp");
+    press_into(&mut state, &mut app, TriggerKey::Tab);
+    assert_eq!(app, "TP. HCM\t");
+}
+
+/// Each key has its own switch: Enter on leaves Tab as it was.
+#[test]
+fn the_enter_and_tab_switches_are_independent() {
+    let mut state = shell_with_tp();
+    state.set_shortcut_on_enter(true);
+    let mut app = app_text(&mut state, "tp");
+    press_into(&mut state, &mut app, TriggerKey::Tab);
+    assert_eq!(app, "tp\t");
+}
+
+/// A word that is no trigger is committed as typed, as Enter always did.
+#[test]
+fn enter_commits_a_word_that_is_no_trigger() {
+    let mut state = shell_with_tp();
+    state.set_method(InputMethod::Telex);
+    state.set_shortcut_on_enter(true);
+    let mut app = app_text(&mut state, "cows");
+    press_into(&mut state, &mut app, TriggerKey::Enter);
+    assert_eq!(app, "cớ\n");
+    assert!(!state.is_composing());
+}
+
+#[test]
+fn enter_expands_in_english_mode_when_gõ_tắt_runs_there() {
+    let mut state = shell_with_tp();
+    state.set_shortcut_on_enter(true);
+    state.set_enabled(false);
+    let mut app = app_text(&mut state, "tp");
+    press_into(&mut state, &mut app, TriggerKey::Enter);
+    assert_eq!(app, "TP. HCM\n");
+}
+
+#[test]
+fn the_enter_and_tab_switches_are_saved() {
+    let mut state = shell();
+    state.set_shortcut_on_enter(true);
+    state.set_shortcut_on_tab(true);
+    assert!(state.settings().shortcut_on_enter);
+    assert!(state.settings().shortcut_on_tab);
 }

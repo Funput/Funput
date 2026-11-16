@@ -90,6 +90,7 @@ pub fn to_key_event(kbd: &KBDLLHOOKSTRUCT) -> KeyEvent {
         is_backspace: vk == VK_BACK,
         is_navigation: is_navigation(vk),
         is_enter: vk == VK_RETURN,
+        is_tab: vk == VK_TAB,
         source: key_source(vk),
     }
 }

@@ -14,7 +14,7 @@ mod settings;
 
 use std::sync::{Mutex, OnceLock};
 
-use funput_desktop::{Caret, ImeResult, KeySource, ShellState};
+use funput_desktop::{Caret, ImeResult, KeySource, ShellState, TriggerKey};
 
 use crate::shared::settings_path;
 
@@ -42,6 +42,11 @@ pub fn process_key(c: char, source: KeySource) -> ImeResult {
 }
 pub fn flip_composing() -> ImeResult {
     with(|s| s.flip_composing())
+}
+/// Enter or Tab ended the word: the gõ tắt expansion to inject before the key, when
+/// its switch is on — see [`ShellState::trigger_key`].
+pub fn trigger_key(key: TriggerKey) -> Option<ImeResult> {
+    with(|s| s.trigger_key(key))
 }
 pub fn on_backspace() {
     with(|s| s.on_backspace());

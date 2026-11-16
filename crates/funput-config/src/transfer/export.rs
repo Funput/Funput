@@ -30,6 +30,8 @@ pub fn to_document(s: &Settings, source: Source) -> ConfigDocument {
             shortcuts_enabled: Some(s.shortcuts_enabled),
             shortcut_smart_case: Some(s.shortcut_smart_case),
             shortcuts_in_english: Some(s.shortcuts_in_english),
+            shortcut_on_enter: Some(s.shortcut_on_enter),
+            shortcut_on_tab: Some(s.shortcut_on_tab),
         }),
         shortcuts: Some(
             s.shortcuts

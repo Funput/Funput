@@ -55,6 +55,8 @@ impl Default for Settings {
             shortcuts_enabled: true,
             shortcut_smart_case: true,
             shortcuts_in_english: true,
+            shortcut_on_enter: false,
+            shortcut_on_tab: false,
             auto_english_on_foreign_layout: true,
         }
     }
