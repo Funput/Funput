@@ -1,10 +1,20 @@
 // Global callbacks for in-process Vietnamese composition inside Funput's window.
+//
+// Offsets are UTF-8 byte offsets, the unit TextInput reports and takes.
+
+// What a key did to the field. `accepted` is false for a key that is no text (a
+// modifier, an F-key), which the TextInput should then handle itself.
+export struct FieldEdit {
+    accepted: bool,
+    text: string,
+    cursor: int,
+}
 
 export global Compose {
-    // A typed character → the new full field text.
-    callback key(string) -> string;
-    // Backspace → the new full field text.
-    callback backspace() -> string;
-    // Focus-in: seed the composer with the field's current text.
-    callback reset(string);
+    // A typed character at the caret: field text, caret, selection anchor, key.
+    callback key(string, int, int, string) -> FieldEdit;
+    // Backspace at the caret: field text, caret, selection anchor.
+    callback backspace(string, int, int) -> FieldEdit;
+    // Focus-in, or an edit the composer did not make: re-read the field next key.
+    callback reset();
 }
