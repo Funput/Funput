@@ -176,3 +176,26 @@ fn word_start_finds_the_run_after_the_last_separator() {
     assert_eq!(word_start("chào phủ"), "chào ".len());
     assert_eq!(word_start("phủ "), "phủ ".len()); // ends on a separator
 }
+
+/// Undoing an expansion swaps it for the trigger in the shadow, so a later
+/// Backspace re-opens the trigger rather than the expansion's last word.
+#[test]
+fn rewrite_end_swaps_the_expansion_for_what_replaced_it() {
+    let mut tail = CommittedTail::new();
+    tail.before_key("vn");
+    tail.after_key(' ', &send(2, "Việt Nam "), "");
+
+    assert!(tail.rewrite_end("Việt Nam ", "vn "));
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("vn"));
+}
+
+/// When the shadow does not end with what is being replaced it has lost track of
+/// the screen, so it forgets everything rather than describe text that is not there.
+#[test]
+fn rewrite_end_clears_a_shadow_that_does_not_match() {
+    let mut tail = CommittedTail::new();
+    commit(&mut tail, "phủ", ' ');
+
+    assert!(!tail.rewrite_end("Việt Nam ", "vn "));
+    assert_eq!(tail.backspace(), None);
+}

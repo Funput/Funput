@@ -3,7 +3,7 @@
 
 use std::sync::atomic::Ordering;
 
-use funput_desktop::{KeyKind, classify, plan_inject};
+use funput_desktop::{ImeResult, KeyKind, classify, plan_inject};
 use windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY;
 use windows::Win32::UI::WindowsAndMessaging::KBDLLHOOKSTRUCT;
 
@@ -67,22 +67,13 @@ pub(super) fn handle(kbd: &KBDLLHOOKSTRUCT) -> bool {
 /// Act on a key the engine is meant to see. Returns true when it was swallowed.
 fn dispatch(kind: KeyKind) -> bool {
     match kind {
-        KeyKind::Compose(c, source) => match plan_inject(&shell::process_key(c, source)) {
-            None => false, // Action::None — the literal key reaches the app
-            Some(plan) => {
-                // Delete + retype the composed text. An empty plan still swallows
-                // the key: the engine took it without changing what is on screen.
-                inject::send_plan(&plan);
-                true
-            }
-        },
-        KeyKind::Backspace => {
-            // Sync Funput's model of the text; the app deletes its own char. When the
-            // deletion puts the caret back on a finished word, this re-opens it so the
-            // next keystroke retones it (`phủ` + Space + ⌫ + `s` → `phú`).
-            shell::on_backspace();
-            false
-        }
+        KeyKind::Compose(c, source) => inject_result(&shell::process_key(c, source)),
+        // Right after a gõ tắt expansion, Backspace takes it back: the shell hands
+        // over the delete + retype and the key is swallowed. Otherwise it only syncs
+        // Funput's model and the app deletes its own char; when that puts the caret
+        // back on a finished word, the word is re-opened so the next keystroke
+        // retones it (`phủ` + Space + ⌫ + `s` → `phú`).
+        KeyKind::Backspace => shell::on_backspace().is_some_and(|undo| inject_result(&undo)),
         KeyKind::Trigger(key) => match shell::trigger_key(key).as_ref().and_then(plan_inject) {
             // No expansion: the composition is committed and the key goes on as is.
             None => false,
@@ -104,4 +95,15 @@ fn dispatch(kind: KeyKind) -> bool {
         }
         KeyKind::PassThrough => false,
     }
+}
+
+/// Inject what the engine decided in place of the key. `false` (`Action::None`)
+/// lets the literal key reach the app; an empty plan still swallows it, because
+/// the engine took the key without changing what is on screen.
+fn inject_result(result: &ImeResult) -> bool {
+    let Some(plan) = plan_inject(result) else {
+        return false;
+    };
+    inject::send_plan(&plan);
+    true
 }

@@ -21,6 +21,8 @@
 
 use funput_engine::{Action, ImeResult};
 
+mod undo;
+
 /// How much committed text to keep, in bytes. Only the word at the caret is read,
 /// but Backspace may walk back over several words to reach a mistyped gõ tắt
 /// trigger (`ctss abc abc` ⌫…), so this outlasts a short phrase, not just a word.

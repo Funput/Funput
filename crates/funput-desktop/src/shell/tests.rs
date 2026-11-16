@@ -3,7 +3,7 @@
 //! pin one, and when composition is thrown away.
 
 use funput_config::{ExtraOnsetLetters, Method, Settings};
-use funput_engine::{Action, KeySource};
+use funput_engine::{Action, ImeResult, KeySource};
 
 use super::*;
 use crate::{Caret, TriggerKey};
@@ -658,21 +658,28 @@ fn type_into(state: &mut ShellState, app: &mut String, keys: &str) {
         let result = state.process_key(key, KeySource::Standard);
         match result.action {
             Action::None => app.push(key),
-            Action::Send => {
-                for _ in 0..result.backspace {
-                    app.pop();
-                }
-                app.push_str(&result.output);
-            }
+            Action::Send => apply(app, &result),
             Action::Restore => unreachable!("Restore not implemented yet"),
         }
     }
 }
 
-/// The Windows hook lets Backspace through; the shell only stays in step with it.
+/// The Windows hook lets Backspace through and the shell only stays in step with
+/// it, unless the shell hands back an undo to inject in its place.
 fn backspace_into(state: &mut ShellState, app: &mut String) {
-    state.on_backspace();
-    app.pop();
+    match state.on_backspace() {
+        Some(undo) => apply(app, &undo),
+        None => {
+            app.pop();
+        }
+    }
+}
+
+fn apply(app: &mut String, result: &ImeResult) {
+    for _ in 0..result.backspace {
+        app.pop();
+    }
+    app.push_str(&result.output);
 }
 
 /// A shell holding one finished row, `tp` → `TP. HCM`.
@@ -1022,6 +1029,41 @@ fn a_reopened_trigger_start_composes_the_next_key() {
     assert_eq!(app, "đ ");
 }
 
+/// Backspace right after an expansion hands the hook an undo to inject, the key
+/// swallowed in its place.
+#[test]
+fn backspace_after_an_expansion_returns_the_undo() {
+    let mut state = shell_with_tp();
+    let mut app = app_text(&mut state, "tp ");
+    assert_eq!(app, "TP. HCM ");
+
+    backspace_into(&mut state, &mut app);
+    assert_eq!(app, "tp ");
+}
+
+/// English mode arms the same undo when gõ tắt runs there.
+#[test]
+fn the_undo_works_in_english_mode() {
+    let mut state = shell_with_tp();
+    state.set_enabled(false);
+    let mut app = app_text(&mut state, "tp ");
+    assert_eq!(app, "TP. HCM ");
+
+    backspace_into(&mut state, &mut app);
+    assert_eq!(app, "tp ");
+}
+
+/// A caret move between the expansion and Backspace drops the undo with the rest
+/// of the composition: the key is plain again.
+#[test]
+fn a_caret_move_drops_the_undo() {
+    let mut state = shell_with_tp();
+    assert_eq!(app_text(&mut state, "tp "), "TP. HCM ");
+    state.caret_moved(Caret::Unknown);
+
+    assert_eq!(state.on_backspace(), None);
+}
+
 /// Enter or Tab through the hook: inject the expansion if there is one, then the
 /// real key reaches the app either way.
 fn press_into(state: &mut ShellState, app: &mut String, key: TriggerKey) {
@@ -1105,4 +1147,17 @@ fn the_enter_and_tab_switches_are_saved() {
     state.set_shortcut_on_tab(true);
     assert!(state.settings().shortcut_on_enter);
     assert!(state.settings().shortcut_on_tab);
+}
+
+/// An expansion made by Enter arms no undo: by the time Backspace comes, the line
+/// is sent or broken, so Backspace deletes as usual.
+#[test]
+fn backspace_after_an_enter_expansion_is_plain() {
+    let mut state = shell_with_tp();
+    state.set_shortcut_on_enter(true);
+    let mut app = app_text(&mut state, "tp");
+    press_into(&mut state, &mut app, TriggerKey::Enter);
+    assert_eq!(app, "TP. HCM\n");
+
+    assert_eq!(state.on_backspace(), None);
 }

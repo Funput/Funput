@@ -1,8 +1,10 @@
-//! One-tap undo of a gõ tắt expansion, for hosts that draw a suggestion bar.
+//! Gõ tắt calls a host makes itself: one-tap undo, where Backspace right after an
+//! expansion puts the trigger back, and expansion before Enter or Tab.
 //!
-//! [`Engine::on_backspace`] does not take it. A desktop shell that deletes the
-//! character itself would otherwise undo an expansion the user cannot see a chip for.
-//! Android asks [`Engine::undo_shortcut`] when Backspace is still the next key.
+//! [`Engine::on_backspace`] does not take the undo, because only the host knows whether
+//! the expansion still sits before the caret. Android and iOS check the document;
+//! the desktop shell checks its shadow of what it typed. Each then asks
+//! [`Engine::undo_shortcut`] when Backspace is still the next key.
 
 use crate::compose::boundary::{self, shortcut_undo};
 use crate::{Engine, ImeResult};

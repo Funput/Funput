@@ -71,6 +71,8 @@ Ngoài engine, các test đang khẳng định hành vi cũ cũng đổi theo: `
 
 ## 2. Backspace hoàn tác gõ tắt trên desktop
 
+Trạng thái: đã làm trên Windows (PR #733). macOS và Linux chưa.
+
 ### Hiện trạng
 
 Engine đã có hoàn tác ([shortcut-undo.md](shortcut-undo.md), PR #631): Backspace ngay sau khi bung trả lại chữ tắt kèm ký tự ranh giới, và bỏ qua chữ tắt đó một lần. Android và iOS đã nối. macOS, Windows, Linux chưa nối, vì thiết kế cũ cho rằng không có chip `↩` thì người dùng không biết Backspace sẽ lấy lại cả cụm.
@@ -95,7 +97,7 @@ Hệ thống chủ phải biết chắc phần đã bung vẫn nằm ngay trư�
 
 ### Kiểm thử
 
-`crates/funput-desktop/tests/` thêm ca kiểu `Shell`: bung rồi ⌫ ra `ct␣`; ⌫ lần hai xóa dấu cách; gõ phím khác rồi ⌫ thì xóa như thường; click (flush) rồi ⌫ thì xóa như thường. Sửa `an_expansion_reopens_its_last_word` cho hợp hành vi mới. Thử tay trên Windows thật, gồm Firefox, Chrome, Word, Zalo.
+`crates/funput-desktop/tests/` thêm ca kiểu `Shell`: bung rồi ⌫ ra `ct␣`; ⌫ lần hai xóa dấu cách; gõ phím khác rồi ⌫ thì xóa như thường; click (flush) rồi ⌫ thì xóa như thường. `an_expansion_reopens_its_last_word` được thay bằng `backspace_right_after_an_expansion_undoes_it`; thêm ca smart case (`Vn␣` ⌫ → `Vn␣`), ca nội dung bung dài hơn bóng chữ, và các ca qua `ShellState` ở cả chế độ tiếng Anh. Thử tay trên Windows thật, gồm Firefox, Chrome, Word, Zalo.
 
 ## 3. Sửa chữ tắt gõ nhầm sau ranh giới
 

@@ -21,7 +21,7 @@ Trạng thái nằm trong `Session::shortcut_undo: Option<Box<ShortcutUndo>>` ([
 
 - Bung ghi lại chữ trước khi bung (`plain_form`), chuỗi đã khớp, và cả cụm đã ghi kèm ranh giới. `Session::clear()` ở ranh giới giữ nó, vì hệ thống chủ trả lời sau khi từ đã đóng.
 - Đầu mỗi `process_key` làm hết nhịp hoàn tác; lệnh bỏ qua ở lại.
-- `Engine::on_backspace` **không** nuốt hoàn tác: shell desktop tự xóa ký tự sẽ không hoàn tác một lần bung mà người dùng không thấy chip.
+- `Engine::on_backspace` **không** nuốt hoàn tác: chỉ hệ thống chủ biết phần đã bung còn nằm ngay trước con trỏ hay không, nên nó kiểm tra trước rồi tự gọi `undo_shortcut`.
 - API: `has_shortcut_undo`, `shortcut_undo_text`, `shortcut_undo_written`, `undo_shortcut`, `dismiss_shortcut_undo`. `Engine::clear()` cũng xóa cả hai.
 
 ## Nền tảng
@@ -37,11 +37,14 @@ Hệ thống chủ phải kiểm tra tài liệu **trước** khi hỏi engine, 
 - Chip đi theo đường sửa lỗi gõ đã có: `CorrectionPreview.shortcut`, kind `shortcutUndo`, `CorrectionBarAction.undoShortcut`. Nhánh chip nằm **trước** các guard `allowsAutocorrect` và từ điển.
 - `clearComposition()` xóa trạng thái này ở mọi sự kiện làm tài liệu đổi dưới chân.
 
+**Windows** ([shortcut-case-and-repair.md](shortcut-case-and-repair.md) §2): không có chip, Backspace ngay sau khi bung là hoàn tác, giống Android. `funput_desktop::undo_shortcut` kiểm tra bóng chữ đã gõ (`CommittedTail`) còn kết thúc bằng `written` rồi mới gọi engine, và sửa bóng chữ theo kết quả. `ShellState::on_backspace` trả kết quả đó cho hook, hook nuốt Backspace và inject. Mọi sự kiện gọi `reset_composition` (click, phím mũi tên, Enter, đổi focus, bật/tắt tiếng Việt) xóa luôn nhịp hoàn tác qua `Engine::clear()`.
+
 ## Giới hạn đã biết
 
 - iOS chỉ giữ một cửa sổ chữ trước con trỏ (`shadowContextLimit` = 128). Nội dung bung dài hơn cửa sổ đó không khớp `written`, nên chip ẩn và Backspace xóa như thường: an toàn nhưng chưa hoàn tác được.
-- macOS, Windows và Linux chưa có chip nên chưa dùng tính năng này.
+- Windows: nội dung bung dài hơn bóng chữ (256 byte) không khớp `written`, nên Backspace xóa như thường.
+- macOS và Linux chưa dùng tính năng này.
 
 ## Kiểm thử
 
-Engine: `tests/words/shortcut_undo.rs`, `tests/alloc_budget/shortcut.rs`. JNI: `funput-jni/src/engine/shortcuts/tests.rs`. C ABI: phần test của `funput-ffi/src/engine/shortcut_undo.rs`. Android: `ShortcutUndoTest`, `ShortcutUndoInstrumentedTest`. iOS: `KeyboardInputTests/Shortcuts/`, `FunputEngineTests/FunputShortcutUndoTests.swift`, và các ca chip ở `SuggestionBarComposerTests`, `PersonalSuggestionToolbarTests`. Test iOS không chạy trên PR: chạy `Scripts/test-funput-kit.sh` tại máy.
+Engine: `tests/words/shortcut_undo.rs`, `tests/alloc_budget/shortcut.rs`. JNI: `funput-jni/src/engine/shortcuts/tests.rs`. C ABI: phần test của `funput-ffi/src/engine/shortcut_undo.rs`. Windows: `funput-desktop/tests/retone.rs`, `src/shell/tests.rs`, `src/retone/tests.rs`. Android: `ShortcutUndoTest`, `ShortcutUndoInstrumentedTest`. iOS: `KeyboardInputTests/Shortcuts/`, `FunputEngineTests/FunputShortcutUndoTests.swift`, và các ca chip ở `SuggestionBarComposerTests`, `PersonalSuggestionToolbarTests`. Test iOS không chạy trên PR: chạy `Scripts/test-funput-kit.sh` tại máy.

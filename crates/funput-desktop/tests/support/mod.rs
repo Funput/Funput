@@ -7,7 +7,7 @@
 #![allow(dead_code)]
 
 use funput_core::InputMethod;
-use funput_desktop::{CommittedTail, KeySource, plan_inject};
+use funput_desktop::{CommittedTail, ImeResult, KeySource, plan_inject, undo_shortcut};
 use funput_engine::Engine;
 
 pub struct Shell {
@@ -35,23 +35,36 @@ impl Shell {
         let result = self.engine.process_key(c, KeySource::Standard);
         self.tail.after_key(c, &result, self.engine.buffer());
 
-        let Some(plan) = plan_inject(&result) else {
+        if !self.inject(&result) {
             self.app.push(c);
-            return;
-        };
-        self.delete(plan.backspaces);
-        self.app
-            .push_str(&String::from_utf16(&plan.units).expect("valid UTF-16"));
+        }
     }
 
-    /// `KeyKind::Backspace`: sync Funput's state, then the physical key reaches the
-    /// app and deletes one character.
+    /// `KeyKind::Backspace`: right after a gõ tắt expansion the key is swallowed and
+    /// the undo injected. Otherwise Funput syncs its state, then the physical key
+    /// reaches the app and deletes one character.
     pub fn backspace(&mut self) {
+        if let Some(undo) = undo_shortcut(&mut self.engine, &mut self.tail) {
+            self.inject(&undo);
+            return;
+        }
         self.sync_backspace();
         self.delete(1);
     }
 
-    /// The body of `shell::on_backspace` on Windows.
+    /// Apply the inject plan for `result` to the app. `false` when there is none and
+    /// the key goes through instead.
+    fn inject(&mut self, result: &ImeResult) -> bool {
+        let Some(plan) = plan_inject(result) else {
+            return false;
+        };
+        self.delete(plan.backspaces);
+        self.app
+            .push_str(&String::from_utf16(&plan.units).expect("valid UTF-16"));
+        true
+    }
+
+    /// The rest of `ShellState::on_backspace`, once no undo applies.
     fn sync_backspace(&mut self) {
         if !self.engine.buffer().is_empty() {
             self.engine.on_backspace();

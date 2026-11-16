@@ -7,7 +7,7 @@
 use funput_engine::{ImeResult, KeySource};
 
 use super::ShellState;
-use crate::{Caret, TriggerKey};
+use crate::{Caret, TriggerKey, undo_shortcut};
 
 impl ShellState {
     /// Feed one character to the engine, tagged with its physical [`KeySource`] so
@@ -23,9 +23,12 @@ impl ShellState {
         result
     }
 
-    /// Backspace while the hook is live. The physical key always passes
-    /// through, so the app deletes its own visible char; this only keeps the shell
-    /// in step with it.
+    /// Backspace while the hook is live.
+    ///
+    /// Right after a gõ tắt expansion it takes the expansion back: the result is
+    /// what to inject in place of the swallowed key (`Việt Nam ` → `vn `). Otherwise
+    /// it returns `None`, the physical key passes through so the app deletes its own
+    /// visible char, and this only keeps the shell in step with it.
     ///
     /// Mid-word that means shortening the composition. With nothing composing, the
     /// character about to disappear is a committed one, and when its removal leaves
@@ -36,14 +39,15 @@ impl ShellState {
     /// trigger stays fixable. A refusal keeps the shadow, so Backspace goes on
     /// eating the word and re-opens it as soon as what is left *is* a syllable —
     /// `dungh` + Space + ⌫⌫ lands on `dung`, and the next tone key reaches it.
-    pub fn on_backspace(&mut self) {
+    pub fn on_backspace(&mut self) -> Option<ImeResult> {
+        if let Some(undo) = undo_shortcut(&mut self.engine, &mut self.tail) {
+            return Some(undo);
+        }
         if !self.engine.buffer().is_empty() {
             self.engine.on_backspace();
-            return;
+            return None;
         }
-        let Some(removed) = self.tail.backspace() else {
-            return;
-        };
+        let removed = self.tail.backspace()?;
         // A full stop leaves the caret on punctuation, so there is no word to
         // adopt — and that full stop is what the sentence scanner must forget.
         self.engine.rewind_sentence(removed.deleted);
@@ -51,6 +55,7 @@ impl ShellState {
             let adopted = self.engine.adopt(word);
             self.tail.resolve(adopted);
         }
+        None
     }
 
     /// Flip the word being composed VN↔raw; returns the delete+inject to apply.
