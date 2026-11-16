@@ -191,18 +191,83 @@ fn a_flush_disables_retoning() {
     assert_eq!(shell.app, "phủs");
 }
 
-/// A gõ tắt expansion lands in the app as one injected string; the caret sits at
-/// the end of its last word, which is the one that re-opens.
+/// Backspace right after a gõ tắt expansion takes it back, boundary and all, so
+/// the trigger can be kept as typed (issue #582).
 #[test]
-fn an_expansion_reopens_its_last_word() {
+fn backspace_right_after_an_expansion_undoes_it() {
     let mut shell = Shell::new(InputMethod::Telex);
     shell.engine.add_shortcut("vn", "Việt Nam");
     shell.type_str("vn ");
     assert_eq!(shell.app, "Việt Nam ");
 
     shell.backspace();
-    shell.key('f');
-    assert_eq!(shell.app, "Việt Nàm");
+    assert_eq!(shell.app, "vn ");
+}
+
+/// The undo gives back the word as typed, so smart case survives it.
+#[test]
+fn the_undo_keeps_the_case_the_trigger_was_typed_in() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("vn", "Việt Nam");
+    shell.type_str("Vn ");
+    assert_eq!(shell.app, "Việt Nam ");
+
+    shell.backspace();
+    assert_eq!(shell.app, "Vn ");
+}
+
+/// A second Backspace deletes the space and re-opens the trigger, which the undo
+/// left refused once: Space keeps it instead of expanding it again.
+#[test]
+fn an_undone_trigger_is_kept_when_reopened() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("vn", "Việt Nam");
+    shell.type_str("vn ");
+
+    shell.backspace(); // the undo
+    shell.backspace(); // the space
+    assert_eq!(shell.app, "vn");
+
+    shell.key(' ');
+    assert_eq!(shell.app, "vn ");
+}
+
+/// Any key after the expansion spends the undo: Backspace is plain again.
+#[test]
+fn a_key_after_the_expansion_spends_the_undo() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("vn", "Việt Nam");
+    shell.type_str("vn x");
+
+    shell.backspace();
+    assert_eq!(shell.app, "Việt Nam ");
+}
+
+/// A click or caret key leaves the expansion behind for good.
+#[test]
+fn a_caret_move_spends_the_undo() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("vn", "Việt Nam");
+    shell.type_str("vn ");
+    shell.flush();
+
+    shell.backspace();
+    assert_eq!(shell.app, "Việt Nam");
+}
+
+/// An expansion longer than the shadow is only partly remembered, so the shell
+/// cannot vouch for what is on screen: Backspace deletes one character instead of
+/// undoing over text it does not know.
+#[test]
+fn an_expansion_longer_than_the_shadow_is_not_undone() {
+    let long = "lorem ipsum ".repeat(30);
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("li", long.trim_end());
+    shell.type_str("li ");
+    assert_eq!(shell.app, long);
+
+    shell.backspace();
+    assert_eq!(shell.app, long.trim_end());
 }
 
 /// Reported: `dungh` + Space, then Backspace twice to drop the space and the stray

@@ -18,7 +18,8 @@
 //!
 //! `retone` adds the one piece of state such a shell needs: a [`CommittedTail`]
 //! shadow of the text it has typed, which stands in for the document it cannot read
-//! when Backspace should re-open a finished word.
+//! when Backspace should re-open a finished word, and [`undo_shortcut`] reads it
+//! to take back a gõ tắt expansion.
 
 //! `shell` then holds the state those decisions are made against — the engine,
 //! the shadow, the settings, and which app is focused — as a plain struct the
@@ -34,6 +35,7 @@ mod key;
 mod layout;
 mod retone;
 mod shell;
+mod shortcut_undo;
 
 pub use access_keys::AccessKeys;
 pub use caret::Caret;
@@ -43,3 +45,4 @@ pub use key::{KeyEvent, KeyKind, Mods, classify};
 pub use layout::is_foreign_layout;
 pub use retone::{CommittedTail, Removed};
 pub use shell::ShellState;
+pub use shortcut_undo::undo_shortcut;

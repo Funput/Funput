@@ -43,8 +43,9 @@ pub fn process_key(c: char, source: KeySource) -> ImeResult {
 pub fn flip_composing() -> ImeResult {
     with(|s| s.flip_composing())
 }
-pub fn on_backspace() {
-    with(|s| s.on_backspace());
+/// What to inject in place of Backspace, when it takes back a gõ tắt expansion.
+pub fn on_backspace() -> Option<ImeResult> {
+    with(|s| s.on_backspace())
 }
 /// The caret moved without typing: commit the composition and tell the engine
 /// where it landed — see [`ShellState::caret_moved`].

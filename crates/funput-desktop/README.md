@@ -51,7 +51,7 @@ pub struct KeyEvent {
 
 pub enum KeyKind {
     Compose(char, KeySource), // nạp cho engine (kể cả space/dấu câu — engine tự quyết ranh giới từ)
-    Backspace,                // gọi ShellState::on_backspace
+    Backspace,                // ShellState::on_backspace: hoàn tác gõ tắt (nuốt phím) hoặc để phím đi qua
     Flush(Caret),             // ShellState::caret_moved(caret) rồi để phím đi qua
     PassThrough,              // phím vô nghĩa — bỏ qua, giữ nguyên composition
 }
@@ -167,7 +167,9 @@ WH_KEYBOARD_LL callback
        match classify(&ev):
          Compose(c, src) → match plan_inject(state.process_key(c, src)):
                              None → để phím đi qua; Some(plan) → SendInput, nuốt phím (cả plan rỗng)
-         Backspace       → state.on_backspace(); để Backspace vật lý đi qua (app tự xoá)
+         Backspace       → match state.on_backspace():
+                             Some(undo) → SendInput hoàn tác gõ tắt, nuốt phím
+                             None → để Backspace vật lý đi qua (app tự xoá)
          Flush(caret)    → state.caret_moved(caret); để phím đi qua
          PassThrough     → để phím đi qua
 
