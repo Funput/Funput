@@ -1,6 +1,6 @@
 # Gõ tắt: bung bằng Enter và Tab
 
-> **Trạng thái:** đã làm trên Windows (PR #…), chưa thử tay. Hai công tắc riêng cho Enter và Tab, đều **tắt mặc định**. macOS giữ hành vi sẵn có (luôn bung), Linux, iOS, Android chưa làm.
+> **Trạng thái:** đã làm trên Windows (PR #735), chưa thử tay. Hai công tắc riêng cho Enter và Tab, đều **tắt mặc định**. macOS giữ hành vi sẵn có (luôn bung), Linux, iOS, Android chưa làm.
 
 Nguồn: issue #582 (Windows), mục "Nút tùy chọn On/Off cho phím kích hoạt viết tắt".
 
