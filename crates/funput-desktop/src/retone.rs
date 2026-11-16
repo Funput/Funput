@@ -134,7 +134,7 @@ impl CommittedTail {
 
 /// Byte index where the unbroken run of word characters at the end of `text`
 /// begins; `text.len()` when `text` ends on a separator.
-fn word_start(text: &str) -> usize {
+pub(crate) fn word_start(text: &str) -> usize {
     text.char_indices()
         .rev()
         .find(|(_, c)| is_separator(*c))

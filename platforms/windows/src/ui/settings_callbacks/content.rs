@@ -3,8 +3,9 @@ use std::cell::RefCell;
 use slint::{ComponentHandle, Model};
 
 use crate::shared::{commands, shell};
-use crate::ui::compose::FieldComposer;
-use crate::{Compose, SettingsWindow};
+use funput_desktop::{FieldComposer, FieldView};
+
+use crate::{Compose, FieldEdit, SettingsWindow};
 
 use super::super::models;
 
@@ -89,19 +90,36 @@ fn update_shortcut(
 
 fn wire_composer(window: &SettingsWindow) {
     let compose = window.global::<Compose>();
-    compose.on_reset(|text| {
+    compose.on_reset(|| {
         let settings = shell::snapshot();
-        COMPOSER.with(|composer| composer.borrow_mut().reset(text.as_str(), &settings));
+        COMPOSER.with(|composer| composer.borrow_mut().reset(&settings));
     });
-    compose.on_key(|text| {
-        let character = text.chars().next().unwrap_or('\0');
-        COMPOSER
-            .with(|composer| composer.borrow_mut().key(character))
-            .into()
+    compose.on_key(|text, cursor, anchor, typed| {
+        let character = typed.chars().next().unwrap_or('\0');
+        let field = field_view(&text, cursor, anchor);
+        COMPOSER.with(|composer| to_slint(composer.borrow_mut().key(field, character)))
     });
-    compose.on_backspace(|| {
-        COMPOSER
-            .with(|composer| composer.borrow_mut().backspace())
-            .into()
+    compose.on_backspace(|text, cursor, anchor| {
+        let field = field_view(&text, cursor, anchor);
+        COMPOSER.with(|composer| to_slint(Some(composer.borrow_mut().backspace(field))))
     });
+}
+
+/// Slint hands over byte offsets as `int`; a negative one means the start.
+fn field_view(text: &str, cursor: i32, anchor: i32) -> FieldView<'_> {
+    let offset = |value: i32| usize::try_from(value).unwrap_or(0);
+    FieldView {
+        text,
+        cursor: offset(cursor),
+        anchor: offset(anchor),
+    }
+}
+
+/// `None` is a key that is no text: the TextInput handles it itself.
+fn to_slint(edit: Option<funput_desktop::FieldEdit>) -> FieldEdit {
+    edit.map_or_else(FieldEdit::default, |edit| FieldEdit {
+        accepted: true,
+        text: edit.text.into(),
+        cursor: i32::try_from(edit.cursor).unwrap_or(i32::MAX),
+    })
 }

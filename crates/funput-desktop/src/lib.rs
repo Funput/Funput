@@ -25,11 +25,15 @@
 //! the shadow, the settings, and which app is focused — as a plain struct the
 //! platform owns and can unit-test.
 //!
+//! `field` composes Vietnamese inside one of Funput's own text fields, which the
+//! hook cannot reach — see [`FieldComposer`].
+//!
 //! `access_keys` decides which keys skip composition altogether because a bare
 //! Alt tap handed them to the app's menus — see [`AccessKeys`].
 
 mod access_keys;
 mod caret;
+mod field;
 mod inject;
 mod key;
 mod layout;
@@ -39,6 +43,7 @@ mod shortcut_undo;
 
 pub use access_keys::AccessKeys;
 pub use caret::Caret;
+pub use field::{FieldComposer, FieldEdit, FieldView};
 pub use funput_engine::{ImeResult, KeySource};
 pub use inject::{InjectPlan, plan_inject};
 pub use key::{KeyEvent, KeyKind, Mods, TriggerKey, classify};
