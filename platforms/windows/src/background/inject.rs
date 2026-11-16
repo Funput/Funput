@@ -12,11 +12,13 @@
 mod events;
 mod lead;
 mod modifiers;
+mod trigger;
 
 use funput_desktop::InjectPlan;
 
 pub use lead::note_foreground;
 pub use modifiers::send_plan_unmodified;
+pub use trigger::send_key;
 
 use events::{deletions, raw_send, text};
 
