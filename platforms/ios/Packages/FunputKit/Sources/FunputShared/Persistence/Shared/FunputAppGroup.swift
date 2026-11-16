@@ -22,8 +22,12 @@ public enum FunputAppGroup {
     /// ``EmojiRecentsStore`` shape, which already stores plain strings.
     public static let kaomojiRecentsKey = "kaomoji-recents"
 
-    /// Set by the keyboard after iOS confirms that Full Access is active.
+    /// The Full Access state the keyboard last observed from iOS.
     public static let observedFullAccessKey = "observed-full-access"
+
+    /// Darwin notification posted whenever ``observedFullAccessKey`` changes.
+    public static let observedFullAccessChangedNotification =
+        "app.funput.funput.observed-full-access-changed"
 
     /// Reset command acknowledged only by the keyboard extension writer.
     public static let personalSuggestionAppliedResetKey = "personal-suggestion-applied-reset"

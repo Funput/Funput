@@ -40,6 +40,24 @@ struct KeyboardFullAccessOnboardingTests {
         binding.wrappedValue = true
         #expect(model.configuration.isHapticFeedbackEnabled)
     }
+
+    @Test("Refreshing Full Access alone publishes only a change")
+    func refreshFullAccessReportsChange() {
+        let access = KeyboardAccessStateTestStore(hasObservedFullAccess: false)
+        let model = SettingsModel(
+            store: SettingsTestStore(configuration: .default),
+            accessStore: access
+        )
+
+        #expect(!model.refreshFullAccess())
+        access.hasObservedFullAccess = true
+        #expect(model.refreshFullAccess())
+        #expect(model.hasFullAccess)
+        #expect(!model.refreshFullAccess())
+        access.hasObservedFullAccess = false
+        #expect(model.refreshFullAccess())
+        #expect(!model.hasFullAccess)
+    }
 }
 
 final class KeyboardAccessStateTestStore: KeyboardAccessStateReading {

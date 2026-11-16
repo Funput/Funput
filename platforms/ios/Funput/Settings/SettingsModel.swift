@@ -42,7 +42,17 @@ final class SettingsModel: ObservableObject {
 
     func reload() {
         configuration = store.load()
-        hasFullAccess = accessStore.hasObservedFullAccess
+        refreshFullAccess()
+    }
+
+    /// Re-reads only the keyboard's Full Access flag and publishes it only when it
+    /// changed, so polling it does not redraw every screen. Returns whether it changed.
+    @discardableResult
+    func refreshFullAccess() -> Bool {
+        let observed = accessStore.hasObservedFullAccess
+        guard observed != hasFullAccess else { return false }
+        hasFullAccess = observed
+        return true
     }
 
     func update<Value>(_ keyPath: WritableKeyPath<FunputConfiguration, Value>, to value: Value) {
@@ -84,47 +94,6 @@ final class SettingsModel: ObservableObject {
     /// not at the next keyboard launch.
     func clearClipboardHistory() {
         clipboardStore.clear()
-    }
-
-    func boolBinding(_ keyPath: WritableKeyPath<FunputConfiguration, Bool>) -> Binding<Bool> {
-        Binding(
-            get: { self.configuration[keyPath: keyPath] },
-            set: { self.update(keyPath, to: $0) }
-        )
-    }
-
-    var numberRowBinding: Binding<Bool> {
-        Binding(
-            get: { self.isNumberRowLocked || self.configuration.showsNumberRow },
-            set: { enabled in
-                guard !self.isNumberRowLocked else { return }
-                self.update(\.showsNumberRow, to: enabled)
-            }
-        )
-    }
-
-    func fullAccessBinding(
-        _ keyPath: WritableKeyPath<FunputConfiguration, Bool>,
-        requestAccess: @escaping () -> Void
-    ) -> Binding<Bool> {
-        Binding(
-            get: { self.configuration[keyPath: keyPath] },
-            set: { enabled in
-                if enabled && !self.hasFullAccess { requestAccess() }
-                else { self.update(keyPath, to: enabled) }
-            }
-        )
-    }
-
-    var heightBinding: Binding<Double> {
-        Binding(
-            get: { self.configuration.heightScale },
-            set: { self.update(\.heightScale, to: min(max($0, 0.85), 1.2)) }
-        )
-    }
-
-    var saveErrorBinding: Binding<Bool> {
-        Binding(get: { self.showsSaveError }, set: { self.showsSaveError = $0 })
     }
 
     private func commit(_ candidate: FunputConfiguration) {
