@@ -3,7 +3,7 @@
 mod shortcut;
 pub(crate) mod shortcut_undo;
 
-pub(crate) use shortcut::starts_a_trigger;
+pub(crate) use shortcut::{expansion_in_place, starts_a_trigger};
 
 use funput_core::{InputMethod, is_bare_shaped_vowel};
 

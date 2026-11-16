@@ -47,6 +47,14 @@ pub fn set_shortcuts_in_english(on: bool) {
     shell::set_shortcuts_in_english(on);
 }
 
+pub fn set_shortcut_on_enter(on: bool) {
+    shell::set_shortcut_on_enter(on);
+}
+
+pub fn set_shortcut_on_tab(on: bool) {
+    shell::set_shortcut_on_tab(on);
+}
+
 pub fn set_auto_english_layout(on: bool) {
     shell::set_auto_english_on_foreign_layout(on);
 }

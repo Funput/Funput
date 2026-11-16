@@ -83,10 +83,22 @@ fn dispatch(kind: KeyKind) -> bool {
             shell::on_backspace();
             false
         }
+        KeyKind::Trigger(key) => match shell::trigger_key(key).as_ref().and_then(plan_inject) {
+            // No expansion: the composition is committed and the key goes on as is.
+            None => false,
+            Some(plan) => {
+                // Gõ tắt on Enter/Tab: type the expansion, then the key itself, which
+                // still sends the message or moves focus. Shift, when held, stays down,
+                // so Shift+Enter arrives as Shift+Enter.
+                inject::send_plan(&plan);
+                inject::send_key(key);
+                true
+            }
+        },
         KeyKind::Flush(caret) => {
-            // Nav/Enter/Tab/shortcut: commit what is shown and let the key pass.
-            // `classify` has said where it leaves the caret — a line start for
-            // Enter, whose newline the engine never sees on this path.
+            // Nav, Shift+Tab, or a shortcut (Ctrl/Alt+Enter too): commit what is
+            // shown and let the key pass. `classify` has said where it leaves the
+            // caret — a line start for Alt+Enter, whose newline the engine never sees.
             shell::caret_moved(caret);
             false
         }
