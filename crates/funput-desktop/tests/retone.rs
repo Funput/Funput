@@ -232,6 +232,44 @@ fn an_undone_trigger_is_kept_when_reopened() {
     assert_eq!(shell.app, "vn ");
 }
 
+/// Reported in #742: after the undo, deleting the word and typing the trigger again
+/// expands it. The refusal was for the word the undo put back, which is gone.
+#[test]
+fn deleting_an_undone_trigger_and_retyping_it_expands_it() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("omg", "Oh my god");
+    shell.type_str("Omg ");
+    shell.backspace(); // the undo
+    assert_eq!(shell.app, "Omg ");
+
+    for _ in 0..4 {
+        shell.backspace();
+    }
+    assert_eq!(shell.app, "");
+
+    shell.type_str("Omg ");
+    assert_eq!(shell.app, "Oh my god ");
+}
+
+/// The same for a trigger whose screen form the shell cannot re-open (`ddc` shows
+/// as `đc`): deleting into it is enough.
+#[test]
+fn deleting_an_undone_composed_trigger_and_retyping_it_expands_it() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("ddc", "được");
+    shell.type_str("ddc ");
+    shell.backspace(); // the undo
+    assert_eq!(shell.app, "đc ");
+
+    for _ in 0..3 {
+        shell.backspace();
+    }
+    assert_eq!(shell.app, "");
+
+    shell.type_str("ddc ");
+    assert_eq!(shell.app, "được ");
+}
+
 /// Any key after the expansion spends the undo: Backspace is plain again.
 #[test]
 fn a_key_after_the_expansion_spends_the_undo() {

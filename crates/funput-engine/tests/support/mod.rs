@@ -107,6 +107,19 @@ impl Document {
     pub fn text(&self) -> &str {
         &self.text
     }
+
+    /// The physical Backspace reaching the app: one character goes.
+    pub fn deleted(&mut self) {
+        self.text.pop();
+    }
+
+    /// The word the caret sits right behind, if it touches one.
+    pub fn last_word(&self) -> Option<&str> {
+        self.text
+            .split_whitespace()
+            .next_back()
+            .filter(|_| !self.text.ends_with(char::is_whitespace))
+    }
 }
 
 /// An engine with typo correction switched on.

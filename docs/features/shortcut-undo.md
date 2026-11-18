@@ -13,7 +13,7 @@ Ngay sau khi một chữ tắt bung, **Backspace một lần** — hoặc chạm
 - Hoạt động cả khi bàn phím ở tiếng Anh có bật gõ tắt, và không phụ thuộc gợi ý cá nhân hay tự sửa lỗi gõ.
 - Nhịp này chết khi gõ phím khác, đổi ô, di con trỏ, hoặc khi tài liệu không còn kết thúc bằng phần đã bung. Khi đó Backspace xóa một ký tự như thường.
 
-**Lệnh bỏ qua một lần.** Sau khi hoàn tác, chữ tắt vừa từ chối được giữ nguyên cho **từ kế tiếp** nếu đúng là chuỗi đó: không bung, không bị sửa lỗi gõ, English restore vẫn chạy. Từ nào kết thúc trước cũng làm hết hạn lệnh này, nên một lần hoàn tác không làm chữ tắt mất tác dụng ở câu sau. Dấu cách thừa không kết thúc từ nào nên không tiêu lệnh. Mọi Backspace không phải cú hoàn tác cũng hủy lệnh: xóa hết `vn ` rồi gõ lại thì bung bình thường.
+**Lệnh bỏ qua một lần.** Sau khi hoàn tác, chữ tắt vừa từ chối được giữ nguyên cho **từ kế tiếp** nếu đúng là chuỗi đó: không bung, không bị sửa lỗi gõ, English restore vẫn chạy. Từ nào kết thúc trước cũng làm hết hạn lệnh này, nên một lần hoàn tác không làm chữ tắt mất tác dụng ở câu sau. Dấu cách thừa không kết thúc từ nào nên không tiêu lệnh. Lệnh thuộc về đúng chữ vừa được đặt lại. Xóa dấu cách để mở lại nguyên chữ đó rồi bấm Space thì vẫn giữ nguyên. Hễ Backspace xóa vào chữ đó thì lệnh hết hạn: xóa hết `vn ` rồi gõ lại thì bung bình thường (#742).
 
 ## Hợp đồng engine
 
@@ -21,6 +21,7 @@ Trạng thái nằm trong `Session::shortcut_undo: Option<Box<ShortcutUndo>>` ([
 
 - Bung ghi lại chữ trước khi bung (`plain_form`), chuỗi đã khớp, và cả cụm đã ghi kèm ranh giới. `Session::clear()` ở ranh giới giữ nó, vì hệ thống chủ trả lời sau khi từ đã đóng.
 - Đầu mỗi `process_key` làm hết nhịp hoàn tác; lệnh bỏ qua ở lại.
+- Lệnh bỏ qua nằm ở [shortcut_undo/refusal.rs](../../crates/funput-engine/src/compose/boundary/shortcut_undo/refusal.rs), giữ cả chuỗi đã khớp lẫn chữ đã đặt lại. Engine tự hủy lệnh, hệ thống chủ không phải gọi gì thêm: `on_backspace` xóa một ký tự của chữ đang gõ thì hủy, `adopt` mở lại một chữ khác chữ đã đặt lại thì hủy (kể cả khi `adopt` từ chối chữ đó, như `đc` của chữ tắt `ddc`).
 - `Engine::on_backspace` **không** nuốt hoàn tác: chỉ hệ thống chủ biết phần đã bung còn nằm ngay trước con trỏ hay không, nên nó kiểm tra trước rồi tự gọi `undo_shortcut`.
 - API: `has_shortcut_undo`, `shortcut_undo_text`, `shortcut_undo_written`, `undo_shortcut`, `dismiss_shortcut_undo`. `Engine::clear()` cũng xóa cả hai.
 
