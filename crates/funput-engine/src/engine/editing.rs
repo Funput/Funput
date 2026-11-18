@@ -1,4 +1,5 @@
-use crate::compose::{RestoreOverride, boundary, diff, doubled, flip};
+use crate::compose::boundary::{self, shortcut_undo};
+use crate::compose::{RestoreOverride, diff, doubled, flip};
 use crate::correction;
 use crate::{Engine, ImeResult};
 
@@ -20,7 +21,11 @@ impl Engine {
     /// text itself — the same state `on_backspace` leaves behind. Composition only
     /// ever reads the buffer, so tone and shape edits work from here; there is no raw
     /// form to flip back to, which makes the flip hotkey a no-op on an adopted word.
+    ///
+    /// Any word but the one a gõ tắt undo just put back ends that undo's one-time
+    /// refusal, taken or not: the caret only reaches it by deleting the refused word.
     pub fn adopt(&mut self, text: &str) -> bool {
+        shortcut_undo::reopened(&mut self.session, text);
         let session = &self.session;
         let takes = !text.is_empty()
             && (session.enabled && session.config.syllable_rules.is_reopenable_syllable(text)
@@ -61,9 +66,11 @@ impl Engine {
         correction::discard(&mut self.session);
         correction::invalidate(&mut self.session);
         // Rewinds only when the deleted character is the key that was pushed. A
-        // composed `ệ` is not, and its keys must not be taken back one by one.
+        // composed `ệ` is not, and its keys must not be taken back one by one. Editing
+        // the word also ends a gõ tắt refusal: what ends next is being retyped.
         if let Some(deleted) = self.session.buffer.pop() {
             self.rewind_sentence(deleted);
+            shortcut_undo::backspaced(&mut self.session);
         }
         self.session.resync_after_backspace();
         ImeResult::none()

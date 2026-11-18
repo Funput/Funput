@@ -1,20 +1,28 @@
 //! One Backspace undoes the gõ tắt expansion that just landed.
 //!
 //! The beat lives until the next key. Taking it puts the word back as it was shown,
-//! boundary character included, and refuses that same trigger once. [`Session::clear`]
-//! at the boundary keeps both: the platform answers after the word is already gone.
+//! boundary character included, and refuses that same trigger once: see [`refusal`].
+//! [`Session::clear`] at the boundary keeps both: the platform answers after the word
+//! is already gone.
+
+mod refusal;
 
 use crate::ImeResult;
 use crate::compose::doubled;
 use crate::model::Session;
+use refusal::Refusal;
+
+pub(super) use refusal::declined;
+pub(crate) use refusal::{backspaced, reopened};
 
 /// Armed undo for the expansion on screen, plus a trigger the user already refused.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub(crate) struct ShortcutUndo {
     armed: Option<Armed>,
-    /// The form that matched (`typed` keys, `keys`, or `buffer`). The next word that
-    /// ends is kept as typed if it is this one; either way the refusal is then spent.
-    suppressed: Option<String>,
+    /// The trigger taken back. The next word that ends is kept as typed if it is this
+    /// one; either way the refusal is then spent, and Backspace into the word spends it
+    /// sooner.
+    suppressed: Option<Refusal>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -105,39 +113,8 @@ pub(crate) fn written(session: &Session) -> Option<&str> {
 pub(crate) fn undo(session: &mut Session) -> Option<ImeResult> {
     let undo = session.shortcut_undo.as_mut()?;
     let armed = undo.armed.take()?;
-    undo.suppressed = Some(armed.matched);
+    undo.suppressed = Some(Refusal::new(armed.matched, armed.shown.clone()));
     let mut output = armed.shown;
     output.push(armed.boundary);
     Some(ImeResult::send(armed.written.chars().count(), output))
-}
-
-/// Whether the word that just ended is the trigger the user refused, and so keeps
-/// its screen form instead of expanding or being repaired.
-///
-/// The refusal is for the very next word, not for the trigger forever: the first
-/// boundary that ends a real word spends it, match or not. Otherwise an `a` →
-/// `anh` refused in one sentence would silently fail to expand in a later one.
-/// An empty boundary (a second space) ends no word, so it leaves the refusal be.
-/// English restore still runs for a refused word; only gõ tắt and typo correction
-/// stand down.
-pub(super) fn declined(session: &mut Session) -> bool {
-    if session.keys.is_empty() {
-        return false;
-    }
-    let Some(undo) = session.shortcut_undo.as_mut() else {
-        return false;
-    };
-    let Some(suppressed) = undo.suppressed.take() else {
-        return false;
-    };
-    if undo.armed.is_none() {
-        session.shortcut_undo = None;
-    }
-    !suppressed.is_empty() && matches_word(session, &suppressed)
-}
-
-fn matches_word(session: &Session, suppressed: &str) -> bool {
-    doubled::typed_keys(session) == suppressed
-        || session.keys == suppressed
-        || session.buffer == suppressed
 }

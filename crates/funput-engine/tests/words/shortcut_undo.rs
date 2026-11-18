@@ -26,6 +26,27 @@ fn undo(engine: &mut Engine, doc: &mut Document) {
     doc.edited(&result);
 }
 
+/// Backspace the way a host drives it once the undo is spent: a character of the
+/// live word is reported to the engine, and a word the caret lands back on is
+/// offered to `adopt` to re-open.
+fn backspace(engine: &mut Engine, doc: &mut Document) {
+    if engine.buffer().is_empty() {
+        doc.deleted();
+        if let Some(word) = doc.last_word() {
+            engine.adopt(word);
+        }
+    } else {
+        engine.on_backspace();
+        doc.deleted();
+    }
+}
+
+fn backspace_times(engine: &mut Engine, doc: &mut Document, times: usize) {
+    for _ in 0..times {
+        backspace(engine, doc);
+    }
+}
+
 #[test]
 fn backspace_restores_the_shown_word_and_keeps_the_space() {
     let mut engine = engine_with(&[("vn", "Việt Nam")]);
@@ -103,6 +124,63 @@ fn the_refused_trigger_is_kept_once_and_then_expands_again() {
 
     type_into(&mut engine, &mut doc, "vn ");
     assert_eq!(doc.text(), "vn vn Việt Nam ");
+}
+
+/// Reported in #742: the refusal is for the word the undo put back. Deleting that
+/// word and typing the trigger again is a new request, not the refused one.
+#[test]
+fn deleting_the_refused_word_and_retyping_it_expands_it() {
+    let mut engine = engine_with(&[("vn", "Việt Nam")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "vn ");
+    undo(&mut engine, &mut doc);
+    backspace_times(&mut engine, &mut doc, 3);
+    assert_eq!(doc.text(), "");
+
+    type_into(&mut engine, &mut doc, "vn ");
+    assert_eq!(doc.text(), "Việt Nam ");
+}
+
+#[test]
+fn reopening_the_refused_word_intact_still_keeps_it() {
+    let mut engine = engine_with(&[("vn", "Việt Nam")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "vn ");
+    undo(&mut engine, &mut doc);
+    backspace(&mut engine, &mut doc); // the space: `vn` is re-opened as it was
+    assert_eq!(engine.buffer(), "vn");
+
+    type_into(&mut engine, &mut doc, " ");
+    assert_eq!(doc.text(), "vn ");
+}
+
+#[test]
+fn editing_the_refused_word_spends_the_refusal() {
+    let mut engine = engine_with(&[("vn", "Việt Nam")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "vn ");
+    undo(&mut engine, &mut doc);
+    backspace_times(&mut engine, &mut doc, 2);
+    assert_eq!(doc.text(), "v");
+
+    type_into(&mut engine, &mut doc, "n ");
+    assert_eq!(doc.text(), "Việt Nam ");
+}
+
+/// A trigger stored as keys (`ddc`) comes back as its screen form (`đc`), which
+/// `adopt` does not re-open. Deleting into it still spends the refusal.
+#[test]
+fn a_refused_word_adopt_declines_is_spent_once_deleted_into() {
+    let mut engine = engine_with(&[("ddc", "được")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "ddc ");
+    undo(&mut engine, &mut doc);
+    assert_eq!(doc.text(), "đc ");
+    backspace_times(&mut engine, &mut doc, 3);
+    assert_eq!(doc.text(), "");
+
+    type_into(&mut engine, &mut doc, "ddc ");
+    assert_eq!(doc.text(), "được ");
 }
 
 #[test]
