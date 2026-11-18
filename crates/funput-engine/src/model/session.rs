@@ -1,8 +1,7 @@
 //! IME session state — enabled flag, input method, composition buffer.
 
-use std::collections::HashMap;
-
 use crate::compose::RestoreOverride;
+use crate::compose::boundary::ShortcutTable;
 use crate::compose::boundary::shortcut_undo::ShortcutUndo;
 use crate::compose::doubled::Literal;
 use crate::correction::CorrectionState;
@@ -33,11 +32,11 @@ pub(crate) struct Session {
     /// Text-expansion table (gõ tắt): trigger → expansion. Matched smart-case at a
     /// word boundary, before English restore, against the keys as typed (`literal`
     /// when a revert dropped one), then `keys`, then the composed `buffer`, so `vn`
-    /// and `đc` both work as triggers — a
-    /// trigger typed lowercase, Title Case, or UPPERCASE all resolve to the same
-    /// entry, re-casing the expansion to match. Config that lives for the whole
+    /// and `đc` both work as triggers — a trigger typed lowercase, Title Case, or
+    /// UPPERCASE all resolve to the same entry however it was stored, re-casing the
+    /// expansion when typed above the stored case. Config that lives for the whole
     /// session — `clear()` does not touch it.
-    pub(crate) shortcuts: HashMap<String, String>,
+    pub(crate) shortcuts: ShortcutTable,
     /// One-tap undo of the last gõ tắt expansion, and the trigger refused once.
     /// Boxed and `None` until an expansion lands, so an idle engine pays a pointer.
     pub(crate) shortcut_undo: Option<Box<ShortcutUndo>>,
@@ -69,7 +68,7 @@ impl Session {
             keys: String::new(),
             literal: Literal::new(),
             sentence: SentenceTrace::mid_text(),
-            shortcuts: HashMap::new(),
+            shortcuts: ShortcutTable::default(),
             shortcut_undo: None,
             vn_form: String::new(),
             restore_override: None,
@@ -190,7 +189,7 @@ mod tests {
         session.buffer.push('á');
         session.clear();
         assert_eq!(
-            session.shortcuts.get("vn").map(String::as_str),
+            session.shortcuts.entries().get("vn").map(String::as_str),
             Some("Việt Nam")
         );
     }

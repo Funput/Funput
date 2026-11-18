@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use funput_core::{InputMethod, SyllableRules, ToneStyle};
 
+use crate::compose::boundary::ShortcutTable;
 use crate::compose::doubled::Literal;
 use crate::model::{EngineConfig, NumberGlue, SentenceTrace, Session};
 
@@ -27,7 +26,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
         keys: keys.into(),
         literal: Literal::new(),
         sentence: SentenceTrace::mid_text(),
-        shortcuts: HashMap::new(),
+        shortcuts: ShortcutTable::default(),
         shortcut_undo: None,
         vn_form: String::new(),
         restore_override: None,

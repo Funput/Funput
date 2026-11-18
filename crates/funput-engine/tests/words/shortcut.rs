@@ -3,10 +3,11 @@
 //! A trigger matches the raw keystrokes since the last word boundary (or, failing
 //! that, the composed word — see `shortcut_composed.rs`) and expands at the boundary — taking priority over English restore. Matching is smart-case: a
 //! trigger typed as lowercase, Title Case, or UPPERCASE all resolve to the same
-//! entry, and the expansion's case is raised to match, never lowered below what the
-//! table stores. Keystrokes with a mixed case that doesn't fit one of those three
-//! patterns fall back to an exact match only. See
-//! `src/compose/boundary/shortcut.rs` for the matching logic.
+//! entry however it was stored, and the expansion's case is raised when the trigger
+//! is typed above its stored case, never lowered below what the table stores.
+//! Keystrokes with a mixed case that doesn't fit one of those three patterns fall
+//! back to an exact match only. See `src/compose/boundary/shortcut/` for the
+//! matching logic.
 
 use funput_core::InputMethod;
 use funput_engine::{Action, Engine, ImeResult, KeySource};
@@ -287,6 +288,62 @@ fn flipping_smart_case_back_on_restores_matching() {
 fn smart_case_off_still_leaves_ordinary_composition_alone() {
     let text = app_text_without_smart_case(&[("tp", "TP. HCM")], "chaof ");
     assert_eq!(text, "chào ");
+}
+
+// ---- triggers stored in capitals (#740) ----
+
+#[test]
+fn a_trigger_stored_in_capitals_expands_as_stored_from_every_case() {
+    // The stored spelling is the floor: `TP` typed as `TP` asks for no more capitals
+    // than the trigger already has, and `tp`/`Tp` never lower the expansion.
+    for keys in ["TP ", "Tp ", "tp "] {
+        let text = app_text_with_shortcuts(InputMethod::Telex, &[("TP", "Thành phố")], keys);
+        assert_eq!(text, "Thành phố ", "{keys:?}");
+    }
+}
+
+#[test]
+fn a_title_case_trigger_raises_only_when_typed_in_uppercase() {
+    let shortcuts = [("Hn", "Hà Nội")];
+    let text = |keys| app_text_with_shortcuts(InputMethod::Telex, &shortcuts, keys);
+    assert_eq!(text("HN "), "HÀ NỘI ");
+    assert_eq!(text("Hn "), "Hà Nội ");
+    assert_eq!(text("hn "), "Hà Nội ");
+}
+
+#[test]
+fn smart_case_off_reaches_a_capitalized_trigger_only_as_stored() {
+    let shortcuts = [("TP", "Thành phố")];
+    assert_eq!(app_text_without_smart_case(&shortcuts, "TP "), "Thành phố ");
+    assert_eq!(app_text_without_smart_case(&shortcuts, "tp "), "tp ");
+}
+
+#[test]
+fn a_mixed_case_trigger_is_still_not_reached_by_folding() {
+    for keys in ["ios ", "IOS "] {
+        let text = app_text_with_shortcuts(InputMethod::Telex, &[("iOS", "iPhone OS")], keys);
+        assert!(!text.contains("iPhone"), "{keys:?} expanded: {text:?}");
+    }
+}
+
+#[test]
+fn triggers_that_fold_together_each_answer_their_own_spelling() {
+    let shortcuts = [("tp", "thành phố"), ("TP", "Thành phố Hồ Chí Minh")];
+    let text = |keys| app_text_with_shortcuts(InputMethod::Telex, &shortcuts, keys);
+    assert_eq!(text("TP "), "Thành phố Hồ Chí Minh ");
+    assert_eq!(text("tp "), "thành phố ");
+    // No exact `Tp`: the lowercase trigger answers, capitalized to match.
+    assert_eq!(text("Tp "), "Thành phố ");
+}
+
+#[test]
+fn removing_one_capitalized_spelling_hands_its_matches_to_the_other() {
+    let mut engine = engine_with(&[("Tp", "Tân Phú"), ("TP", "Thành phố")]);
+    assert_eq!(drive(&mut engine, "tp "), "Tân Phú ");
+    engine.remove_shortcut("Tp");
+    assert_eq!(drive(&mut engine, "tp "), "Thành phố ");
+    engine.remove_shortcut("TP");
+    assert_eq!(drive(&mut engine, "tp "), "tp ");
 }
 
 // ---- English mode ("Gõ tắt cả khi ở chế độ tiếng Anh") ----

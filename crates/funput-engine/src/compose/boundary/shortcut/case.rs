@@ -3,20 +3,21 @@
 
 use std::borrow::Cow;
 
-/// The letter-casing pattern of typed keys, used to raise the expansion's case to
+/// The letter-casing pattern of a trigger, used to raise the expansion's case to
 /// match (`vn` → as stored, `Vn` → first letter capitalized, `VN` → UPPERCASE), the
-/// way UniKey does. Case is only ever raised, never lowered: what the user stored in
-/// the table is the floor. Only consulted while `shortcut_smart_case` is on.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+/// way UniKey does. Case is only ever raised, never lowered: what the user stored is
+/// the floor, the trigger's spelling as much as its expansion. Only consulted while
+/// `shortcut_smart_case` is on. Declared in rank order: `Lower < Title < Upper`.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub(super) enum ShortcutCase {
     Lower,
-    Upper,
     Title,
+    Upper,
 }
 
-/// `word` as the table spells it, and the case it was typed in. With smart case off,
-/// or for a mixed-case word (`iOS`), that is the exact word and no case to raise. A
-/// lowercase word already is its own spelling: only re-cased words pay for a copy.
+/// `word` folded the way the table indexes it, and the case it was typed in. With
+/// smart case off, or for a mixed-case word (`iOS`), that is the exact word and no
+/// case. A lowercase word already is its own fold: only re-cased words pay for a copy.
 pub(super) fn table_form(word: &str, smart: bool) -> (Cow<'_, str>, Option<ShortcutCase>) {
     let case = if smart { classify_case(word) } else { None };
     let form = match case {
@@ -26,22 +27,32 @@ pub(super) fn table_form(word: &str, smart: bool) -> (Cow<'_, str>, Option<Short
     (form, case)
 }
 
+/// The case to raise an expansion to when a trigger stored as `stored` was typed as
+/// `typed`: only a typed case above the stored one asks for more. A trigger kept as
+/// `TP` gives its expansion as stored whether typed `tp`, `Tp` or `TP`.
+pub(super) fn raise(typed: ShortcutCase, stored: ShortcutCase) -> Option<ShortcutCase> {
+    (typed > stored).then_some(typed)
+}
+
 /// Classify the case pattern of `keys` from its cased characters (letters), ignoring
 /// digits and punctuation. Returns `None` when the keys don't fit a clean pattern
 /// (e.g. `vNa`), so the caller falls back to an exact, unmodified lookup — this keeps
 /// deliberately mixed-case triggers (like `iOS`) working exactly as defined. That same
 /// `None` path is what the smart-case switch reuses when it is off.
-fn classify_case(keys: &str) -> Option<ShortcutCase> {
+pub(super) fn classify_case(keys: &str) -> Option<ShortcutCase> {
     let mut letters = keys.chars().filter(|c| c.is_alphabetic());
     let first = letters.next()?;
-    let rest: Vec<char> = letters.collect();
+    let (mut rest_lower, mut rest_upper, mut rest_empty) = (true, true, true);
+    for letter in letters {
+        rest_empty = false;
+        rest_lower &= letter.is_lowercase();
+        rest_upper &= letter.is_uppercase();
+    }
     if first.is_lowercase() {
-        rest.iter()
-            .all(|c| c.is_lowercase())
-            .then_some(ShortcutCase::Lower)
-    } else if !rest.is_empty() && rest.iter().all(|c| c.is_uppercase()) {
+        rest_lower.then_some(ShortcutCase::Lower)
+    } else if !rest_empty && rest_upper {
         Some(ShortcutCase::Upper)
-    } else if rest.iter().all(|c| c.is_lowercase()) {
+    } else if rest_lower {
         // A single uppercase letter (`rest` empty) also lands here: capitalizing one
         // word reads more naturally than shouting the whole expansion.
         Some(ShortcutCase::Title)

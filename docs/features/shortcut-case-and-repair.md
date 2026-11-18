@@ -49,6 +49,22 @@ Không còn cách nhanh để ra "Hoa Đầu Mọi Từ". Trường hợp này h
 - Câu mô tả công tắc ("Gõ vn, Vn hay VN đều bung và nội dung tự viết hoa theo") vẫn đúng, không cần sửa trên nền tảng nào.
 - Đổi trong engine nên áp dụng cho mọi nền tảng cùng lúc. Ghi rõ trong release note vì người đang quen kiểu cũ sẽ thấy khác.
 
+### Chữ tắt lưu bằng chữ hoa (#740)
+
+Trước đây chữ gõ được hạ về chữ thường rồi mới tra, còn khoá trong bảng giữ nguyên, nên `TP` → `Thành phố` không bung với `TP`, `Tp` lẫn `tp`. Quy tắc "chỉ nâng, không hạ" giờ áp dụng cho cả cách viết khoá: khoá lưu thế nào là mức gốc, chỉ nâng khi gõ hoa hơn khoá (`Lower < Title < Upper`).
+
+| Bảng | Gõ | Ra |
+|---|---|---|
+| `TP` → `Thành phố` | `TP`, `Tp`, `tp` | Thành phố |
+| `Hn` → `Hà Nội` | `HN` | HÀ NỘI |
+| `tp` → `thành phố` | `Tp`, `TP` | Thành phố, THÀNH PHỐ (như cũ) |
+
+- Bảng không đổi khoá người dùng lưu. `ShortcutTable` ([shortcut/table.rs](../../crates/funput-engine/src/compose/boundary/shortcut/table.rs)) giữ bảng gốc cùng `CaseIndex` ([shortcut/index.rs](../../crates/funput-engine/src/compose/boundary/shortcut/index.rs)): chữ thường → khoá lưu dạng `Title`/`Upper`. Chỉ mục cập nhật lúc thêm, xoá, nên tra cứu lúc gõ không duyệt bảng và không cấp phát thêm.
+- Thứ tự tra: đúng chữ đã gõ, rồi dạng chữ thường, rồi khoá lưu chữ hoa qua chỉ mục. Bảng có cả `tp` và `TP` thì mỗi khoá trả đúng cách gõ của nó, `Tp` rơi về `tp`.
+- Hai khoá hoa trùng sau khi hạ (`Tp`, `TP`): chỉ mục giữ khoá gần chữ thường hơn; xoá khoá đó thì khoá còn lại thế chỗ.
+- Khoá hoa xen kẽ (`iOS`) vẫn chỉ khớp nguyên văn. Mở lại chữ tắt sau Backspace (`starts_a_trigger`) đi cùng đường tra nên `T`, `t` đều mở lại được khi bảng có `TP`.
+- Chỉ mục nằm sau `Option<Box<_>>`, nên `size_of::<Engine>()` tăng 192 → 200.
+
 ### Kiểm thử
 
 Test cũ trong `crates/funput-engine/tests/words/shortcut.rs` đổi kỳ vọng theo quy tắc mới:

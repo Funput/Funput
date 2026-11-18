@@ -119,7 +119,7 @@ impl Engine {
     }
 
     pub fn shortcuts(&self) -> &HashMap<String, String> {
-        &self.session.shortcuts
+        self.session.shortcuts.entries()
     }
 
     pub fn buffer(&self) -> &str {
