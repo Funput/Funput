@@ -301,6 +301,24 @@ fn a_trigger_start_follows_smart_case() {
     assert!(exact.adopt("cts"));
 }
 
+/// A trigger stored in capitals re-opens from any clean case of its start, and the
+/// finished word still expands (#740). With smart case off only its exact start does.
+#[test]
+fn a_trigger_stored_in_capitals_reopens_from_any_case() {
+    let mut smart = engine_with_trigger("TP");
+    for word in ["t", "Tp", "tp", "TP"] {
+        assert!(smart.adopt(word), "{word:?}");
+    }
+    assert!(smart.adopt("T"));
+    smart.process_char('P');
+    assert_eq!(smart.process_char(' ').output, "cơm tấm Sài Gòn ");
+
+    let mut exact = engine_with_trigger("TP");
+    exact.update_config(|config| config.shortcut_smart_case = false);
+    assert!(exact.adopt("T"));
+    assert!(!exact.adopt("t"));
+}
+
 #[test]
 fn a_trigger_start_is_refused_while_shortcuts_are_off() {
     let mut engine = engine_with_trigger("ctsg");

@@ -1,6 +1,11 @@
-//! Shortcut expansion at a word boundary. Smart case lives in [`case`].
+//! Shortcut expansion at a word boundary. Smart case lives in [`case`], the table in
+//! [`table`] and its case-folded index in [`index`].
 
 mod case;
+mod index;
+mod table;
+
+pub(crate) use table::ShortcutTable;
 
 use crate::ImeResult;
 use crate::compose::doubled;
@@ -85,12 +90,8 @@ fn matched_expansion(session: &Session) -> Option<(String, String)> {
 
 /// The expansion `word` triggers, re-cased to match it.
 fn lookup(session: &Session, word: &str) -> Option<String> {
-    let (form, case) = case::table_form(word, session.config.shortcut_smart_case);
-    let expansion = session.shortcuts.get(form.as_ref())?;
-    Some(match case {
-        Some(case) => case::apply(expansion, case),
-        None => expansion.clone(),
-    })
+    let smart = session.config.shortcut_smart_case;
+    session.shortcuts.find(word, smart).map(|hit| hit.cased())
 }
 
 /// Whether `word` begins a trigger (or is one), cased as a lookup would. Backspace
@@ -109,9 +110,7 @@ pub(crate) fn starts_a_trigger(session: &Session, word: &str) -> bool {
     {
         return false;
     }
-    let (form, _) = case::table_form(word, session.config.shortcut_smart_case);
     session
         .shortcuts
-        .keys()
-        .any(|trigger| trigger.starts_with(&*form))
+        .has_trigger_starting_with(word, session.config.shortcut_smart_case)
 }
