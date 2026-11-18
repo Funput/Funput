@@ -45,7 +45,7 @@ pub use correction::{
 pub use result::{ACTION_NONE, ACTION_RESTORE, ACTION_SEND, CHARS_CAP, FunputResult};
 pub use shortcut_undo::{
     funput_engine_dismiss_shortcut_undo, funput_engine_shortcut_undo_text,
-    funput_engine_undo_shortcut,
+    funput_engine_shortcut_undo_written, funput_engine_undo_shortcut,
 };
 pub use shortcuts::{
     funput_add_shortcut, funput_clear_shortcuts, funput_process_key_text,
