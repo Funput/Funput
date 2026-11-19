@@ -20,6 +20,14 @@ extension SettingsModel {
         return configuration.keySoundVolume == volume
     }
 
+    /// Remembered on its own like the volume, so it needs no Full Access to save.
+    @discardableResult
+    func selectKeySoundVolumeSource(_ source: KeySoundVolumeSource) -> Bool {
+        if configuration.keySoundVolumeSource == source { return true }
+        update(\.keySoundVolumeSource, to: source)
+        return configuration.keySoundVolumeSource == source
+    }
+
     func saveKeySoundStyle(_ style: KeySoundStyle?) -> Bool {
         if selectedKeySoundStyle == style { return true }
         update {

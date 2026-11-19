@@ -14,21 +14,31 @@ final class KeySoundSelection: ObservableObject {
     func select(_ style: KeySoundStyle?, model: SettingsModel) -> FullAccessFeature? {
         if let style, !model.hasFullAccess { return .keySoundStyle(style) }
         if model.selectKeySoundStyle(style), let style {
-            preview(style, volume: model.configuration.keySoundVolume)
+            preview(style, configuration: model.configuration)
         }
         return nil
     }
 
     func select(_ volume: KeySoundVolume, model: SettingsModel) {
         guard model.selectKeySoundVolume(volume), let style = model.selectedKeySoundStyle else { return }
-        preview(style, volume: volume)
+        preview(style, configuration: model.configuration)
     }
 
-    private func preview(_ style: KeySoundStyle, volume: KeySoundVolume) {
+    func select(_ source: KeySoundVolumeSource, model: SettingsModel) {
+        guard model.selectKeySoundVolumeSource(source), let style = model.selectedKeySoundStyle else { return }
+        preview(style, configuration: model.configuration)
+    }
+
+    private func preview(_ style: KeySoundStyle, configuration: FunputConfiguration) {
         guard style != .system else {
             AudioServicesPlaySystemSound(Self.systemClick)
             return
         }
-        sounds.play(.key, style: style, volume: volume)
+        sounds.play(
+            .key,
+            style: style,
+            volume: configuration.keySoundVolume,
+            source: configuration.keySoundVolumeSource
+        )
     }
 }

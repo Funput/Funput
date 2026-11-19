@@ -3,7 +3,13 @@ extension KeyboardSurfaceInteractionController {
     func updateFeedback(_ presentation: KeyboardPresentation) {
         hapticStrength = presentation.isHapticFeedbackEnabled ? presentation.hapticFeedbackStrength : nil
         modeChangeStrength = presentation.hapticFeedbackStrength
-        if presentation.isKeySoundEnabled { sounds.prepare(style: presentation.keySoundStyle) }
+        if presentation.isKeySoundEnabled {
+            sounds.prepare(
+                style: presentation.keySoundStyle,
+                volume: presentation.keySoundVolume,
+                source: presentation.keySoundVolumeSource
+            )
+        }
     }
 
     func performHapticFeedback() {
@@ -27,7 +33,12 @@ extension KeyboardSurfaceInteractionController {
 
     func performKeySound(_ kind: KeySoundKind?, presentation: KeyboardPresentation) {
         guard let kind, presentation.isKeySoundEnabled else { return }
-        sounds.play(kind, style: presentation.keySoundStyle, volume: presentation.keySoundVolume)
+        sounds.play(
+            kind,
+            style: presentation.keySoundStyle,
+            volume: presentation.keySoundVolume,
+            source: presentation.keySoundVolumeSource
+        )
     }
 }
 #endif

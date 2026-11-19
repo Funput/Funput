@@ -67,6 +67,7 @@ final class GestureTestSubject {
     /// Off while nil, as the setting is by default.
     var soundStyle: KeySoundStyle?
     var soundVolume: KeySoundVolume = .medium
+    var soundVolumeSource: KeySoundVolumeSource = .media
 
     lazy var controller = KeyboardSurfaceInteractionController(
         onEvent: { _ in },
@@ -99,6 +100,7 @@ final class GestureTestSubject {
         value.isKeySoundEnabled = soundStyle != nil
         value.keySoundStyle = soundStyle ?? .system
         value.keySoundVolume = soundVolume
+        value.keySoundVolumeSource = soundVolumeSource
         return value
     }
 

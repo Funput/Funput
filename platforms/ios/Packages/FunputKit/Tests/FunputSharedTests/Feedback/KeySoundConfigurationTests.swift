@@ -9,6 +9,15 @@ struct KeySoundConfigurationTests {
         #expect(!config.isKeySoundEnabled)
         #expect(config.keySoundStyle == .system)
         #expect(config.keySoundVolume == .medium)
+        #expect(config.keySoundVolumeSource == .media)
+    }
+
+    @Test("Schema 18 keeps the media volume its bundled sounds always followed")
+    func schema18FollowsMedia() throws {
+        let data = Data("{\"keySoundStyle\":\"wood\",\"schemaVersion\":18}".utf8)
+        let config = try JSONDecoder().decode(FunputConfiguration.self, from: data)
+        #expect(config.keySoundVolumeSource == .media)
+        #expect(config.schemaVersion == FunputConfiguration.currentSchemaVersion)
     }
 
     @Test("Schema 17 keeps the switch and plays the system click", arguments: [false, true])
@@ -26,6 +35,7 @@ struct KeySoundConfigurationTests {
         var config = FunputConfiguration.default
         config.keySoundStyle = style
         config.keySoundVolume = .loud
+        config.keySoundVolumeSource = .ringer
         let data = try JSONEncoder().encode(config)
         let decoded = try JSONDecoder().decode(FunputConfiguration.self, from: data)
         #expect(decoded == config)
@@ -35,12 +45,13 @@ struct KeySoundConfigurationTests {
     @Test("Unknown values fall back without discarding other settings")
     func unknownValues() throws {
         let json = """
-        {"keySoundStyle":"vinyl","keySoundVolume":"deafening","isKeySoundEnabled":true,\
-        "showsNumberRow":true,"schemaVersion":18}
+        {"keySoundStyle":"vinyl","keySoundVolume":"deafening","keySoundVolumeSource":"bone",\
+        "isKeySoundEnabled":true,"showsNumberRow":true,"schemaVersion":18}
         """
         let config = try JSONDecoder().decode(FunputConfiguration.self, from: Data(json.utf8))
         #expect(config.keySoundStyle == .system)
         #expect(config.keySoundVolume == .medium)
+        #expect(config.keySoundVolumeSource == .media)
         #expect(config.isKeySoundEnabled)
         #expect(config.showsNumberRow)
     }

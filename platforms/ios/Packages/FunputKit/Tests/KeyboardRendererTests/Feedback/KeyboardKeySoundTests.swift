@@ -11,14 +11,18 @@ final class SoundSpy: KeyboardSoundPlaying {
         let kind: KeySoundKind
         let style: KeySoundStyle
         let volume: KeySoundVolume
+        var source: KeySoundVolumeSource = .media
     }
 
     private(set) var prepared: [KeySoundStyle] = []
     private(set) var played: [Played] = []
 
-    func prepare(style: KeySoundStyle) { prepared.append(style) }
-    func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume) {
-        played.append(Played(kind: kind, style: style, volume: volume))
+    func prepare(style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource) {
+        prepared.append(style)
+    }
+
+    func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource) {
+        played.append(Played(kind: kind, style: style, volume: volume, source: source))
     }
 }
 
@@ -42,6 +46,15 @@ struct KeyboardKeySoundTests {
         subject.begin()
         #expect(subject.sounds.played == [SoundSpy.Played(kind: .delete, style: .wood, volume: .loud)])
         #expect(subject.sounds.prepared.contains(.wood))
+    }
+
+    @Test("A press follows the chosen system volume")
+    func pressFollowsVolumeSource() {
+        let subject = GestureTestSubject(key: KeySpec(id: "a", label: "a", role: .character))
+        subject.soundStyle = .marimba
+        subject.soundVolumeSource = .ringer
+        subject.begin()
+        #expect(subject.sounds.played == [SoundSpy.Played(kind: .key, style: .marimba, volume: .medium, source: .ringer)])
     }
 
     @Test("Off neither loads nor plays a sound")

@@ -28,6 +28,7 @@ extension FunputConfiguration {
         // Lenient like the haptic strength: a sound added by a newer build must not throw away every other setting.
         config.keySoundStyle = (try? container.decodeIfPresent(KeySoundStyle.self, forKey: .keySoundStyle)) ?? config.keySoundStyle
         config.keySoundVolume = (try? container.decodeIfPresent(KeySoundVolume.self, forKey: .keySoundVolume)) ?? config.keySoundVolume
+        config.keySoundVolumeSource = (try? container.decodeIfPresent(KeySoundVolumeSource.self, forKey: .keySoundVolumeSource)) ?? config.keySoundVolumeSource
         config.showsKeyPreviews = try container.decodeIfPresent(Bool.self, forKey: .showsKeyPreviews) ?? config.showsKeyPreviews
         config.smartGesturesEnabled = try container.decodeIfPresent(Bool.self, forKey: .smartGesturesEnabled) ?? config.smartGesturesEnabled
         config.returnsToLettersAfterPunctuation = try container.decodeIfPresent(Bool.self, forKey: .returnsToLettersAfterPunctuation) ?? config.returnsToLettersAfterPunctuation
@@ -119,6 +120,11 @@ extension FunputConfiguration {
         // system click, which `.system` keeps, so like the `< 10` rung nothing needs fixing up.
         if config.schemaVersion < 18 {
             config.schemaVersion = 18
+        }
+        // v19 added `keySoundVolumeSource`. `.media` is the only volume earlier builds'
+        // bundled sounds followed, so like the `< 10` rung nothing needs fixing up.
+        if config.schemaVersion < 19 {
+            config.schemaVersion = 19
         }
         self = config
     }
