@@ -77,6 +77,8 @@ nguyên văn bản đang gõ và không nhân đôi khi đổi chế độ.
 
 `funput_process_key_text` trả đầy đủ output qua callback UTF-8 đồng bộ, tránh giới
 hạn 64 codepoint của `FunputResult` cũ mà không đổi layout ABI đang dùng bởi host khác.
+Chế độ VI trên macOS cũng chốt từ qua đường này (`FunputComposer.endWord`), nên nội dung
+gõ tắt dài hơn 64 ký tự không bị cắt ở chế độ nào.
 
 ### Kiểm tra thủ công
 

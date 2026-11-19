@@ -64,10 +64,7 @@ extension FunputInputController {
             return false
         }
 
-        let result = composer.process(scalar, source: source)
-        let word = result.action == ACTION_SEND
-            ? String(FunputComposer.output(of: result).dropLast())
-            : pre
+        let word = composer.endWord(with: scalar, source: source) ?? pre
 
         // Enter and Tab keep their native action: the app receives the key itself.
         let actionKey = scalar == "\n" || scalar == "\r" || scalar == "\t"
