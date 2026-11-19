@@ -3,6 +3,8 @@
 
 #include "compose/composer/composer.h"
 
+#include <utility>
+
 #include "ffi/utf8.h"
 
 namespace funput {
@@ -35,14 +37,17 @@ ComposePlan Composer::onBoundary(char32_t scalar, KeySource source) {
         if (scalar != U' ') return ComposePlan::passThrough();
         return appPerforms(0, scalar);
     }
-    const FunputResult result = handle_.process(static_cast<uint32_t>(scalar), source);
+    // Read in full: a gõ tắt expansion can be longer than the inline result holds.
+    std::string written;
+    const FunputResult result =
+        handle_.processText(static_cast<uint32_t>(scalar), source, written);
     // The engine's output already ends with the boundary character, and the word in
     // front of it is already in the document — so the repair covers both at once,
     // with none of the splicing the preedit path needs below.
-    if (nonPreedit_.on) return planFromResult(result, scalar);
+    if (nonPreedit_.on) return planFromResult(result, scalar, std::move(written));
     std::string word = before;
     if (result.action == ACTION_SEND) {
-        word = Handle::output(result);
+        word = std::move(written);
         // The engine's output ends with the boundary character it was fed; drop it
         // and re-append below, so both paths commit exactly one copy of it. Every
         // boundary is ASCII (see `isBoundary`), so one byte is one character here.

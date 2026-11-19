@@ -2,7 +2,8 @@
 //
 // The `funput-ffi` C ABI carries text as UTF-32 codepoint arrays, while Fcitx5/IBus
 // speak UTF-8; these are the single decode/encode pair behind every buffer read,
-// committed word, and gõ tắt string. Mirrors `funput-ffi`'s `abi::codec`.
+// committed word, and gõ tắt string. Mirrors `funput-ffi`'s `abi::codec`. Text the
+// ABI lends back as UTF-8 through a callback lands via `receiveUtf8`.
 
 #ifndef FUNPUT_UTF8_H
 #define FUNPUT_UTF8_H
@@ -86,6 +87,14 @@ inline std::string dropLast(const std::string &text, uint32_t count) {
     std::string out;
     for (size_t i = 0; i < keep; ++i) appendUtf8(out, chars[i]);
     return out;
+}
+
+// The C ABI's text callback: copies the UTF-8 the engine lends for the duration of
+// one call into the `std::string` that `context` points at. Shared by every call
+// that hands text back this way, so none decodes the borrowed bytes on its own.
+inline void receiveUtf8(void *context, const uint8_t *bytes, uintptr_t count) {
+    if (context == nullptr || bytes == nullptr) return;
+    static_cast<std::string *>(context)->assign(reinterpret_cast<const char *>(bytes), count);
 }
 
 } // namespace funput

@@ -47,7 +47,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         // composing) leaves the client alone.
         const FunputResult result = handle_.flipComposing();
         if (result.action == ACTION_NONE) return ComposePlan::swallow();
-        if (nonPreedit_.on) return planFromResult(result, 0);
+        if (nonPreedit_.on) return planFromResult(result, 0, Handle::output(result));
         return ComposePlan::preedit(handle_.buffer());
     }
 
@@ -64,8 +64,12 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
             return ComposePlan::passThrough();
         }
         // The composing word shortens and the key is swallowed. With nothing
-        // composing the key passes through, so the app deletes its own character.
-        if (handle_.buffer().empty()) return backspaceOutsideWord();
+        // composing, the key takes back a gõ tắt expansion that just landed, or
+        // passes through so the app deletes its own character.
+        if (handle_.buffer().empty()) {
+            if (std::optional<ComposePlan> undone = undoShortcut()) return std::move(*undone);
+            return backspaceOutsideWord();
+        }
         handle_.backspace();
         // Non-preedit: the character stands in the document, so the key passes
         // through and the app deletes its own — the engine is only kept in step, and
@@ -91,7 +95,7 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
 
     case KeyKind::Compose: {
         const FunputResult result = handle_.process(static_cast<uint32_t>(ev.ch));
-        if (nonPreedit_.on) return planFromResult(result, ev.ch);
+        if (nonPreedit_.on) return planFromResult(result, ev.ch, Handle::output(result));
         // The engine can swallow a character without composing anything (a lone
         // modifier key in VNI, say); with nothing to show, the key passes through.
         if (handle_.buffer().empty()) return ComposePlan::passThrough();

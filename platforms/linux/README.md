@@ -348,6 +348,7 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       composer.h              Máy trạng thái (engine + settings + VI/EN)
       keys.cpp                onKey(): cây quyết định cho mỗi phím
       keys/boundary.cpp       Từ kết thúc ở đâu: ký tự ranh giới và mọi lối thoát commit từ đang gõ
+      keys/shortcut_undo.cpp  Backspace hoàn tác gõ tắt vừa bung, khi tài liệu tin được
       state.cpp               Settings, VI/EN, và các lối thoát không phải phím
       nonpreedit.h            Chế độ commit-khi-gõ, và cách đánh giá một client
       nonpreedit.cpp          Composer làm gì với đánh giá đó
@@ -377,6 +378,7 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
     onsets/letters.h/.cpp   Phụ âm đầu mở rộng z/f/w/j (`extraOnsets`)
     watch.h/.cpp            Watcher inotify để nạp lại tức thì
   ffi/                    C ABI của funput-ffi
+    config.h                Settings -> `FunputConfig`, một ánh xạ cho cả hai shell
     handle.h                Bọc RAII quanh handle của engine
     onsets.h                Bộ chữ phụ âm đầu -> mặt nạ `ONSET_*`
     utf8.h                  Chuyển đổi UTF-8 <-> UTF-32
@@ -545,6 +547,12 @@ kế tiếp. Việc tiếp quản chỉ xảy ra khi **có bằng chứng dươn
 **mọi** thay đổi đã ghi trong journal đều được thấy là đã xảy ra thật, không chỉ một phần. Không
 có bằng chứng đó thì phím đi thẳng qua, và chính điều này giữ cho một vùng bôi đen bằng chuột vẫn
 xoá được.
+
+Backspace ngay sau khi gõ tắt bung thì **hoàn tác**: `vn` ␣ → `Việt Nam` ␣, ⌫ → `vn` ␣, và gõ lại
+ngay thì `vn` giữ nguyên (#737). Cùng bằng chứng như trên: chỉ ở chế độ này, chỉ khi tài liệu đã
+đồng bộ, không có vùng chọn, và tài liệu dự đoán còn kết thúc bằng đúng phần đã bung
+(`compose/composer/keys/shortcut_undo.cpp`). Thiếu một điều thì là Backspace thường. Ở preedit
+không hoàn tác: đó đúng là những client không tin được một lệnh xoá trong tài liệu.
 
 Bằng chứng đó phải sống sót qua cả những thay đổi mà **app tự làm**: dấu cách gõ khi không có gì
 đang soạn, và Backspace rút ngắn một từ đang đứng trong tài liệu. Cả hai đều đoán trước được, nên
