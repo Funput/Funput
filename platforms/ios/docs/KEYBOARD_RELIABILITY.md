@@ -6,7 +6,7 @@
 > trong tiến trình, hiện lại là gắn lại chứ không dựng lại, đường khởi động chỉ làm
 > việc của frame đầu, và không có đường code nào tự giết tiến trình.
 >
-> **Trạng thái:** Thiết kế đã chốt (11/2026). B1 đến B6 chưa hiện thực.
+> **Trạng thái:** B1 và B2 đã hiện thực (11/2026). B3 đến B5 chưa.
 >
 > **Cập nhật:** 20/11/2026
 >
@@ -227,6 +227,18 @@ Ba PR xếp chồng: B1 và B2; B3; B4 và B5.
 **Nghiệm thu.** Script xanh trên nhánh, đỏ khi thêm thử một `precondition` mới. Test:
 adapter bỏ timestamp NaN và vô cực; factory kẹp `heightScale` 0, âm và quá lớn.
 
+**Đã đổi khi hiện thực.**
+
+- Adapter **không bỏ** sample có timestamp hỏng mà thay timestamp bằng uptime hiện
+  tại, đồng hồ mà `UITouch` dùng. Bỏ sample `ended` sẽ để một contact không bao giờ
+  kết thúc, tức một phím bị giữ.
+- Khoảng 0,85 đến 1,2 thành một hằng số, `FunputConfiguration.heightScaleRange`, dùng
+  chung cho snapshot và factory qua `clampedHeightScale`. Giá trị không phải số (NaN,
+  vô cực) về chiều cao mặc định.
+- Script so **đúng bằng** với allowlist (`Scripts/Quality/keyboard-traps.allowlist`),
+  không chỉ "không vượt": gỡ một trap mà quên sửa allowlist cũng đỏ, nên danh sách
+  không bị cũ. Force unwrap không đếm được bằng mẫu dòng nên nằm ngoài script.
+
 ### B2: Đường khởi động chỉ còn việc của frame đầu, ẩn là nhẹ (K1 đến K4, M3, M4, T5)
 
 **Thiết kế.**
@@ -249,6 +261,18 @@ trên haptics và sounds giả, `prepareFeedback()` thì gọi; sau khi thả, l
 nạp lại. Test `KeyboardConfiguration`: `load()` trên thư mục chưa tồn tại không tạo
 thư mục. Kịch bản tay: đang phát nhạc, gõ có âm phím, ẩn bàn phím, nhạc không bị ngắt
 hay giảm âm; hiện lại gõ vẫn có âm.
+
+**Đã đổi khi hiện thực.**
+
+- Interaction controller có ba mức: `updateFeedback` chỉ ghi nhớ cài đặt (đường đổi
+  presentation), `armFeedback` thêm việc nạp âm (đường chạm, như trước),
+  `prepareFeedback` thêm việc đánh thức haptics (đường `viewDidAppear`).
+- Chỉ pool `AVAudioPlayer` được thả. Âm phím theo âm lượng chuông là system sound đã
+  đăng ký: chúng nằm ở sound server, không giữ audio session, nên để nguyên.
+- Hai test cũ ghi file snapshot hỏng thẳng vào thư mục mà `init` từng tạo hộ; giờ
+  chúng tự tạo thư mục.
+- Chưa có test cho việc nạp lại sau khi thả ở mức `KeyboardKeySounds`: test bundle
+  không có audio session, và pool không có điểm chen. Phần đó dựa vào kịch bản tay.
 
 ### B3: Tái dùng phím khi đổi layout (M2, K5)
 
