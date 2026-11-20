@@ -3,9 +3,7 @@ package app.funput.funput.keyboard.ui.clipboard.row
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,9 +25,11 @@ internal fun ClipboardPinAction(
     palette: KeyboardPanelPalette,
     onClick: () -> Unit,
 ) {
-    val color = Color(palette.readable(if (pinned) palette.accent else palette.secondaryLabel))
+    val ink = if (pinned) palette.accent else palette.secondaryLabel
+    val color = Color(palette.readableOn(palette.cardSurface, ink))
     Box(
-        Modifier.width(44.dp).fillMaxHeight()
+        // A fixed size: a card is as tall as its text, so there is no height to fill.
+        Modifier.size(44.dp)
             .semantics { contentDescription = label }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,

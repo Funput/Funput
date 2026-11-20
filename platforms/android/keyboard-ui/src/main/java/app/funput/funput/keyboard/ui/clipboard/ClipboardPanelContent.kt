@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.funput.funput.keyboard.ui.R
 import app.funput.funput.keyboard.ui.clipboard.preview.ClipboardPreviewOverlay
+import app.funput.funput.keyboard.ui.clipboard.row.ClipboardCardSpacing
 import app.funput.funput.keyboard.ui.clipboard.row.ClipboardSwipeRow
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import java.time.Instant
@@ -56,7 +58,11 @@ internal fun ClipboardPanelContent(
                     stringResource(R.string.clipboard_empty_title),
                     stringResource(R.string.clipboard_empty_detail), palette,
                 )
-                else -> LazyColumn(state = listState) {
+                else -> LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(bottom = ClipboardCardSpacing),
+                    verticalArrangement = Arrangement.spacedBy(ClipboardCardSpacing),
+                ) {
                     clipboardGroups(entries).forEach { group ->
                         stickyHeader(group.pinned) { Header(group.pinned, palette) }
                         items(group.entries.size, key = { group.entries[it].id }) { index ->

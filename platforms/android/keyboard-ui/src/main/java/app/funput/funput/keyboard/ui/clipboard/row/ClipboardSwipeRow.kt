@@ -3,20 +3,15 @@ package app.funput.funput.keyboard.ui.clipboard.row
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -25,29 +20,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.funput.funput.keyboard.ui.R
+import app.funput.funput.keyboard.ui.clipboard.ClipboardRowText
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import java.time.Instant
 import kotlin.math.roundToInt
 
-private val ActionWidth = 88.dp
+/** Gap between a history card and the side of the panel. */
+internal val ClipboardCardInset = 8.dp
 
+/** Gap between two history cards, and between a card and its section header. */
+internal val ClipboardCardSpacing = 6.dp
+
+/** Width of the delete action a swipe uncovers at the end of a card. */
+internal val ClipboardDeleteWidth = 88.dp
+
+private val CardMinHeight = 48.dp
+private val CardShape = RoundedCornerShape(10.dp)
+
+/**
+ * One history entry as a card: tap pastes, long press previews, and a swipe towards the start
+ * slides the card aside to uncover its delete action.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ClipboardSwipeRow(
@@ -55,20 +61,24 @@ internal fun ClipboardSwipeRow(
     revealed: Boolean, onReveal: (Boolean) -> Unit, onSelect: () -> Unit,
     onPin: () -> Unit, onRemove: () -> Unit, onPreview: () -> Unit,
 ) {
-    val widthPx = with(LocalDensity.current) { ActionWidth.toPx() }
+    val widthPx = with(LocalDensity.current) { ClipboardDeleteWidth.toPx() }
     var dragging by remember(entry.id) { mutableStateOf(false) }
     var dragOffset by remember(entry.id) { mutableFloatStateOf(0f) }
     val target = if (revealed) -widthPx else 0f
     val animated by animateFloatAsState(target, label = "clipboard swipe")
     val offset = if (dragging) dragOffset else animated
-    val preview = ClipboardRowTextContent.preview(entry.text)
+    val preview = ClipboardRowText.preview(entry.text)
     val pinLabel = stringResource(if (entry.isPinned) R.string.clipboard_unpin else R.string.clipboard_pin)
     val deleteLabel = stringResource(R.string.clipboard_delete)
-    Box(Modifier.fillMaxWidth().height(44.dp)) {
-        DeleteAction(deleteLabel, { onReveal(false); onRemove() }, Modifier.align(Alignment.CenterEnd))
+    Box(Modifier.fillMaxWidth().padding(horizontal = ClipboardCardInset).clip(CardShape)) {
+        ClipboardDeleteAction(
+            deleteLabel, uncovered = { -offset }, onClick = { onReveal(false); onRemove() },
+            modifier = Modifier.matchParentSize(),
+        )
         Row(
-            Modifier.fillMaxSize().offset { IntOffset(offset.roundToInt(), 0) }
-                .background(Color(palette.backgroundEnd))
+            Modifier.fillMaxWidth().heightIn(min = CardMinHeight)
+                .offset { IntOffset(offset.roundToInt(), 0) }
+                .background(Color(palette.cardSurface))
                 .pointerInput(entry.id, revealed, widthPx) {
                     detectHorizontalDragGestures(
                         onDragStart = { dragging = true; dragOffset = target },
@@ -92,7 +102,7 @@ internal fun ClipboardSwipeRow(
                 .combinedClickable(onClick = onSelect, onLongClick = onPreview),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ClipboardRowTextContent(entry, preview, now, palette, Modifier.weight(1f))
+            ClipboardRowLabel(entry, preview, now, palette, Modifier.weight(1f))
             ClipboardPinAction(entry.isPinned, pinLabel, palette, onPin)
         }
     }
@@ -100,22 +110,3 @@ internal fun ClipboardSwipeRow(
 
 internal fun shouldRevealClipboardAction(offsetPx: Float, actionWidthPx: Float): Boolean =
     offsetPx <= -actionWidthPx / 2f
-
-@Composable
-private fun DeleteAction(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier.width(ActionWidth).fillMaxHeight().background(Color(0xFFB3261E))
-            .semantics { contentDescription = label; role = Role.Button }
-            .clickable(onClick = onClick),
-        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        androidx.compose.foundation.Canvas(Modifier.size(16.dp)) {
-            drawRect(Color.White, androidx.compose.ui.geometry.Offset(size.width * .25f, size.height * .3f),
-                androidx.compose.ui.geometry.Size(size.width * .5f, size.height * .58f), style = Stroke(1.5.dp.toPx()))
-            drawLine(Color.White, androidx.compose.ui.geometry.Offset(size.width * .18f, size.height * .22f),
-                androidx.compose.ui.geometry.Offset(size.width * .82f, size.height * .22f), 1.5.dp.toPx())
-        }
-        BasicText(label, style = TextStyle(Color.White, 12.sp))
-    }
-}
