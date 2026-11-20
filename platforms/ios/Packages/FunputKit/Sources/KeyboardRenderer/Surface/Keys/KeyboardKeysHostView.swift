@@ -21,9 +21,10 @@ final class KeyboardKeysHostView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func install(_ controls: [KeyboardKeyControl]) {
-        self.controls.forEach { $0.removeFromSuperview() }
-        self.controls = controls
+    /// Controls only ever arrive: the surface reuses the ones it has across layouts
+    /// and parks the ones a layout does not need.
+    func add(_ controls: [KeyboardKeyControl]) {
+        self.controls.append(contentsOf: controls)
         controls.forEach(contentHost.addSubview)
     }
 
