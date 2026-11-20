@@ -17,6 +17,8 @@ impl ShellState {
     /// it stood *before* the key (a word boundary wipes it, and that is exactly the
     /// text that just became committed) and the engine's verdict *after*.
     pub fn process_key(&mut self, c: char, source: KeySource) -> ImeResult {
+        // A completion list stays open while its word is typed on, and closes with it.
+        self.completion &= !c.is_whitespace();
         self.tail.before_key(self.engine.buffer());
         let result = self.engine.process_key(c, source);
         self.tail.after_key(c, &result, self.engine.buffer());
@@ -67,13 +69,20 @@ impl ShellState {
     /// the word is a gõ tắt trigger, returns the expansion to inject; the hook then
     /// sends the real key itself, so Enter still sends or breaks the line. Either way
     /// the composition is committed as for any key that moves the caret.
+    ///
+    /// Over a word that opens an app's completion list (`@pcod`, see
+    /// [`CommittedTail::opens_completion`](crate::CommittedTail::opens_completion)),
+    /// the key is the list's: nothing expands, and Enter, which picked an entry
+    /// rather than breaking a line, leaves the next word as typed (#712).
     pub fn trigger_key(&mut self, key: TriggerKey) -> Option<ImeResult> {
-        let wanted = match key {
-            TriggerKey::Enter => self.settings.shortcut_on_enter,
-            TriggerKey::Tab => self.settings.shortcut_on_tab,
-        };
+        let listing = self.completion || self.tail.opens_completion(self.engine.buffer());
+        let wanted = !listing
+            && match key {
+                TriggerKey::Enter => self.settings.shortcut_on_enter,
+                TriggerKey::Tab => self.settings.shortcut_on_tab,
+            };
         let expansion = wanted.then(|| self.engine.expand_shortcut()).flatten();
-        self.caret_moved(key.caret());
+        self.caret_moved(if listing { Caret::Unknown } else { key.caret() });
         expansion
     }
 
@@ -82,11 +91,16 @@ impl ShellState {
     /// Commits whatever is composed, and tells the engine what is known about where
     /// the caret landed, so auto-capitalize reads the sentence from there rather
     /// than from keys typed somewhere else.
+    ///
+    /// Up and Down ([`Caret::Vertical`]) keep note of a completion list the word at
+    /// the caret opened, for the Enter that picks from it after the shadow is gone.
     pub fn caret_moved(&mut self, caret: Caret) {
+        self.completion = caret == Caret::Vertical
+            && (self.completion || self.tail.opens_completion(self.engine.buffer()));
         self.reset_composition();
         match caret {
             Caret::LineStart => self.engine.arm_capitalization(),
-            Caret::Unknown => self.engine.disarm_capitalization(),
+            Caret::Unknown | Caret::Vertical => self.engine.disarm_capitalization(),
         }
     }
 

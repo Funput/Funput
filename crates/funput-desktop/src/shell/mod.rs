@@ -43,6 +43,11 @@ pub struct ShellState {
     /// A hook shell cannot read the document, so this stands in for it when
     /// Backspace should re-open a finished word — see [`CommittedTail`].
     tail: CommittedTail,
+    /// An app's completion list may be open: Up or Down was pressed over a word that
+    /// opens one. Set only by [`crate::Caret::Vertical`]; dropped by whitespace, which
+    /// ends the word, and by every other caret move. Kept over a letter or a Backspace,
+    /// which edit the word the list completes: wrongly kept, it costs a missed capital.
+    completion: bool,
     settings: Settings,
     /// Where `settings` is persisted, resolved once by the platform. `None` when no
     /// writable location exists — settings then live for this session only.
@@ -78,6 +83,7 @@ impl ShellState {
         let mut state = Self {
             engine: Engine::new(),
             tail: CommittedTail::new(),
+            completion: false,
             settings: Settings::default(),
             settings_file,
             foreground: None,

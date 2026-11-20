@@ -23,4 +23,9 @@ pub enum Caret {
     /// Chosen over [`Caret::LineStart`] whenever the shell is guessing: a missed
     /// capital costs one Shift, a wrong one has to be deleted.
     Unknown,
+    /// Up or Down. To the sentence it is [`Caret::Unknown`]: the caret may have moved a
+    /// line. But in an app's completion list (`@` mentions, `:` emoji) the arrow moves
+    /// the highlight and the caret stays put, so a list the word at the caret opened
+    /// may still be open, and the next Enter picks from it instead of breaking a line.
+    Vertical,
 }

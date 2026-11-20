@@ -91,6 +91,7 @@ pub fn to_key_event(kbd: &KBDLLHOOKSTRUCT) -> KeyEvent {
         is_navigation: is_navigation(vk),
         is_enter: vk == VK_RETURN,
         is_tab: vk == VK_TAB,
+        is_vertical: matches!(vk, VK_UP | VK_DOWN),
         source: key_source(vk),
     }
 }
