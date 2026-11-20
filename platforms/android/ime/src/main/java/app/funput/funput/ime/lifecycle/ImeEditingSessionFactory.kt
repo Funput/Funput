@@ -61,6 +61,7 @@ internal fun createImeEditingSession(
         editor = editor,
         connection = connection,
         enterCommand = { editorRuntime.policy.editorAction.command },
+        rawKeyEditor = { editorRuntime.policy.isRawKeyEditor },
     )
     val clipboard = ImeClipboardSession(
         context = context,

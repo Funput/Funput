@@ -29,4 +29,21 @@ class InputConnectionEditorTest {
         assertTrue(result)
         assertEquals(73, receivedAction)
     }
+
+    @Test
+    fun `delete key command sends one key press and no text edit`() {
+        val calls = mutableListOf<String>()
+        val connection = Proxy.newProxyInstance(
+            InputConnection::class.java.classLoader,
+            arrayOf(InputConnection::class.java),
+        ) { _, method, _ ->
+            if (method.name == "toString") "InputConnectionTestDouble" else true.also { calls += method.name }
+        } as InputConnection
+
+        val result = InputConnectionEditor().execute(connection, ImeEditCommand.PressDeleteKey)
+
+        assertTrue(result)
+        // Key down and key up.
+        assertEquals(listOf("sendKeyEvent", "sendKeyEvent"), calls)
+    }
 }

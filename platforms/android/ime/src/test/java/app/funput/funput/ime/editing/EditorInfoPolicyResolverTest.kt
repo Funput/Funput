@@ -125,6 +125,18 @@ class EditorInfoPolicyResolverTest {
         )
     }
 
+    @Test
+    fun `editor without an input class takes raw keys`() {
+        // Termux: TYPE_NULL by default, a class-less visible password when it enforces characters.
+        val enforcedCharacters = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD or
+            InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        listOf(InputType.TYPE_NULL, enforcedCharacters).forEach { inputType ->
+            assertTrue(resolve(inputType).isRawKeyEditor)
+        }
+        listOf(InputType.TYPE_CLASS_TEXT, InputType.TYPE_CLASS_NUMBER, InputType.TYPE_CLASS_PHONE)
+            .forEach { inputType -> assertFalse(resolve(inputType).isRawKeyEditor) }
+    }
+
     private fun resolve(
         inputType: Int,
         imeOptions: Int = EditorInfo.IME_ACTION_NONE,

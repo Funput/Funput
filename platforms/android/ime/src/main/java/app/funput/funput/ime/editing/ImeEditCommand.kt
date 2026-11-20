@@ -9,6 +9,9 @@ internal sealed interface ImeEditCommand {
     }
 
     data object DeleteBackward : ImeEditCommand
+
+    /** Backspace as a key press, for editors that keep no text for [DeleteBackward] to edit. */
+    data object PressDeleteKey : ImeEditCommand
     data class DeleteSurrounding(val beforeLength: Int) : ImeEditCommand {
         init {
             require(beforeLength > 0) { "Deleted span must be positive" }

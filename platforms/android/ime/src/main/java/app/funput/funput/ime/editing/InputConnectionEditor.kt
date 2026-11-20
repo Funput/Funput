@@ -2,6 +2,8 @@ package app.funput.funput.ime.editing
 
 import android.icu.text.BreakIterator
 import android.view.inputmethod.InputConnection
+import app.funput.funput.ime.editing.keyevent.KeyEventStroke
+import app.funput.funput.ime.editing.keyevent.sendAndroidKeyEventStroke
 
 /** Executes editor commands against the connection that currently owns focus. */
 internal class InputConnectionEditor {
@@ -14,6 +16,7 @@ internal class InputConnectionEditor {
         return when (command) {
             is ImeEditCommand.CommitText -> connection.commitText(command.text, CursorAfterText)
             ImeEditCommand.DeleteBackward -> deleteBackward(connection)
+            ImeEditCommand.PressDeleteKey -> sendAndroidKeyEventStroke(connection, KeyEventStroke.Delete)
             is ImeEditCommand.DeleteSurrounding -> deleteSurrounding(connection, command.beforeLength)
             is ImeEditCommand.PerformEditorAction -> connection.performEditorAction(command.actionId)
         }

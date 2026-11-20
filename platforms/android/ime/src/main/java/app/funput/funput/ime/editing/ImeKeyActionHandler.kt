@@ -19,6 +19,7 @@ internal class ImeKeyActionHandler(
     private val connection: () -> InputConnection?,
     private val enterCommand: () -> ImeEditCommand,
     private val shortcuts: ImeShortcutSession = ImeShortcutSession(composition.engine),
+    private val rawKeyEditor: () -> Boolean = { false },
 ) {
     private val mode = ImeTypingMode()
     private val suggestions = ImeSuggestionSession(composition, connection)
@@ -52,6 +53,7 @@ internal class ImeKeyActionHandler(
         usesComposition = { usesVietnameseComposition },
         onCompositionChanged = suggestions::updateComposition,
         onCompositionCleared = { if (usesVietnameseComposition) suggestions.reset() },
+        rawKeyEditor = rawKeyEditor,
     )
 
     val language: KeyboardLanguage get() = mode.language
