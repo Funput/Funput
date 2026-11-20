@@ -6,38 +6,52 @@ import UIKit
 @MainActor
 protocol KeyboardSoundPlaying {
     /// Loads a bundled style ahead of the first press. Cheap once the style is loaded.
-    func prepare(style: KeySoundStyle)
-    func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume)
+    func prepare(style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource)
+    func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource)
 }
 
 /// The same key sounds in the keyboard and the containing app's settings.
 @MainActor
 public final class KeyboardKeySounds: KeyboardSoundPlaying {
+    private struct Prepared: Equatable {
+        let style: KeySoundStyle
+        let volume: KeySoundVolume
+        let source: KeySoundVolumeSource
+    }
+
     private lazy var pool = KeySoundPlayerPool()
-    /// Prepare runs on every touch, so only a new style reaches the audio queue.
-    private var preparedStyle: KeySoundStyle?
+    private lazy var systemSounds = KeySystemSoundBank()
+    /// Prepare runs on every touch, so only a new choice reaches the audio queue.
+    private var prepared: Prepared?
 
     public init() {}
 
-    public func prepare(style: KeySoundStyle) {
-        guard style != .system, style != preparedStyle else { return }
-        preparedStyle = style
-        pool.load(style)
+    public func prepare(style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource) {
+        let choice = Prepared(style: style, volume: volume, source: source)
+        guard style != .system, choice != prepared else { return }
+        prepared = choice
+        switch source {
+        case .media: pool.load(style)
+        case .ringer: systemSounds.load(style, volume: volume)
+        }
     }
 
     /// The system style goes through `playInputClick()`, which only sounds while an
     /// input view that adopts `UIInputViewAudioFeedback` is on screen.
-    public func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume) {
+    public func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource) {
         guard style != .system else {
             UIDevice.current.playInputClick()
             return
         }
-        pool.play(kind, style: style, gain: volume.gain)
+        switch source {
+        case .media: pool.play(kind, style: style, gain: volume.gain)
+        case .ringer: systemSounds.play(kind, style: style, volume: volume)
+        }
     }
 }
 
 extension KeySoundVolume {
-    /// A fraction of the media volume; the player cannot exceed it.
+    /// A fraction of the system volume the sound follows; playback cannot exceed it.
     var gain: Float {
         switch self {
         case .soft: 0.35

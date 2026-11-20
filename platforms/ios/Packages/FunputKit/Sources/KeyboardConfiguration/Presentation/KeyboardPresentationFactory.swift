@@ -37,6 +37,7 @@ public enum KeyboardPresentationFactory {
             isKeySoundEnabled: configuration.isKeySoundEnabled,
             keySoundStyle: configuration.keySoundStyle,
             keySoundVolume: configuration.keySoundVolume,
+            keySoundVolumeSource: configuration.keySoundVolumeSource,
             showsKeyPreviews: configuration.showsKeyPreviews,
             areSmartGesturesEnabled: configuration.smartGesturesEnabled,
             pinsAppearance: pinsAppearance

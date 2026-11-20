@@ -23,6 +23,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public var isKeySoundEnabled: Bool
     public var keySoundStyle: KeySoundStyle
     public var keySoundVolume: KeySoundVolume
+    public var keySoundVolumeSource: KeySoundVolumeSource
     public var showsKeyPreviews: Bool
     /// Double-tap space, spacebar cursor panning and swipe-to-delete-word, as one switch.
     public var smartGesturesEnabled: Bool
@@ -53,7 +54,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         case inputMethod, language, toneStyle, spellCheck, smartRestore
         case eagerRestore, autoCapitalize, selectedThemeID, extraOnsets
         case isHapticFeedbackEnabled, isKeySoundEnabled, showsKeyPreviews
-        case hapticFeedbackStrength, keySoundStyle, keySoundVolume
+        case hapticFeedbackStrength, keySoundStyle, keySoundVolume, keySoundVolumeSource
         case smartGesturesEnabled, returnsToLettersAfterPunctuation
         case showsNumberRow, layoutPreset, keySizing, heightScale, keyboardAppearance
         case personalSuggestionsEnabled, personalSuggestionResetToken, languageToggleEnabled
@@ -75,6 +76,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         isKeySoundEnabled: Bool = false,
         keySoundStyle: KeySoundStyle = .system,
         keySoundVolume: KeySoundVolume = .medium,
+        keySoundVolumeSource: KeySoundVolumeSource = .media,
         showsKeyPreviews: Bool = true,
         smartGesturesEnabled: Bool = true,
         returnsToLettersAfterPunctuation: Bool = true,
@@ -106,6 +108,7 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
         self.isKeySoundEnabled = isKeySoundEnabled
         self.keySoundStyle = keySoundStyle
         self.keySoundVolume = keySoundVolume
+        self.keySoundVolumeSource = keySoundVolumeSource
         self.showsKeyPreviews = showsKeyPreviews
         self.smartGesturesEnabled = smartGesturesEnabled
         self.returnsToLettersAfterPunctuation = returnsToLettersAfterPunctuation
@@ -136,5 +139,5 @@ public struct FunputConfiguration: Codable, Hashable, Sendable {
     public static let defaultThemeID = "app.funput.theme.glass"
 
     /// Schema version emitted by this build. Bump when the stored shape changes.
-    public static let currentSchemaVersion = 18
+    public static let currentSchemaVersion = 19
 }

@@ -73,6 +73,20 @@ struct KeySoundSettingsTests {
         #expect(store.saveCount == 1)
     }
 
+    @Test("Volume source saves without Full Access and only when it changes")
+    func volumeSource() {
+        let store = SettingsTestStore(configuration: .default)
+        let model = SettingsModel(
+            store: store,
+            accessStore: KeyboardAccessStateTestStore(hasObservedFullAccess: false)
+        )
+
+        #expect(model.selectKeySoundVolumeSource(.ringer))
+        #expect(store.configuration.keySoundVolumeSource == .ringer)
+        #expect(model.selectKeySoundVolumeSource(.ringer))
+        #expect(store.saveCount == 1)
+    }
+
     @Test("A failed save keeps the old choice")
     func failedSave() {
         let store = SettingsTestStore(configuration: .default, acceptsSaves: false)
