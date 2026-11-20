@@ -20,7 +20,7 @@ extension KeyboardViewController {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(flushPersonalSuggestions),
-            name: UIApplication.didEnterBackgroundNotification,
+            name: .NSExtensionHostDidEnterBackground,
             object: nil
         )
     }
