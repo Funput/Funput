@@ -14,7 +14,7 @@ mod settings;
 
 use std::sync::{Mutex, OnceLock};
 
-use funput_desktop::{Caret, ImeResult, KeySource, ShellState, TriggerKey};
+use funput_desktop::{Caret, ImeResult, KeySource, Mods, ShellState, TriggerKey};
 
 use crate::shared::settings_path;
 
@@ -42,6 +42,11 @@ pub fn process_key(c: char, source: KeySource) -> ImeResult {
 }
 pub fn flip_composing() -> ImeResult {
     with(|s| s.flip_composing())
+}
+/// A lone Ctrl tap seals the word being composed, when its switch is on — see
+/// [`ShellState::seal_word`]. Any other bare-modifier gesture does nothing here.
+pub fn seal_word(tapped: Mods) -> bool {
+    with(|s| s.seal_word(tapped))
 }
 /// Enter or Tab ended the word: the gõ tắt expansion to inject before the key, when
 /// its switch is on — see [`ShellState::trigger_key`].

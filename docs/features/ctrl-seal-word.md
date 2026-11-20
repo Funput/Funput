@@ -1,6 +1,6 @@
 # Bấm Ctrl để chốt từ đang gõ
 
-> **Trạng thái:** đã chốt làm, là tính năng riêng, tách khỏi phím lật từ. Chưa có code. Mặc định bật hay tắt chưa chốt: tài liệu này viết theo đề xuất **bật mặc định, có công tắc tắt**.
+> **Trạng thái:** đã làm cho Windows (issue #736): engine, FFI, shell desktop và công tắc trong Cài đặt. **Bật mặc định, có công tắc tắt.** Linux làm sau, macOS chưa làm.
 
 Nguồn: issue #582 (Windows), mục "Chức năng của Ctrl".
 
@@ -11,7 +11,7 @@ Unikey cho bấm Ctrl rồi thả (không kèm phím nào) để dừng biến �
 - `dung` Ctrl `x` ra `dungx`, không thành `dũng`.
 - `CT` Ctrl Space ra `CT␣`, không bung gõ tắt `ct` → `cơm tấm`.
 
-Funput hiện bỏ qua cú bấm này: [keydown.rs](../../platforms/windows/src/background/hook/keyboard/keydown.rs) trả các phím bổ trợ về cho app trước khi tới engine. `dung` Ctrl `x` vẫn ra `dũng`, `CT` Ctrl Space vẫn bung.
+Trước đây Funput bỏ qua cú bấm này: [keydown.rs](../../platforms/windows/src/background/hook/keyboard/keydown.rs) trả các phím bổ trợ về cho app trước khi tới engine, nên `dung` Ctrl `x` vẫn ra `dũng` và `CT` Ctrl Space vẫn bung.
 
 ## Hành vi
 
@@ -53,7 +53,7 @@ Backspace hoàn tác ([shortcut-undo.md](shortcut-undo.md), [shortcut-case-and-r
 
 ## Engine
 
-Thêm `Engine::seal()`:
+`Engine::seal()` ([editing.rs](../../crates/funput-engine/src/engine/editing.rs)):
 
 - Kết thúc từ đang gõ **mà không chạy ranh giới**: không tra gõ tắt, không sửa lỗi gõ, không English restore, không ghi chữ nào ra. Từ đã nằm sẵn trên màn hình (Windows inject) hoặc nằm trong vùng đang gõ (preedit), việc đưa nó vào văn bản là của nền tảng.
 - Trả về chữ đang hiện để nền tảng preedit commit, và để shell desktop đưa vào `CommittedTail`.
@@ -61,15 +61,17 @@ Thêm `Engine::seal()`:
 - Hủy nhịp hoàn tác gõ tắt đang chờ và lệnh bỏ qua một lần (`shortcut_undo::dismiss`).
 - Không có từ đang gõ thì không làm gì và báo lại là không có gì để chốt.
 
-Đi qua FFI/JNI như các API khác của engine, dù hiện chỉ desktop dùng.
+Có ở FFI là `funput_engine_seal`, để Linux dùng khi làm tới. Chưa đưa qua JNI: Android không có Ctrl, thêm vào lúc này chỉ là code không ai gọi.
+
+Chế độ tiếng Anh cũng chốt được khi engine đang giữ từ, tức là khi gõ tắt chạy ở tiếng Anh: `ct` Ctrl Space không bung ở cả hai chế độ.
 
 ## Nền tảng
 
-### Windows (làm trước)
+### Windows (đã làm)
 
-Phần nhận diện đã có: `hotkey::on_key_event` báo `Gesture::Modifiers` khi bấm rồi thả một tập phím bổ trợ không kèm phím thường ([keyboard/mod.rs](../../platforms/windows/src/background/hook/keyboard/mod.rs)). Hiện chỉ Alt đứng một mình được dùng, cho phím tắt menu Office ([access-keys.md](access-keys.md)).
+Phần nhận diện có sẵn: `hotkey::on_key_event` báo `Gesture::Modifiers` khi bấm rồi thả một tập phím bổ trợ không kèm phím thường ([keyboard/mod.rs](../../platforms/windows/src/background/hook/keyboard/mod.rs)). Alt đứng một mình dùng cho phím tắt menu Office ([access-keys.md](access-keys.md)), Ctrl đứng một mình dùng cho việc chốt từ.
 
-- Khi `Gesture::Modifiers` là **đúng Ctrl** (trái hoặc phải) và công tắc đang bật: gọi `seal()`, rồi đưa chữ đã chốt vào `CommittedTail` như chữ vừa được ghi ra. **Không** gọi `caret_moved`: hàm đó xóa `CommittedTail` và làm mất khả năng mở lại từ bằng Backspace.
+- Khi `Gesture::Modifiers` là **đúng Ctrl** (trái hoặc phải) và công tắc đang bật: `ShellState::seal_word` ([compose.rs](../../crates/funput-desktop/src/shell/compose.rs)) gọi `seal()`, rồi đưa chữ đã chốt vào `CommittedTail` như chữ vừa được ghi ra. **Không** gọi `caret_moved`: hàm đó xóa `CommittedTail` và làm mất khả năng mở lại từ bằng Backspace.
 - Không nuốt phím Ctrl: thả Ctrl phải tới app, nếu không app tưởng Ctrl vẫn đang giữ.
 - Ctrl+Shift, Ctrl+Alt và các tổ hợp khác không chốt.
 
@@ -87,22 +89,24 @@ Không có Ctrl. Đã có chip và Backspace để hoàn tác gõ tắt.
 
 ## Cài đặt
 
-Một công tắc trong phần Gõ (cạnh phím lật từ): "Bấm Ctrl để giữ nguyên từ đang gõ". Câu mô tả: "Bấm và thả Ctrl khi đang gõ dở thì từ giữ nguyên như đang hiện, không thêm dấu và không bung gõ tắt."
+Một công tắc ở trang Phím tắt, ngay dưới phím lật từ: "Bấm Ctrl để giữ nguyên từ đang gõ". Câu mô tả: "Bấm và thả Ctrl khi đang gõ dở thì từ giữ nguyên như đang hiện, không thêm dấu và không bung gõ tắt."
+
+Lưu trong `settings.json` là `ctrlSealsWord`, và đi theo file xuất cấu hình ở `preferences.ctrlSealsWord`. File viết trước khi có công tắc cũng đọc là **bật**: trước đó cú bấm không làm gì, nên bật lên không lấy mất hành vi nào.
 
 Hướng dẫn trên website đặt Ctrl và phím lật từ cạnh nhau để người dùng phân biệt.
 
-## Rủi ro cần kiểm tra khi làm
+## Rủi ro cần kiểm tra trên máy Windows
 
 - **Bấm Ctrl nhầm**, ví dụ định Ctrl+C rồi đổi ý. Cái giá chỉ là từ bị chốt sớm, Backspace mở lại được.
-- **Ctrl + cuộn chuột** (phóng to trong trình duyệt, Office): kiểm tra hook có báo nhầm thành Ctrl đứng một mình không. Nếu có, thao tác chuột giữa lúc giữ Ctrl phải hủy cú bấm.
+- **Ctrl + cuộn chuột** (phóng to trong trình duyệt, Office): hook chuột báo mọi thao tác trừ di chuột cho bộ nhận diện, nên cuộn hay click giữa lúc giữ Ctrl hủy cú bấm. Vẫn cần thử trên máy thật.
 - **Ctrl + click**: cú click đã làm Funput coi như con trỏ di chuyển, nên chốt hay không cũng vậy. Vẫn kiểm tra thứ tự sự kiện.
-- **Phím tắt tự ghi**: nếu người dùng ghi được Ctrl đứng một mình làm phím bật/tắt tiếng Việt, phím tắt thắng và không chốt. Kiểm tra bộ ghi phím có cho phép tổ hợp này không.
+- **Phím tắt tự ghi**: bộ ghi phím không nhận một phím bổ trợ đứng một mình. Nếu file cấu hình sửa tay gán Ctrl đứng một mình làm phím tắt thì phím tắt thắng và không chốt.
 - **Phím tắt menu (Alt)**: chốt không đụng tới `AccessKeys`.
 
-## Việc cần chốt
+## Đã chốt
 
-- Mặc định bật hay tắt (đề xuất: bật).
-- Có làm trên macOS không.
+- Mặc định bật, kể cả với người đang dùng bản cũ.
+- macOS chưa làm.
 
 ## Kiểm thử
 

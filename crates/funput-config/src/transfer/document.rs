@@ -85,6 +85,10 @@ pub struct Preferences {
     pub shortcut_on_enter: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcut_on_tab: Option<bool>,
+    /// Whether a lone Ctrl tap seals the word being composed. Portable: a habit of
+    /// the hands, the same on every desktop that has the key.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ctrl_seals_word: Option<bool>,
 }
 
 /// Comparable and printable because it is also what [`crate::unikey`] parses a

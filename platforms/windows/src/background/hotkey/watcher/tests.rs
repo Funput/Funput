@@ -254,3 +254,23 @@ fn a_held_alt_shortcut_or_click_is_not_a_tap() {
     w.interrupt();
     assert_eq!(w.feed(up(ALT), NONE), None);
 }
+
+#[test]
+fn a_lone_ctrl_tap_is_reported_for_sealing_the_word() {
+    let mut w = Watcher::default();
+    assert_eq!(w.feed(down(CTRL), CTRL), None);
+    assert_eq!(w.feed(up(CTRL), NONE), Some(CTRL));
+}
+
+#[test]
+fn a_ctrl_shortcut_wheel_or_click_is_not_a_tap() {
+    // Ctrl+C, let go: a copy, not a decision about the word being typed.
+    let mut w = Watcher::default();
+    w.feed(down(CTRL), CTRL);
+    w.feed(OtherDown, CTRL);
+    assert_eq!(w.feed(up(CTRL), NONE), None);
+    // Ctrl+wheel zooms and Ctrl+click selects; the mouse hook reports both.
+    w.feed(down(CTRL), CTRL);
+    w.interrupt();
+    assert_eq!(w.feed(up(CTRL), NONE), None);
+}

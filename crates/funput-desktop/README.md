@@ -172,6 +172,7 @@ WH_KEYBOARD_LL callback
   ├─ tổ hợp toggle? → hỏi lại app đang ở trước (note/clear_foreground),
   │                   state.toggle_enabled_hotkey(), nuốt phím       (trước classify)
   ├─ tổ hợp flip?   → if let Some(plan) = plan_inject(state.flip_composing()), nuốt phím
+  ├─ thả Ctrl đứng một mình? → state.seal_word(mods): chốt từ đang gõ, không nuốt phím
   ├─ !state.hook_active()? → để phím đi qua, không classify
   └─ dựng KeyEvent (mods, ToUnicodeEx → ch, backspace/navigation, numpad?)
        match classify(&ev):

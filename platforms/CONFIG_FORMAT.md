@@ -45,6 +45,7 @@ one machine imports on another. macOS is the first implementation
     "shortcutsInEnglish": true,
     "shortcutOnEnter": false,
     "shortcutOnTab": false,
+    "ctrlSealsWord": true,
     "extraOnsets": "zj"              // letters among z, f, w, j; "" = none
   },
 
@@ -77,6 +78,7 @@ one machine imports on another. macOS is the first implementation
 | `preferences.shortcutSmartCase` | ✅ | Whether a trigger matches regardless of how it was capitalized, with the expansion's case raised to match, never lowered (`vn`/`Vn`/`VN` → `việt nam`/`Việt nam`/`VIỆT NAM`; `tp`/`Tp`/`TP` → `TP. HCM`). Off, only the exact trigger expands and the expansion is verbatim. Defaults to `true` when absent, for the same reason as `shortcutsEnabled`. Exposed as a switch on macOS, Windows and Linux. |
 | `preferences.shortcutsInEnglish` | ✅ | Whether the gõ tắt table also expands while the app is in English mode. Only expansion happens there — no diacritics, no English restore, no auto-capitalize. Defaults to `true` when absent, for the same reason as `shortcutsEnabled`. Exposed as a switch on Windows, macOS and Linux. |
 | `preferences.shortcutOnEnter`, `preferences.shortcutOnTab` | ✅ | Whether Enter (Shift+Enter included) or Tab (not Shift+Tab) also expands a trigger, before the key itself goes on to the app. No undo is armed for such an expansion. Default to `false` when absent: Enter sends in chat apps and Tab accepts suggestions in IDEs, so neither may start expanding on its own after an update. Exposed as switches on Windows only; macOS already expands on Enter and Tab with no switch. |
+| `preferences.ctrlSealsWord` | ✅ | Whether pressing and releasing Ctrl on its own seals the word being composed: it stays exactly as shown, takes no further tone or shape key, and does not expand as a gõ tắt trigger. Backspace still re-opens it. Defaults to `true` when absent: the tap did nothing before the switch existed, so turning it on takes no behaviour away. Exposed as a switch on Windows only; no other platform acts on it yet. |
 | `preferences.extraOnsets` | ✅ | Letters admitted as initial consonants beyond Vietnamese spelling, spelled out in any order and case (`"zj"`; `""` = none; unknown letters are ignored). Absent leaves the local choice alone. Exposed letter by letter on macOS, Windows and Linux. |
 | `platform.macos.toggleShortcut` | ❌ | `KeyCombo` (`keyCode` is AppKit-specific). Applied only on macOS, only if present. |
 | `platform.macos.flipShortcut` | ❌ | `KeyCombo` or `null`. Applied only on macOS, only if present. |

@@ -92,6 +92,7 @@ pub(super) fn populate(window: &SettingsWindow) {
             window.set_flip_hotkey_conflict(false);
         }
     }
+    window.set_ctrl_seals_word(settings.ctrl_seals_word);
     window.set_vi_enabled(settings.enabled);
     window.set_smart_restore(settings.smart_restore);
     window.set_eager_restore(settings.eager_restore);

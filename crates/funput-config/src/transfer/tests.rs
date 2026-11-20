@@ -52,6 +52,7 @@ fn round_trip_preserves_state() {
         shortcuts_in_english: false,
         shortcut_on_enter: true,
         shortcut_on_tab: true,
+        ctrl_seals_word: false,
         ..Settings::default()
     };
 
@@ -76,6 +77,7 @@ fn round_trip_preserves_state() {
             && b.shortcut_on_tab,
         "every gõ tắt switch is portable"
     );
+    assert!(!b.ctrl_seals_word, "and so is sealing a word with Ctrl");
     assert!(b.shortcuts_enabled);
 }
 

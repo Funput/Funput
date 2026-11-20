@@ -83,6 +83,10 @@ pub fn set_flip_combo(combo: KeyCombo) {
     shell::set_flip_combo(combo);
 }
 
+pub fn set_ctrl_seals_word(on: bool) {
+    shell::set_ctrl_seals_word(on);
+}
+
 pub fn complete_onboarding() {
     shell::complete_onboarding();
 }

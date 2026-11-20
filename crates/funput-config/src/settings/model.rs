@@ -51,6 +51,12 @@ pub struct Settings {
     pub flip_hotkey: FlipHotkey,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub flip_combo: Option<KeyCombo>,
+    /// Whether a lone Ctrl tap seals the word being composed as shown. Defaults to
+    /// **on**, including for a file written before this field existed: the tap did
+    /// nothing until now, a stray one costs a Backspace to re-open the word, and
+    /// the users who expect it from UniKey would never look for a switch.
+    #[serde(default = "default_true")]
+    pub ctrl_seals_word: bool,
     pub launch_at_login: bool,
     pub has_completed_onboarding: bool,
     /// Per-app VI/EN memory, keyed by the platform's app id (on Windows, the

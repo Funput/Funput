@@ -1,4 +1,5 @@
-//! Keeping the shadow true when Backspace takes back a gõ tắt expansion.
+//! Keeping the shadow true through the edits no keystroke carries: Backspace taking
+//! back a gõ tắt expansion, and a word sealed where it stands.
 
 use super::CommittedTail;
 
@@ -22,5 +23,13 @@ impl CommittedTail {
         self.tail.push_str(shown);
         self.trim();
         true
+    }
+
+    /// The word being composed ended as shown with no key behind it: a sealed word.
+    /// It is on screen already, so it joins the shadow like any other typed text and
+    /// Backspace can re-open it.
+    pub fn commit(&mut self, word: &str) {
+        self.tail.push_str(word);
+        self.trim();
     }
 }

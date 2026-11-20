@@ -107,6 +107,12 @@ impl ShellState {
         self.save();
     }
 
+    /// Whether a lone Ctrl tap seals the word being composed.
+    pub fn set_ctrl_seals_word(&mut self, on: bool) {
+        self.settings.ctrl_seals_word = on;
+        self.save();
+    }
+
     /// Persist the launch-at-login preference. The OS side effect (an autostart
     /// registry entry, a plist) belongs to the platform, which owns that
     /// integration.

@@ -21,7 +21,7 @@
 use funput_engine::{Action, ImeResult};
 
 mod completion;
-mod undo;
+mod edits;
 
 /// How much committed text to keep, in bytes. Only the word at the caret is read,
 /// but Backspace may walk back over several words to reach a mistyped gõ tắt

@@ -4,14 +4,15 @@
 //! keypress is *blocked* until it returns — so nothing here may do I/O or wait.
 //!
 //! Every event first goes past the gesture tracker (hotkeys made of modifiers
-//! alone, and the lone Alt tap that opens an app's menus); a keydown then goes
-//! on to [`keydown`], which decides whether the engine composes it.
+//! alone, the lone Alt tap that opens an app's menus, and the lone Ctrl tap that
+//! seals the word being composed); a keydown then goes on to [`keydown`], which
+//! decides whether the engine composes it.
 
 mod keydown;
 
 use std::sync::atomic::Ordering;
 
-use funput_desktop::plan_inject;
+use funput_desktop::{Mods, plan_inject};
 use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY;
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -48,7 +49,7 @@ pub(super) unsafe extern "system" fn keyboard_proc(
                 Some(Gesture::Hotkey(hit)) => {
                     fire(hit);
                 }
-                Some(Gesture::Modifiers(tapped)) => access_keys::on_modifier_tap(tapped),
+                Some(Gesture::Modifiers(tapped)) => on_modifier_tap(tapped),
                 None => {}
             }
         }
@@ -58,6 +59,15 @@ pub(super) unsafe extern "system" fn keyboard_proc(
     }
     // SAFETY: Forward the original callback arguments unchanged.
     unsafe { CallNextHookEx(None, code, wparam, lparam) }
+}
+
+/// A bare-modifier gesture completed that is none of Funput's hotkeys. Alt on its
+/// own opens the app's menus. Ctrl on its own seals the word being composed: the
+/// word is on screen already, so there is nothing to inject, and in Funput's own
+/// windows, which compose in-process, there is no word here to seal.
+fn on_modifier_tap(tapped: Mods) {
+    access_keys::on_modifier_tap(tapped);
+    shell::seal_word(tapped);
 }
 
 /// Run the hotkey that just matched. Returns false when it was not applicable

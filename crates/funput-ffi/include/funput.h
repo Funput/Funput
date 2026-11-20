@@ -966,6 +966,27 @@ FunputResult funput_flip_composing(FunputEngine *engine);
 bool funput_adopt(FunputEngine *engine, const uint32_t *word, uintptr_t len);
 
 /**
+ * End the word being composed exactly as it is shown, without running a word
+ * boundary: no gõ tắt, no typo correction, no English restore, and nothing for the
+ * host to delete or inject. The next key starts a new word right behind this one.
+ *
+ * Returns `true` when a word was sealed. The shown word is delivered to a non-null
+ * `receive` synchronously, as borrowed UTF-8 valid only during the call: a host that
+ * shows marked text commits it, and a host that injects already has it on screen
+ * and only needs it to offer back to [`funput_adopt`](crate::funput_adopt) when
+ * Backspace returns to it. Returns `false`, and calls nothing, with nothing
+ * composing or for a null handle.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `receive` must accept `context` and a
+ * borrowed UTF-8 pointer and length, must not re-enter or free the engine, and must
+ * not unwind across the C boundary.
+ */
+bool funput_engine_seal(FunputEngine *engine,
+                        void (*receive)(void*, const uint8_t*, uintptr_t),
+                        void *context);
+
+/**
  * Set the input method: `0 = Telex`, `1 = VNI`, `2 = Telex Advanced`.
  * Any other value falls back to standard Telex.
  *

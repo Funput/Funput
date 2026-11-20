@@ -6,6 +6,8 @@ mod support;
 mod boundary;
 #[path = "words/expand_shortcut.rs"]
 mod expand_shortcut;
+#[path = "words/seal.rs"]
+mod seal;
 #[path = "words/shortcut.rs"]
 mod shortcut;
 #[path = "words/shortcut_composed.rs"]

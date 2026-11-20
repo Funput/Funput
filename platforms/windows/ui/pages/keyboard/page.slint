@@ -1,6 +1,7 @@
-// Settings → "Phím tắt": VI/EN toggle hotkey and flip-word hotkey.
+// Settings → "Phím tắt": VI/EN toggle hotkey, flip-word hotkey, and the lone Ctrl
+// tap that seals the word being typed.
 
-import { Theme, PageHeader } from "../../theme/mod.slint";
+import { Theme, PageHeader, Section, Row, AccentSwitch } from "../../theme/mod.slint";
 import { RecorderPanel } from "../../overlays/recorder.slint";
 import { HotkeyBlock } from "hotkey_block.slint";
 
@@ -11,8 +12,10 @@ export component KeyboardPage inherits VerticalLayout {
     in property <string> flip-hotkey;
     in property <[string]> flip-hotkey-caps;
     in property <bool> flip-hotkey-conflict;
+    in-out property <bool> ctrl-seals-word;
     callback pick-hotkey(string);
     callback pick-flip-hotkey(string);
+    callback set-ctrl-seals-word(bool);
     callback record-combo(string, string, bool, bool, bool, bool) -> bool;
 
     private property <string> rec-kind: "toggle";
@@ -80,6 +83,20 @@ export component KeyboardPage inherits VerticalLayout {
             root.rec-kind = "flip";
             root.rec-reset-token += 1;
             recorder-popup.show();
+        }
+    }
+
+    // Beside the flip hotkey on purpose: flip changes a word back after a key
+    // transformed it, the Ctrl tap stops the transformation before it happens.
+    Section {
+        Row {
+            icon: @image-url("../../icons/row/seal.svg");
+            title: "Bấm Ctrl để giữ nguyên từ đang gõ";
+            subtitle: "Bấm và thả Ctrl khi đang gõ dở thì từ giữ nguyên như đang hiện, không thêm dấu và không bung gõ tắt.";
+            AccentSwitch {
+                checked <=> root.ctrl-seals-word;
+                toggled => { root.set-ctrl-seals-word(root.ctrl-seals-word); }
+            }
         }
     }
 }

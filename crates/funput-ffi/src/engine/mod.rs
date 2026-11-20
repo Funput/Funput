@@ -24,7 +24,8 @@ pub(crate) use config::decode_tone_style;
 
 pub use compose::{
     SOURCE_NUMPAD, SOURCE_STANDARD, funput_adopt, funput_arm_capitalization, funput_backspace,
-    funput_buffer, funput_clear, funput_flip_composing, funput_process_char, funput_process_key,
+    funput_buffer, funput_clear, funput_engine_seal, funput_flip_composing, funput_process_char,
+    funput_process_key,
 };
 pub use config::{
     FunputConfig, METHOD_TELEX, METHOD_TELEX_ADVANCED, METHOD_VNI, ONSET_F, ONSET_J, ONSET_W,

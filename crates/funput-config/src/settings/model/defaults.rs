@@ -43,6 +43,7 @@ impl Default for Settings {
             toggle_combo: None,
             flip_hotkey: FlipHotkey::Off,
             flip_combo: None,
+            ctrl_seals_word: true,
             launch_at_login: false,
             has_completed_onboarding: false,
             app_language_memory: BTreeMap::new(),
