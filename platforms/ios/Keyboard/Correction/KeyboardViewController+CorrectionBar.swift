@@ -14,7 +14,7 @@ extension KeyboardViewController {
         }
         // The bar has moved on since this slot was drawn: ignore the tap rather
         // than act on a word that is no longer there.
-        guard let action = personalSuggestionService.correctionAction(for: candidate) else {
+        guard let action = ownedSuggestionService?.correctionAction(for: candidate) else {
             clearPersonalSuggestions()
             return
         }

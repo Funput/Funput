@@ -28,8 +28,10 @@ extension KeyboardViewController {
     /// `adopt` clears the request, so a transient failure is still retried once per
     /// activation.
     func refreshBackgroundImage() {
+        // The cache and the surface are the process's: a controller that is loading
+        // while another one shows the keyboard must not swap the backdrop under it.
         let budget = backgroundImagePixelBudget
-        guard budget > 0 else { return }
+        guard isSurfaceOwner, budget > 0 else { return }
         let request = KeyboardBackgroundRequest(
             assetID: selectedTheme.backgroundEffects.image?.assetID,
             pixelBudget: budget
@@ -56,15 +58,19 @@ extension KeyboardViewController {
     /// alone left it in place. Guarded on visibility so a warning that arrives while
     /// the user is typing does not throw away an image the next layout pass would
     /// immediately decode again.
+    ///
+    /// Every living controller gets the warning. One that has lost the surface knows
+    /// nothing about whether the keyboard is on screen, so only the holder decides,
+    /// and when nobody holds the surface the keyboard is certainly off screen.
     func releaseBackgroundImageIfHidden() {
-        guard !isKeyboardVisible else { return }
-        backgroundImageCache.clear()
-        resolvedBackgroundRequest = nil
-        showBackgroundImage(nil)
+        let host = runtime.surfaceHost
+        guard !host.hasHolder || (isSurfaceOwner && !isKeyboardVisible) else { return }
+        runtime.releaseBackgroundImage()
+        applyBackgroundImageToSupplementarySurfaces(nil)
     }
 
     private func showBackgroundImage(_ image: UIImage?) {
-        keyboardView.backgroundImage = image
+        ownedSurface?.backgroundImage = image
         applyBackgroundImageToSupplementarySurfaces(image)
     }
 

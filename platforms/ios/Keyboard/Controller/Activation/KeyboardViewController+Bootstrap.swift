@@ -26,10 +26,11 @@ extension KeyboardViewController {
         // configuration before the first presentation is built, or bootstrap would
         // size the keyboard for the wrong one and `viewWillAppear` would resize it.
         adoptConfiguration(source)
-        followSeedLanguage()
         inputCoordinator.apply(source.configuration)
         applyTextInputTraits(force: true)
-        applyAdoptedPresentation()
+        // In a process that already has a surface, this controller only takes it if
+        // nobody is showing it; otherwise `viewWillAppear` does.
+        applyAdoptedPresentation(claimingAt: .loading)
         activatePreferredHeightForBootstrap()
     }
 }

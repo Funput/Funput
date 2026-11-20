@@ -66,10 +66,10 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 | Chặng | Được phép trên main | Không được phép |
 |---|---|---|
 | **Pre-main** (spawn, dyld) | Nạp binary đã link tĩnh | Framework động riêng, SwiftUI, static initializer làm I/O |
-| **`init` controller** | Tạo engine Rust (`funput_engine_new`, không load từ điển); tạo store **chỉ giữ handle** (URL, `UserDefaults(suiteName:)`) | Mọi syscall đĩa, kể cả tạo thư mục |
-| **`viewDidLoad`** | Đọc bootstrap snapshot (một file nhỏ, kích thước cố định theo cấu hình); resolve theme khi snapshot miss; dựng surface UIKit; kích hoạt height constraint | Đọc dữ liệu của user (clipboard, từ điển, lịch sử, shortcuts); ghi xuống đĩa, kể cả tạo thư mục; đánh thức Taptic Engine hay audio server |
+| **`init` controller** | Tạo engine Rust (`funput_engine_new`, không load từ điển); lần đầu trong tiến trình tạo `KeyboardRuntime`, với các store **chỉ giữ handle** (URL, `UserDefaults(suiteName:)`) | Mọi syscall đĩa, kể cả tạo thư mục |
+| **`viewDidLoad`** | Đọc bootstrap snapshot (một file nhỏ, kích thước cố định theo cấu hình); resolve theme khi snapshot miss; dựng surface UIKit lần đầu trong tiến trình, các lần sau gắn surface có sẵn nếu nó đang rảnh; kích hoạt height constraint | Đọc dữ liệu của user (clipboard, từ điển, lịch sử, shortcuts); ghi xuống đĩa, kể cả tạo thư mục; đánh thức Taptic Engine hay audio server |
 | **`textWillChange`** | Resolve traits của field | Việc nặng hơn việc đọc traits |
-| **`viewWillAppear`** | `synchronizeDocument` (IPC với host, bắt buộc để tính Shift); áp lại presentation khi cấu hình đổi | Đọc lại cấu hình đã đọc ở `viewDidLoad` của cùng lần trình bày |
+| **`viewWillAppear`** | `synchronizeDocument` (IPC với host, bắt buộc để tính Shift); áp lại presentation khi cấu hình đổi; nhận surface còn đang gắn ở controller khác, không tạo view | Đọc lại cấu hình đã đọc ở `viewDidLoad` của cùng lần trình bày |
 | **First layout** | Decode ảnh nền theo pixel budget (§2.2) | Decode không có kích thước đích |
 | **Sau `viewDidAppear`** | Việc trên main có trần cố định, không phụ thuộc dữ liệu user; đọc metadata pasteboard (không hỏi); chuẩn bị haptics và âm phím | Decode/encode file có kích thước tùy user; truy vấn hệ thống lặp lại nhiều lần trong lúc gõ |
 | **Mọi chặng** | Nhận nội dung pasteboard qua `UIPasteControl` khi user bấm | Tự đọc nội dung pasteboard (`string`, `items`, `itemProviders`…) |
@@ -186,10 +186,11 @@ Hai ràng buộc đã biết, **không sửa được**, chỉ quản lý:
 
 | Vùng nhớ | Trần | Thả khi nào |
 |---|---|---|
-| Primary surface | Cố định theo layout | Sống cùng controller |
+| Primary surface | Cố định theo layout | Sống cùng tiến trình (`KeyboardSurfaceHost`): một bản, chuyển từ controller này sang controller khác |
 | Phím của surface (`KeyboardKeyControlPool`) | Số phím của layout lớn nhất từng hiện; đổi layout tái dùng, không tạo mới | Sống cùng surface |
-| Controller cũ khi đổi app host | Được thả đúng; `KeyboardLifetimeCensus` đếm và báo fault (A7) | `deinit` khi host đổi |
-| Surface cũ khi đổi app host | Được tháo khỏi `inputView` ở `viewDidDisappear` và đi theo controller (A8) | `deinit` của controller |
+| Controller cũ khi đổi app host | Một controller mỗi app host còn sống ở nền; chỉ giữ engine gõ và trạng thái của lần trình bày | iOS thả khi app đó hiện bàn phím lần nữa hoặc chết |
+| Surface khi đổi app host | Không có surface cũ: được tháo khỏi `inputView` ở `viewDidDisappear` (A8) và trao cho controller kế tiếp; `KeyboardLifetimeCensus` báo fault nếu có surface thứ hai | Không thả |
+| Suggestion service, worker và từ điển sửa lỗi | Một bản cho cả tiến trình | Không thả; worker in-memory bị bỏ khi đổi app mà thiếu Full Access |
 | Emoji/kaomoji/clipboard panel | Theo panel | Rời panel nào thả panel đó; giữ cặp emoji↔kaomoji khi chuyển qua lại; `viewDidDisappear` thả hết |
 | Emoji catalog đã decode | Nhỏ (model, không ảnh) | `viewDidDisappear`, memory warning |
 | Ảnh nền theme | Pixel budget theo width | Memory warning khi đang ẩn (`releaseBackgroundImageIfHidden`) |

@@ -34,11 +34,12 @@ struct KeyboardBootstrappedSource {
 struct KeyboardActivationIdentity: Equatable {
     let configuration: FunputConfiguration
     let selectedTheme: KeyboardTheme
+    /// The resolved theme depends on it, and the identity outlives a host app.
+    let reducesTransparency: Bool
 }
 
 extension KeyboardViewController {
     func activateKeyboardForAppearance() {
-        reattachPrimarySurfaceIfNeeded()
         cancelClipboardRetry()
         let generation = activationState.begin()
         let source = takeBootstrappedSource() ?? loadActivationSource(hasFullAccess: hasFullAccess)
@@ -56,7 +57,7 @@ extension KeyboardViewController {
             )
         }
         activateShortcuts()
-        applyAdoptedPresentation()
+        applyAdoptedPresentation(claimingAt: .appearing)
         // A panel left open in the previous host is not where the next one should
         // start; without this the keyboard comes back on emoji instead of letters.
         showFunput()
@@ -76,36 +77,28 @@ extension KeyboardViewController {
         return bootstrappedSource.source
     }
 
-    /// Installs one activation's configuration and theme.
-    ///
-    /// Rebuilding the themed presentation means resolving the theme and re-reading the
-    /// accessibility state, so an activation that changed nothing keeps the last one.
+    /// The configuration and theme are the process's; only what to repair in the
+    /// bootstrap snapshot belongs to this activation.
     func adoptConfiguration(_ source: KeyboardActivationSource) {
         pendingBootstrapRepair = source.repairSnapshot
-        let identity = KeyboardActivationIdentity(
-            configuration: source.configuration,
-            selectedTheme: source.selectedTheme
-        )
-        guard adoptedIdentity != identity else { return }
-        adoptedIdentity = identity
-        configuration = source.configuration
-        themeCatalog = source.catalog
-        selectedTheme = source.selectedTheme
-        cachedThemedPresentation = KeyboardPresentationFactory.make(
-            from: source.configuration,
-            catalog: source.catalog
-        )
-        // Always reached on the first call, since `adoptedIdentity` starts nil: that
-        // is what lets the controller begin with a placeholder store.
-        clipboardStore = ClipboardStore(expiry: source.configuration.clipboardExpiry)
+        runtime.adopt(source)
     }
 
-    /// Folds the adopted configuration and the live input state onto the surfaces.
-    func applyAdoptedPresentation() {
+    /// Folds the adopted configuration and the live input state onto the surfaces,
+    /// asking for the primary surface on the way.
+    ///
+    /// The presentation is worked out first, so a surface built by this claim is
+    /// built for it, and a surface taken over from another host app is shown this
+    /// controller's keyboard in one pass. A controller that does not get the surface
+    /// stops there: it has its layout and its height, which is all it needs until it
+    /// appears.
+    func applyAdoptedPresentation(claimingAt moment: KeyboardSurfaceClaimPolicy.Moment) {
         launchTrace.measure("SurfaceApply") {
             applyKeyboardAppearance()
             applyInputPresentation()
-            keyboardView.updateClipboardKeyVisible(configuration.clipboardEnabled)
+            claimSurface(at: moment)
+            guard let surface = ownedSurface else { return }
+            surface.updateClipboardKeyVisible(configuration.clipboardEnabled)
             // A theme swap changes the backdrop without changing the layout, which on
             // its own would not schedule the layout pass that picks the new one up.
             // Clearing first also gives a failed decode one retry per activation.

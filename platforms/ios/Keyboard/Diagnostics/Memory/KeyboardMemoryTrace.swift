@@ -35,8 +35,7 @@ enum KeyboardMemoryTrace {
         )
     }
 
-    /// The `Appeared` sample, plus the leak check once the previous host's controller
-    /// has had time to go.
+    /// The `Appeared` sample, plus the surface count once things have settled.
     static func recordAppearance() {
         record("Appeared")
         Task { @MainActor in
