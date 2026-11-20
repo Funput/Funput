@@ -38,6 +38,8 @@ pub struct KeyEvent {
     pub is_enter: bool,
     /// Tab, which like Enter may expand a gõ tắt trigger before it goes on.
     pub is_tab: bool,
+    /// Up or Down arrow, which also walks an app's completion list ([`Caret::Vertical`]).
+    pub is_vertical: bool,
     /// Where the key physically came from. A numpad digit carries
     /// [`KeySource::Numpad`] so the engine keeps it a literal number instead of a
     /// VNI tone/shape modifier; ordinary keys are [`KeySource::Standard`].
@@ -99,6 +101,10 @@ pub fn classify(ev: &KeyEvent) -> KeyKind {
     if ev.is_tab && !ev.mods.shift {
         return KeyKind::Trigger(TriggerKey::Tab);
     }
+    // Shift+Up/Down selects lines; only a bare arrow walks a completion list.
+    if ev.is_navigation && ev.is_vertical && !ev.mods.shift {
+        return KeyKind::Flush(Caret::Vertical);
+    }
     if ev.is_navigation {
         return KeyKind::Flush(landing(ev));
     }
@@ -133,8 +139,16 @@ mod tests {
             is_navigation: false,
             is_enter: false,
             is_tab: false,
+            is_vertical: false,
             source: KeySource::Standard,
         }
+    }
+
+    fn down() -> KeyEvent {
+        let mut ev = key(None);
+        ev.is_navigation = true;
+        ev.is_vertical = true;
+        ev
     }
 
     fn tab() -> KeyEvent {
@@ -232,6 +246,19 @@ mod tests {
         let setters: [fn(&mut Mods); 3] = [|m| m.shift = true, |m| m.ctrl = true, |m| m.alt = true];
         for set in setters {
             let mut ev = tab();
+            set(&mut ev.mods);
+            assert_eq!(classify(&ev), KeyKind::Flush(Caret::Unknown));
+        }
+    }
+
+    /// Up and Down may walk an app's completion list rather than move the caret.
+    /// Shift selects lines and Ctrl/Alt are shortcuts: neither walks a list.
+    #[test]
+    fn up_and_down_flush_as_vertical_unless_a_modifier_is_held() {
+        assert_eq!(classify(&down()), KeyKind::Flush(Caret::Vertical));
+        let setters: [fn(&mut Mods); 3] = [|m| m.shift = true, |m| m.ctrl = true, |m| m.alt = true];
+        for set in setters {
+            let mut ev = down();
             set(&mut ev.mods);
             assert_eq!(classify(&ev), KeyKind::Flush(Caret::Unknown));
         }

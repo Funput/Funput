@@ -1,5 +1,4 @@
-//! Re-opening a finished word after Backspace, on a shell that cannot read the
-//! document.
+//! Re-opening a finished word after Backspace, on a shell that cannot read the document.
 //!
 //! [`funput_engine::Engine::adopt`] takes the word the caret sits at the end of and
 //! makes it the live composition again, so `phủ` + Space + Backspace + `s` gives
@@ -21,6 +20,7 @@
 
 use funput_engine::{Action, ImeResult};
 
+mod completion;
 mod undo;
 
 /// How much committed text to keep, in bytes. Only the word at the caret is read,

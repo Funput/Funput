@@ -96,6 +96,7 @@ Nếu iOS đang bung khi Return qua đường `"\n"`, đó là hành vi hiện c
 - `funput-desktop`: `KeyKind::Trigger(TriggerKey)` cho Enter (cả Shift+Enter) và Tab không Shift; Ctrl, Alt, Win cùng phím vẫn là `Flush`. `ShellState::trigger_key` hỏi engine khi công tắc bật, rồi luôn `caret_moved` như `Flush` cũ.
 - Windows: hook nuốt Enter/Tab khi có nội dung bung, inject nội dung bung rồi gửi lại đúng phím đó (`inject::send_key`, gắn `INJECT_TAG`). Shift đang giữ thật nên Shift+Enter đi ra vẫn là Shift+Enter. Enter ở bàn phím số được gửi lại như Enter thường.
 - Cài đặt: hai dòng trong trang Gõ tắt, ngay dưới "Gõ tắt cả khi ở chế độ tiếng Anh".
+- Danh sách gợi ý của app (#712): từ ở caret bắt đầu bằng `@`, `#`, `:` hay `~` (kể cả khi đã chọn mục bằng mũi tên lên/xuống) thì Enter và Tab là phím của danh sách, không bung gõ tắt: `@ct` Enter giữ nguyên `@ct`.
 
 ## Đã làm (Linux)
 

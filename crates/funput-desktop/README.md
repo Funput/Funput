@@ -46,6 +46,8 @@ pub struct KeyEvent {
     pub is_backspace: bool,
     pub is_navigation: bool,  // mũi tên, Home/End, PageUp/Down, Esc, Delete, F-keys, Enter, Tab
     pub is_enter: bool,       // Enter — phím duy nhất cho biết caret rơi vào đầu dòng
+    pub is_tab: bool,         // Tab — như Enter, có thể bung gõ tắt trước khi đi tiếp
+    pub is_vertical: bool,    // mũi tên lên/xuống — cũng là phím đi trong danh sách gợi ý của app
     pub source: KeySource,    // Standard hay Numpad
 }
 
@@ -71,6 +73,14 @@ Tự viết hoa đọc câu từ chính những phím đó. `Enter` (kể cả k
 chữ kế tiếp mở câu. Mọi phím khác → `Unknown`: shell không đọc được tài liệu nên không đoán — viết hoa
 thiếu tốn một lần Shift, viết hoa sai thì phải xoá. Click chuột và đổi app cũng báo `Unknown`, qua
 cùng `ShellState::caret_moved`, nên commit composition và bỏ trạng thái câu luôn đi cùng nhau.
+
+Mũi tên lên/xuống không kèm modifier → `Vertical`. Với câu thì nó như `Unknown`, nhưng trong danh
+sách gợi ý của app thì mũi tên chỉ dời dòng được chọn, caret đứng yên. Vì thế từ ở caret bắt đầu
+bằng `@` (nhắc tên), `#` (kênh, thẻ), `:` (emoji) hay `~` (kênh Mattermost) thì Enter kế tiếp là
+**chọn một mục**, không phải xuống dòng: `trigger_key` báo `Unknown` thay vì `LineStart` và không
+bung gõ tắt (#712). Từ đó đọc từ `CommittedTail::opens_completion` nếu Enter đến ngay, hoặc từ cờ mà
+`caret_moved(Vertical)` ghi lại nếu đã bấm mũi tên trước. Cờ giữ qua chữ gõ thêm và Backspace (vẫn đang
+sửa cái tên), mất khi gặp khoảng trắng hoặc caret dời kiểu khác. Đoán sai thì chỉ thiếu một chữ hoa.
 
 Shell nào sau này đọc được chữ trước caret (UI Automation, TSF) sẽ có câu trả lời tốt hơn `Unknown`;
 chỗ nhận nó là `caret_moved`, không phải từng hook.
