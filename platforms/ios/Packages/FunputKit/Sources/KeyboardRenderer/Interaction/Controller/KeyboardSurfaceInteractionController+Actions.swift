@@ -37,7 +37,7 @@ extension KeyboardSurfaceInteractionController {
     }
 
     func performSuggestionFeedback(presentation: KeyboardPresentation) {
-        updateFeedback(presentation)
+        armFeedback(presentation)
         performHapticFeedback()
         performKeySound(.key, presentation: presentation)
     }

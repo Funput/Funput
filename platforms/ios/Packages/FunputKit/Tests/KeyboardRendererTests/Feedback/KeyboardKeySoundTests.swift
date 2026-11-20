@@ -16,6 +16,7 @@ final class SoundSpy: KeyboardSoundPlaying {
 
     private(set) var prepared: [KeySoundStyle] = []
     private(set) var played: [Played] = []
+    private(set) var releases = 0
 
     func prepare(style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource) {
         prepared.append(style)
@@ -24,6 +25,8 @@ final class SoundSpy: KeyboardSoundPlaying {
     func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource) {
         played.append(Played(kind: kind, style: style, volume: volume, source: source))
     }
+
+    func release() { releases += 1 }
 }
 
 @MainActor

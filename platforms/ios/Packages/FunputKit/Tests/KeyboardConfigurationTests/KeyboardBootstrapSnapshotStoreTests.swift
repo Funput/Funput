@@ -50,11 +50,22 @@ struct KeyboardBootstrapSnapshotStoreTests {
         let store = KeyboardBootstrapSnapshotStore(containerURL: container)
         #expect(throws: (any Error).self) { try store.load() }
 
-        let file = container
+        let directory = container
             .appendingPathComponent(KeyboardBootstrapSnapshotStore.directoryName)
-            .appendingPathComponent(KeyboardBootstrapSnapshotStore.fileName)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let file = directory.appendingPathComponent(KeyboardBootstrapSnapshotStore.fileName)
         try Data("{\"schemaVersion\":".utf8).write(to: file)
         #expect(throws: (any Error).self) { try store.load() }
+    }
+
+    /// The keyboard reads on its way to the first frame; only a writer may touch
+    /// the directory.
+    @Test("Reading a missing snapshot creates nothing on disk")
+    func loadCreatesNothing() {
+        let container = temporaryContainer()
+        let store = KeyboardBootstrapSnapshotStore(containerURL: container)
+        #expect(throws: (any Error).self) { try store.load() }
+        #expect(!FileManager.default.fileExists(atPath: container.path))
     }
 
     @Test("Unavailable App Group fails without a partial value")

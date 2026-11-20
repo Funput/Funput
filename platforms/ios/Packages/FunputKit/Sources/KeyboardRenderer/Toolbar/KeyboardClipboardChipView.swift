@@ -9,6 +9,9 @@ import UIKit
 /// authorisation, so nothing here ever reads the pasteboard and no paste alert is
 /// raised. Verified on device — the control works inside a keyboard extension and
 /// delivers its provider in ~29ms.
+///
+/// The control is system-drawn and costly to make, so it only exists once there is
+/// something to paste: a keyboard that never sees a copy never builds one.
 @MainActor
 final class KeyboardClipboardChipView: UIView {
     var onPaste: ((KeyboardClipboardPaste) -> Void)?
@@ -30,7 +33,6 @@ final class KeyboardClipboardChipView: UIView {
         hintLabel.lineBreakMode = .byTruncatingTail
         hintLabel.isAccessibilityElement = true
         addSubview(hintLabel)
-        rebuildPasteControl()
     }
 
     @available(*, unavailable)
@@ -63,6 +65,7 @@ final class KeyboardClipboardChipView: UIView {
     }
 
     func update(hint: KeyboardClipboardHint?) {
+        if hint != nil, pasteControl == nil { rebuildPasteControl() }
         isHidden = hint == nil
         hintLabel.text = hint?.title
         hintLabel.accessibilityLabel = hint?.title
@@ -90,12 +93,13 @@ final class KeyboardClipboardChipView: UIView {
         hintLabel.textColor = theme.secondaryLabel.uiColor(for: traits)
         let newAccent = theme.accent.uiColor(for: traits)
         let newForeground = Self.readableForeground(on: newAccent)
-        // `UIPasteControl.Configuration` is only honoured at init, so a theme change
-        // means building a new control and re-attaching its target.
         guard newAccent != accent || newForeground != foreground else { return }
         accent = newAccent
         foreground = newForeground
-        rebuildPasteControl()
+        // `UIPasteControl.Configuration` is only honoured at init, so a theme change
+        // means building a new control and re-attaching its target. With no control
+        // yet the colours simply wait for the first hint.
+        if pasteControl != nil { rebuildPasteControl() }
     }
 
     /// The control's label sits on the accent colour, which the theme author picks

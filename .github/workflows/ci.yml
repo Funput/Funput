@@ -258,6 +258,9 @@ jobs:
       - name: Swift, iOS keyboard pasteboard reads
         run: bash platforms/ios/Scripts/Quality/check-pasteboard-reads.sh
 
+      - name: Swift, iOS keyboard trap sites
+        run: bash platforms/ios/Scripts/Quality/check-keyboard-traps.sh
+
       - name: Swift, macOS
         run: bash platforms/macos/scripts/check-swift-loc.sh
 

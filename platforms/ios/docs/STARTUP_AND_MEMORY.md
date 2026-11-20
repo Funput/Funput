@@ -67,11 +67,11 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 |---|---|---|
 | **Pre-main** (spawn, dyld) | Nạp binary đã link tĩnh | Framework động riêng, SwiftUI, static initializer làm I/O |
 | **`init` controller** | Tạo engine Rust (`funput_engine_new`, không load từ điển); tạo store **chỉ giữ handle** (URL, `UserDefaults(suiteName:)`) | Mọi syscall đĩa, kể cả tạo thư mục |
-| **`viewDidLoad`** | Đọc bootstrap snapshot (một file nhỏ, kích thước cố định theo cấu hình); resolve theme khi snapshot miss; dựng surface UIKit; kích hoạt height constraint | Đọc dữ liệu của user (clipboard, từ điển, lịch sử, shortcuts) |
+| **`viewDidLoad`** | Đọc bootstrap snapshot (một file nhỏ, kích thước cố định theo cấu hình); resolve theme khi snapshot miss; dựng surface UIKit; kích hoạt height constraint | Đọc dữ liệu của user (clipboard, từ điển, lịch sử, shortcuts); ghi xuống đĩa, kể cả tạo thư mục; đánh thức Taptic Engine hay audio server |
 | **`textWillChange`** | Resolve traits của field | Việc nặng hơn việc đọc traits |
 | **`viewWillAppear`** | `synchronizeDocument` (IPC với host, bắt buộc để tính Shift); áp lại presentation khi cấu hình đổi | Đọc lại cấu hình đã đọc ở `viewDidLoad` của cùng lần trình bày |
 | **First layout** | Decode ảnh nền theo pixel budget (§2.2) | Decode không có kích thước đích |
-| **Sau `viewDidAppear`** | Việc trên main có trần cố định, không phụ thuộc dữ liệu user; đọc metadata pasteboard (không hỏi) | Decode/encode file có kích thước tùy user; truy vấn hệ thống lặp lại nhiều lần trong lúc gõ |
+| **Sau `viewDidAppear`** | Việc trên main có trần cố định, không phụ thuộc dữ liệu user; đọc metadata pasteboard (không hỏi); chuẩn bị haptics và âm phím | Decode/encode file có kích thước tùy user; truy vấn hệ thống lặp lại nhiều lần trong lúc gõ |
 | **Mọi chặng** | Nhận nội dung pasteboard qua `UIPasteControl` khi user bấm | Tự đọc nội dung pasteboard (`string`, `items`, `itemProviders`…) |
 
 ### 2.1. Hiện trạng so với hợp đồng
@@ -118,6 +118,10 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 - `init` của controller không gọi xuống đĩa lần nào (A6): `ClipboardStore` bắt đầu là
   bản giữ chỗ, `KeyboardBootstrapSnapshotStore` là `lazy` và được tạo lần đầu trong
   `viewDidLoad`. Các store còn lại chỉ giữ handle.
+- Đọc bootstrap snapshot không ghi gì xuống đĩa: store chỉ ghép URL khi tạo, và chỉ
+  đường ghi mới chuẩn bị thư mục (KEYBOARD_RELIABILITY.md, B2).
+- Trước frame đầu không có `UIPasteControl`, không đánh thức Taptic Engine, không nạp
+  âm phím (KEYBOARD_RELIABILITY.md, B2).
 
 **Lệch:**
 
@@ -147,6 +151,8 @@ main. Việc không có trong bảng thì không được chạy ở chặng đ�
 | Personal suggestions engine + store | Sau activation | Serial queue riêng của `PersonalSuggestionWorker`; store mở off-main | `Keyboard/Suggestions/PersonalSuggestionWorker.swift` |
 | Shortcuts (gõ tắt) | Sau activation | Actor async, có `cancel()` ở disappear | `Keyboard/Shortcuts/KeyboardViewController+Shortcuts.swift` |
 | Vá bootstrap snapshot | `viewDidAppear` | `Task.detached(priority: .utility)` | `Keyboard/Configuration/KeyboardViewController+Configuration.swift` |
+| `UIPasteControl` của chip dán | Lần đầu có lời mời dán | `KeyboardClipboardChipView.update(hint:)` dựng control khi chưa có | `Packages/FunputKit/Sources/KeyboardRenderer/Toolbar/KeyboardClipboardChipView.swift` |
+| Haptics và âm phím | `viewDidAppear` | `KeyboardSurfaceView.prepareFeedback()`; thả lại bằng `releaseFeedback()` ở `viewDidDisappear` | `Packages/FunputKit/Sources/KeyboardRenderer/Interaction/Feedback/` |
 
 Đọc nội dung clipboard không nằm trong bảng: từ A1 bàn phím không bao giờ tự đọc,
 kể cả khi đã trì hoãn.
@@ -186,6 +192,7 @@ Hai ràng buộc đã biết, **không sửa được**, chỉ quản lý:
 | Emoji/kaomoji/clipboard panel | Theo panel | Rời panel nào thả panel đó; giữ cặp emoji↔kaomoji khi chuyển qua lại; `viewDidDisappear` thả hết |
 | Emoji catalog đã decode | Nhỏ (model, không ảnh) | `viewDidDisappear`, memory warning |
 | Ảnh nền theme | Pixel budget theo width | Memory warning khi đang ẩn (`releaseBackgroundImageIfHidden`) |
+| Player âm phím đóng gói và audio session | 3 player mỗi loại âm của một style | `viewDidDisappear` (`KeySoundPlayerPool.unload`); nạp lại ở lần hiện sau |
 | Lexicon `en.lex` | mmap read-only, trang clean, OS tự thu hồi | Không cần thả |
 | Personal suggestion store | `max_words: 5_000` (`crates/funput-suggestions/src/engine/config.rs`) | Flush định kỳ, engine sống trên queue riêng |
 | Clipboard history | ≤ 50 mục; mỗi mục ≤ 16.384 UTF-16; tổng ≤ 262.144 UTF-16 kể cả pinned (`ClipboardHistoryPolicy`, A3) | Expiry theo cấu hình (pinned không bao giờ expire); vượt trần thì bỏ mục unpinned cũ nhất |

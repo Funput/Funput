@@ -5,45 +5,49 @@ public struct KeyboardBootstrapSnapshotStore: Sendable {
     public static let directoryName = "KeyboardBootstrap"
     public static let fileName = "snapshot.json"
 
-    private let directoryURL: URL?
+    private let containerURL: URL?
 
     public init(suiteName: String = FunputAppGroup.identifier) {
-        let container = AppGroupDirectory.containerURL(groupIdentifier: suiteName)
-        directoryURL = AppGroupDirectory.prepare(
-            named: Self.directoryName,
-            in: container
-        )
+        containerURL = AppGroupDirectory.containerURL(groupIdentifier: suiteName)
     }
 
     public init(containerURL: URL?) {
-        directoryURL = AppGroupDirectory.prepare(
-            named: Self.directoryName,
-            in: containerURL
-        )
+        self.containerURL = containerURL
     }
 
+    /// Reads without preparing anything: the keyboard calls this on its way to the
+    /// first frame, and a read needs no directory to exist. A missing file throws,
+    /// which is the caller's cue to fall back.
     public func load() throws -> KeyboardBootstrapSnapshot {
-        let data = try Data(contentsOf: fileURL(), options: .mappedIfSafe)
+        guard let containerURL else {
+            throw KeyboardBootstrapSnapshotError.unavailableContainer
+        }
+        let url = containerURL
+            .appendingPathComponent(Self.directoryName, isDirectory: true)
+            .appendingPathComponent(Self.fileName, isDirectory: false)
+        let data = try Data(contentsOf: url, options: .mappedIfSafe)
         return try JSONDecoder().decode(KeyboardBootstrapSnapshot.self, from: data)
     }
 
     public func save(_ snapshot: KeyboardBootstrapSnapshot) throws {
         let data = try JSONEncoder().encode(snapshot)
-        let url = try fileURL()
-        try coordinateWrite(data, to: url, onlyIfInvalid: false)
+        try coordinateWrite(data, to: preparedFileURL(), onlyIfInvalid: false)
     }
 
     public func repairIfNeeded(_ snapshot: KeyboardBootstrapSnapshot) throws {
         let data = try JSONEncoder().encode(snapshot)
-        let url = try fileURL()
-        try coordinateWrite(data, to: url, onlyIfInvalid: true)
+        try coordinateWrite(data, to: preparedFileURL(), onlyIfInvalid: true)
     }
 
-    private func fileURL() throws -> URL {
-        guard let directoryURL else {
+    /// Only writers create the directory and set its protection.
+    private func preparedFileURL() throws -> URL {
+        guard let directory = AppGroupDirectory.prepare(
+            named: Self.directoryName,
+            in: containerURL
+        ) else {
             throw KeyboardBootstrapSnapshotError.unavailableContainer
         }
-        return directoryURL.appendingPathComponent(Self.fileName, isDirectory: false)
+        return directory.appendingPathComponent(Self.fileName, isDirectory: false)
     }
 
     private func coordinateWrite(

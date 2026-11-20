@@ -121,7 +121,6 @@ final class KeyboardSurfaceInteractionController {
         self.onSwipeProgress = onSwipeProgress
         self.repeatScheduler = repeatScheduler
         touches.reserveCapacity(10)
-        self.haptics.prepare()
     }
 
     var activeTouchCount: Int { touches.count }

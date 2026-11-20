@@ -1,15 +1,34 @@
 #if canImport(UIKit)
 extension KeyboardSurfaceInteractionController {
+    /// Records the feedback settings and wakes nothing. This runs on every presentation
+    /// change, and the first one lands while the keyboard is still loading: the Taptic
+    /// Engine and the audio server are not part of the first frame.
     func updateFeedback(_ presentation: KeyboardPresentation) {
         hapticStrength = presentation.isHapticFeedbackEnabled ? presentation.hapticFeedbackStrength : nil
         modeChangeStrength = presentation.hapticFeedbackStrength
-        if presentation.isKeySoundEnabled {
-            sounds.prepare(
-                style: presentation.keySoundStyle,
-                volume: presentation.keySoundVolume,
-                source: presentation.keySoundVolumeSource
-            )
-        }
+    }
+
+    /// The settings a touch runs under, with its sound loading as the finger lands.
+    func armFeedback(_ presentation: KeyboardPresentation) {
+        updateFeedback(presentation)
+        guard presentation.isKeySoundEnabled else { return }
+        sounds.prepare(
+            style: presentation.keySoundStyle,
+            volume: presentation.keySoundVolume,
+            source: presentation.keySoundVolumeSource
+        )
+    }
+
+    /// Readies haptics and the key sound ahead of the first press, once the keyboard
+    /// is on screen.
+    func prepareFeedback(_ presentation: KeyboardPresentation) {
+        armFeedback(presentation)
+        haptics.prepare()
+    }
+
+    /// Lets go of what `prepareFeedback` loaded while the keyboard is off screen.
+    func releaseFeedback() {
+        sounds.release()
     }
 
     func performHapticFeedback() {

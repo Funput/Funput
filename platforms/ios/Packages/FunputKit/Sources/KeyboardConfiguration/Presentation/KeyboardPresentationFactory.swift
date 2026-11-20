@@ -65,7 +65,7 @@ public enum KeyboardPresentationFactory {
     ) -> KeyboardSizingProfile {
         guard configuration.keySizing == .funput else { return .system }
         var sizing = KeyboardSizingProfile.default
-        sizing.heightScale = CGFloat(configuration.heightScale)
+        sizing.heightScale = CGFloat(configuration.clampedHeightScale)
         sizing.horizontalPadding = CGFloat(theme.horizontalPadding)
         sizing.horizontalGap = CGFloat(theme.horizontalGap)
         sizing.verticalGap = CGFloat(theme.verticalGap)

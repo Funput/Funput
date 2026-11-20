@@ -53,6 +53,18 @@ extension KeyboardSurfaceView {
         toolbarView.updateClipboardKeyVisible(visible)
     }
 
+    /// Readies haptics and the key sound. Called once the keyboard is on screen, so
+    /// neither the Taptic Engine nor the audio server is woken on the way to the
+    /// first frame.
+    public func prepareFeedback() {
+        interactionController.prepareFeedback(presentation)
+    }
+
+    /// Lets go of the loaded key sound while the keyboard is off screen.
+    public func releaseFeedback() {
+        interactionController.releaseFeedback()
+    }
+
     @objc func accessibilityAppearanceDidChange() {
         applyPresentation()
         setNeedsLayout()
