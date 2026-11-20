@@ -9,7 +9,8 @@ use crate::dev::render::json_escape;
 use crate::dev::suggest::Options;
 
 pub(in crate::dev::suggest) fn print_json(text: &Path, tally: &Tally, options: &Options) {
-    let shown = tally.predict_shown();
+    let predict = &tally.predict;
+    let shown = predict.shown();
     println!("{{");
     println!(
         "  \"text\": \"{}\",",
@@ -37,22 +38,24 @@ pub(in crate::dev::suggest) fn print_json(text: &Path, tally: &Tally, options: &
     println!("  \"saved\": {},", tally.saved);
     println!("  \"saved_pct\": {:.2},", pct(tally.saved, tally.keys));
     println!("  \"predict\": {{");
-    println!("    \"chances\": {},", tally.predict_chances);
+    println!("    \"chances\": {},", predict.chances);
     println!("    \"shown\": {shown},");
     println!(
         "    \"right\": {},",
-        per_source(|source| tally.by_source(source).0)
+        per_source(|source| predict.by_source(source).0)
     );
     println!(
         "    \"wrong\": {},",
         per_source(|source| {
-            let (right, shown) = tally.by_source(source);
+            let (right, shown) = predict.by_source(source);
             shown - right
         })
     );
+    println!("    \"right_first\": {},", predict.right_first);
+    println!("    \"slots\": {},", predict.slots);
     println!(
         "    \"wrong_pct_of_shown\": {:.2}",
-        pct(tally.predict_wrong_total(), shown)
+        pct(predict.wrong_total(), shown)
     );
     println!("  }},");
     println!("  \"completion\": {{");
@@ -64,7 +67,7 @@ pub(in crate::dev::suggest) fn print_json(text: &Path, tally: &Tally, options: &
     );
     println!("    \"bar\": {:?}", tally.bar);
     println!("  }},");
-    let wrong: Vec<String> = tally
+    let wrong: Vec<String> = predict
         .top_wrong(options.show)
         .into_iter()
         .map(|((previous, guess, word, source), n)| {
@@ -78,7 +81,7 @@ pub(in crate::dev::suggest) fn print_json(text: &Path, tally: &Tally, options: &
         })
         .collect();
     println!("  \"wrong\": [{}],", wrong.join(", "));
-    let silent: Vec<String> = tally
+    let silent: Vec<String> = predict
         .top_silent(options.show)
         .into_iter()
         .map(|((previous, word), n)| {
