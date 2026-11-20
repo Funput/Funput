@@ -27,6 +27,11 @@ internal data class EditorInfoPolicy(
     val compositionRenderMode: CompositionRenderMode,
     /** Whether typo correction may repair words here; see `CorrectionFieldPolicy`. */
     val allowsCorrection: Boolean = true,
+    /**
+     * True when the editor declares no input class (`TYPE_NULL`), as terminals do. Its connection
+     * keeps no text to read or edit, so Backspace reaches it only as a key press.
+     */
+    val isRawKeyEditor: Boolean = false,
 ) {
     val showsSuggestionBar: Boolean get() = suggestionSource != ImeSuggestionSource.NONE
 

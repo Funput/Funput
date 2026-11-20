@@ -44,6 +44,7 @@ internal object EditorInfoPolicyResolver {
                 variation != InputType.TYPE_TEXT_VARIATION_URI,
             compositionRenderMode = CompositionCompatibilityPolicy.renderMode(packageName),
             allowsCorrection = CorrectionFieldPolicy.allows(inputType, editorMode),
+            isRawKeyEditor = inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_NULL,
         )
     }
 

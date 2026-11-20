@@ -16,8 +16,13 @@ internal class ImeBackspaceHandler(
     private val usesComposition: () -> Boolean,
     private val onCompositionChanged: () -> Unit,
     private val onCompositionCleared: () -> Unit,
+    private val rawKeyEditor: () -> Boolean = { false },
 ) {
     private val corrections = CorrectionUndo(composition)
+
+    /** A raw-key editor keeps no text for an edit to delete; only the key press reaches it. */
+    private val plainDelete: ImeEditCommand
+        get() = if (rawKeyEditor()) ImeEditCommand.PressDeleteKey else ImeEditCommand.DeleteBackward
 
     /**
      * Deletes the user's selection, if there is one, as a plain range edit and returns true.
@@ -42,8 +47,10 @@ internal class ImeBackspaceHandler(
         if (current != null && ShortcutUndo(composition, connection).undo()) return onCompositionCleared()
         corrections.dropParked()
         if (composition.backspace(current)) return onCompositionChanged()
-        if (current == null || !usesComposition()) {
-            editor.execute(current, ImeEditCommand.DeleteBackward)
+        // A raw-key editor never shows a composition, so reopening a word there would take it
+        // off the screen until the next commit.
+        if (current == null || !usesComposition() || rawKeyEditor()) {
+            editor.execute(current, plainDelete)
             onCompositionCleared()
             return
         }
