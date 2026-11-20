@@ -82,3 +82,18 @@ fn a_non_string_extra_onsets_does_not_cost_the_rest_of_the_file() {
         assert!(settings.has_completed_onboarding, "{value}"); // the rest was read
     }
 }
+
+#[test]
+fn enter_and_tab_expand_only_when_asked_and_share_the_windows_keys() {
+    let settings: Settings = serde_json::from_str(LEGACY).unwrap();
+    assert!(!settings.shortcut_on_enter && !settings.shortcut_on_tab);
+    let json = LEGACY.replace(
+        '{',
+        "{\n    \"shortcutOnEnter\":true,\"shortcutOnTab\":true,",
+    );
+    let settings: Settings = serde_json::from_str(&json).unwrap();
+    assert!(settings.shortcut_on_enter && settings.shortcut_on_tab);
+    let saved = serde_json::to_value(&settings).unwrap();
+    assert_eq!(saved["shortcutOnEnter"], true);
+    assert_eq!(saved["shortcutOnTab"], true);
+}

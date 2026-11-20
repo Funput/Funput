@@ -5,7 +5,8 @@
 // below is that shared order, and it is load-bearing: see `classify()` for why the
 // hotkeys and Backspace are matched ahead of the character tests. Ending a word —
 // a boundary character, and every exit that commits the buffer — is in
-// keys/boundary.cpp.
+// keys/boundary.cpp; Enter and Tab, which end it but still reach the app, in
+// keys/trigger.cpp.
 
 #include "compose/composer/composer.h"
 
@@ -78,12 +79,13 @@ ComposePlan Composer::onKey(const KeyEvent &ev) {
         if (nonPreedit_.on) return appPerforms(1, 0);
         return ComposePlan::preedit(handle_.buffer());
 
+    case KeyKind::Trigger:
+        // Enter and Tab: keys/trigger.cpp.
+        return onTriggerKey(ev);
+
     case KeyKind::NonText:
-        // Arrows, F-keys, Enter: the caret is about to move somewhere the engine
+        // Arrows, F-keys, Escape: the caret is about to move somewhere the engine
         // cannot follow, so commit first and pass the key through.
-        if (settings_.autoCapitalize && ev.keysym == keysym::Return) {
-            handle_.armCapitalization();
-        }
         return commitBuffer(false);
 
     case KeyKind::NumpadDigit:

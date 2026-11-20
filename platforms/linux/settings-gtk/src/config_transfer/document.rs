@@ -53,6 +53,11 @@ pub(super) struct Preferences {
     pub shortcut_smart_case: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shortcuts_in_english: Option<bool>,
+    /// Whether Enter, then Tab, also expand gõ tắt. Portable, like the switches above.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcut_on_enter: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shortcut_on_tab: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

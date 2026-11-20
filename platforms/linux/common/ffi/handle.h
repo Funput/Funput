@@ -105,6 +105,11 @@ public:
         return funput_engine_undo_shortcut(engine_, receiveUtf8, &restored);
     }
     void dismissShortcutUndo() { funput_engine_dismiss_shortcut_undo(engine_); }
+    // Gõ tắt for Enter or Tab, which the app still receives: the expansion, with no
+    // boundary character, in `text`. ACTION_NONE leaves the word composing.
+    FunputResult expandShortcut(std::string &text) {
+        return funput_engine_expand_shortcut(engine_, receiveUtf8, &text);
+    }
 
     // Re-open an already-committed word as the live composition, so the next key
     // edits it. Returns whether it was taken: a Vietnamese syllable or the start of

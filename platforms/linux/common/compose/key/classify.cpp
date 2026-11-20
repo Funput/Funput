@@ -56,6 +56,10 @@ bool matchesFlip(const KeyEvent &ev, FlipHotkey preset) {
     return false;
 }
 
+bool isEnter(const KeyEvent &ev) {
+    return ev.keysym == keysym::Return || ev.keysym == keysym::KP_Enter;
+}
+
 KeyKind classify(const KeyEvent &ev, const Settings &settings) {
     if (isModifierKeysym(ev.keysym)) return KeyKind::Modifier;
     // Both hotkeys hold a non-Shift modifier, so they must be matched before the
@@ -67,6 +71,10 @@ KeyKind classify(const KeyEvent &ev, const Settings &settings) {
     // been claimed as a Shortcut above, and BackSpace's keysym-to-Unicode mapping
     // is not something the typing rules should depend on.
     if (ev.keysym == keysym::BackSpace) return KeyKind::Backspace;
+    // Shift+Enter breaks a line where plain Enter sends, so it counts. Shift+Tab moves
+    // focus backwards or un-indents (many layouts send it as ISO_Left_Tab, which this
+    // never matches): it ends a word but never one typed in, so it stays `NonText`.
+    if (isEnter(ev) || (ev.keysym == keysym::Tab && !ev.mods.shift)) return KeyKind::Trigger;
     // A control character is a key, not text. Both frameworks hand one over for the
     // keys that used to have an ASCII meaning — `keySymToUnicode` was measured
     // answering CR for Return, HT for Tab and ESC for Escape — so testing `ch == 0`

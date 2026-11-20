@@ -33,7 +33,7 @@
 | 🔤 **Kiểu đặt dấu** | Truyền thống (`hòa`, `khỏe`) hoặc hiện đại (`hoà`, `khoẻ`) |
 | 🧠 **Gõ thông minh** | Tự khôi phục tiếng Anh · khôi phục tức thì · kiểm tra chính tả · tự động viết hoa |
 | 🔠 **Phụ âm đầu mở rộng** | Cho phép `z`, `f`, `w`, `j` đầu từ (`zô`, `fải`, `wá`, `jờ`), chọn từng chữ — mặc định tắt |
-| ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường |
+| ✂️ **Gõ tắt** | Bảng viết tắt tự bung, tuỳ chọn khớp cả hoa lẫn thường, tuỳ chọn bung cả khi bấm Enter hoặc Tab |
 | 🔄 **Chuyển mã** | Đổi qua lại giữa Unicode dựng sẵn, Unicode tổ hợp, TCVN3 (ABC) và VNI-Windows |
 | ⚙️ **App Cài đặt GTK4** | Dùng chung cho cả hai shell, giao diện libadwaita |
 | 📝 **Gõ thẳng, không gạch chân** | Chữ vào thẳng ô nhập thay vì đợi ở dòng gạch chân — cứu được Chrome. **Luôn bật**; app nào không nhận được thì tự lùi về gạch chân. [Chi tiết](#chế-độ-không-preedit) |
@@ -349,6 +349,7 @@ common/                 C++ thuần, không framework, dùng chung cho cả hai 
       keys.cpp                onKey(): cây quyết định cho mỗi phím
       keys/boundary.cpp       Từ kết thúc ở đâu: ký tự ranh giới và mọi lối thoát commit từ đang gõ
       keys/shortcut_undo.cpp  Backspace hoàn tác gõ tắt vừa bung, khi tài liệu tin được
+      keys/trigger.cpp        Enter, Tab: bung gõ tắt nếu công tắc bật, phím vẫn tới app
       state.cpp               Settings, VI/EN, và các lối thoát không phải phím
       nonpreedit.h            Chế độ commit-khi-gõ, và cách đánh giá một client
       nonpreedit.cpp          Composer làm gì với đánh giá đó
@@ -553,6 +554,13 @@ ngay thì `vn` giữ nguyên (#737). Cùng bằng chứng như trên: chỉ ở 
 đồng bộ, không có vùng chọn, và tài liệu dự đoán còn kết thúc bằng đúng phần đã bung
 (`compose/composer/keys/shortcut_undo.cpp`). Thiếu một điều thì là Backspace thường. Ở preedit
 không hoàn tác: đó đúng là những client không tin được một lệnh xoá trong tài liệu.
+
+Enter và Tab bung gõ tắt khi bật công tắc tương ứng trong Cài đặt ("Bung gõ tắt khi bấm Enter",
+"… Tab", đều tắt mặc định; #738): `ct` Enter ra `cơm tấm` rồi Enter vẫn tới app. Shift+Enter cũng
+bung; Shift+Tab và Ctrl/Alt/Super cùng phím thì không. Chạy ở cả hai kiểu: preedit commit nội dung
+bung thay cho vùng gạch chân, gõ thẳng thì sửa từ trong tài liệu như mọi phím
+(`compose/composer/keys/trigger.cpp`). Lần bung này không hoàn tác được bằng Backspace, vì Enter có
+thể đã gửi tin.
 
 Bằng chứng đó phải sống sót qua cả những thay đổi mà **app tự làm**: dấu cách gõ khi không có gì
 đang soạn, và Backspace rút ngắn một từ đang đứng trong tài liệu. Cả hai đều đoán trước được, nên

@@ -1,4 +1,4 @@
-//! The three switches governing the gõ tắt table, above the rows themselves.
+//! The switches governing the gõ tắt table, above the rows themselves.
 //!
 //! Kept visible whether or not the table has any rows — an empty table is exactly
 //! when a user is most likely to be reading this page — and mirroring the Windows
@@ -71,5 +71,39 @@ pub(super) fn group(settings: &Settings) -> PreferencesGroup {
     group.add(&enabled_row);
     group.add(&smart_row);
     group.add(&english_row);
+    group.add(&enter_row(settings));
+    group.add(&tab_row(settings));
     group
+}
+
+/// Off by default: Enter in a chat sends, so an expansion there is already gone
+/// before a Backspace could take it back.
+fn enter_row(settings: &Settings) -> SwitchRow {
+    let row = SwitchRow::builder()
+        .title("Bung gõ tắt khi bấm Enter")
+        .subtitle(
+            "Bung xong, Enter vẫn xuống dòng hoặc gửi tin như thường. Không hoàn tác được \
+             bằng Backspace, vì tin có thể đã gửi.",
+        )
+        .active(settings.shortcut_on_enter)
+        .build();
+    row.connect_active_notify(|row| {
+        let on = row.is_active();
+        Settings::update(|settings| settings.shortcut_on_enter = on);
+    });
+    row
+}
+
+/// Off by default: Tab in an editor or a terminal accepts a completion.
+fn tab_row(settings: &Settings) -> SwitchRow {
+    let row = SwitchRow::builder()
+        .title("Bung gõ tắt khi bấm Tab")
+        .subtitle("Bung xong, Tab vẫn chuyển ô hoặc thụt dòng như thường. Shift+Tab không bung.")
+        .active(settings.shortcut_on_tab)
+        .build();
+    row.connect_active_notify(|row| {
+        let on = row.is_active();
+        Settings::update(|settings| settings.shortcut_on_tab = on);
+    });
+    row
 }

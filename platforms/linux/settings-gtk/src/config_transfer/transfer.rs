@@ -32,6 +32,8 @@ pub(super) fn to_document(settings: &Settings) -> ConfigDocument {
             shortcuts_enabled: Some(settings.shortcuts_enabled),
             shortcut_smart_case: Some(settings.shortcut_smart_case),
             shortcuts_in_english: Some(settings.shortcuts_in_english),
+            shortcut_on_enter: Some(settings.shortcut_on_enter),
+            shortcut_on_tab: Some(settings.shortcut_on_tab),
         }),
         shortcuts: Some(
             settings
@@ -97,6 +99,12 @@ pub(super) fn apply(settings: &mut Settings, doc: &ConfigDocument) -> ImportSumm
         }
         if let Some(value) = prefs.shortcuts_in_english {
             settings.shortcuts_in_english = value;
+        }
+        if let Some(value) = prefs.shortcut_on_enter {
+            settings.shortcut_on_enter = value;
+        }
+        if let Some(value) = prefs.shortcut_on_tab {
+            settings.shortcut_on_tab = value;
         }
     }
     merge_shortcuts(settings, doc, &mut summary);

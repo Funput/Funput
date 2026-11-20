@@ -1,6 +1,6 @@
 # Gõ tắt: bung bằng Enter và Tab
 
-> **Trạng thái:** đã làm trên Windows (PR #735), chưa thử tay. Hai công tắc riêng cho Enter và Tab, đều **tắt mặc định**. macOS giữ hành vi sẵn có (luôn bung), Linux, iOS, Android chưa làm.
+> **Trạng thái:** đã làm trên Windows (PR #735) và Linux (#738), cả hai chưa thử tay. Hai công tắc riêng cho Enter và Tab, đều **tắt mặc định**. macOS giữ hành vi sẵn có (luôn bung), iOS, Android chưa làm.
 
 Nguồn: issue #582 (Windows), mục "Nút tùy chọn On/Off cho phím kích hoạt viết tắt".
 
@@ -10,7 +10,7 @@ Nguồn: issue #582 (Windows), mục "Nút tùy chọn On/Off cho phím kích ho
 - **Engine:** mọi khoảng trắng là ranh giới từ (`is_english_boundary`, [boundary/mod.rs](../../crates/funput-engine/src/compose/boundary/mod.rs)), kể cả `\n` và `\t`. Nền tảng nào gửi Enter vào engine dưới dạng ký tự thì gõ tắt bung.
 - **iOS:** phím Return gửi `"\n"` vào luồng nhập ([KeyboardInputCoordinator+Actions.swift:64](../../platforms/ios/Packages/FunputKit/Sources/KeyboardInput/Coordinator/KeyboardInputCoordinator+Actions.swift:64)), nên có vẻ đã bung khi bấm Return. **Chưa kiểm chứng.**
 - **macOS:** đã luôn bung khi bấm Enter và Tab, cả ở chế độ tiếng Anh, không có công tắc: `InputEventPolicy.isBoundary` coi `\t`, `\n`, `\r` là ranh giới, `commitBoundary` commit nội dung bung rồi để app nhận phím. Giữ nguyên, không đổi lặng lẽ.
-- **Linux:** không bung. Enter, Tab là `NonText` (`classify.cpp`), chỉ commit từ đang gõ.
+- **Linux:** trước #738 không bung: Enter, Tab là `NonText` (`classify.cpp`), chỉ commit từ đang gõ. Nay có hai công tắc như Windows (xem Đã làm (Linux)).
 - **Android:** chưa kiểm tra.
 
 ## Người dùng xin gì
@@ -73,7 +73,7 @@ Chỗ dễ vỡ: ô có gợi ý tự động (thanh địa chỉ Firefox, ô t�
 
 macOS đã bung sẵn khi bấm Enter/Tab (xem Hiện trạng). Muốn có công tắc như Windows thì mặc định phải **bật** ở macOS để không lặng lẽ bỏ hành vi đang có; chưa chốt.
 
-Linux: cùng cách Windows, trước khi Enter/Tab commit vùng đang gõ, hỏi `expand_shortcut`, commit nội dung bung, rồi để phím đi tiếp. Chưa làm.
+Linux: cùng cách Windows, trước khi Enter/Tab commit vùng đang gõ, hỏi `expand_shortcut`, commit nội dung bung, rồi để phím đi tiếp. Đã làm, xem bên dưới.
 
 ### iOS, Android
 
@@ -97,8 +97,16 @@ Nếu iOS đang bung khi Return qua đường `"\n"`, đó là hành vi hiện c
 - Windows: hook nuốt Enter/Tab khi có nội dung bung, inject nội dung bung rồi gửi lại đúng phím đó (`inject::send_key`, gắn `INJECT_TAG`). Shift đang giữ thật nên Shift+Enter đi ra vẫn là Shift+Enter. Enter ở bàn phím số được gửi lại như Enter thường.
 - Cài đặt: hai dòng trong trang Gõ tắt, ngay dưới "Gõ tắt cả khi ở chế độ tiếng Anh".
 
+## Đã làm (Linux)
+
+- FFI: `funput_engine_expand_shortcut` (`crates/funput-ffi/src/engine/shortcuts/expand.rs`), trả nội dung bung qua callback UTF-8 như `funput_engine_undo_shortcut`, vì `FunputResult.chars` cắt ở `CHARS_CAP`. Các hàm gõ tắt của FFI gom vào `engine/shortcuts/` (bảng, `undo.rs`, `expand.rs`).
+- Composer: `KeyKind::Trigger` cho Enter (cả Shift+Enter và Enter bàn phím số) và Tab không Shift; Ctrl, Alt, Super cùng phím vẫn là `Shortcut`, Shift+Tab (kể cả `ISO_Left_Tab`) vẫn là `NonText`. `Composer::onTriggerKey` (`compose/composer/keys/trigger.cpp`) hỏi engine khi công tắc bật. Preedit: commit nội dung bung thay cho vùng gạch chân rồi cho phím đi tiếp. Gõ thẳng: sửa từ trong tài liệu (`planFromResult`) rồi cho phím đi tiếp. Không khớp thì commit như cũ. Enter vẫn bật viết hoa đầu câu cho dòng mới.
+- Cài đặt: `shortcutOnEnter`, `shortcutOnTab` trong `settings.json` (cùng khoá với Windows), addon chỉ đọc, thiếu thì `false`; settings-gtk thêm hai dòng dưới "Gõ tắt cả khi ở chế độ tiếng Anh", mang theo khi xuất/nhập cấu hình.
+
 ## Kiểm thử
 
 - Engine (`tests/words/expand_shortcut.rs`): khớp và không khớp; không ghi nhịp hoàn tác; smart case; chữ vừa hoàn tác giữ nguyên; `500k` không bung; tắt gõ tắt; chế độ tiếng Anh theo công tắc gõ tắt tiếng Anh. Ctrl chốt từ chưa làm nên chưa có ca đó.
 - `funput-desktop`: `key.rs` phủ bảng hành vi (Enter, Shift+Enter, Ctrl/Alt+Enter, Tab, Shift/Ctrl/Alt+Tab); `src/shell/tests.rs` qua `ShellState` thật: mặc định tắt, bật từng phím, hai công tắc độc lập, từ không phải chữ tắt, chế độ tiếng Anh, lưu cài đặt.
 - Windows thật: Notepad, Word, Chrome, thanh địa chỉ Firefox, Zalo, Messenger (Enter gửi), Excel (Tab sang ô), VS Code (Tab gợi ý).
+- Linux (`common/tests`): `classify_tests.cpp` phủ bảng phím; `keys/trigger_tests.cpp` phủ công tắc tắt, preedit, gõ thẳng, từng công tắc riêng, Shift+Tab và Ctrl+Enter, từ không phải chữ tắt, chế độ tiếng Anh, viết hoa đầu dòng, Backspace sau lần bung; `settings/shortcut_keys_tests.cpp` phủ đọc, mặc định, `save()` không ghi đè. settings-gtk: model và xuất/nhập.
+- Linux thật (fcitx5 và ibus): trình soạn thảo, thanh địa chỉ trình duyệt, app chat (Enter gửi), terminal (Tab).

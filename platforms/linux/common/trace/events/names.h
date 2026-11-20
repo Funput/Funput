@@ -22,6 +22,7 @@ inline const char *kindName(KeyKind kind) {
     case KeyKind::Flip: return "Flip";
     case KeyKind::Shortcut: return "Shortcut";
     case KeyKind::Backspace: return "Backspace";
+    case KeyKind::Trigger: return "Trigger";
     case KeyKind::NonText: return "NonText";
     case KeyKind::NumpadDigit: return "NumpadDigit";
     case KeyKind::Boundary: return "Boundary";
@@ -63,6 +64,7 @@ inline bool printsCharacter(KeyKind kind) {
     case KeyKind::Flip:
     case KeyKind::Shortcut:
     case KeyKind::Backspace:
+    case KeyKind::Trigger:
     case KeyKind::NonText:
         return false;
     }

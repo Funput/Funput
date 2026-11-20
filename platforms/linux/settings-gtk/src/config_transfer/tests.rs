@@ -14,6 +14,8 @@ fn round_trip_preserves_state() {
         shortcuts_enabled: false,
         shortcut_smart_case: false,
         shortcuts_in_english: false,
+        shortcut_on_enter: true,
+        shortcut_on_tab: true,
         ..Settings::default()
     };
     assert_eq!(
@@ -30,17 +32,20 @@ fn round_trip_preserves_state() {
     assert!(!imported.shortcuts_enabled);
     assert!(!imported.shortcut_smart_case);
     assert!(!imported.shortcuts_in_english);
+    assert!(imported.shortcut_on_enter && imported.shortcut_on_tab);
 }
 
 #[test]
 fn a_document_without_the_gõ_tắt_switches_leaves_them_alone() {
-    // Both default to on, so a file predating them describes a table that expands,
-    // smart-cased. Reading their absence as "off" would silently change what an
-    // imported table expands to.
+    // The first three default to on, so a file predating them describes a table that
+    // expands, smart-cased. Reading their absence as "off" would silently change what
+    // an imported table expands to; and absent is never "off" for Enter and Tab either.
     let mut settings = Settings {
         shortcuts_enabled: false,
         shortcut_smart_case: false,
         shortcuts_in_english: false,
+        shortcut_on_enter: true,
+        shortcut_on_tab: true,
         ..Settings::default()
     };
     let doc = serde_json::from_str(
@@ -52,6 +57,7 @@ fn a_document_without_the_gõ_tắt_switches_leaves_them_alone() {
     assert!(!settings.shortcuts_enabled); // and these survived it
     assert!(!settings.shortcut_smart_case);
     assert!(!settings.shortcuts_in_english);
+    assert!(settings.shortcut_on_enter && settings.shortcut_on_tab);
 }
 
 #[test]

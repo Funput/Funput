@@ -44,6 +44,7 @@ add_library(funput_linux_common STATIC
     compose/composer/keys.cpp
     compose/composer/keys/boundary.cpp
     compose/composer/keys/shortcut_undo.cpp
+    compose/composer/keys/trigger.cpp
     compose/composer/state.cpp
     compose/composer/nonpreedit.cpp
     compose/composer/nonpreedit/appedits.cpp
