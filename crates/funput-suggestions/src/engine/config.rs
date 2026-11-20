@@ -31,8 +31,9 @@ pub struct SuggestionConfig {
     /// whole of the feature's judgement: "cảm" is nearly always followed by "ơn"
     /// and clears it at once, "hôm" clears it with "nay" and "qua" together, and
     /// "của" can be followed by anything and never will. The share is how often
-    /// the bar has held the next word so far, so it is set a little under the
-    /// rate Predict should keep (70%), to leave room for habits still settling.
+    /// the bar would have held the next word so far, so it is the rate Predict
+    /// should keep: 70%. It was 60 while one word had to earn it alone; three
+    /// slots reach it sooner, and at 60 they spoke for contexts too spread out.
     pub context_dominance_percent: u8,
     /// How often a word must have been seen as a context before the user's own
     /// typing outranks shipped data about it. Below it, the user's pairs have no
@@ -66,7 +67,7 @@ impl Default for SuggestionConfig {
             unrecognized_promotion_uses: 4,
             context_rerank_uses: 1,
             context_predict_uses: 3,
-            context_dominance_percent: 60,
+            context_dominance_percent: 70,
             context_evidence_seen: 3,
             context_order: 3,
             ngram_contexts: 4_096,

@@ -254,11 +254,12 @@ fn a_context_with_two_habits_offers_both_once_both_are_habits() {
     );
 
     engine.learn_after(Some("hôm"), "nay");
+    assert_eq!(predicted(&engine, "hôm"), ["nay"], "3 of 4: a habit");
+
     engine.learn_after(Some("hôm"), "qua");
-    assert_eq!(
-        predicted(&engine, "hôm"),
-        ["nay"],
-        "3 of 5 is 60%: it leads, and `qua` is no habit yet"
+    assert!(
+        predicted(&engine, "hôm").is_empty(),
+        "3 of 5 falls short on its own, and `qua` is no habit yet"
     );
 
     engine.learn_after(Some("hôm"), "qua");
