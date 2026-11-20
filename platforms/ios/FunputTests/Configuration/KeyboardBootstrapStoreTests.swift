@@ -51,9 +51,10 @@ struct KeyboardBootstrapStoreTests {
         let container = temporaryContainer()
         defer { try? FileManager.default.removeItem(at: container) }
         let store = KeyboardBootstrapSnapshotStore(containerURL: container)
-        let file = container
+        let directory = container
             .appendingPathComponent(KeyboardBootstrapSnapshotStore.directoryName)
-            .appendingPathComponent(KeyboardBootstrapSnapshotStore.fileName)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let file = directory.appendingPathComponent(KeyboardBootstrapSnapshotStore.fileName)
         try Data("{".utf8).write(to: file)
         #expect(throws: (any Error).self) { try store.load() }
 
