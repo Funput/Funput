@@ -38,13 +38,11 @@ internal class ClipboardOfferChipRenderer(
         labelPaint.color = theme.specialLabelColor
     }
 
-    /** The chip's plate on [band]: as wide as its content, centred, never wider than the band. */
+    /** The chip's plate on [band], sized to the glyph cell, the label and the padding after it. */
     fun plate(band: KeyBounds, offer: KeyboardClipboardOffer): ResolvedKey {
         labelPaint.textSize = metrics.sp(LabelSizeSp)
         val content = band.height + labelPaint.measureText(offer.chipLabel(resources)) + metrics.dp(EndPaddingDp)
-        val width = minOf(band.width, content)
-        val left = band.centerX - width / 2f
-        return ResolvedKey(PlateSpec, KeyBounds(left, band.top, left + width, band.bottom))
+        return ResolvedKey(PlateSpec, ClipboardOfferChip.plateBounds(band, content))
     }
 
     fun draw(canvas: Canvas, plate: ResolvedKey, offer: KeyboardClipboardOffer) {

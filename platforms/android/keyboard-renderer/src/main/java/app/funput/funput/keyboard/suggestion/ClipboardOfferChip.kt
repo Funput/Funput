@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.suggestion
 
 import app.funput.funput.keyboard.KeyboardClipboardOffer
+import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.layout.ResolvedSuggestionBar
 
 /**
@@ -24,4 +25,13 @@ internal object ClipboardOfferChip {
         // A band with suggestions switched off is not a tap target at all.
         bar != null && bar.suggestionsEnabled &&
         bar.suggestionsBounds.width >= MinWidthDp * density
+
+    /**
+     * Where the chip sits on [band]: as wide as its content and never wider than the band.
+     *
+     * It starts where the band does rather than in the middle, so it is found in the same place
+     * whatever it holds and, with keys leading the toolbar, reads as the next one in their row.
+     */
+    fun plateBounds(band: KeyBounds, contentWidth: Float): KeyBounds =
+        KeyBounds(band.left, band.top, band.left + minOf(band.width, contentWidth), band.bottom)
 }

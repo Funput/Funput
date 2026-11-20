@@ -39,6 +39,13 @@ class ClipboardOfferChipTest {
     }
 
     @Test
+    fun `sits at the start of the band and never outgrows it`() {
+        val band = KeyBounds(40f, 8f, 340f, 42f)
+        assertEquals(KeyBounds(40f, 8f, 160f, 42f), ClipboardOfferChip.plateBounds(band, contentWidth = 120f))
+        assertEquals(band, ClipboardOfferChip.plateBounds(band, contentWidth = 900f))
+    }
+
+    @Test
     fun `never previews a sensitive clip`() {
         val sensitive = KeyboardClipboardOffer(KeyboardClipboardHint.SENSITIVE, preview = "mật khẩu")
         assertNull(sensitive.visiblePreview)
