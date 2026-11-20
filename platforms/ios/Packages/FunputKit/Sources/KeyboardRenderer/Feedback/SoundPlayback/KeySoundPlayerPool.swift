@@ -34,6 +34,12 @@ final class KeySoundPlayerPool: @unchecked Sendable {
         }
     }
 
+    /// Stops holding the players and the session. Serial with `load` and `play`, so a
+    /// press that follows simply loads the style again.
+    func unload() {
+        queue.async { self.unloadOnQueue() }
+    }
+
     static func resourceURL(style: KeySoundStyle, kind: KeySoundKind) -> URL? {
         Bundle.module.url(forResource: "\(style.rawValue)-\(kind.rawValue)", withExtension: "wav")
     }
@@ -59,6 +65,20 @@ final class KeySoundPlayerPool: @unchecked Sendable {
         player.volume = gain
         player.currentTime = 0
         player.play()
+    }
+
+    private func unloadOnQueue() {
+        players.values.joined().forEach { $0.stop() }
+        players = [:]
+        nextIndex = [:]
+        loadedStyle = nil
+        guard isSessionAmbient else { return }
+        isSessionAmbient = false
+        do {
+            try AVAudioSession.sharedInstance().setActive(false)
+        } catch {
+            Self.log.error("Key sound deactivation failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// Ambient mixes with whatever is playing and goes quiet with the ringer switch,

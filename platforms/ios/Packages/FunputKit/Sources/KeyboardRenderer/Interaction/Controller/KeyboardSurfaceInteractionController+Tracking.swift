@@ -13,7 +13,7 @@ extension KeyboardSurfaceInteractionController {
         presentation: KeyboardPresentation
     ) {
         guard touches[token] == nil else { return }
-        updateFeedback(presentation)
+        armFeedback(presentation)
         let signpostID = OSSignpostID(log: KeyboardTouchSignpost.log)
         touches[token] = TouchState(
             initialKey: key,
@@ -59,7 +59,7 @@ extension KeyboardSurfaceInteractionController {
         presentation: KeyboardPresentation
     ) {
         guard var state = touches[token] else { return }
-        updateFeedback(presentation)
+        armFeedback(presentation)
         if state.trackpad != nil {
             updateSpaceTrackpad(token: token, translation: translation(for: state, at: point))
             return

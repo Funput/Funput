@@ -112,6 +112,7 @@ final class KeyboardViewController: UIInputViewController {
 #endif
         repairBootstrapSnapshotIfNeeded()
         scheduleClipboardMonitoringStart()
+        keyboardView.prepareFeedback()
         KeyboardMemoryTrace.recordAppearance()
     }
 
@@ -122,6 +123,7 @@ final class KeyboardViewController: UIInputViewController {
         // hold memory while the keyboard is off screen.
         switchSurface(to: .funput)
         emojiCatalogCache.release()
+        keyboardView.releaseFeedback()
         detachPrimarySurface()
         KeyboardMemoryTrace.record("Disappeared")
 #if DEBUG

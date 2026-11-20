@@ -8,6 +8,8 @@ protocol KeyboardSoundPlaying {
     /// Loads a bundled style ahead of the first press. Cheap once the style is loaded.
     func prepare(style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource)
     func play(_ kind: KeySoundKind, style: KeySoundStyle, volume: KeySoundVolume, source: KeySoundVolumeSource)
+    /// Lets go of what was loaded. The next `prepare` or `play` loads it again.
+    func release()
 }
 
 /// The same key sounds in the keyboard and the containing app's settings.
@@ -34,6 +36,14 @@ public final class KeyboardKeySounds: KeyboardSoundPlaying {
         case .media: pool.load(style)
         case .ringer: systemSounds.load(style, volume: volume)
         }
+    }
+
+    /// Players and an active audio session are only worth holding while the keyboard
+    /// can be typed on. Registered system sounds stay: they live in the sound server,
+    /// not here, and never touch the session.
+    public func release() {
+        prepared = nil
+        pool.unload()
     }
 
     /// The system style goes through `playInputClick()`, which only sounds while an

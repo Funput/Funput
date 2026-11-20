@@ -40,8 +40,9 @@ final class TestGestureScheduler {
 final class HapticSpy: KeyboardHapticPerforming {
     private(set) var performed: [HapticFeedbackStrength] = []
     private(set) var ticks = 0
+    private(set) var prepares = 0
 
-    func prepare() {}
+    func prepare() { prepares += 1 }
     func perform(strength: HapticFeedbackStrength) { performed.append(strength) }
     func performTick() { ticks += 1 }
 }
