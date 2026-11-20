@@ -2,7 +2,8 @@ import Foundation
 
 extension FunputComposer {
     /// Decode a `FunputResult`'s inline `chars` (a C `uint32_t[64]`, imported as a
-    /// tuple) into a `String`.
+    /// tuple) into a `String`. Stops at `CHARS_CAP` codepoints, so text that may be a gõ
+    /// tắt expansion is read through `processText` instead.
     static func output(of result: FunputResult) -> String {
         var copy = result
         let count = Int(result.count)
@@ -26,8 +27,23 @@ extension FunputComposer {
     }
 
     /// Capture the complete expansion before the FFI's borrowed UTF-8 output expires.
-    func processText(_ scalar: Unicode.Scalar) -> (result: FunputResult, output: String) {
-        Self.receivingText { funput_process_key_text(handle, scalar.value, 0, Self.receiveText, $0) }
+    func processText(
+        _ scalar: Unicode.Scalar,
+        source: KeySource = .standard
+    ) -> (result: FunputResult, output: String) {
+        Self.receivingText {
+            funput_process_key_text(handle, scalar.value, source.rawValue, Self.receiveText, $0)
+        }
+    }
+
+    /// Feed the boundary `scalar` that ends the word being composed, and return the word
+    /// the engine sent ahead of it: the composed syllable, or a gõ tắt expansion of any
+    /// length. `nil` when the engine sent nothing and the word stands as composed.
+    func endWord(with scalar: Unicode.Scalar, source: KeySource = .standard) -> String? {
+        let (result, output) = processText(scalar, source: source)
+        guard result.action == ACTION_SEND else { return nil }
+        // Remove exactly the boundary scalar, including when CR + LF is one grapheme.
+        return String(String.UnicodeScalarView(output.unicodeScalars.dropLast()))
     }
 
     /// Run `call` with a fresh `String` for `receiveText` to fill, and return both. This is
