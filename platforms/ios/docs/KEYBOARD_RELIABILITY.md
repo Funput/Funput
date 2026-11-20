@@ -3,10 +3,10 @@
 > **Mục tiêu:** chạm vào ô nhập là Funput hiện, hiện ngay, và không bao giờ tự chết.
 > Funput không được là nguyên nhân của bất kỳ lần nào người dùng thấy bàn phím hệ
 > thống thay cho mình. Đạt được **bằng cấu trúc**: mỗi thứ nặng chỉ tồn tại một bản
-> trong tiến trình, hiện lại là gắn lại chứ không dựng lại, không có đường code nào tự
-> giết tiến trình, và hỏng thì lùi về bàn phím tối thiểu.
+> trong tiến trình, hiện lại là gắn lại chứ không dựng lại, đường khởi động chỉ làm
+> việc của frame đầu, và không có đường code nào tự giết tiến trình.
 >
-> **Trạng thái:** Thiết kế đã chốt (11/2026). B1 đến B7 chưa hiện thực.
+> **Trạng thái:** Thiết kế đã chốt (11/2026). B1 đến B6 chưa hiện thực.
 >
 > **Cập nhật:** 20/11/2026
 >
@@ -14,8 +14,8 @@
 > động, bộ nhớ, các đường crash. Không bàn Rust engine nội bộ hay theme store.
 >
 > **Không làm:** không thêm đo đạc, không thêm signpost mới làm điều kiện nghiệm thu,
-> không lưu nhật ký nào trên máy người dùng. Nghiệm thu bằng test, kịch bản tay và
-> dùng thật.
+> không lưu nhật ký hay bộ đếm nào trên máy người dùng. Nghiệm thu bằng test, kịch bản
+> tay và dùng thật.
 
 Tài liệu này tiếp nối [STARTUP_AND_MEMORY.md](STARTUP_AND_MEMORY.md) và theo cùng quy
 ước: **mỗi thay đổi hành vi cập nhật lại tài liệu trong cùng PR**; chỗ nào hiện thực
@@ -69,22 +69,21 @@ tự chết.
 
 | # | Chỗ chưa tốt | Ở đâu | Sửa |
 |---|---|---|---|
-| T1 | **Còn đường tự giết.** Khoảng 40 `precondition` vẫn chạy ở bản Release; một cái bắn là tiến trình chết và iOS thay bằng bàn phím hệ thống. Vài cái nhận giá trị có nguồn gốc lúc chạy: kích thước layout, hệ số sizing, nhãn phím Enter, timestamp của touch. | `Sources/KeyboardLayout/KeyboardGeometry.swift`, `KeyboardSizingProfile.swift`, `Models/KeyboardEnterAction.swift`, `Sources/KeyboardTouchCore/Model/ContactSample.swift` | B1 |
-| T2 | **Mọi thứ thuộc về controller, mà iOS dựng controller mới ở mỗi app host.** Nếu iOS dựng controller mới trước khi thả controller cũ, tiến trình giữ hai bản của surface, ảnh nền và các engine đúng vào khoảnh khắc trình bày. Đó là lúc footprint cao nhất, và là lúc người dùng thấy hậu quả nếu tiến trình bị giết. | `Keyboard/Controller/KeyboardViewController.swift` (mọi stored property) | B3, B4 |
-| T3 | **Hai worker cùng một store.** Mỗi controller có `PersonalSuggestionWorker` riêng. Khi đổi app, worker cũ có thể còn đang flush trong lúc worker mới mở cùng file store. | `Keyboard/Suggestions/PersonalSuggestionWorker.swift` | B4 |
-| T4 | **Hỏng lúc khởi động thì hỏng mãi.** Nếu một cấu hình, một theme tuỳ biến hay một file ảnh nền làm bootstrap chết, lần khởi động nào cũng chết lại y như vậy; không có đường lùi về bàn phím tối thiểu. | `Keyboard/Controller/Activation/KeyboardViewController+Bootstrap.swift` | B7 |
-| T5 | **Observer flush có thể không bao giờ chạy.** `flushPersonalSuggestions` đăng ký `UIApplication.didEnterBackgroundNotification`, thông báo của app, không phải của extension. | `Keyboard/Suggestions/KeyboardViewController+Suggestions.swift` | B6 |
+| T1 | **Còn một đường tự giết nhận dữ liệu lúc chạy.** `ContactSample` trap khi timestamp không hữu hạn, mà timestamp đến thẳng từ `UITouch`, không ai kiểm trước. Các `precondition` còn lại trong package (khoảng 40) chỉ nhận hằng số trong code hoặc đã có guard ở nơi gọi, và `Keyboard/` không có trap hay force unwrap nào; nhưng không có gì giữ cho điều đó tiếp tục đúng. | `Sources/KeyboardTouchCore/Model/ContactSample.swift`, `Sources/KeyboardTouchUIKit/Capture/UIKitTouchCaptureAdapter.swift` | B1 |
+| T2 | **`heightScale` chỉ được kẹp trên đường snapshot.** Đường fallback đọc cấu hình rồi gán thẳng vào sizing; một giá trị 0 hoặc âm cho ra bàn phím cao 0. | `Sources/KeyboardConfiguration/Presentation/KeyboardPresentationFactory.swift` | B1 |
+| T3 | **Mọi thứ thuộc về controller, mà iOS dựng controller mới ở mỗi app host.** Nếu iOS dựng controller mới trước khi thả controller cũ, tiến trình giữ hai bản của surface, ảnh nền và các engine gợi ý đúng vào khoảnh khắc trình bày. Đó là lúc footprint cao nhất, và là lúc người dùng thấy hậu quả nếu tiến trình bị giết. | `Keyboard/Controller/KeyboardViewController.swift` (mọi stored property) | B4, B5 |
+| T4 | **Hai worker cùng một store.** Mỗi controller có `PersonalSuggestionWorker` riêng. Khi đổi app, worker cũ có thể còn đang flush trong lúc worker mới mở cùng file store. | `Keyboard/Suggestions/PersonalSuggestionWorker.swift` | B5 |
+| T5 | **Observer flush nghe thông báo của app.** `flushPersonalSuggestions` đăng ký `UIApplication.didEnterBackgroundNotification`, không phải thông báo dành cho extension. | `Keyboard/Suggestions/KeyboardViewController+Suggestions.swift` | B2 |
 
 ### 2.2. Bộ nhớ
 
 | # | Chỗ chưa tối ưu | Ở đâu | Sửa |
 |---|---|---|---|
-| M1 | **Một bộ đầy đủ cho mỗi controller.** Mỗi lần đổi app tạo mới: một surface (vài chục phím), một `FunputComposer` (engine Rust), một suggestion engine có store, một suggestion engine thứ hai cho sửa lỗi gõ, một cache ảnh nền đã decode, cùng tất cả các store. Bản cũ chỉ được thả khi controller cũ chết. | `KeyboardViewController.swift`, `Sources/PersonalSuggestions/Correction/CorrectionWordSource.swift` | B3, B4 |
-| M2 | **Đổi layout là huỷ và dựng lại toàn bộ phím.** Mỗi lần bấm `?123`, quay về chữ, hay ô nhập đổi kiểu, `rebuildKeys()` bỏ hết `KeyboardKeyControl` và tạo lại. Với theme kính, mỗi phím là một `UIVisualEffectView(UIGlassEffect)`, nên mỗi lần đổi là vài chục effect view bị huỷ và vài chục cái mới được cấp phát. | `Sources/KeyboardRenderer/Surface/Core/KeyboardSurfaceView+Presentation.swift`, `Sources/KeyboardRenderer/Keys/KeyboardKeySurfaceView.swift` | B5 |
-| M3 | **Âm phím được nạp ngay khi bàn phím hiện và không bao giờ thả.** `updateFeedback` gọi `sounds.prepare` ở mỗi lần đổi presentation; với âm phím đóng gói, việc đó dựng audio session và ba `AVAudioPlayer` cho mỗi loại âm, kể cả khi người dùng không gõ phím nào. Session không bao giờ được ngừng, player sống tới khi surface chết. | `Sources/KeyboardRenderer/Interaction/Feedback/KeyboardSurfaceInteractionController+Feedback.swift`, `Sources/KeyboardRenderer/Feedback/SoundPlayback/KeySoundPlayerPool.swift` | B2, B6 |
-| M4 | **`UIPasteControl` luôn tồn tại.** Toolbar tạo chip dán khi khởi tạo và dựng control ở lần áp theme đầu tiên, dù chưa có gì để dán, kể cả khi người dùng tắt clipboard. | `Sources/KeyboardRenderer/Toolbar/KeyboardToolbarView.swift`, `KeyboardClipboardChipView.swift` | B2 |
-| M5 | **Bộ đếm từ của phiên không có trần.** `personalCounts` tăng theo mỗi từ gõ xong. Hiện nó chết cùng controller nên không lộ; khi chuyển sang sống cùng tiến trình (B4) thì phải có trần. | `Sources/PersonalSuggestions/Correction/CorrectionWordSource+Counts.swift` | B4 |
-| M6 | **Cache ảnh emoji của CoreText không trả lại được** (STARTUP_AND_MEMORY.md §3.1). Giới hạn đã biết, xem §7. | | Không sửa |
+| M1 | **Một bộ đầy đủ cho mỗi controller.** Mỗi lần đổi app tạo mới: một surface (vài chục phím), một suggestion engine có store, một suggestion engine thứ hai cho sửa lỗi gõ, một cache ảnh nền đã decode, cùng tất cả các store. Bản cũ chỉ được thả khi controller cũ chết. | `KeyboardViewController.swift`, `Sources/PersonalSuggestions/Correction/CorrectionWordSource.swift` | B4, B5 |
+| M2 | **Đổi layout là huỷ và dựng lại toàn bộ phím.** Mỗi lần bấm `?123`, quay về chữ, hay ô nhập đổi kiểu, `rebuildKeys()` bỏ hết `KeyboardKeyControl` và tạo lại. Với theme kính, mỗi phím là một `UIVisualEffectView(UIGlassEffect)`, nên mỗi lần đổi là vài chục effect view bị huỷ và vài chục cái mới được cấp phát. | `Sources/KeyboardRenderer/Surface/Core/KeyboardSurfaceView+Presentation.swift`, `Sources/KeyboardRenderer/Keys/KeyboardKeyControl.swift` | B3 |
+| M3 | **Âm phím được nạp ngay khi bàn phím hiện và không bao giờ thả.** `updateFeedback` gọi `sounds.prepare` ở mỗi lần đổi presentation; với âm phím đóng gói, việc đó dựng audio session và ba `AVAudioPlayer` cho mỗi loại âm, kể cả khi người dùng không gõ phím nào. Session không bao giờ được ngừng, player sống tới khi surface chết. | `Sources/KeyboardRenderer/Interaction/Feedback/KeyboardSurfaceInteractionController+Feedback.swift`, `Sources/KeyboardRenderer/Feedback/SoundPlayback/KeySoundPlayerPool.swift` | B2 |
+| M4 | **`UIPasteControl` luôn tồn tại.** Toolbar tạo chip dán khi khởi tạo, chip dựng control ngay, dù chưa có gì để dán, kể cả khi người dùng tắt clipboard. | `Sources/KeyboardRenderer/Toolbar/KeyboardClipboardChipView.swift` | B2 |
+| M5 | **Cache ảnh emoji của CoreText không trả lại được** (STARTUP_AND_MEMORY.md §3.1). Giới hạn đã biết, xem §7. | | Không sửa |
 
 ### 2.3. Khởi động
 
@@ -94,38 +93,35 @@ Hai loại khởi động, và cả hai đều đang làm thừa việc.
 
 | # | Chỗ chưa tốt | Ở đâu | Sửa |
 |---|---|---|---|
-| K1 | Dựng `UIPasteControl` trước frame đầu (cùng chỗ với M4). Đây là một control do hệ thống vẽ hộ, đắt hơn một view thường. | `KeyboardClipboardChipView.swift` | B2 |
+| K1 | `UIPasteControl` được dựng **hai lần** trước frame đầu: một lần trong `init` của chip với màu mặc định, một lần nữa ở `apply(theme:)` đầu tiên vì màu theme khác màu mặc định. Đây là một control do hệ thống vẽ hộ, đắt hơn một view thường. | `KeyboardClipboardChipView.swift` | B2 |
 | K2 | Đọc snapshot mà phải chuẩn bị thư mục trước: `KeyboardBootstrapSnapshotStore.init` gọi `AppGroupDirectory.prepare`, tức tạo thư mục, đặt thuộc tính bảo vệ, đặt cờ không backup. Ba syscall ghi chỉ để đọc một file. | `Sources/KeyboardConfiguration/Bootstrap/KeyboardBootstrapSnapshotStore.swift` | B2 |
-| K3 | `KeyboardSurfaceInteractionController.init` gọi `haptics.prepare()` cho ba generator, đánh thức Taptic Engine trước khi có ngón tay nào chạm. | `Sources/KeyboardRenderer/Interaction/Controller/KeyboardSurfaceInteractionController.swift` | B2 |
-| K4 | Nạp âm phím ngay lúc hiện (cùng chỗ với M3). Chạy trên queue riêng nhưng vẫn tranh CPU và gọi audio server đúng lúc bàn phím đang dựng. | như M3 | B2 |
-| K5 | Phím có thể được dựng hai lần: bootstrap dựng theo traits mặc định, rồi `textWillChange` báo traits thật của ô nhập; nếu layout khác thì `rebuildKeys()` dựng lại toàn bộ (cùng gốc với M2). | `KeyboardSurfaceView+Presentation.swift` | B5 |
-| K6 | Mỗi phím một effect view kính ở theme mặc định `funputGlass`. Đây là diện mạo của sản phẩm nên giữ; chi phí dựng được B3 biến thành một lần mỗi tiến trình. | `KeyboardKeySurfaceView.swift` | B3 |
+| K3 | `KeyboardSurfaceInteractionController.init` gọi `haptics.prepare()` cho ba generator. Controller này được tạo ở lần gán presentation đầu tiên, tức trong `viewDidLoad`, nên Taptic Engine bị đánh thức trước khi bàn phím hiện. | `Sources/KeyboardRenderer/Interaction/Controller/KeyboardSurfaceInteractionController.swift` | B2 |
+| K4 | Nạp âm phím ngay trong `viewDidLoad` (cùng chỗ với M3). Chạy trên queue riêng nhưng vẫn tranh CPU và gọi audio server đúng lúc bàn phím đang dựng. | như M3 | B2 |
+| K5 | Phím có thể được dựng hai lần: bootstrap dựng theo traits mặc định, rồi `textWillChange` báo traits thật của ô nhập; nếu layout khác thì `rebuildKeys()` dựng lại toàn bộ (cùng gốc với M2). | `KeyboardSurfaceView+Presentation.swift` | B3 |
+| K6 | Mỗi phím một effect view kính ở theme mặc định `funputGlass`. Đây là diện mạo của sản phẩm nên giữ; chi phí dựng được B4 biến thành một lần mỗi tiến trình. | `Sources/KeyboardRenderer/Keys/KeyboardKeySurfaceView.swift` | B4 |
 
 **Hiện ấm** (tiến trình còn sống, đổi sang app khác):
 
 | # | Chỗ chưa tốt | Sửa |
 |---|---|---|
-| K7 | Hiện ấm làm gần như toàn bộ việc của khởi động nguội, chỉ trừ bước tạo tiến trình: đọc snapshot, resolve presentation, dựng surface, decode ảnh nền, tạo engine, mở store gợi ý, mở từ điển sửa lỗi. Trong khi thứ duy nhất thật sự đổi là document của host. | B3, B4 |
-| K8 | Cùng lúc đó main thread còn phải huỷ bộ cũ: surface cũ với vài chục effect view bị giải phóng ngay trong lúc bàn phím mới đang hiện. | B3 |
+| K7 | Hiện ấm làm gần như toàn bộ việc của khởi động nguội, chỉ trừ bước tạo tiến trình: resolve presentation, dựng surface, decode ảnh nền, mở store gợi ý, mở từ điển sửa lỗi. Trong khi thứ duy nhất thật sự đổi là document của host. | B4, B5 |
+| K8 | Cùng lúc đó main thread còn phải huỷ bộ cũ: surface cũ với vài chục effect view bị giải phóng ngay trong lúc bàn phím mới đang hiện. | B4 |
 
 ---
 
 ## 3. Nguyên tắc
 
-Năm nguyên tắc của STARTUP_AND_MEMORY.md §1 giữ nguyên. Thêm bốn nguyên tắc:
+Năm nguyên tắc của STARTUP_AND_MEMORY.md §1 giữ nguyên. Thêm ba nguyên tắc:
 
-6. **Tiến trình là đơn vị sống, controller là vỏ.** Thứ gì không phụ thuộc app host
-   thì thuộc về tiến trình và chỉ có một bản. Controller chỉ giữ những gì gắn với lần
-   trình bày của nó.
+6. **Thứ nặng mà không phụ thuộc app host thì thuộc về tiến trình và chỉ có một bản.**
+   Controller chỉ giữ những gì gắn với lần trình bày của nó, và những gì mang trạng
+   thái của document đang gõ.
 7. **Hiện lại là gắn lại, không dựng lại.** Từ lần hiện thứ hai trong cùng một tiến
-   trình: không tạo view, không decode ảnh, không mở file. Việc duy nhất bắt buộc là
-   đồng bộ document với host mới. Cùng luật đó cho đổi layout: tái dùng phím, không
-   huỷ rồi tạo.
+   trình: không tạo view, không decode ảnh, không mở từ điển. Cùng luật đó cho đổi
+   layout: tái dùng phím, không huỷ rồi tạo.
 8. **Không có đường code nào tự giết tiến trình vì dữ liệu lúc chạy.** Giá trị đến từ
-   cấu hình, từ host, từ đĩa hay từ kích thước layout mà sai thì được kẹp về giá trị
-   hợp lệ hoặc bỏ qua, không trap.
-9. **Hỏng thì lùi, không chết lặp.** Bootstrap chết hai lần liền thì lần sau khởi động
-   ở chế độ an toàn: bàn phím tối thiểu luôn hiện được.
+   cấu hình, từ host, từ đĩa, từ touch hay từ kích thước layout mà sai thì được kẹp về
+   giá trị hợp lệ hoặc bỏ qua, không trap.
 
 ---
 
@@ -134,177 +130,136 @@ Năm nguyên tắc của STARTUP_AND_MEMORY.md §1 giữ nguyên. Thêm bốn ng
 ```
 iOS dựng lại ở mỗi app host                  Sống cùng tiến trình, một bản duy nhất
 ┌──────────────────────────────┐             ┌────────────────────────────────────────┐
-│ KeyboardViewController (vỏ)  │   claim     │ KeyboardRuntime.shared                 │
+│ KeyboardViewController       │   claim     │ KeyboardRuntime.shared                 │
 │  inputView, height constraint│ ──────────▶ │  surface (KeyboardSurfaceView)         │
-│  lease của lần trình bày     │             │  ảnh nền đã decode                     │
-│  đồng bộ document với host   │ ◀────────── │  cấu hình + presentation đã resolve    │
-│  clipboard monitor (theo lần │   release   │  inputCoordinator (engine Rust)        │
-│  hiện)                       │             │  suggestion service, correction words  │
-└──────────────────────────────┘             │  shortcuts, các store                  │
+│  inputCoordinator (engine)   │             │  ảnh nền đã decode                     │
+│  presentation của lần hiện   │ ◀────────── │  cấu hình + theme đã resolve           │
+│  panel, clipboard monitor    │  surrender  │  suggestion service, correction words  │
+└──────────────────────────────┘             │  các store                             │
                                              └────────────────────────────────────────┘
 ```
 
 ### 4.1. Ai giữ cái gì
 
-| Thuộc về tiến trình (`KeyboardRuntime`) | Thuộc về lần trình bày (controller) |
+| Thuộc về tiến trình (`KeyboardRuntime`) | Thuộc về controller |
 |---|---|
-| `keyboardView` và các panel emoji, kaomoji, clipboard | `inputView`, `heightController` |
-| `backgroundImageCache`, `resolvedBackgroundRequest` | `launchTrace` |
-| `configuration`, `themeCatalog`, `selectedTheme`, `cachedThemedPresentation`, `adoptedIdentity` | `resolvedTextInputTraits`, `isKeyboardVisible` |
-| `inputCoordinator` | `activationState` và generation của nó |
-| `personalSuggestionService`, `correctionWords`, `shortcutsLoader` | `clipboardChangeMonitor`, `clipboardStartTask` |
-| mọi store (`configurationStore`, `customThemeStore`, `themeAssetStore`, `bootstrapSnapshotStore`, `clipboardStore`, recents) | lease đang giữ |
-| `emojiCatalogCache`, `clipboardRecorder` | |
+| Surface chính (`KeyboardSurfaceView`) | `inputView`, `heightController` |
+| `backgroundImageCache`, `resolvedBackgroundRequest` | `currentPresentation` |
+| `configuration`, `selectedTheme`, `cachedThemedPresentation`, `adoptedIdentity` | `inputCoordinator`, `shortcutsLoader` |
+| `personalSuggestionService`, `correctionWords` | `activationState`, `isKeyboardVisible` |
+| mọi store (`configurationStore`, `customThemeStore`, `themeAssetStore`, `bootstrapSnapshotStore`, `clipboardStore`, recents) | ba panel, `displayedSurface`, `emojiCatalogCache` |
+| | `clipboardRecorder`, `clipboardChangeMonitor`, các task |
 
-### 4.2. Lease: ai đang là bàn phím
+Vì sao cột phải giữ những thứ trông có vẻ chia sẻ được:
 
-Tại một thời điểm chỉ một controller là bàn phím đang hiện. Runtime phát một **lease**
-(một số generation tăng dần) cho controller gọi `claim`, và mọi lease cũ hết hiệu lực
-ngay lúc đó.
+- **`inputCoordinator`** mang trạng thái của document đang gõ. Một `textDidChange` đến
+  muộn từ controller cũ sẽ ghi snapshot của app cũ vào coordinator dùng chung, và lần
+  sửa chữ kế tiếp ở app mới sẽ tính số ký tự cần xoá trên sai văn bản. Engine Rust còn
+  có trạng thái sống qua `funput_clear` (số chờ ghép của `500k`, bộ đếm sửa lỗi) mà
+  Swift không reset được. Tạo engine vốn đã được phép ở `init`.
+- **`currentPresentation`**: `textWillChange` của controller mới chạy trước
+  `viewWillAppear` và tính layout theo ô nhập mới. Nếu dùng chung, controller cũ sẽ đọc
+  layout của controller mới để tính chiều cao của mình.
+- **`activationState`**: `allowsClipboardOffer` ghép nó với coordinator của chính
+  controller. Dùng chung thì monitor của controller cũ, đang ở ô chữ, có thể mời dán
+  lên surface mà controller mới đang hiện trong ô mật khẩu.
+- **Panel**: gắn vào `view` của controller và bị thả ở mỗi lần đổi app, nên chia sẻ
+  không tiết kiệm gì.
 
-```
-viewDidLoad        runtime.claim(self)
-                     lần đầu trong tiến trình: bootstrap như hiện nay (nguội)
-                     các lần sau: gắn surface sang inputView mới, nối lại callback,
-                                  đưa phiên nhập về trạng thái đầu (ấm)
-viewWillAppear     đồng bộ document; áp cấu hình nếu identity đổi
-viewWillDisappear  nếu lease còn hiệu lực: flush, dừng clipboard monitor
-viewDidDisappear   nếu lease còn hiệu lực: tháo surface khỏi inputView, cho runtime giữ
-```
+### 4.2. Quyền giữ surface
 
-Ba luật đi kèm:
+Tại một thời điểm chỉ một controller giữ surface. Runtime nhớ nó bằng một tham chiếu
+**weak**, nên controller chết thì surface tự thành vô chủ.
 
-- **Controller cũ không được đụng vào thứ đã trao.** Mọi callback vòng đời của
-  controller kiểm `lease.isCurrent` trước khi chạm runtime. Nhờ vậy thứ tự iOS gọi
-  `viewDidDisappear` của controller cũ và `viewDidLoad` của controller mới là gì cũng
-  đúng; thiết kế không dựa vào thứ tự đó.
-- **`claim` nối lại mọi callback trỏ về controller.** `onKeyEvent`,
-  `setInputModeSwitch(target:action:)`, callback clipboard và suggestion hiện được gán
-  trong `makePrimarySurface()`; chúng tách ra thành `bind(to:)` và chạy ở mỗi lần
-  claim. Tạo surface chỉ còn chạy một lần mỗi tiến trình.
-- **Trạng thái của phiên nhập không rò sang app khác.** `claim` ấm đưa bàn phím về
-  đúng trạng thái mà một controller mới ngày nay có: layout chữ, surface `.funput`,
-  không composition dở, thanh gợi ý trống, touch pipeline đã reset. Thứ gì người dùng
-  coi là một quyết định (đã dán, đã bỏ qua) vẫn persist qua App Group như cũ.
+| Thời điểm | Hành vi |
+|---|---|
+| `viewDidLoad` | Lấy surface nếu chưa ai giữ hoặc surface đang không gắn vào đâu; ngược lại hoãn |
+| `viewWillAppear` | Lấy vô điều kiện |
+| `viewDidAppear` | Lấy lại nếu vì lý do nào đó chưa giữ (lưới đỡ) |
+| `viewDidDisappear` | Nếu còn giữ: tháo surface khỏi `inputView`, runtime giữ nó |
+
+Một controller được iOS nạp sẵn không cướp được surface của controller đang hiện, vì
+surface đang hiện thì đang gắn. Tính đúng không dựa vào thứ tự iOS gọi các callback;
+thứ tự chỉ quyết định việc gắn xảy ra sớm hay muộn.
+
+Bốn luật đi kèm:
+
+- **Chỉ người giữ mới ghi được vào surface.** Controller chạm surface qua một
+  optional `ownedSurface`, là nil với mọi controller không giữ. Mọi lời gọi của
+  controller cũ vì thế tự thành không làm gì, không cần guard ở từng callback.
+- **Mất quyền là một lời gọi, không chỉ là một điều kiện.** Lúc trao, runtime gọi
+  `surrenderSurface()` trên người giữ cũ: kết thúc activation, dừng clipboard monitor
+  và các task, huỷ shortcuts loader, thả panel. `viewWillDisappear` có thể đến muộn
+  hoặc không đến.
+- **Nhận surface là nhận một surface sạch.** Trước khi nối callback về controller mới,
+  surface được đưa về trạng thái đầu: touch pipeline và key repeat đã reset, không
+  preview hay bảng alternates, thanh gợi ý trống, không có lời mời dán. Rồi controller
+  đẩy presentation và ảnh nền của mình trong một lượt.
+- **Trạng thái của phiên nhập không rò sang app khác.** Đổi người giữ là đổi phiên:
+  bộ đếm từ của phiên trong `correctionWords` bị xoá; không có Full Access thì các từ
+  đã giữ và worker gợi ý in-memory cũng bị bỏ, đúng như một controller mới ngày nay.
 
 A8 vẫn đúng và trở thành hệ quả tự nhiên: surface rời `inputView` cũ ngay lúc được
 trao, nên vòng giữ nhau giữa `inputView` và surface không hình thành.
 `KeyboardLifetimeCensus` giữ nguyên và phải luôn báo một surface.
 
-### 4.3. Chế độ an toàn
-
-Một **số đếm một byte** trong container riêng của extension, không phải nhật ký:
-không có thời gian, không có lịch sử, không có gì về người dùng. Lần claim nguội tăng
-nó trước khi bootstrap và đưa về 0 khi bootstrap xong, nên giá trị khác 0 lúc khởi
-động nghĩa là lần trước chết giữa bootstrap.
-
-| Số đếm lúc khởi động | Bàn phím khởi động với |
-|---|---|
-| 0 hoặc 1 | Bình thường |
-| 2 hoặc 3 | Bậc 1: cấu hình của người dùng (kiểu gõ, layout), nhưng theme gốc không kính, không ảnh nền, không snapshot, không gợi ý, không sửa lỗi gõ, không gõ tắt |
-| 4 trở lên | Bậc 2: `FunputConfiguration.default` hoàn toàn |
-
-Ở chế độ an toàn, bootstrap xong **không** đưa số đếm về 0 mà giữ ở ngưỡng của bậc
-đang chạy, để lần sau không thử lại cấu hình đã làm chết. Số đếm về 0 khi identity của
-cấu hình đổi (người dùng sửa cài đặt hoặc đổi theme) hoặc khi phiên bản app đổi.
-
 ---
 
 ## 5. Các việc phải làm
 
-Thứ tự B1 → B7, mỗi mục một PR.
+Ba PR xếp chồng: B1 và B2; B3; B4 và B5.
 
-### B1: Bỏ các đường tự giết (T1)
+### B1: Không còn đường tự giết (T1, T2)
 
 **Thiết kế.**
 
-1. Rà toàn bộ `precondition`, `preconditionFailure`, `fatalError`, `try!`, `as!`,
-   force unwrap trong `Keyboard/` và `Sources/`. Cái nào nhận giá trị có thể đến từ
-   cấu hình, host, đĩa hoặc layout thì đổi thành kẹp về giá trị hợp lệ hoặc trả sớm.
-2. Cái nào thật sự là bất biến của lập trình viên (hằng số trong code, `init(coder:)`
-   không bao giờ chạy, `funput_engine_new` trả null) thì giữ và ghi vào allowlist kèm
-   một dòng lý do.
-3. Script `Scripts/Quality/check-keyboard-traps.sh`: báo lỗi khi có trap mới ngoài
-   allowlist. Chạy trong job `shell-line-budget` của `.github/workflows/ci.yml`, thêm
-   một step, không đổi tên job.
-4. Mọi API của proxy trả kiểu non-optional mà chưa có trong §7 của tài liệu kia thì
-   đọc theo mẫu `documentIdentifier`.
+1. `UIKitTouchCaptureAdapter` bỏ sample có timestamp không hữu hạn trước khi tạo
+   `ContactSample`.
+2. `KeyboardPresentationFactory` kẹp `heightScale` về cùng khoảng mà
+   `KeyboardBootstrapSnapshot` dùng.
+3. Xoá `KeyboardEnterAction.validatedCustom`: không ai gọi, và nó chỉ tồn tại để trap.
+4. Script `Scripts/Quality/check-keyboard-traps.sh`: đếm `precondition`,
+   `preconditionFailure`, `fatalError` (trừ `init(coder:)`), `try!`, `as!` trong
+   `Keyboard/` và `Sources/`, so với một allowlist theo file. Thêm trap mới là phải
+   sửa allowlist, tức phải có người nhìn. Chạy trong job `shell-line-budget` của
+   `.github/workflows/ci.yml`, thêm một step, không đổi tên job.
 
-**Nghiệm thu.** Script xanh trên nhánh, đỏ khi thêm thử một `precondition` mới. Test
-cho từng chỗ đã đổi: đầu vào xấu (0, số âm, NaN, chuỗi rỗng) cho ra giá trị kẹp, không
-trap.
+**Nghiệm thu.** Script xanh trên nhánh, đỏ khi thêm thử một `precondition` mới. Test:
+adapter bỏ timestamp NaN và vô cực; factory kẹp `heightScale` 0, âm và quá lớn.
 
-### B2: Đường khởi động chỉ còn việc của frame đầu (K1 đến K4, M3, M4)
+### B2: Đường khởi động chỉ còn việc của frame đầu, ẩn là nhẹ (K1 đến K4, M3, M4, T5)
 
 **Thiết kế.**
 
 1. `KeyboardClipboardChipView` không tạo `UIPasteControl` cho tới khi nhận hint đầu
-   tiên khác nil. `apply(theme:)` chỉ ghi nhớ màu; control được dựng ở `update(hint:)`.
+   tiên khác nil. `apply(theme:)` chỉ ghi nhớ màu, và chỉ dựng lại control khi control
+   đã tồn tại.
 2. `KeyboardBootstrapSnapshotStore` tách đường đọc khỏi `AppGroupDirectory.prepare`:
-   đọc chỉ ghép URL, `prepare` chỉ chạy trước lần ghi.
-3. `haptics.prepare()` rời khỏi `init` của interaction controller, chạy ở lần chạm đầu
-   tiên (`beginTouch`); generator tự chuẩn bị lại sau mỗi lần rung như hiện nay.
-4. `sounds.prepare` rời khỏi `updateFeedback`, chạy ở lần chạm đầu tiên.
-   `KeySoundPlayerPool.play` vốn đã tự nạp style trước khi phát, nên lần bấm đầu vẫn
-   có âm; gọi `prepare` ngay lúc ngón tay chạm xuống chỉ để việc nạp bắt đầu sớm hơn.
+   khởi tạo chỉ ghép URL, `prepare` chỉ chạy trước lần ghi.
+3. `haptics.prepare()` rời khỏi `init` của interaction controller. Đổi presentation
+   không còn gọi `sounds.prepare`. Cả hai chạy ở `prepareFeedback()`, mà controller
+   gọi trong `viewDidAppear`. Lần chạm vẫn tự chuẩn bị như hiện nay.
+4. Khi bàn phím ẩn (`viewDidDisappear`): thả các player âm phím và ngừng audio
+   session. Lần hiện sau nạp lại trên queue riêng.
+5. `flushPersonalSuggestions` nghe `NSExtensionHostDidEnterBackground`.
 
-**Nghiệm thu.** Test `KeyboardRenderer`: chip mới tạo không có `UIPasteControl` trong
-cây view, có hint thì có; interaction controller mới tạo chưa gọi `prepare` trên
-haptics và sounds giả, sau `beginTouch` đầu tiên thì gọi đúng một lần. Test
-`KeyboardConfiguration`: `load()` trên thư mục chưa tồn tại không tạo thư mục. Các UI
-test clipboard hiện có vẫn xanh.
+**Nghiệm thu.** Test `KeyboardRenderer`: chip mới tạo không có `UIPasteControl`, có
+hint thì có; interaction controller mới tạo và đổi presentation không gọi `prepare`
+trên haptics và sounds giả, `prepareFeedback()` thì gọi; sau khi thả, lần phát kế tiếp
+nạp lại. Test `KeyboardConfiguration`: `load()` trên thư mục chưa tồn tại không tạo
+thư mục. Kịch bản tay: đang phát nhạc, gõ có âm phím, ẩn bàn phím, nhạc không bị ngắt
+hay giảm âm; hiện lại gõ vẫn có âm.
 
-### B3: `KeyboardRuntime`, phần nhìn thấy (T2, M1, K6, K7, K8)
-
-**Thiết kế.** Như §4.1 và §4.2, cho surface, panel, ảnh nền, cấu hình và presentation,
-các store.
-
-- `Keyboard/Runtime/`: `KeyboardRuntime` (`@MainActor`, một instance cho tiến trình),
-  `KeyboardLease`.
-- Controller giữ **computed property chuyển tiếp** cùng tên (`keyboardView`,
-  `configuration`, `selectedTheme`, …) trỏ vào runtime, để các extension hiện có không
-  phải sửa.
-- `makePrimarySurface()` tách thành tạo (một lần) và `bind(to:)` (mỗi lần claim).
-- `detachPrimarySurface()` và `reattachPrimarySurfaceIfNeeded()` chỉ chạy khi lease
-  còn hiệu lực.
-
-**Rủi ro đã biết.** Chuyển một surface có `UIGlassEffect` sang `inputView` của một
-controller khác chưa từng được làm trong code này. Nếu kính hiển thị sai sau khi
-chuyển, lùi về phương án: giữ surface theo controller như hiện nay, vẫn chia sẻ ảnh
-nền, presentation và store. Ghi lại lựa chọn ở mục **Đã đổi khi hiện thực**.
-
-**Nghiệm thu.** Test `KeyboardLease`: lease cũ hết hiệu lực sau claim mới; release
-bằng lease cũ không làm gì. UI test đổi qua lại harness và Settings 10 lần: chỉ một
-surface sống suốt, không có log fault của `KeyboardLifetimeCensus`, và surface là cùng
-một instance. Kịch bản tay: đổi app khi đang mở emoji thì app sau bắt đầu ở bàn phím
-chữ; đổi theme trong app chính rồi quay lại thì bàn phím nhận theme mới; xoay máy; bật
-Giảm độ trong suốt.
-
-### B4: `KeyboardRuntime`, phần xử lý (T3, M1, M5, K7)
-
-**Thiết kế.** Chuyển `inputCoordinator`, `personalSuggestionService`,
-`correctionWords`, `shortcutsLoader` sang runtime.
-
-- `claim` ấm gọi một hàm reset phiên trên coordinator, cho kết quả giống một
-  coordinator mới tạo rồi `apply(configuration)`.
-- Suggestion worker chỉ còn một cho cả tiến trình, nên store gợi ý cá nhân chỉ được mở
-  một lần và không còn hai worker trên cùng một file.
-- Lexicon và từ điển sửa lỗi chỉ mở một lần mỗi tiến trình.
-- `personalCounts` có trần ghi bằng hằng số; vượt thì bỏ các từ đếm thấp nhất.
-
-**Nghiệm thu.** Test `KeyboardInput`: sau reset phiên, trạng thái coordinator bằng
-trạng thái của một coordinator mới với cùng cấu hình. Test `PersonalSuggestions`:
-`personalCounts` không vượt trần. Kịch bản tay: gõ dở một từ ở app A, đổi sang app B,
-gõ tiếp thì không dính composition cũ; từ vừa học ở A được gợi ý ở B; ô mật khẩu vẫn
-tắt gõ tiếng Việt, tắt học từ, tắt mời dán.
-
-### B5: Tái dùng phím khi đổi layout (M2, K5)
+### B3: Tái dùng phím khi đổi layout (M2, K5)
 
 **Thiết kế.** `rebuildKeys()` không huỷ rồi tạo nữa. Surface giữ một **pool**
 `KeyboardKeyControl`:
 
-- đổi layout thì gán spec mới cho các control đang có theo thứ tự; lớp nền của phím
-  (kính hoặc màu) được giữ, chỉ nội dung và vai trò đổi;
+- `KeyboardKeyControl.adopt(_:)` nhận spec mới và làm lại đúng những gì `init` chỉ làm
+  một lần: nhãn và cờ accessibility (kể cả gỡ trạng thái placeholder), bật hay tắt
+  nhận vuốt ngang, đưa trạng thái nhấn và vuốt về đầu;
+- lớp nền của phím phụ thuộc phím thường hay phím chức năng, nên pool ưu tiên trao
+  control cùng nhóm để lớp kính không phải dựng lại;
 - layout mới nhiều phím hơn thì tạo thêm phần thiếu; ít hơn thì ẩn phần dư, không huỷ.
   Trần của pool là layout nhiều phím nhất;
 - `keyControls` vẫn là từ điển theo `spec.id`, dựng lại từ pool sau mỗi lần gán, nên
@@ -312,37 +267,67 @@ tắt gõ tiếng Việt, tắt học từ, tắt mời dán.
 - luật hiện có giữ nguyên: ngón tay đang đặt trên phím vẫn commit theo layout nó chạm
   vào (`suspendPresentation` và snapshot geometry theo từng contact).
 
-**Nghiệm thu.** Test `KeyboardRenderer`: chuyển chữ → số → ký hiệu → chữ, số
-`KeyboardKeyControl` được tạo bằng số phím của layout lớn nhất, không tăng thêm ở các
-vòng sau; mỗi phím sau khi gán lại có đúng nhãn, vai trò, alternates và trạng thái
-Shift của spec mới; các test rollover khi đổi layout hiện có vẫn xanh.
+**Nghiệm thu.** Test `KeyboardRenderer`: chuyển chữ → số → ký hiệu → chữ, số control
+được tạo không tăng sau vòng đầu; mỗi phím sau khi gán lại có đúng nhãn, vai trò,
+alternates, accessibility và trạng thái Shift của spec mới; placeholder của keypad bật
+lại được thành phím thường; các test rollover khi đổi layout hiện có vẫn xanh. Ảnh
+thumbnail theme (`Scripts/export-theme-thumbnails.sh`) không đổi.
 
-### B6: Ẩn là nhẹ (M3, T5)
+### B4: Một surface cho cả tiến trình (T3, M1, K6, K7, K8)
 
-**Thiết kế.** Khi release lease ở `viewDidDisappear`:
+**Thiết kế.** Như §4.1 và §4.2, cho surface, ảnh nền, cấu hình và theme đã resolve,
+các store.
 
-- thả các player âm phím và ngừng audio session (`KeySoundPlayerPool`); lần chạm đầu
-  của lần hiện sau nạp lại trên queue riêng (đường của B2);
-- panel và emoji catalog: giữ hành vi hiện tại (đã thả);
-- ảnh nền: giữ, vì chỉ còn một bản và hiện lại không được phải decode; vẫn thả khi có
-  memory warning lúc đang ẩn;
-- `flushPersonalSuggestions` đăng ký thêm `NSExtensionHostDidEnterBackground`, thông
-  báo dành cho extension.
+- `Sources/KeyboardRenderer/Surface/Hosting/`: `KeyboardSurfaceHost` (giữ surface và
+  người giữ), `KeyboardSurfaceClaimPolicy` (hàm thuần quyết định giữ, lấy hay hoãn),
+  `KeyboardSurfaceClaimant` (thứ một người giữ phải làm được). Nằm trong package để
+  test được mà không cần `UIInputViewController`.
+- `Keyboard/Runtime/`: `KeyboardRuntime` (`@MainActor`, một instance cho tiến trình)
+  và các extension của controller cho quyền giữ surface.
+- `KeyboardActivationIdentity` thêm cờ Giảm độ trong suốt: theme đã resolve có chứa
+  nó, và identity giờ sống cùng tiến trình.
+- Memory warning thả ảnh nền khi không còn ai giữ surface, hoặc người giữ đang ẩn.
 
-**Nghiệm thu.** Test `KeyboardRenderer`: sau lệnh thả, pool không còn player và lần
-`play` kế tiếp nạp lại. Kịch bản tay: đang phát nhạc, gõ có âm phím, ẩn bàn phím, nhạc
-không bị ngắt hay giảm âm; hiện lại gõ vẫn có âm.
+**Rủi ro đã biết.** Chuyển một surface có `UIGlassEffect` sang `inputView` của một
+controller khác chưa từng được làm trong code này. Nếu kính hiển thị sai sau khi
+chuyển, lùi về phương án: giữ surface theo controller như hiện nay, vẫn chia sẻ ảnh
+nền, theme đã resolve, store và service. Ghi lại lựa chọn ở mục **Đã đổi khi hiện
+thực**.
 
-### B7: Chế độ an toàn (T4)
+**Nghiệm thu.** Test `KeyboardRenderer`: bảng chân trị của policy; host giữ một
+instance qua nhiều lần claim, đúng bốn constraint sau nhiều lần gắn, người giữ cũ được
+báo đúng một lần, lệnh tháo của người giữ cũ bị bỏ qua, người giữ đã chết coi như
+trống; surface sau reset không còn gợi ý, hint, preview hay touch đang theo dõi. Kịch
+bản tay trên simulator: đổi harness và Settings 10 lần, cùng một tiến trình và cùng
+một surface, không có log fault của `KeyboardLifetimeCensus`; đổi app khi đang mở
+emoji hoặc `?123` thì app sau bắt đầu ở bàn phím chữ; giữ Backspace trong lúc đổi app
+không xoá gì ở app mới; đổi theme trong app chính rồi quay lại thì bàn phím nhận theme
+mới; xoay máy; bật Giảm độ trong suốt.
 
-**Thiết kế.** Như §4.3. `Keyboard/Runtime/Safety/`: `KeyboardBootGuard` (đọc, tăng và
-đặt lại số đếm; một hàm thuần đổi số đếm thành bậc). `bootstrapKeyboard()` rẽ nhánh
-theo bậc trước khi đọc snapshot. Làm sau B3 vì chỉ lần claim nguội mới chạm số đếm.
+### B5: Một suggestion service, một từ điển sửa lỗi (T4, M1, K7)
 
-**Nghiệm thu.** Test hàm bậc với mọi giá trị số đếm. Test bootstrap: ở bậc 1 không đọc
-snapshot, không tạo suggestion engine, theme là theme gốc không kính; bootstrap xong ở
-chế độ an toàn không đưa số đếm về 0; identity cấu hình đổi thì về 0. File số đếm
-hỏng, thiếu hoặc không ghi được thì coi là 0 và bàn phím khởi động bình thường.
+**Thiết kế.** `personalSuggestionService` và `correctionWords` chuyển sang runtime.
+
+- Một service là một worker, nên store gợi ý cá nhân chỉ được mở một lần và không còn
+  hai worker trên cùng một file. Lexicon và từ điển sửa lỗi chỉ mở một lần mỗi tiến
+  trình.
+- Controller dùng service qua một optional chỉ có với người giữ surface, cùng luật
+  với `ownedSurface`: prefix đang gõ ở app cũ không thể được hoàn thành trên thanh gợi
+  ý của app mới.
+- Đổi người giữ thì dọn phiên như §4.2.
+
+**Nghiệm thu.** Test: sau khi dọn phiên, bộ đếm từ của phiên trống; có Full Access ở
+cả hai phía thì worker được giữ, thiếu ở một phía thì worker được tạo lại. Kịch bản
+tay: gõ dở một từ ở app A, đổi sang app B, gõ tiếp thì thanh gợi ý không dính prefix
+cũ; từ vừa học ở A được gợi ý ở B; ô mật khẩu vẫn tắt gõ tiếng Việt, tắt học từ, tắt
+mời dán.
+
+### B6: đã bỏ
+
+Bản đầu của tài liệu có một chế độ an toàn: lùi về bàn phím tối thiểu sau hai lần
+bootstrap chết liền, dựa trên một số đếm ghi xuống đĩa. Khảo sát cho B1 không tìm
+thấy đường nào làm bootstrap chết, còn cơ chế thì thêm hai lần ghi đĩa vào mỗi lần
+khởi động nguội. Không làm.
 
 ---
 
@@ -353,10 +338,9 @@ hỏng, thiếu hoặc không ghi được thì coi là 0 và bàn phím khởi 
 | Chặng | Thay đổi | PR |
 |---|---|---|
 | `viewDidLoad` | Bỏ khỏi cột được phép: chuẩn bị thư mục App Group. Đọc snapshot không còn ghi gì xuống đĩa | B2 |
-| `viewDidLoad` | Lần claim ấm: gắn surface có sẵn, không tạo view, không đọc snapshot nếu identity chưa đổi | B3 |
-| `init` controller | Không tạo engine nữa: engine thuộc runtime | B4 |
-| `viewDidLoad` | Lần claim nguội: đọc và ghi một byte số đếm khởi động trong container riêng | B7 |
-| Sau `viewDidAppear` | Chuẩn bị haptics và âm phím ở lần chạm đầu tiên, không sớm hơn | B2 |
+| Sau `viewDidAppear` | Thêm: chuẩn bị haptics và âm phím. Không còn chạy trong `viewDidLoad` | B2 |
+| `viewDidLoad` | Tiến trình đã có surface và surface đang rảnh: gắn surface có sẵn, không tạo view | B4 |
+| `viewWillAppear` | Thêm: nhận surface còn đang gắn ở controller khác. Không tạo view | B4 |
 
 ---
 
@@ -365,7 +349,9 @@ hỏng, thiếu hoặc không ghi được thì coi là 0 và bàn phím khởi 
 - **Cache ảnh emoji của CoreText** vẫn không trả lại được: xem hết catalog để lại
   khoảng 30 MB cho tới khi tiến trình chết. Vòng này không đổi điều đó; nó chỉ bảo đảm
   phần còn lại của tiến trình không cộng thêm vào: không còn bản thứ hai của surface,
-  ảnh nền hay engine.
+  ảnh nền hay engine gợi ý.
+- **Mỗi controller vẫn tạo một engine gõ riêng** (§4.1). Engine không nạp từ điển nên
+  nhẹ, và đó là cái giá để văn bản không bao giờ bị tính sai giữa hai app.
 - **iOS vẫn được dọn tiến trình khi đang ẩn**, và các trường hợp ở §1.1 vẫn ra bàn
   phím hệ thống. Không có gì trong extension đổi được hai điều này.
 
@@ -373,15 +359,14 @@ hỏng, thiếu hoặc không ghi được thì coi là 0 và bàn phím khởi 
 
 ## 8. Ràng buộc cho agent hiện thực
 
-- Mỗi mục một PR nhỏ, kèm cập nhật tài liệu này và bảng §2, §3.2 của
-  STARTUP_AND_MEMORY.md.
+- Mỗi PR kèm cập nhật tài liệu này và bảng §2, §3.2 của STARTUP_AND_MEMORY.md.
 - Giữ mọi ràng buộc ở §6 và các bất biến ở §7 của tài liệu kia: không đổi hành vi ô
   mật khẩu, không thêm lần đọc nội dung pasteboard, giữ mọi signpost hiện có.
 - Không thêm nhật ký, bộ đếm thống kê hay bất kỳ dữ liệu chẩn đoán nào ghi xuống đĩa.
-  Ngoại lệ duy nhất là số đếm một byte của B7.
 - `Scripts/check-swift-loc.sh`: mỗi file Swift tối đa 150 dòng.
   `Scripts/Quality/check-keyboard-touch-layout.sh`: tối đa 5 file Swift mỗi thư mục
-  được liệt kê, nên code mới nằm trong thư mục con mới (`Keyboard/Runtime/`).
+  được liệt kê, nên code mới nằm trong thư mục con mới (`Keyboard/Runtime/`,
+  `Sources/KeyboardRenderer/Surface/Hosting/`).
 - Code và comment bằng tiếng Anh. Chữ trên giao diện bằng tiếng Việt, câu tự nhiên,
   không dùng `·` hay `—`.
 - Sau B3, B4 và B5 chạy lại kịch bản của PR #642 (emoji) và kịch bản đổi app của A7.
