@@ -312,6 +312,37 @@ fn a_file_without_the_enter_and_tab_switches_leaves_them_off() {
     assert!(!s.shortcut_on_tab);
 }
 
+/// A lone Ctrl tap did nothing before the switch existed, so turning it on takes
+/// nothing away from a file that predates it.
+#[test]
+fn a_file_without_the_ctrl_seal_switch_reads_it_as_on() {
+    let legacy = r#"{
+      "method": "vni",
+      "enabled": true,
+      "smartRestore": true,
+      "eagerRestore": true,
+      "toggleHotkey": "ctrl_backtick",
+      "launchAtLogin": false,
+      "hasCompletedOnboarding": false
+    }"#;
+    let s: Settings = serde_json::from_str(legacy).expect("legacy settings.json must decode");
+
+    assert!(s.ctrl_seals_word);
+    assert!(Settings::default().ctrl_seals_word);
+}
+
+#[test]
+fn the_ctrl_seal_switch_round_trips_when_turned_off() {
+    let s = Settings {
+        ctrl_seals_word: false,
+        ..Settings::default()
+    };
+    let text = serde_json::to_string(&s).expect("serialize");
+    assert!(text.contains("\"ctrlSealsWord\":false"));
+    let back: Settings = serde_json::from_str(&text).expect("deserialize");
+    assert!(!back.ctrl_seals_word);
+}
+
 #[test]
 fn the_enter_and_tab_switches_round_trip_when_turned_on() {
     let s = Settings {

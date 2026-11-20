@@ -7,7 +7,15 @@
 use funput_engine::{ImeResult, KeySource};
 
 use super::ShellState;
-use crate::{Caret, TriggerKey, undo_shortcut};
+use crate::{Caret, Mods, TriggerKey, undo_shortcut};
+
+/// The bare-modifier gesture that seals the word being composed.
+const CTRL_ALONE: Mods = Mods {
+    ctrl: true,
+    alt: false,
+    win: false,
+    shift: false,
+};
 
 impl ShellState {
     /// Feed one character to the engine, tagged with its physical [`KeySource`] so
@@ -84,6 +92,24 @@ impl ShellState {
         let expansion = wanted.then(|| self.engine.expand_shortcut()).flatten();
         self.caret_moved(if listing { Caret::Unknown } else { key.caret() });
         expansion
+    }
+
+    /// A bare-modifier gesture completed. When it is Ctrl on its own and the Settings
+    /// switch is on, the word being composed is sealed: it stays exactly as shown and
+    /// the next key starts a new word behind it, so `dung` Ctrl `x` gives `dungx` and
+    /// a gõ tắt trigger no longer expands at Space. Returns whether a word was sealed.
+    ///
+    /// The caret has not moved, so unlike [`ShellState::caret_moved`] this keeps the
+    /// shadow and adds the word to it: Backspace still re-opens it.
+    pub fn seal_word(&mut self, tapped: Mods) -> bool {
+        if !self.settings.ctrl_seals_word || tapped != CTRL_ALONE {
+            return false;
+        }
+        let Some(word) = self.engine.seal() else {
+            return false;
+        };
+        self.tail.commit(&word);
+        true
     }
 
     /// The caret moved without typing — a caret key, Enter, a mouse click, a focus

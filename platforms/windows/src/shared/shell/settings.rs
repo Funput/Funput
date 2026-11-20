@@ -112,6 +112,9 @@ pub fn set_flip_hotkey(hotkey: FlipHotkey) {
 pub fn set_flip_combo(combo: KeyCombo) {
     write(|s| s.set_flip_combo(combo));
 }
+pub fn set_ctrl_seals_word(on: bool) {
+    write(|s| s.set_ctrl_seals_word(on));
+}
 pub fn set_launch_at_login(on: bool) {
     write(|s| s.set_launch_at_login(on));
 }

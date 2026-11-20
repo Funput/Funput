@@ -91,6 +91,7 @@ pub(super) fn wire(window: &SettingsWindow) {
     window.on_set_smart(commands::set_smart_restore);
     window.on_set_eager(commands::set_eager_restore);
     window.on_set_spell(commands::set_spell_check);
+    window.on_set_ctrl_seals_word(commands::set_ctrl_seals_word);
     window.on_set_auto_cap(commands::set_auto_capitalize);
     window.on_set_auto_english_layout(commands::set_auto_english_layout);
     window.on_set_remember_per_app(commands::set_remember_per_app);

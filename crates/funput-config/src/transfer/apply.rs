@@ -75,6 +75,9 @@ fn apply_preferences(s: &mut Settings, prefs: &Preferences) {
     if let Some(v) = prefs.shortcut_on_tab {
         s.shortcut_on_tab = v;
     }
+    if let Some(v) = prefs.ctrl_seals_word {
+        s.ctrl_seals_word = v;
+    }
 }
 
 /// Merge by `trigger`: a matching trigger takes the incoming expansion, a new one

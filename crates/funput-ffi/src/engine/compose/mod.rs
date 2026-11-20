@@ -7,10 +7,14 @@
 //! - this file — the keystroke path and the composed buffer.
 //! - `editing` — the calls that edit a word already on screen: Backspace, the flip
 //!   hotkey, and re-opening a committed word.
+//! - `seal` — ending the word exactly as shown, for a host gesture such as a lone
+//!   Ctrl tap.
 
 mod editing;
+mod seal;
 
 pub use editing::{funput_adopt, funput_backspace, funput_flip_composing};
+pub use seal::funput_engine_seal;
 
 use funput_engine::KeySource;
 

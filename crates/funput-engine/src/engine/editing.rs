@@ -49,6 +49,25 @@ impl Engine {
         true
     }
 
+    /// End the live word exactly as it is shown, for a host gesture that says "leave
+    /// this as I see it": a lone Ctrl tap on the desktop. Returns the shown text, or
+    /// `None` with nothing composing.
+    ///
+    /// No word boundary runs: no gõ tắt, no typo correction, no English restore, and
+    /// nothing is written. The word is already on screen or in the host's preedit, so
+    /// putting it into the document is the host's job, and it can still offer the
+    /// word back to [`Engine::adopt`] when Backspace returns to it. The next key
+    /// starts a new word right behind this one, and since no key was typed the
+    /// sentence stands where it was.
+    pub fn seal(&mut self) -> Option<String> {
+        if self.session.buffer.is_empty() {
+            return None;
+        }
+        let shown = self.session.buffer.clone();
+        self.clear();
+        Some(shown)
+    }
+
     /// Synchronize engine state after a Backspace passed through to the host app.
     ///
     /// English mode keeps this too when gõ tắt is live there: a mistyped trigger has

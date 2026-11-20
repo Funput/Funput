@@ -23,6 +23,7 @@ export component SettingsWindow inherits Window {
     in property <string> flip-hotkey;
     in property <[string]> flip-hotkey-caps;
     in property <bool> flip-hotkey-conflict;
+    in-out property <bool> ctrl-seals-word;
     in-out property <bool> vi-enabled: true;
     in-out property <bool> smart-restore;
     in-out property <bool> eager-restore;
@@ -51,6 +52,7 @@ export component SettingsWindow inherits Window {
     callback pick-tone(string);
     callback pick-hotkey(string);
     callback pick-flip-hotkey(string);
+    callback set-ctrl-seals-word(bool);
     callback record-combo(string, string, bool, bool, bool, bool) -> bool;
     callback set-enabled(bool);
     callback set-smart(bool);
@@ -105,6 +107,7 @@ export component SettingsWindow inherits Window {
             flip-hotkey: root.flip-hotkey;
             flip-hotkey-caps: root.flip-hotkey-caps;
             flip-hotkey-conflict: root.flip-hotkey-conflict;
+            ctrl-seals-word <=> root.ctrl-seals-word;
             vi-enabled <=> root.vi-enabled;
             smart-restore <=> root.smart-restore;
             eager-restore <=> root.eager-restore;
@@ -128,6 +131,7 @@ export component SettingsWindow inherits Window {
             pick-tone(v) => { root.pick-tone(v); }
             pick-hotkey(v) => { root.pick-hotkey(v); }
             pick-flip-hotkey(v) => { root.pick-flip-hotkey(v); }
+            set-ctrl-seals-word(v) => { root.set-ctrl-seals-word(v); }
             record-combo(k, t, c, a, s, w) => { root.record-combo(k, t, c, a, s, w) }
             set-enabled(v) => { root.set-enabled(v); }
             set-smart(v) => { root.set-smart(v); }

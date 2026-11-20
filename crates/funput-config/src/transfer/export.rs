@@ -32,6 +32,7 @@ pub fn to_document(s: &Settings, source: Source) -> ConfigDocument {
             shortcuts_in_english: Some(s.shortcuts_in_english),
             shortcut_on_enter: Some(s.shortcut_on_enter),
             shortcut_on_tab: Some(s.shortcut_on_tab),
+            ctrl_seals_word: Some(s.ctrl_seals_word),
         }),
         shortcuts: Some(
             s.shortcuts
