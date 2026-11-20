@@ -22,6 +22,10 @@ internal class KeyRenderer(private val metrics: RenderMetrics) {
         iconRenderer.updateTheme(theme)
     }
 
+    /** Paints only the plate of [key], for a surface whose content is drawn elsewhere. */
+    fun drawSurface(canvas: Canvas, key: ResolvedKey, theme: KeyboardTheme, isPressed: Boolean) =
+        surfacePainter.draw(canvas, key, theme, isPressed, isActivated = false)
+
     fun draw(
         canvas: Canvas,
         key: ResolvedKey,

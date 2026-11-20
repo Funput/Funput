@@ -3,7 +3,7 @@ package app.funput.funput.keyboard.ui
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
 import app.funput.funput.keyboard.KeyboardHapticStrength
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
@@ -95,7 +95,7 @@ class FunputKeyboardView @JvmOverloads constructor(
             field = value
             syncSuggestions()
         }
-    var clipboardHint: KeyboardClipboardHint? by keyboardSurface::clipboardHint
+    var clipboardOffer: KeyboardClipboardOffer? by keyboardSurface::clipboardOffer
     var clipboardPanelEnabled: Boolean by clipboardState::enabled
     var clipboardEntries: List<KeyboardClipboardEntry> by clipboardState::entries
     var clipboardHistoryLoading: Boolean by clipboardState::loading

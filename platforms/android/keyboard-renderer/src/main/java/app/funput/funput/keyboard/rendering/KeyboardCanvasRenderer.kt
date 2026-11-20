@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.rendering
 
+import app.funput.funput.keyboard.rendering.clipboard.ClipboardOfferChipRenderer
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 import app.funput.funput.keyboard.suggestion.SuggestionBand
 import app.funput.funput.keyboard.suggestion.SuggestionChip
 import android.content.res.Resources
@@ -9,7 +11,7 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Shader
 import app.funput.funput.keyboard.interaction.PressedKeyState
-import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.model.KeyboardEnterAction
@@ -30,6 +32,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
     private val keyRenderer = KeyRenderer(metrics)
     private val keyPopupRenderer = KeyPopupRenderer(metrics)
     private val suggestionBarRenderer = SuggestionBarRenderer(metrics)
+    private val offerChipRenderer = ClipboardOfferChipRenderer(resources, metrics)
     private val backgroundImageRenderer = KeyboardBackgroundImageRenderer()
     private val liquidGlassBackdrop = LiquidGlassBackdropPainter()
     private var theme: KeyboardTheme = LocalKeyboardThemeCatalog.defaultTheme.theme
@@ -38,6 +41,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         this.theme = theme
         keyRenderer.updateTheme(theme, width, height)
         suggestionBarRenderer.updateTheme(theme)
+        offerChipRenderer.updateTheme(theme)
         keyPopupRenderer.updateTheme(theme)
         liquidGlassBackdrop.updateTheme(theme, width, height)
         if (width > 0 && height > 0) {
@@ -71,7 +75,7 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
         backgroundImage: KeyboardThemeBackgroundImage?,
         backgroundBitmap: Bitmap?,
         suggestions: List<SuggestionChip>,
-        clipboardHint: KeyboardClipboardHint?,
+        clipboardOffer: KeyboardClipboardOffer?,
         pressedKeys: PressedKeyState,
         shiftState: ShiftState,
         language: KeyboardLanguage,
@@ -89,8 +93,14 @@ internal class KeyboardCanvasRenderer(resources: Resources) {
                     ?: SuggestionBand.chips(suggestions, bar.suggestionsBounds)
                 suggestionBarRenderer.draw(canvas, bar.suggestionsBounds, segments, pressedKeys)
             }
+            if (clipboardOffer != null &&
+                ClipboardOfferChip.isVisible(clipboardOffer, suggestions.size, bar, metrics.dp(1f))) {
+                val plate = offerChipRenderer.plate(bar.suggestionsBounds, clipboardOffer)
+                keyRenderer.drawSurface(canvas, plate, theme, pressedKeys.isPressed(ClipboardOfferChip.TargetId))
+                offerChipRenderer.draw(canvas, plate, clipboardOffer)
+            }
         }
-        val clipboardOfferActive = clipboardHint != null
+        val clipboardOfferActive = clipboardOffer != null
         keyboard.keys.forEach { key ->
             keyRenderer.draw(
                 canvas, key, theme, pressedKeys.isPressed(key.spec.id), shiftState, language,

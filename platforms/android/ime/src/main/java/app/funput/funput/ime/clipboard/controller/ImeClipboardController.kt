@@ -107,7 +107,7 @@ internal class ImeClipboardController(
         }
     }
     fun close() { stop(); scope.cancel() }
-    fun historyCleared() { suppressOffer = false; refreshOffer() }
+    fun historyChanged(cleared: Boolean = false) { if (cleared) suppressOffer = false; refreshOffer() }
     private fun reconcileObservation() {
         val shouldObserve = session.isActive && prefs.enabled
         if (shouldObserve) {
@@ -133,9 +133,9 @@ internal class ImeClipboardController(
         val refreshStore = store
         val snapshot = gateway.snapshot()
         refreshJob = scope.launch {
-            val token = withContext(ioDispatcher) { refreshStore.lastCapturedSourceToken() }
+            val source = withContext(ioDispatcher) { refreshStore.offerSource(snapshot?.sourceToken) }
             if (session.matches(refreshGeneration) && store === refreshStore) {
-                mutableOffer.value = ClipboardOfferPolicy.offer(snapshot, token, policyContext())
+                mutableOffer.value = ClipboardOfferPolicy.offer(snapshot, source, policyContext())
             }
         }
     }
@@ -143,7 +143,7 @@ internal class ImeClipboardController(
         session.matches(value) && store === expectedStore &&
             ClipboardOfferPolicy.allowsClipboard(policyContext())
     private fun policyContext() = ClipboardOfferPolicy.Context(
-        prefs.enabled, session.isActive, session.editorMode,
+        prefs.enabled, session.isActive, session.editorMode, prefs.captureSystemCopies,
     )
     private companion object { const val MaxTextLength = 100_000 }
 }

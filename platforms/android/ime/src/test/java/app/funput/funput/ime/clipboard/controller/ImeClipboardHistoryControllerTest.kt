@@ -38,7 +38,7 @@ class ImeClipboardHistoryControllerTest {
         assertEquals(listOf(first.id), fixture.controller.state.value.entries.map { it.id })
         fixture.controller.clear()
         assertTrue(fixture.controller.state.value.entries.isEmpty())
-        assertNull(fixture.store.lastCapturedSourceToken())
+        assertNull(fixture.store.offerSource(null).lastPastedSourceToken)
         assertEquals(1, fixture.cleared)
         fixture.close()
     }
@@ -89,7 +89,7 @@ class ImeClipboardHistoryControllerTest {
         val controller = ImeClipboardHistoryController(
             scope, prefs, { ClipboardHistoryStore(directory, it) },
             { fixture.committed += it }, {}, { fixture.prepared += 1 },
-            { fixture.cleared += 1 }, Dispatchers.Unconfined,
+            { cleared -> if (cleared) fixture.cleared += 1 }, Dispatchers.Unconfined,
         )
         fixture = Fixture(controller, store, scope, directory)
         return fixture

@@ -1,9 +1,10 @@
-package app.funput.funput.keyboard.rendering
+package app.funput.funput.keyboard.rendering.clipboard
 
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import app.funput.funput.keyboard.layout.ResolvedKey
+import app.funput.funput.keyboard.rendering.RenderMetrics
 import app.funput.funput.theme.KeyboardTheme
 import kotlin.math.min
 

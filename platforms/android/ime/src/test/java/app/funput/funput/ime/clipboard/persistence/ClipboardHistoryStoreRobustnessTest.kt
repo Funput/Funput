@@ -53,7 +53,7 @@ class ClipboardHistoryStoreRobustnessTest {
         assertEquals(listOf(original), failing.remove(original.id, ClipboardEpoch))
         assertFalse(failing.clearPersisted())
         assertEquals(listOf(original), ClipboardHistoryStore(directory).load(ClipboardEpoch))
-        assertEquals("old", ClipboardHistoryStore(directory).lastCapturedSourceToken())
+        assertEquals("old", ClipboardHistoryStore(directory).offerSource(null).lastPastedSourceToken)
     }
 
     @Test
