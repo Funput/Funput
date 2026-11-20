@@ -6,7 +6,7 @@
 > trong tiến trình, hiện lại là gắn lại chứ không dựng lại, đường khởi động chỉ làm
 > việc của frame đầu, và không có đường code nào tự giết tiến trình.
 >
-> **Trạng thái:** B1 đến B3 đã hiện thực (11/2026). B4 và B5 chưa.
+> **Trạng thái:** B1 đến B5 đã hiện thực (11/2026). Chưa dùng thử trên máy thật, bản Release.
 >
 > **Cập nhật:** 20/11/2026
 >
@@ -71,7 +71,7 @@ tự chết.
 |---|---|---|---|
 | T1 | **Còn một đường tự giết nhận dữ liệu lúc chạy.** `ContactSample` trap khi timestamp không hữu hạn, mà timestamp đến thẳng từ `UITouch`, không ai kiểm trước. Các `precondition` còn lại trong package (khoảng 40) chỉ nhận hằng số trong code hoặc đã có guard ở nơi gọi, và `Keyboard/` không có trap hay force unwrap nào; nhưng không có gì giữ cho điều đó tiếp tục đúng. | `Sources/KeyboardTouchCore/Model/ContactSample.swift`, `Sources/KeyboardTouchUIKit/Capture/UIKitTouchCaptureAdapter.swift` | B1 |
 | T2 | **`heightScale` chỉ được kẹp trên đường snapshot.** Đường fallback đọc cấu hình rồi gán thẳng vào sizing; một giá trị 0 hoặc âm cho ra bàn phím cao 0. | `Sources/KeyboardConfiguration/Presentation/KeyboardPresentationFactory.swift` | B1 |
-| T3 | **Mọi thứ thuộc về controller, mà iOS dựng controller mới ở mỗi app host.** Nếu iOS dựng controller mới trước khi thả controller cũ, tiến trình giữ hai bản của surface, ảnh nền và các engine gợi ý đúng vào khoảnh khắc trình bày. Đó là lúc footprint cao nhất, và là lúc người dùng thấy hậu quả nếu tiến trình bị giết. | `Keyboard/Controller/KeyboardViewController.swift` (mọi stored property) | B4, B5 |
+| T3 | **Mọi thứ thuộc về controller, mà iOS dựng controller mới ở mỗi app host và giữ controller cũ lại.** Quan sát trên simulator iOS 27.2: controller của một app host sống chừng nào app đó còn ở nền, cho tới khi chính app đó hiện bàn phím lần nữa. Hai app là hai controller, và trước B4 là hai surface, hai bộ engine gợi ý, sống cùng lúc và suốt thời gian đó, không chỉ thoáng qua lúc chuyển. | `Keyboard/Controller/KeyboardViewController.swift` (mọi stored property) | B4, B5 |
 | T4 | **Hai worker cùng một store.** Mỗi controller có `PersonalSuggestionWorker` riêng. Khi đổi app, worker cũ có thể còn đang flush trong lúc worker mới mở cùng file store. | `Keyboard/Suggestions/PersonalSuggestionWorker.swift` | B5 |
 | T5 | **Observer flush nghe thông báo của app.** `flushPersonalSuggestions` đăng ký `UIApplication.didEnterBackgroundNotification`, không phải thông báo dành cho extension. | `Keyboard/Suggestions/KeyboardViewController+Suggestions.swift` | B2 |
 
@@ -177,6 +177,10 @@ Tại một thời điểm chỉ một controller giữ surface. Runtime nhớ n
 | `viewWillAppear` | Lấy vô điều kiện |
 | `viewDidAppear` | Lấy lại nếu vì lý do nào đó chưa giữ (lưới đỡ) |
 | `viewDidDisappear` | Nếu còn giữ: tháo surface khỏi `inputView`, runtime giữ nó |
+
+Trong thực tế đường chính là dòng đầu: controller cũ thường đã `viewDidDisappear` và
+tháo surface ra trước khi controller mới được nạp, nên controller mới gắn surface ngay
+trong `viewDidLoad`, trước frame đầu.
 
 Một controller được iOS nạp sẵn không cướp được surface của controller đang hiện, vì
 surface đang hiện thì đang gắn. Tính đúng không dựa vào thứ tự iOS gọi các callback;
@@ -345,6 +349,46 @@ emoji hoặc `?123` thì app sau bắt đầu ở bàn phím chữ; giữ Backsp
 không xoá gì ở app mới; đổi theme trong app chính rồi quay lại thì bàn phím nhận theme
 mới; xoay máy; bật Giảm độ trong suốt.
 
+**Đã đổi khi hiện thực.**
+
+- Quyền giữ là một tham chiếu weak trong `KeyboardSurfaceHost`, không có kiểu lease
+  hay số generation: "ai đang giữ" trả lời được bằng một phép so sánh.
+- `KeyboardRuntime` chỉ giữ thứ **không** mang trạng thái của document (bảng §4.1).
+  Bản thiết kế đầu định chuyển cả `currentPresentation`, `activationState`, panel và
+  coordinator; lý do giữ lại nằm ngay dưới bảng đó.
+- `applyAdoptedPresentation(claimingAt:)` tính presentation trước rồi mới xin surface,
+  nên surface dựng lần đầu thấy presentation cuối cùng, còn surface nhận lại từ app
+  khác được đẩy presentation và ảnh nền trong một lượt (`apply(presentation:
+  backgroundImage:)` có sẵn).
+- Reporter chẩn đoán touch của bản DEBUG được tạo khi surface được bind và kết thúc khi
+  controller mất surface; để theo controller như cũ thì controller cũ sẽ gỡ observer
+  của controller mới.
+- `KeyboardLifetimeCensus` không còn báo fault khi có hơn một controller: đó là cách
+  iOS chạy (T3). Nó báo khi có surface thứ hai.
+
+**Đã kiểm trên simulator** (iPhone 17 Pro Max, iOS 27.2, bản Debug, harness và
+Settings, 12 lần hiện): cùng một tiến trình, cùng một địa chỉ `KeyboardSurfaceView`,
+một lần `PrimarySurfaceCreation` duy nhất, 43 `KeyboardKeyControl` suốt; kính hiển thị
+đúng sau mỗi lần chuyển; rời app ở trang ký hiệu thì app sau bắt đầu ở trang chữ, phím
+Enter đúng kiểu của ô mới; chữ gõ vào đúng ô của app đang hiện. Cùng kịch bản trên bản
+trước B4 cho hai surface sống cùng lúc.
+
+**Chưa kiểm:** máy thật bản Release; ô mật khẩu trong Safari; nút dán sau khi chuyển
+app; memory warning; xoay máy; đổi theme và Giảm độ trong suốt giữa hai app.
+
+Riêng nút dán: simulator dùng để kiểm không có Full Access, nên bàn phím không bao giờ
+mời dán. `ClipboardPasteUITests` vì thế đỏ cả hai ca ở đó, và đỏ y hệt trên bản trước
+B1 (cùng dòng, cùng lý do), nên chúng không nói được gì về B2 hay B4. Việc dựng
+`UIPasteControl` muộn (B2) mới chỉ được kiểm bằng unit test; cần chạy bộ UI test này
+trên một simulator hoặc máy có Full Access. `KeyboardHeightRefreshUITests` có một ca
+đỏ sẵn trên `main`, trước và sau thay đổi đều cho cùng kết quả.
+
+**Còn lại, có từ trước và không do B4.** Mỗi lần hiện để lại một
+`KeyboardAudioInputView` (`inputView` của controller cũ) không được thả: 12 lần hiện
+là 12 cái, trên bản trước B4 cũng vậy. Thứ giữ nó là `_UIInputViewContent` của UIKit
+qua một associated object, không phải code của Funput. Sau A8 nó không còn kéo theo
+surface nên nhẹ, nhưng vẫn là tăng không có trần.
+
 ### B5: Một suggestion service, một từ điển sửa lỗi (T4, M1, K7)
 
 **Thiết kế.** `personalSuggestionService` và `correctionWords` chuyển sang runtime.
@@ -362,6 +406,18 @@ cả hai phía thì worker được giữ, thiếu ở một phía thì worker �
 tay: gõ dở một từ ở app A, đổi sang app B, gõ tiếp thì thanh gợi ý không dính prefix
 cũ; từ vừa học ở A được gợi ý ở B; ô mật khẩu vẫn tắt gõ tiếng Việt, tắt học từ, tắt
 mời dán.
+
+**Đã đổi khi hiện thực.**
+
+- Dọn phiên chạy trong `bind`, tức đúng lúc surface đổi người giữ:
+  `CorrectionWordSource.forgetSession()` xoá bộ đếm và các từ đã giữ (có Full Access
+  thì chúng được nạp lại từ store ngay ở activation),
+  `PersonalSuggestionService.beginSession(hasFullAccess:)` xoá thanh gợi ý và bỏ
+  worker khi một trong hai phía không có Full Access.
+- `followSeedLanguage()` chạy trong `bind` thay vì trong bootstrap: service là của
+  chung, nên chỉ nghe ngôn ngữ của controller khi controller đó thành bàn phím.
+- `flushPersonalSuggestions` không bị chặn theo quyền giữ: flush chỉ ghi những gì đã
+  học, và controller vừa mất bàn phím chính là nơi nên gọi nó.
 
 ### B6: đã bỏ
 
