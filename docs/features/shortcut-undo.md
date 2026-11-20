@@ -47,13 +47,20 @@ Hệ thống chủ phải kiểm tra tài liệu **trước** khi hỏi engine, 
 - `ShortcutUndoSession` ghi số click lúc nhịp được bật (`keyHandled`, chạy sau mỗi phím) và bỏ nhịp nếu đã click: chữ đã commit không có marked text nên IMKit không báo click. Bộ đếm chỉ được đọc khi có nhịp.
 - Nhánh Backspace với buffer rỗng (`FunputInputController.handle`) thử hoàn tác trước `reopenPreviousWord`; chế độ tiếng Anh có gõ tắt cũng vậy. Không phụ thuộc công tắc retone. Kiểm tra trượt thì `dismissShortcutUndo` rồi để app xóa.
 
+**Linux** (#737, fcitx5 và ibus dùng chung composer): không có chip, Backspace ngay sau khi bung là hoàn tác. Mã nằm ở `platforms/linux/common/compose/composer/keys/shortcut_undo.cpp`.
+
+- Chỉ ở chế độ gõ trực tiếp (không preedit). Shell tự bật chế độ này cho client báo surrounding text; preedit là đúng những client không tin được một lệnh xóa trong tài liệu, và ở đó ranh giới đã gọi `Engine::clear()`.
+- Tin tài liệu bằng chính bằng chứng mà Backspace ngoài từ đòi: journal đã đồng bộ (`inSync`), không có vùng chọn, và **tài liệu dự đoán** kết thúc bằng `funput_engine_shortcut_undo_written`. Kết quả là một `Effect::Replace` như mọi sửa chữa khác; shell không phải sửa gì. Đặt `backspaceJournaled = false` để shell không mở lại từ sau cú hoàn tác.
+- Ranh giới đọc phần bung qua `funput_process_key_text` (`Handle::processText`), không qua `FunputResult.chars`, ở cả hai chế độ. Trước đây nội dung dài hơn 64 ký tự bị cắt.
+- Enter và Tab trên Linux không bung gõ tắt (chúng là phím `NonText`), nên không có ca hoàn tác nào cho chúng.
+
 ## Giới hạn đã biết
 
 - iOS chỉ giữ một cửa sổ chữ trước con trỏ (`shadowContextLimit` = 128). Nội dung bung dài hơn cửa sổ đó không khớp `written`, nên chip ẩn và Backspace xóa như thường: an toàn nhưng chưa hoàn tác được.
 - Windows: nội dung bung dài hơn bóng chữ (256 byte) không khớp `written`, nên Backspace xóa như thường.
 - macOS: app không cho đọc văn bản trước con trỏ (Warp, Google Docs) thì không hoàn tác được, Backspace xóa như thường.
-- Linux chưa dùng tính năng này.
+- Linux: client ở chế độ preedit (chưa báo surrounding text, nằm trong danh sách hidden-preedit, sau cầu gnome-shell khi chắc chắn mất lệnh xóa, hay đã bị bắt bỏ lệnh xóa) không hoàn tác được, Backspace xóa như thường. Client trả lời trễ cũng vậy.
 
 ## Kiểm thử
 
-Engine: `tests/words/shortcut_undo.rs`, `tests/alloc_budget/shortcut.rs`. JNI: `funput-jni/src/engine/shortcuts/tests.rs`. C ABI: phần test của `funput-ffi/src/engine/shortcut_undo.rs`. Windows: `funput-desktop/tests/retone.rs`, `src/shell/tests.rs`, `src/retone/tests.rs`. Android: `ShortcutUndoTest`, `ShortcutUndoInstrumentedTest`. iOS: `KeyboardInputTests/Shortcuts/`, `FunputEngineTests/FunputShortcutUndoTests.swift`, và các ca chip ở `SuggestionBarComposerTests`, `PersonalSuggestionToolbarTests`. Test iOS không chạy trên PR: chạy `Scripts/test-funput-kit.sh` tại máy. macOS: `FunputTests/ShortcutUndo/` (`xcodebuild … test` tại máy, CI không chạy Swift).
+Engine: `tests/words/shortcut_undo.rs`, `tests/alloc_budget/shortcut.rs`. JNI: `funput-jni/src/engine/shortcuts/tests.rs`. C ABI: phần test của `funput-ffi/src/engine/shortcut_undo.rs`. Windows: `funput-desktop/tests/retone.rs`, `src/shell/tests.rs`, `src/retone/tests.rs`. Android: `ShortcutUndoTest`, `ShortcutUndoInstrumentedTest`. iOS: `KeyboardInputTests/Shortcuts/`, `FunputEngineTests/FunputShortcutUndoTests.swift`, và các ca chip ở `SuggestionBarComposerTests`, `PersonalSuggestionToolbarTests`. Test iOS không chạy trên PR: chạy `Scripts/test-funput-kit.sh` tại máy. macOS: `FunputTests/ShortcutUndo/` (`xcodebuild … test` tại máy, CI không chạy Swift). Linux: `platforms/linux/common/tests/compose/composer/keys/shortcut_undo_tests.cpp` và `boundary_tests.cpp` (job CI `linux-common`).

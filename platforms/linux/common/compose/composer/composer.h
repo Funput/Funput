@@ -6,14 +6,14 @@
 // shell performs. That split keeps one copy of the typing rules instead of the two
 // Fcitx5 and IBus drifted into, and let non-preedit arrive as an [Effect], not a shell.
 //
-// Deliberately *not* here, because they are genuinely per-framework: publishing the
-// preedit (Fcitx5 `setClientPreedit`; IBus `IBUS_ENGINE_PREEDIT_COMMIT`), including
-// who commits on focus loss — see each shell's comments; and the settings file
-// watcher, whose fd is wired into that framework's own event loop.
+// Deliberately *not* here, being per-framework: publishing the preedit (Fcitx5
+// `setClientPreedit`; IBus `IBUS_ENGINE_PREEDIT_COMMIT`), including who commits on focus
+// loss (see each shell), and the settings watcher, wired into that framework's loop.
 
 #ifndef FUNPUT_COMPOSE_COMPOSER_H
 #define FUNPUT_COMPOSE_COMPOSER_H
 
+#include <optional>
 #include <string>
 
 #include "compose/composer/nonpreedit.h"
@@ -27,8 +27,8 @@ namespace funput {
 
 class Composer {
 public:
-    // Settings are injected rather than read from disk, so a test never touches the
-    // user's real settings.json; a shell starts from defaults and `reloadSettings()`.
+    // Settings are injected, so a test never touches the user's real settings.json; a
+    // shell starts from defaults and `reloadSettings()`.
     explicit Composer(Settings settings = {});
 
     // --- typing ---------------------------------------------------------------
@@ -36,9 +36,8 @@ public:
     // Handle one key press. Key releases must be dropped by the shell first.
     ComposePlan onKey(const KeyEvent &ev);
 
-    // Commit whatever is composing and end the composition, for an event that is
-    // not a focus loss: Fcitx5's input-method-switch `deactivate()`. `consumed` is
-    // meaningless here and is left false.
+    // Commit whatever is composing and end it, for an event that is not a focus loss:
+    // Fcitx5's input-method-switch `deactivate()`. `consumed` is left false (unused).
     ComposePlan flush();
 
     // Fcitx5's `reset()`: `flush()` on a direct transport, where nothing else commits
@@ -51,9 +50,9 @@ public:
     // reset is a click or a caret move. Dropping the visible preedit is the shell's job.
     void onResetCommitted();
 
-    // Drop the composition *without* committing it. Used on focus loss, where the
-    // framework has already flushed the preedit to the client and committing again
-    // would type the word twice. Tearing down the visible preedit is the shell's job.
+    // Drop the composition *without* committing it, on focus loss: the framework has
+    // flushed the preedit already, and committing would type the word twice. Tearing
+    // down the visible preedit is the shell's job.
     void discard();
 
     // Arm auto-capitalize for the next word (a no-op unless the setting is on).
@@ -68,9 +67,8 @@ public:
     void setNonPreedit(bool on);
     bool nonPreedit() const { return nonPreedit_.on; }
 
-    // A client took focus: who it is (an empty name is a fresh question; a client
-    // caught dropping a delete keeps that verdict) and what the writes travel
-    // through. See compose/transport.h.
+    // A client took focus: who it is (an empty name is a fresh question; a client caught
+    // dropping a delete keeps that verdict) and what the writes travel through (transport.h).
     void onFocusChanged(ClientIdentity client = {});
 
     // What the writes travel through, as told at focus. A shell asks this before
@@ -124,9 +122,11 @@ private:
 
     // --- non-preedit (nonpreedit.cpp) -----------------------------------------
 
-    // One engine result as a document repair.
-    ComposePlan planFromResult(const FunputResult &result, char32_t typed);
-    // A Backspace with nothing composing: who removes the character.
+    // One engine result as a document repair, `text` being everything it wrote.
+    ComposePlan planFromResult(const FunputResult &result, char32_t typed, std::string text);
+    // A Backspace with nothing composing: a gõ tắt expansion it takes back when the
+    // document can be trusted with that (keys/shortcut_undo.cpp), else who deletes.
+    std::optional<ComposePlan> undoShortcut();
     ComposePlan backspaceOutsideWord();
     // An edit the app is about to make itself — `deleted` characters, then `typed`
     // (0 for none) — journaled so the next reading can confirm it. Passes the key on.

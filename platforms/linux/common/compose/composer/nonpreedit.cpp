@@ -68,7 +68,8 @@ Observation Composer::observeDocument(const std::string &textBeforeCaret, bool s
     return seen;
 }
 
-ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed) {
+ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed,
+                                     std::string text) {
     // ACTION_NONE means the engine produced nothing to show: the key was not part of a
     // composition, so the app types `typed` itself. That is still a change to the
     // document, and a predictable one — recorded as "delete nothing, append this" so
@@ -77,9 +78,9 @@ ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed)
     // after it wants to know. A repair that deletes nothing can never produce a
     // verdict through the comparison; only `BlindWrites` counts it, as an answer.
     if (result.action == ACTION_NONE) {
-        std::string text;
-        if (typed != 0) appendUtf8(text, static_cast<uint32_t>(typed));
-        nonPreedit_.noteRepair(0, text);
+        std::string echo;
+        if (typed != 0) appendUtf8(echo, static_cast<uint32_t>(typed));
+        nonPreedit_.noteRepair(0, echo);
         return ComposePlan::passThrough();
     }
     // A live selection that is not a suffix after the caret is the user's own
@@ -89,7 +90,6 @@ ComposePlan Composer::planFromResult(const FunputResult &result, char32_t typed)
         discard();
         return ComposePlan::passThrough();
     }
-    std::string text = Handle::output(result);
     nonPreedit_.noteRepair(result.backspace, text);
     ComposePlan plan = ComposePlan::replace(result.backspace, std::move(text));
     plan.deleteAfterChars = nonPreedit_.selectionAfter;
