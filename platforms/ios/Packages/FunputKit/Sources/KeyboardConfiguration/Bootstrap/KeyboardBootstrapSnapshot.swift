@@ -15,7 +15,7 @@ public struct KeyboardBootstrapSnapshot: Codable, Hashable, Sendable {
     ) {
         var normalized = configuration
         normalized.schemaVersion = FunputConfiguration.currentSchemaVersion
-        normalized.heightScale = min(max(normalized.heightScale, 0.85), 1.2)
+        normalized.heightScale = normalized.clampedHeightScale
         normalized.selectedThemeID = selectedTheme.id
         schemaVersion = Self.currentSchemaVersion
         self.configuration = normalized

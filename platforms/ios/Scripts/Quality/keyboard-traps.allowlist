@@ -1,0 +1,40 @@
+# Trap sites the keyboard keeps: `<count> <path from platforms/ios>`.
+# Read by check-keyboard-traps.sh, which fails when the code and this list differ.
+# Every entry is a programmer invariant: the checked value is written in code, or
+# its only caller checks it first. Nothing here may see a value from configuration,
+# the host app, disk, a touch, or the layout size.
+
+# The engine handle. `funput_engine_new` always returns a boxed engine.
+1 Packages/FunputKit/Sources/FunputEngine/FunputComposer.swift
+
+# Layout models, built only by the preset factories from literals.
+1 Packages/FunputKit/Sources/KeyboardLayout/Alternates/KeyAlternate.swift
+3 Packages/FunputKit/Sources/KeyboardLayout/Models/KeySpec.swift
+6 Packages/FunputKit/Sources/KeyboardLayout/Models/KeyboardLayout.swift
+1 Packages/FunputKit/Sources/KeyboardLayout/Presets/Keypad/NumberKeyboardLayouts.swift
+
+# Sizing. The initializer only runs for the built-in profiles; user and theme values
+# are assigned afterwards and clamped where they are read from storage.
+9 Packages/FunputKit/Sources/KeyboardLayout/KeyboardSizingProfile.swift
+
+# Geometry. The surface returns early on an empty size before resolving.
+1 Packages/FunputKit/Sources/KeyboardLayout/KeyboardGeometry.swift
+
+# Gesture tuning constants.
+2 Packages/FunputKit/Sources/KeyboardRenderer/Interaction/Gestures/BackspaceRepeatController.swift
+2 Packages/FunputKit/Sources/KeyboardRenderer/Interaction/Gestures/BackspaceWordRatchet.swift
+2 Packages/FunputKit/Sources/KeyboardRenderer/Interaction/Gestures/KeySwipeGestureTracker.swift
+1 Packages/FunputKit/Sources/KeyboardRenderer/Interaction/Gestures/SpaceCursorPanTracker.swift
+1 Packages/FunputKit/Sources/KeyboardTouchCore/Model/PressArbiterConfiguration.swift
+2 Packages/FunputKit/Sources/KeyboardTouchCore/Resolution/ContactResolverConfiguration.swift
+
+# The alternates palette. Its caller derives the index from a non-empty list.
+1 Packages/FunputKit/Sources/KeyboardRenderer/Keys/Preview/KeyboardAlternatePaletteLayout.swift
+
+# 64-bit counters that advance once per touch or layout pass.
+1 Packages/FunputKit/Sources/KeyboardTouchCore/Arbitration/PressArbiter.swift
+1 Packages/FunputKit/Sources/KeyboardTouchUIKit/Capture/UIKitTouchIdentityMap.swift
+1 Packages/FunputKit/Sources/KeyboardTouchUIKit/Pipeline/KeyboardTouchPipeline.swift
+
+# A touch timestamp. `UIKitTouchCaptureAdapter` replaces one that is not finite.
+1 Packages/FunputKit/Sources/KeyboardTouchCore/Model/ContactSample.swift

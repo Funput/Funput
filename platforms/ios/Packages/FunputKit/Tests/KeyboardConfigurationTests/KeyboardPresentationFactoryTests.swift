@@ -111,6 +111,18 @@ struct KeyboardPresentationFactoryTests {
         #expect(sizing.heightScale == 1)
     }
 
+    /// Stored configuration is decoded as written, and a height of zero is a
+    /// keyboard the user cannot see.
+    @Test("A stored height outside the supported range is brought back into it", arguments: [
+        (0.0, 0.85), (-3.0, 0.85), (9.0, 1.2), (Double.nan, 1.0), (Double.infinity, 1.0), (0.9, 0.9),
+    ])
+    func heightScaleIsClamped(stored: Double, expected: Double) {
+        var config = FunputConfiguration.default
+        config.heightScale = stored
+        let sizing = KeyboardPresentationFactory.make(from: config).sizing
+        #expect(sizing.heightScale == CGFloat(expected))
+    }
+
     private func resolved(_ theme: KeyboardTheme) -> ResolvedTheme {
         ThemeRuntime.resolve(
             theme,

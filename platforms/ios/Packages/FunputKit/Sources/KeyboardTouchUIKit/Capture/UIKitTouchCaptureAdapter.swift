@@ -78,10 +78,17 @@ public final class UIKitTouchCaptureAdapter {
         ContactSample(
             id: id,
             phase: phase,
-            timestamp: touch.timestamp,
+            timestamp: Self.usableTimestamp(touch.timestamp),
             location: touch.location(in: view),
             previousLocation: touch.previousLocation(in: view)
         )
+    }
+
+    /// `ContactSample` traps on a timestamp that is not finite, and this one comes
+    /// straight from the system. Dropping such a sample could leave a key held down,
+    /// so the contact keeps running on the current uptime, the clock `UITouch` uses.
+    static func usableTimestamp(_ timestamp: TimeInterval) -> TimeInterval {
+        timestamp.isFinite ? timestamp : ProcessInfo.processInfo.systemUptime
     }
 }
 #endif

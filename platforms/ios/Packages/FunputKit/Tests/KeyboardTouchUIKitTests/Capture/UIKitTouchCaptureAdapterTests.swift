@@ -30,6 +30,23 @@ struct UIKitTouchCaptureAdapterTests {
         #expect(ended[0].id == began[0].id)
     }
 
+    /// `ContactSample` traps on such a timestamp, and a trap in the keyboard is the
+    /// system keyboard taking over. The contact has to run its course regardless.
+    @Test(arguments: [TimeInterval.nan, .infinity, -.infinity])
+    func timestampThatIsNotFiniteStillYieldsEverySample(timestamp: TimeInterval) {
+        let adapter = UIKitTouchCaptureAdapter()
+        let view = UIView()
+        let touch = ShadowStubTouch()
+        touch.stubTimestamp = timestamp
+
+        let began = adapter.samples(for: [touch], phase: .began, in: view)
+        let ended = adapter.samples(for: [touch], phase: .ended, in: view)
+
+        #expect(began.count == 1)
+        #expect(began[0].timestamp.isFinite)
+        #expect(ended.first?.id == began[0].id)
+    }
+
     /// Retiring the old contact is a policy choice, not an observation. It is reported so the
     /// field data can say whether UIKit actually recycles a `UITouch` this way — the answer
     /// decides whether the policy stays.

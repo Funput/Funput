@@ -9,9 +9,4 @@ public enum KeyboardEnterAction: Hashable, Sendable {
     case done
     case previous
     case custom(String)
-
-    public static func validatedCustom(_ label: String) -> Self {
-        precondition(!label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        return .custom(label)
-    }
 }
