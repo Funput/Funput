@@ -7,7 +7,7 @@
 //! the prefix, so it is still a completion of what the user is typing.
 
 use super::Contexts;
-use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
+use crate::bigram::follower::{FOLLOWER_SLOTS, Follower, ranked};
 use crate::engine::{MAX_TOKEN_SCALARS, SuggestionEngine};
 use crate::index::{NONE, TOP_K, marks, normalize};
 use crate::ngram::MAX_CONTEXT;
@@ -50,21 +50,14 @@ impl SuggestionEngine {
     }
 
     /// The live followers that `typed` could still become, most used first.
-    /// Four slots, so the ordering is done in place.
     fn matching_followers(
         &self,
         followers: &[Follower; FOLLOWER_SLOTS],
         typed: &str,
         out: &mut [u32],
     ) -> usize {
-        let mut slots = *followers;
         let mut len = 0;
-        for index in 0..FOLLOWER_SLOTS {
-            let Some(strongest) = (index..FOLLOWER_SLOTS).max_by_key(|&at| slots[at].uses) else {
-                break;
-            };
-            slots.swap(index, strongest);
-            let follower = slots[index];
+        for follower in ranked(*followers) {
             if follower.uses < self.config.context_rerank_uses {
                 // Sorted by uses, so nothing after this one clears the bar either.
                 break;

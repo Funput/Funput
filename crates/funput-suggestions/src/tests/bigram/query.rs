@@ -173,22 +173,24 @@ fn a_dominant_pair_speaks_after_a_space() {
 fn a_flat_context_stays_silent() {
     let mut engine = engine(SuggestionConfig::default());
     engine.learn_after(None, "của");
-    // Four followers sharing the sightings evenly. Every one of them clears the
-    // use threshold; none of them accounts for enough of "của" to be worth
-    // saying, which is the whole distinction this mode rests on.
-    for word in ["tôi", "bạn", "anh", "chị"] {
+    // More followers than the bar has slots, sharing the sightings evenly. The
+    // ones the store kept clear the use threshold; no three of them account for
+    // enough of "của" to be worth saying, which is the whole distinction this
+    // mode rests on.
+    let followers = ["tôi", "bạn", "anh", "chị", "em", "họ", "nó", "mình"];
+    for word in followers {
         for _ in 0..3 {
             engine.learn_after(Some("của"), word);
         }
     }
     assert!(
         predicted(&engine, "của").is_empty(),
-        "a context that can be followed by anything must not offer one of them"
+        "a context that can be followed by anything must not offer three of them"
     );
 }
 
 #[test]
-fn only_the_leader_is_offered() {
+fn a_follower_below_the_use_threshold_is_not_offered() {
     let mut engine = engine(SuggestionConfig::default());
     engine.learn_after(None, "xin");
     for _ in 0..8 {
@@ -198,6 +200,22 @@ fn only_the_leader_is_offered() {
         engine.learn_after(Some("xin"), "lỗi");
     }
     assert_eq!(predicted(&engine, "xin"), ["chào"]);
+}
+
+#[test]
+fn every_habit_is_offered_most_used_first() {
+    let mut engine = engine(SuggestionConfig::default());
+    engine.learn_after(None, "xin");
+    for (word, times) in [("phép", 3), ("chào", 8), ("lỗi", 5), ("mời", 4)] {
+        for _ in 0..times {
+            engine.learn_after(Some("xin"), word);
+        }
+    }
+    assert_eq!(
+        predicted(&engine, "xin"),
+        ["chào", "lỗi", "mời"],
+        "the bar has three slots"
+    );
 }
 
 #[test]
@@ -223,7 +241,7 @@ fn a_pair_below_the_use_threshold_stays_silent() {
 }
 
 #[test]
-fn a_context_with_two_habits_waits_for_one_to_lead() {
+fn a_context_with_two_habits_offers_both_once_both_are_habits() {
     // The case `funput dev suggest` caught: `hôm nay` twice, then `hôm qua`.
     let mut engine = engine(SuggestionConfig::default());
     engine.learn_after(None, "hôm");
@@ -240,13 +258,14 @@ fn a_context_with_two_habits_waits_for_one_to_lead() {
     assert_eq!(
         predicted(&engine, "hôm"),
         ["nay"],
-        "3 of 5 is 60%: it leads"
+        "3 of 5 is 60%: it leads, and `qua` is no habit yet"
     );
 
     engine.learn_after(Some("hôm"), "qua");
-    assert!(
-        predicted(&engine, "hôm").is_empty(),
-        "3 of 6 is a coin toss, and a wrong guess is worse than silence"
+    assert_eq!(
+        predicted(&engine, "hôm"),
+        ["nay", "qua"],
+        "3 and 3 of 6: neither leads, and the bar has room for both"
     );
 }
 

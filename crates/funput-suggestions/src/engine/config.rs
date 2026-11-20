@@ -26,18 +26,18 @@ pub struct SuggestionConfig {
     /// with the same follower is 2 of 2, a share no dominance test can question,
     /// and `hôm nay` twice made every later `hôm` say `nay` (`funput dev suggest`).
     pub context_predict_uses: u16,
-    /// What share of a context word's sightings its strongest follower has to
-    /// account for before the bar says anything. This is the whole of the
-    /// feature's judgement: "cảm" is nearly always followed by "ơn" and clears it
-    /// at once, while "của" can be followed by anything and never will. The
-    /// share is the leader's own hit rate so far, so it is set near the hit rate
-    /// Predict should keep (70%), a little under to leave room for a word the
-    /// user's habits are still settling on.
+    /// What share of a context's sightings the followers Predict offers have to
+    /// account for, between them, before the bar says anything. This is the
+    /// whole of the feature's judgement: "cảm" is nearly always followed by "ơn"
+    /// and clears it at once, "hôm" clears it with "nay" and "qua" together, and
+    /// "của" can be followed by anything and never will. The share is how often
+    /// the bar has held the next word so far, so it is set a little under the
+    /// rate Predict should keep (70%), to leave room for habits still settling.
     pub context_dominance_percent: u8,
-    /// How often a word must have been seen as a context before Predict's silence
-    /// counts as the user's answer. Below it, the user's pairs have no evidence
-    /// either way and shipped data may speak for them; past it, a Predict that
-    /// says nothing means what follows is spread out, and nothing fills the slot.
+    /// How often a word must have been seen as a context before the user's own
+    /// typing outranks shipped data about it. Below it, the user's pairs have no
+    /// evidence either way and every shipped follower may speak; past it, a
+    /// shipped follower stays only if the user follows the context with it too.
     pub context_evidence_seen: u16,
     /// How many words of context Predict and Rerank read, plus one: 2 is the word
     /// before only, 3 adds the two words before. Clamped to what the engine holds.
