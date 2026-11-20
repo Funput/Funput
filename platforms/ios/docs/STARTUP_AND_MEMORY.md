@@ -21,6 +21,11 @@ Bối cảnh: [issue #641](https://github.com/Funput/Funput/issues/641).
 [PR #642](https://github.com/Funput/Funput/pull/642) đã xử lý nguyên nhân jetsam chính
 (bộ nhớ emoji). Tài liệu này chốt kiến trúc và các việc còn lại.
 
+Vòng tiếp theo, [issue #751](https://github.com/Funput/Funput/issues/751), nằm ở
+[KEYBOARD_RELIABILITY.md](KEYBOARD_RELIABILITY.md): các chỗ còn chưa tốt về độ tin
+cậy, bộ nhớ và khởi động, và kiến trúc để tiến trình giữ mỗi thứ nặng một bản (B1 đến
+B7). Tài liệu đó sửa vài dòng của hợp đồng ở §2 dưới đây, liệt kê ở §6 của nó.
+
 **Quy ước đường dẫn:** mọi đường dẫn tính từ `platforms/ios/`. Code trong Swift
 package viết đầy đủ `Packages/FunputKit/Sources/<Module>/…`.
 
