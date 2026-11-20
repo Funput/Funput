@@ -35,7 +35,6 @@ internal class EmojiBottomBarView(context: Context) : KeyboardPanelComposeView(c
     var onKaomojiRequested: () -> Unit = {}
     var onBackspaceRequested: () -> Unit = {}
     var onCategoryRequested: (EmojiCategory) -> Unit = {}
-    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var selectedCategory by mutableStateOf(EmojiCategory.SMILEYS_PEOPLE)
 
     init { setContent { Content() } }

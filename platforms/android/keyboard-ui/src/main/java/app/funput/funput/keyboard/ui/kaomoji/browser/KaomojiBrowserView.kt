@@ -47,7 +47,6 @@ internal class KaomojiBrowserView(context: Context) : KeyboardPanelComposeView(c
     var onKaomojiSelected: (KaomojiItem) -> Unit = {}
     var onCategoryChanged: (KaomojiCategory) -> Unit = {}
     private var sections by mutableStateOf(KaomojiSections(emptyList()))
-    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var loaded by mutableStateOf(false)
     private var requestedCategory by mutableStateOf<KaomojiCategory?>(null)
     private var requestId by mutableIntStateOf(0)

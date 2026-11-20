@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.funput.funput.keyboard.ui.R
-import app.funput.funput.keyboard.ui.clipboard.ClipboardPinAction
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 import app.funput.funput.keyboard.ui.panel.KeyboardPanelPalette
 import java.time.Instant

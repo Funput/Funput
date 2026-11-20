@@ -3,6 +3,7 @@ package app.funput.funput.keyboard.ui.panel
 import app.funput.funput.theme.KeyboardThemeDescriptor
 import app.funput.funput.theme.LocalKeyboardThemeCatalog
 import app.funput.funput.theme.validation.ContrastRatio
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -36,6 +37,15 @@ class KeyboardPanelPaletteTest {
             )
             assertTrue(ContrastRatio.between(palette.secondaryLabel, 0, palette.backgroundEnd) >= 3.0)
         }
+    }
+
+    @Test fun `press feedback never hides what it is drawn over`() {
+        LocalKeyboardThemeCatalog.themes.map(KeyboardThemeDescriptor::theme).forEach { theme ->
+            assertTrue(KeyboardPanelPalette.from(theme).pressed ushr 24 in 1..0x66)
+        }
+        // An opaque pressed-key token is thinned; a missing one falls back to the label ink.
+        assertEquals(0x66112233, KeyboardPanelPalette.pressOverlay(0xFF112233.toInt(), 0))
+        assertEquals(0x1FABCDEF, KeyboardPanelPalette.pressOverlay(0x00000000, 0xFFABCDEF.toInt()))
     }
 
     @Test fun `clipboard foreground falls back on extreme custom backgrounds`() {

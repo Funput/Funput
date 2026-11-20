@@ -11,6 +11,8 @@ internal data class KeyboardPanelPalette(
     val divider: Int,
     val searchSurface: Int,
     val buttonSurface: Int,
+    /** Translucent wash drawn over a pressed element; see [pressOverlay]. */
+    val pressed: Int,
 ) {
     fun solidSurface(surface: Int): Int = surface.compositedOver(backgroundEnd)
 
@@ -32,7 +34,19 @@ internal data class KeyboardPanelPalette(
             divider = theme.suggestionDividerColor,
             searchSurface = theme.keyColor.compositedOver(theme.backgroundEndColor),
             buttonSurface = theme.specialKeyColor,
+            pressed = pressOverlay(theme.pressedKeyColor, theme.labelColor),
         )
+
+        /**
+         * A pressed key is repainted in [pressedKey], but a panel draws the press over its
+         * content, so an opaque token is thinned until that content still reads through it.
+         * A theme with no pressed colour falls back to a faint wash of its [label] ink.
+         */
+        internal fun pressOverlay(pressedKey: Int, label: Int): Int {
+            val alpha = pressedKey ushr 24
+            if (alpha == 0) return (label and Rgb) or (FallbackPressAlpha shl 24)
+            return (pressedKey and Rgb) or (minOf(alpha, MaxPressAlpha) shl 24)
+        }
 
         private fun Int.compositedOver(background: Int): Int {
             val alpha = (this ushr 24) / 255f
@@ -67,5 +81,8 @@ private fun luminance(color: Int): Double {
 }
 
 private const val Opaque = -0x1000000
+private const val Rgb = 0x00FFFFFF
+private const val MaxPressAlpha = 0x66
+private const val FallbackPressAlpha = 0x1F
 private const val Black = -0x1000000
 private const val White = -0x1
