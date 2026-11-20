@@ -12,8 +12,7 @@
 
 use std::ffi::c_void;
 
-use super::{FunputEngine, FunputResult};
-use crate::abi;
+use crate::{FunputEngine, FunputResult, abi};
 
 /// Whether the last expansion can still be taken back, and the word it replaced.
 ///
@@ -121,35 +120,9 @@ pub unsafe extern "C" fn funput_engine_dismiss_shortcut_undo(engine: *mut Funput
 
 #[cfg(test)]
 mod tests {
+    use super::super::testing::{add, collect, type_keys};
     use super::*;
     use crate::*;
-
-    unsafe extern "C" fn collect(context: *mut c_void, bytes: *const u8, len: usize) {
-        unsafe {
-            let output = &mut *context.cast::<String>();
-            *output = String::from_utf8(std::slice::from_raw_parts(bytes, len).to_vec()).unwrap();
-        }
-    }
-
-    fn add(engine: *mut FunputEngine, trigger: &str, expansion: &str) {
-        let trigger: Vec<u32> = trigger.chars().map(u32::from).collect();
-        let expansion: Vec<u32> = expansion.chars().map(u32::from).collect();
-        unsafe {
-            funput_add_shortcut(
-                engine,
-                trigger.as_ptr(),
-                trigger.len(),
-                expansion.as_ptr(),
-                expansion.len(),
-            );
-        }
-    }
-
-    fn type_keys(engine: *mut FunputEngine, keys: &str) {
-        for key in keys.chars() {
-            unsafe { funput_process_char(engine, key as u32) };
-        }
-    }
 
     fn word(engine: *const FunputEngine) -> Option<String> {
         let mut text = String::new();

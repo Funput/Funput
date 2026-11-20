@@ -40,6 +40,13 @@ pub struct Settings {
     /// Whether the table also expands while Vietnamese is off.
     #[serde(default = "on")]
     pub shortcuts_in_english: bool,
+    /// Whether Enter, then Tab, also expand a trigger, the key then reaching the app.
+    /// **Off** by default and when absent: Enter sends in a chat, Tab accepts a
+    /// completion, so an expansion there has to be asked for.
+    #[serde(default)]
+    pub shortcut_on_enter: bool,
+    #[serde(default)]
+    pub shortcut_on_tab: bool,
 }
 
 fn on() -> bool {
@@ -79,6 +86,8 @@ impl Default for Settings {
             shortcuts_enabled: true,
             shortcut_smart_case: true,
             shortcuts_in_english: true,
+            shortcut_on_enter: false,
+            shortcut_on_tab: false,
         }
     }
 }

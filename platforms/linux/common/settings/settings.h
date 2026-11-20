@@ -65,6 +65,12 @@ struct Settings {
     // Whether the table also expands while Vietnamese is off ("Gõ tắt cả khi ở
     // chế độ tiếng Anh"). Same default-on rule as the two switches above.
     bool shortcutsInEnglish = true;
+    // Whether Enter, then Tab, also expand a trigger, the key then going on to the app
+    // ("Bung gõ tắt khi bấm Enter" / "… Tab"). Off when absent: Enter sends in a chat
+    // and Tab accepts a completion, so an expansion there must be asked for. Owned by
+    // the Settings UI, read here and never written back by `save()`.
+    bool shortcutOnEnter = false;
+    bool shortcutOnTab = false;
     // The diagnostic trace (common/trace/). Hidden keys — the Settings app has no
     // page for them and drops them when it saves — read live like everything else,
     // because the engines are daemon-spawned and an environment variable would not

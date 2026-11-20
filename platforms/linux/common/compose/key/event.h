@@ -29,7 +29,9 @@ inline constexpr uint32_t UpperZ = 0x005A;
 inline constexpr uint32_t LowerX = 0x0078;
 inline constexpr uint32_t LowerZ = 0x007A;
 inline constexpr uint32_t BackSpace = 0xFF08;
+inline constexpr uint32_t Tab = 0xFF09;
 inline constexpr uint32_t Return = 0xFF0D;
+inline constexpr uint32_t KP_Enter = 0xFF8D;
 } // namespace keysym
 
 // Modifiers held when a key was pressed. Shift is tracked but does *not* by itself

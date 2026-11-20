@@ -22,7 +22,8 @@ ExtraOnsetLetters parseOnsets(const json &data) {
 
 // The trace switches are typed by hand, so `1` or `"true"` will happen. `value()`
 // would throw on the type, and nothing between here and the inotify callback
-// catches, so a near miss would take the engine down. It reads as off instead.
+// catches, so a near miss would take the engine down. It reads as off instead, which
+// also suits every other switch whose absence means off.
 bool flag(const json &data, const char *key) {
     const auto value = data.find(key);
     return value != data.end() && value->is_boolean() && value->get<bool>();
@@ -61,6 +62,8 @@ bool Settings::reload() {
     shortcutsEnabled = data.value("shortcutsEnabled", shortcutsEnabled);
     shortcutSmartCase = data.value("shortcutSmartCase", shortcutSmartCase);
     shortcutsInEnglish = data.value("shortcutsInEnglish", shortcutsInEnglish);
+    shortcutOnEnter = flag(data, "shortcutOnEnter");
+    shortcutOnTab = flag(data, "shortcutOnTab");
     toggleHotkey = parseHotkey(data.value("toggleHotkey", std::string(hotkeyString(toggleHotkey))));
     flipHotkey = parseFlip(data.value("flipHotkey", std::string(flipString(flipHotkey))));
     // Absent is off, not "keep the current value": the Settings app rewrites the file
@@ -84,8 +87,9 @@ bool Settings::reload() {
            toggleHotkey != previous.toggleHotkey || flipHotkey != previous.flipHotkey ||
            shortcuts != previous.shortcuts || shortcutsEnabled != previous.shortcutsEnabled ||
            shortcutSmartCase != previous.shortcutSmartCase ||
-           shortcutsInEnglish != previous.shortcutsInEnglish || trace != previous.trace ||
-           traceRaw != previous.traceRaw;
+           shortcutsInEnglish != previous.shortcutsInEnglish ||
+           shortcutOnEnter != previous.shortcutOnEnter || shortcutOnTab != previous.shortcutOnTab ||
+           trace != previous.trace || traceRaw != previous.traceRaw;
 }
 
 bool Settings::sameTyping(const Settings &other) const {
@@ -118,7 +122,8 @@ void Settings::save() const {
     data.erase("nonPreedit");
     // Nor `trace` / `traceRaw`: they are switched by editing the file, so the file is
     // their only owner. The merge keeps whatever it says; the struct's copy is never
-    // written, so a VI/EN toggle can neither start a trace nor stop one.
+    // written, so a VI/EN toggle can neither start a trace nor stop one. Nor
+    // `shortcutOnEnter` / `shortcutOnTab`, which only the Settings app changes.
     data["shortcutsEnabled"] = shortcutsEnabled;
     data["shortcutSmartCase"] = shortcutSmartCase;
     data["shortcutsInEnglish"] = shortcutsInEnglish;

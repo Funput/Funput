@@ -1,6 +1,21 @@
-//! Text-expansion shortcut (gõ tắt) table sync over the C ABI.
+//! Text-expansion shortcut (gõ tắt) over the C ABI: syncing the table and its
+//! switches here, and the calls a host makes around an expansion beside it.
+//!
+//! - [`undo`] — taking the last expansion back with one Backspace.
+//! - [`expand`] — expanding for Enter or Tab, which the app still receives.
+
+mod expand;
+#[cfg(test)]
+mod testing;
+mod undo;
 
 use std::ffi::c_void;
+
+pub use expand::funput_engine_expand_shortcut;
+pub use undo::{
+    funput_engine_dismiss_shortcut_undo, funput_engine_shortcut_undo_text,
+    funput_engine_shortcut_undo_written, funput_engine_undo_shortcut,
+};
 
 use super::{FunputEngine, FunputResult, compose::decode_source};
 use crate::abi;
@@ -168,15 +183,9 @@ mod tests {
 
 #[cfg(test)]
 mod text_tests {
+    use super::testing::collect;
     use super::*;
     use crate::*;
-
-    unsafe extern "C" fn collect(context: *mut c_void, bytes: *const u8, len: usize) {
-        unsafe {
-            let output = &mut *context.cast::<String>();
-            *output = String::from_utf8(std::slice::from_raw_parts(bytes, len).to_vec()).unwrap();
-        }
-    }
 
     #[test]
     fn complete_output_and_null_inputs() {

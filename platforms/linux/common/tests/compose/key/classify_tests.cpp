@@ -85,7 +85,6 @@ TEST_CASE("Backspace is matched on its keysym, and Ctrl+Backspace is not") {
 
 TEST_CASE("a key with no character is NonText") {
     Settings settings;
-    CHECK(classify(bare(keysym::Return), settings) == KeyKind::NonText);
     CHECK(classify(bare(0xFF51), settings) == KeyKind::NonText); // Left arrow
 }
 
@@ -94,12 +93,29 @@ TEST_CASE("a control character is a key, not text") {
     // What the shells really send. Reading these as characters put Enter and Tab on
     // the word-boundary path, where the key was swallowed and its CR appended to the
     // commit, and put Escape on the composing path, where it was fed to the engine.
-    CHECK(classify(control(keysym::Return, U'\r'), settings) == KeyKind::NonText);
-    CHECK(classify(control(0xFF8D, U'\r'), settings) == KeyKind::NonText);  // KP_Enter
-    CHECK(classify(control(0xFF09, U'\t'), settings) == KeyKind::NonText);  // Tab
+    CHECK(classify(control(keysym::Return, U'\r'), settings) == KeyKind::Trigger);
+    CHECK(classify(control(keysym::KP_Enter, U'\r'), settings) == KeyKind::Trigger);
+    CHECK(classify(control(keysym::Tab, U'\t'), settings) == KeyKind::Trigger);
     CHECK(classify(control(0xFF1B, U'\x1B'), settings) == KeyKind::NonText); // Escape
     // Space is not a control character and must stay a word boundary.
     CHECK(classify(ascii(' '), settings) == KeyKind::Boundary);
+}
+
+TEST_CASE("Enter and Tab end the word but reach the app; their shortcut forms do not") {
+    Settings settings;
+    KeyEvent shiftEnter = control(keysym::Return, U'\r');
+    shiftEnter.mods.shift = true; // breaks a line where plain Enter sends
+    CHECK(classify(shiftEnter, settings) == KeyKind::Trigger);
+    KeyEvent shiftTab = control(keysym::Tab, U'\t');
+    shiftTab.mods.shift = true; // moves focus backwards: never ends a word typed in
+    CHECK(classify(shiftTab, settings) == KeyKind::NonText);
+    CHECK(classify(control(0xFE20, U'\t'), settings) == KeyKind::NonText); // ISO_Left_Tab
+    KeyEvent ctrlEnter = control(keysym::Return, U'\r');
+    ctrlEnter.mods.ctrl = true; // an app's own shortcut
+    CHECK(classify(ctrlEnter, settings) == KeyKind::Shortcut);
+    KeyEvent altTab = control(keysym::Tab, U'\t');
+    altTab.mods.alt = true;
+    CHECK(classify(altTab, settings) == KeyKind::Shortcut);
 }
 
 TEST_CASE("numpad digits are told apart from top-row digits") {

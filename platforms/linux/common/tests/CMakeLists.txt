@@ -28,6 +28,7 @@ add_executable(funput_linux_tests
     compose/composer/keys/boundary_tests.cpp
     compose/composer/keys/flip_tests.cpp
     compose/composer/keys/shortcut_undo_tests.cpp
+    compose/composer/keys/trigger_tests.cpp
     compose/composer/state_tests.cpp
     compose/composer/state/onsets_tests.cpp
     compose/composer/state/applied_tests.cpp
@@ -59,6 +60,7 @@ add_executable(funput_linux_tests
     settings/lookup_tests.cpp
     settings/io_tests.cpp
     settings/save_tests.cpp
+    settings/shortcut_keys_tests.cpp
     settings/typing_tests.cpp
     settings/onsets/letters_tests.cpp
     trace/summary/siphash_tests.cpp

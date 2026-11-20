@@ -113,11 +113,11 @@ public:
     const Settings &settings() const { return settings_; }
 
 private:
-    // Commit the composing word and end the composition. `consumed` is the caller's
-    // call: a word boundary swallows its key, a shortcut does not.
+    // Ending a word: keys/boundary.cpp, and keys/trigger.cpp for Enter and Tab, which
+    // still reach the app. `consumed`: a boundary swallows its key, a shortcut does not.
     ComposePlan commitBuffer(bool consumed);
-    // A word boundary arrived while composing: commit the word and the boundary as one.
     ComposePlan onBoundary(char32_t scalar, KeySource source);
+    ComposePlan onTriggerKey(const KeyEvent &ev);
     bool englishShortcutsActive() const;
 
     // --- non-preedit (nonpreedit.cpp) -----------------------------------------

@@ -16,6 +16,7 @@ enum class KeyKind {
     Flip,        // the flip-composing (VN <-> raw keys) hotkey
     Shortcut,    // Ctrl/Alt/Super held: flush and let the app have the key
     Backspace,   // shorten the composition
+    Trigger,     // Enter or Tab: ends the word, yet the app must still receive it
     NonText,     // produces no character: flush and pass through
     NumpadDigit, // a literal number, never a VNI tone/shape modifier
     Boundary,    // ends the word: commit it along with this character
@@ -34,7 +35,7 @@ enum class KeyKind {
 // Toggle and Flip come next because their combos hold a non-Shift modifier,
 // which would otherwise be swallowed by the `Shortcut` test. `Backspace` is
 // matched on its keysym before `ch` is looked at, so Ctrl+BackSpace stays a
-// `Shortcut`.
+// `Shortcut`; `Trigger` likewise, so Ctrl+Enter stays one (an app's own shortcut).
 KeyKind classify(const KeyEvent &ev, const Settings &settings);
 
 // Whether `ev` is the configured VI/EN toggle on key-down. Hotkey::AltShift never
@@ -44,6 +45,9 @@ bool matchesToggle(const KeyEvent &ev, Hotkey preset);
 // Whether `ev` is the configured flip-composing hotkey (a Ctrl+Shift+<letter>
 // preset, or FlipHotkey::Off which never matches).
 bool matchesFlip(const KeyEvent &ev, FlipHotkey preset);
+
+// Whether `ev` is the Enter of a `Trigger`: Return or the keypad's Enter.
+bool isEnter(const KeyEvent &ev);
 
 } // namespace funput
 
