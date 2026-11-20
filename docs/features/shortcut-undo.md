@@ -40,12 +40,20 @@ Hệ thống chủ phải kiểm tra tài liệu **trước** khi hỏi engine, 
 
 **Windows** ([shortcut-case-and-repair.md](shortcut-case-and-repair.md) §2): không có chip, Backspace ngay sau khi bung là hoàn tác, giống Android. `funput_desktop::undo_shortcut` kiểm tra bóng chữ đã gõ (`CommittedTail`) còn kết thúc bằng `written` rồi mới gọi engine, và sửa bóng chữ theo kết quả. `ShellState::on_backspace` trả kết quả đó cho hook, hook nuốt Backspace và inject. Mọi sự kiện gọi `reset_composition` (click, phím mũi tên, Enter, đổi focus, bật/tắt tiếng Việt) xóa luôn nhịp hoàn tác qua `Engine::clear()`.
 
+**macOS** (#737): không có chip, Backspace ngay sau khi bung là hoàn tác, như Windows. Mã nằm ở `platforms/macos/Funput/IME/ShortcutUndo/`.
+
+- Phần đã bung lấy từ engine qua `funput_engine_shortcut_undo_written` (C ABI, cùng khuôn `_undo_text`), nên host không giữ bản sao. Với Enter và Tab, engine ghi kèm `\n`/`\t` mà tài liệu không có, nên kiểm tra trượt và Backspace xóa như thường.
+- `ShortcutUndoDocument.range` chỉ trả vùng thay khi client hỗ trợ document access, có con trỏ không vùng chọn và không marked text (`Retone.caret`), và đúng `written` nằm ngay trước con trỏ. Mọi lần đọc là round trip sang app, nên chỉ chạy khi Backspace gặp nhịp đang chờ.
+- `ShortcutUndoSession` ghi số click lúc nhịp được bật (`keyHandled`, chạy sau mỗi phím) và bỏ nhịp nếu đã click: chữ đã commit không có marked text nên IMKit không báo click. Bộ đếm chỉ được đọc khi có nhịp.
+- Nhánh Backspace với buffer rỗng (`FunputInputController.handle`) thử hoàn tác trước `reopenPreviousWord`; chế độ tiếng Anh có gõ tắt cũng vậy. Không phụ thuộc công tắc retone. Kiểm tra trượt thì `dismissShortcutUndo` rồi để app xóa.
+
 ## Giới hạn đã biết
 
 - iOS chỉ giữ một cửa sổ chữ trước con trỏ (`shadowContextLimit` = 128). Nội dung bung dài hơn cửa sổ đó không khớp `written`, nên chip ẩn và Backspace xóa như thường: an toàn nhưng chưa hoàn tác được.
 - Windows: nội dung bung dài hơn bóng chữ (256 byte) không khớp `written`, nên Backspace xóa như thường.
-- macOS và Linux chưa dùng tính năng này.
+- macOS: app không cho đọc văn bản trước con trỏ (Warp, Google Docs) thì không hoàn tác được, Backspace xóa như thường.
+- Linux chưa dùng tính năng này.
 
 ## Kiểm thử
 
-Engine: `tests/words/shortcut_undo.rs`, `tests/alloc_budget/shortcut.rs`. JNI: `funput-jni/src/engine/shortcuts/tests.rs`. C ABI: phần test của `funput-ffi/src/engine/shortcut_undo.rs`. Windows: `funput-desktop/tests/retone.rs`, `src/shell/tests.rs`, `src/retone/tests.rs`. Android: `ShortcutUndoTest`, `ShortcutUndoInstrumentedTest`. iOS: `KeyboardInputTests/Shortcuts/`, `FunputEngineTests/FunputShortcutUndoTests.swift`, và các ca chip ở `SuggestionBarComposerTests`, `PersonalSuggestionToolbarTests`. Test iOS không chạy trên PR: chạy `Scripts/test-funput-kit.sh` tại máy.
+Engine: `tests/words/shortcut_undo.rs`, `tests/alloc_budget/shortcut.rs`. JNI: `funput-jni/src/engine/shortcuts/tests.rs`. C ABI: phần test của `funput-ffi/src/engine/shortcut_undo.rs`. Windows: `funput-desktop/tests/retone.rs`, `src/shell/tests.rs`, `src/retone/tests.rs`. Android: `ShortcutUndoTest`, `ShortcutUndoInstrumentedTest`. iOS: `KeyboardInputTests/Shortcuts/`, `FunputEngineTests/FunputShortcutUndoTests.swift`, và các ca chip ở `SuggestionBarComposerTests`, `PersonalSuggestionToolbarTests`. Test iOS không chạy trên PR: chạy `Scripts/test-funput-kit.sh` tại máy. macOS: `FunputTests/ShortcutUndo/` (`xcodebuild … test` tại máy, CI không chạy Swift).

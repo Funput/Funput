@@ -1222,6 +1222,23 @@ bool funput_engine_shortcut_undo_text(const FunputEngine *engine,
                                       void *context);
 
 /**
+ * The text the last expansion wrote: the expansion plus its boundary character,
+ * exactly what [`funput_engine_undo_shortcut`] deletes. A host that cannot keep its
+ * own record of the expansion compares this with the text before its caret to know
+ * the undo still applies.
+ *
+ * Returns `true`, delivering the text to a non-null `receive` as borrowed UTF-8, while
+ * the undo is armed; `false`, calling nothing, otherwise or for a null handle.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null. `receive` follows the rules of
+ * [`funput_engine_shortcut_undo_text`].
+ */
+bool funput_engine_shortcut_undo_written(const FunputEngine *engine,
+                                         void (*receive)(void*, const uint8_t*, uintptr_t),
+                                         void *context);
+
+/**
  * Take the last expansion back: delete it and put the word it replaced, plus the
  * same boundary character, in its place.
  *

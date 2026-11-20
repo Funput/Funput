@@ -25,6 +25,8 @@ final class FunputInputController: IMKInputController {
     )
     /// Hands password fields that refuse marked text every key untouched.
     var secureInput = SecureInputGuard()
+    /// Backspace right after a gõ tắt expansion takes it back.
+    var shortcutUndo = ShortcutUndoSession(clicks: { MouseClickCounter.shared.clicks })
 
     private enum KeyCode {
         static let backspace: UInt16 = 51
@@ -44,6 +46,7 @@ final class FunputInputController: IMKInputController {
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
         guard let event, let client = sender as? IMKTextInput else { return false }
         guard event.type == .keyDown else { return false }
+        defer { shortcutUndo.keyHandled(by: composer) }
 
         syncSettings(client: client)
         if session.endIfClicked() { composer.clear() }
@@ -78,9 +81,11 @@ final class FunputInputController: IMKInputController {
         }
 
         if event.keyCode == KeyCode.backspace {
-            // Nothing composing: the character about to disappear is a committed one, and
-            // its removal may leave the caret at the end of a finished word to re-open.
-            guard !composer.buffer().isEmpty else { return reopenPreviousWord(client, event: event) }
+            // Nothing composing: Backspace takes back a gõ tắt expansion that just landed,
+            // or deletes a committed character and may re-open the word it leaves behind.
+            guard !composer.buffer().isEmpty else {
+                return undoShortcut(client) || reopenPreviousWord(client, event: event)
+            }
             composer.backspace()
             // A word written into the document hands Backspace to the app to delete.
             return session.backspace(to: composer.buffer(), on: IMKCompositionSurface(client: client))

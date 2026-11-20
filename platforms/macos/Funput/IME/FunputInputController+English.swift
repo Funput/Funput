@@ -20,6 +20,7 @@ extension FunputInputController {
         }
 
         if event.keyCode == 51 {
+            if composer.buffer().isEmpty, undoShortcut(client) { return true }
             guard let edit = EnglishComposition.backspace(composer: composer) else { return false }
             return session.backspace(to: edit.text, on: IMKCompositionSurface(client: client))
         }

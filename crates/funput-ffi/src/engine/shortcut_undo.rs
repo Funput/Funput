@@ -2,8 +2,9 @@
 //!
 //! The engine arms the undo when an expansion lands and spends it on the next key.
 //! A host with a suggestion bar reads the word the expansion replaced
-//! ([`funput_engine_shortcut_undo_text`]) to name the `↩` chip, and takes the
-//! expansion back with [`funput_engine_undo_shortcut`] on Backspace or a tap.
+//! ([`funput_engine_shortcut_undo_text`]) to name the `↩` chip, checks the document
+//! still ends with what it wrote ([`funput_engine_shortcut_undo_written`]), and takes
+//! the expansion back with [`funput_engine_undo_shortcut`] on Backspace or a tap.
 //!
 //! Text leaves through a UTF-8 callback, as in [`super::funput_process_key_text`],
 //! never through `FunputResult.chars`: that array cuts at `CHARS_CAP` codepoints, and
@@ -35,6 +36,36 @@ pub unsafe extern "C" fn funput_engine_shortcut_undo_text(
     unsafe {
         abi::with_engine_ref(engine, |e| {
             let Some(text) = e.shortcut_undo_text() else {
+                return false;
+            };
+            if let Some(receive) = receive {
+                receive(context, text.as_ptr(), text.len());
+            }
+            true
+        })
+    }
+}
+
+/// The text the last expansion wrote: the expansion plus its boundary character,
+/// exactly what [`funput_engine_undo_shortcut`] deletes. A host that cannot keep its
+/// own record of the expansion compares this with the text before its caret to know
+/// the undo still applies.
+///
+/// Returns `true`, delivering the text to a non-null `receive` as borrowed UTF-8, while
+/// the undo is armed; `false`, calling nothing, otherwise or for a null handle.
+///
+/// # Safety
+/// `engine` must be a valid handle or null. `receive` follows the rules of
+/// [`funput_engine_shortcut_undo_text`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_engine_shortcut_undo_written(
+    engine: *const FunputEngine,
+    receive: Option<unsafe extern "C" fn(*mut c_void, *const u8, usize)>,
+    context: *mut c_void,
+) -> bool {
+    unsafe {
+        abi::with_engine_ref(engine, |e| {
+            let Some(text) = e.shortcut_undo_written() else {
                 return false;
             };
             if let Some(receive) = receive {
@@ -124,6 +155,38 @@ mod tests {
         let mut text = String::new();
         let context = (&mut text as *mut String).cast();
         unsafe { funput_engine_shortcut_undo_text(engine, Some(collect), context) }.then_some(text)
+    }
+
+    fn written(engine: *const FunputEngine) -> Option<String> {
+        let mut text = String::new();
+        let context = (&mut text as *mut String).cast();
+        unsafe { funput_engine_shortcut_undo_written(engine, Some(collect), context) }
+            .then_some(text)
+    }
+
+    #[test]
+    fn the_written_text_is_the_expansion_with_its_boundary_until_the_undo_is_spent() {
+        unsafe {
+            let engine = funput_engine_new();
+            add(engine, "vn", "Việt Nam");
+            assert_eq!(written(engine), None, "nothing armed before an expansion");
+
+            type_keys(engine, "vn,");
+            assert_eq!(written(engine).as_deref(), Some("Việt Nam,"));
+            funput_engine_undo_shortcut(engine, None, std::ptr::null_mut());
+            assert_eq!(written(engine), None, "spent by the undo");
+
+            type_keys(engine, "x vn ");
+            assert_eq!(written(engine).as_deref(), Some("Việt Nam "));
+            type_keys(engine, "x");
+            assert_eq!(written(engine), None, "spent by the next key");
+            assert!(!funput_engine_shortcut_undo_written(
+                std::ptr::null(),
+                Some(collect),
+                std::ptr::null_mut()
+            ));
+            funput_engine_free(engine);
+        }
     }
 
     #[test]
