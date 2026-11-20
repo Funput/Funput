@@ -1,5 +1,10 @@
 import SwiftUI
 
+enum AppScreenMetrics {
+    /// The widest a screen's content grows, so cards stay readable on an iPad.
+    static let maxContentWidth: CGFloat = 720
+}
+
 struct AppScreen<Content: View>: View {
     private let content: Content
 
@@ -44,7 +49,7 @@ struct AppScreen<Content: View>: View {
         VStack(alignment: .leading, spacing: 18) {
             content
         }
-        .frame(maxWidth: 720)
+        .frame(maxWidth: AppScreenMetrics.maxContentWidth)
         .padding(.horizontal, 18)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity)

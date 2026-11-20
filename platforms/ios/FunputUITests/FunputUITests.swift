@@ -10,9 +10,13 @@ final class FunputUITests: XCTestCase {
     func testThemeEditorScrollAndControlsRemainResponsive() throws {
         let app = XCUIApplication()
         app.launch()
-        openAppearance(in: app)
+        app.openAppearanceTab()
         XCTAssertTrue(app.staticTexts["Hệ thống"].waitForExistence(timeout: 5))
 
+        // The theme actions live on the docked preview, which starts closed.
+        let showPreview = app.buttons["appearance.showPreview"]
+        XCTAssertTrue(showPreview.waitForExistence(timeout: 5))
+        showPreview.tap()
         let customize = app.buttons["appearance.customize"]
         XCTAssertTrue(customize.waitForExistence(timeout: 5))
         customize.tap()
@@ -95,7 +99,7 @@ final class FunputUITests: XCTestCase {
     func testThemeGalleryScrollsAndHidesEmptyCustomSection() throws {
         let app = XCUIApplication()
         app.launch()
-        openAppearance(in: app)
+        app.openAppearanceTab()
         XCTAssertTrue(app.staticTexts["Hệ thống"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Của bạn"].exists)
 
@@ -107,14 +111,6 @@ final class FunputUITests: XCTestCase {
         carousel.swipeLeft()
         // Lazy carousel cells may leave the accessibility tree once off-screen.
         XCTAssertTrue(!firstTheme.exists || firstTheme.frame.minX < initialX - 20)
-    }
-
-    private func openAppearance(in app: XCUIApplication) {
-        let tab = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == %@", "Giao diện"))
-            .firstMatch
-        XCTAssertTrue(tab.waitForExistence(timeout: 5))
-        tab.tap()
     }
 
     @MainActor
