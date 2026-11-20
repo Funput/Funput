@@ -5,11 +5,18 @@ import UIKit
 
 extension KeyboardViewController {
     override func viewWillDisappear(_ animated: Bool) {
+        endPresentation()
+        super.viewWillDisappear(animated)
+    }
+
+    /// Ends this controller's turn as the keyboard. Reached from `viewWillDisappear`
+    /// and from losing the surface to the next host app, in either order and possibly
+    /// more than once, so every step is safe to repeat.
+    func endPresentation() {
         activationState.end()
         stopClipboardMonitoring()
         cancelClipboardRetry()
         markPreferredHeightHidden()
-        super.viewWillDisappear(animated)
         clearPersonalSuggestions()
         flushPersonalSuggestions()
         reportCorrectionSession()

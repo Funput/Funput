@@ -17,6 +17,11 @@ extension KeyboardViewController {
         surface.onSuggestionSelected = { [weak self] candidate in
             self?.handleSuggestionTap(candidate)
         }
+    }
+
+    /// Once per controller, not once per surface: the surface is bound to every
+    /// controller that comes to hold it.
+    func observeHostBackgrounding() {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(flushPersonalSuggestions),
@@ -80,7 +85,7 @@ extension KeyboardViewController {
 
     func clearPersonalSuggestions() {
         personalSuggestionService.clear()
-        keyboardView.updateSuggestions([])
+        ownedSurface?.updateSuggestions([])
     }
 
     func acceptPersonalSuggestion(_ candidate: KeyboardSuggestionCandidate) {

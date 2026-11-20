@@ -9,7 +9,7 @@ extension KeyboardViewController {
     /// word blocked there would come back the next time the keyboard opens. The
     /// menu stays away rather than promise what it cannot keep.
     func configureSuggestionMenu(hasFullAccess: Bool) {
-        keyboardView.onSuggestionEdit = hasFullAccess
+        ownedSurface?.onSuggestionEdit = hasFullAccess
             ? { [weak self] candidate, action in
                 self?.personalSuggestionService.edit(candidate, action.dictionaryEdit)
             }

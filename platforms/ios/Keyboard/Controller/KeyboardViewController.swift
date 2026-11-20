@@ -15,27 +15,18 @@ import ThemeRuntime
 import ThemeSchema
 import UIKit
 
+/// One host app's keyboard. iOS builds a new one for every host inside the same
+/// process, so this holds only what belongs to one presentation and one document;
+/// the surface and everything else worth keeping live in `KeyboardRuntime`.
 final class KeyboardViewController: UIInputViewController {
     let launchTrace = KeyboardLaunchTrace()
     let censusEnrollment = KeyboardLifetimeCensus.Enrollment(.controller)
     let inputCoordinator = KeyboardInputCoordinator()
     let shortcutsLoader = KeyboardShortcutsLoader(store: KeyboardShortcutSource())
-    lazy var keyboardView = makePrimarySurface()
-    var hasPrimarySurface = false
     var emojiView: EmojiKeyboardView?
     var kaomojiView: KaomojiKeyboardView?
     var clipboardPanelView: ClipboardKeyboardView?
-    let emojiRecentsStore = EmojiRecentsStore()
     let emojiCatalogCache = EmojiCatalogCache()
-    /// Rebuilt whenever configuration changes, since it carries the chosen expiry.
-    /// Starts as a placeholder with no directory, so `init` makes no disk calls:
-    /// bootstrap's first `adoptConfiguration` always installs the real store, before
-    /// anything can touch the clipboard.
-    var clipboardStore = ClipboardStore(directory: nil)
-    let kaomojiRecentsStore = EmojiRecentsStore(key: FunputAppGroup.kaomojiRecentsKey)
-    let accessStateStore = KeyboardAccessStateStore()
-    let customThemeStore = CustomThemeStore()
-    let themeAssetStore = ThemeAssetStore()
     /// The word list typo correction weighs candidates against. Separate from the
     /// store below, and read-only, so the correction handshake can ask it on the
     /// keystroke path without waiting on that store's queue.
@@ -44,10 +35,6 @@ final class KeyboardViewController: UIInputViewController {
         PersonalSuggestionWorker(onResult: $0)
     }
     let activationState = KeyboardActivationState()
-    let backgroundImageCache = KeyboardBackgroundAssetCache<UIImage>()
-    /// Lazy because its initializer prepares the App Group directory, and `init` makes
-    /// no disk calls; bootstrap reads it first, in `viewDidLoad`.
-    lazy var bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
     var clipboardRetryTask: Task<Void, Never>?
     let clipboardChangeMonitor = ClipboardChangeMonitor()
     var clipboardStartTask: Task<Void, Never>?
@@ -55,19 +42,13 @@ final class KeyboardViewController: UIInputViewController {
     lazy var clipboardRecorder = makeClipboardRecorder()
     var pendingBootstrapRepair: KeyboardBootstrapSnapshot?
     var bootstrappedSource: KeyboardBootstrappedSource?
-    var adoptedIdentity: KeyboardActivationIdentity?
-    var resolvedBackgroundRequest: KeyboardBackgroundRequest?
     var displayedSurface = KeyboardSurface.funput
-    var configuration = FunputConfiguration.default
-    var themeCatalog = ThemeCatalog()
-    var selectedTheme: KeyboardTheme = BundledThemes.default
+    /// This controller's own view of the keyboard: `textWillChange` works it out for
+    /// the field about to be typed in before the controller holds the surface.
     var currentPresentation = KeyboardPresentation()
-    var cachedThemedPresentation: KeyboardPresentation?
-    let configurationStore = FunputConfigurationStore()
 #if DEBUG
-    lazy var touchDiagnosticsReporter = KeyboardTouchDiagnosticsReporter(
-        surface: keyboardView
-    )
+    /// Made when the surface is bound to this controller, and gone when it leaves.
+    var touchDiagnosticsReporter: KeyboardTouchDiagnosticsReporter?
 #endif
     var resolvedTextInputTraits = KeyboardInputContext(
         editorMode: .text,
@@ -76,8 +57,6 @@ final class KeyboardViewController: UIInputViewController {
     )
     let heightController = KeyboardHeightController()
     private(set) var isKeyboardVisible = false
-
-    var cachedBackgroundImage: UIImage? { backgroundImageCache.value }
 
     override func loadView() {
         inputView = KeyboardAudioInputView(frame: .zero, inputViewStyle: .keyboard)
@@ -98,6 +77,7 @@ final class KeyboardViewController: UIInputViewController {
                 controller.updatePreferredHeight()
             }
         }
+        observeHostBackgrounding()
         bootstrapKeyboard()
         launchTrace.endViewDidLoad()
     }
@@ -105,14 +85,17 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         launchTrace.finish()
+        // Normally a no-op. It is here for a controller that iOS shows again without
+        // `viewWillAppear`, after another one took the surface.
+        if !isSurfaceOwner { applyAdoptedPresentation(claimingAt: .appearing) }
         releaseSystemGestureTouchDelay()
         accessStateStore.record(hasFullAccess: hasFullAccess)
 #if DEBUG
-        touchDiagnosticsReporter.startIfAvailable(hasFullAccess: hasFullAccess)
+        touchDiagnosticsReporter?.startIfAvailable(hasFullAccess: hasFullAccess)
 #endif
         repairBootstrapSnapshotIfNeeded()
         scheduleClipboardMonitoringStart()
-        keyboardView.prepareFeedback()
+        ownedSurface?.prepareFeedback()
         KeyboardMemoryTrace.recordAppearance()
     }
 
@@ -123,11 +106,11 @@ final class KeyboardViewController: UIInputViewController {
         // hold memory while the keyboard is off screen.
         switchSurface(to: .funput)
         emojiCatalogCache.release()
-        keyboardView.releaseFeedback()
+        ownedSurface?.releaseFeedback()
         detachPrimarySurface()
         KeyboardMemoryTrace.record("Disappeared")
 #if DEBUG
-        touchDiagnosticsReporter.finish()
+        touchDiagnosticsReporter?.finish()
 #endif
     }
 

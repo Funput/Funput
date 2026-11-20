@@ -21,7 +21,7 @@ extension KeyboardViewController {
             emojiView?.reset()
         }
         displayedSurface = surface
-        keyboardView.isHidden = surface != .funput
+        ownedSurface?.isHidden = surface != .funput
         emojiView?.isHidden = surface != .emoji
         kaomojiView?.isHidden = surface != .kaomoji
         clipboardPanelView?.isHidden = surface != .clipboard
@@ -38,6 +38,13 @@ extension KeyboardViewController {
             guard let self else { return }
             releasePanels(keeping: KeyboardPanelRetention.retained(whileShowing: displayedSurface.panel))
         }
+    }
+
+    /// Now, not on the next run loop turn: the surface is leaving for another
+    /// controller, and this one may be gone before a queued block would run.
+    func releaseAllSupplementarySurfaces() {
+        displayedSurface = .funput
+        releasePanels(keeping: [])
     }
 
     /// Under memory pressure even the way back is not worth keeping.

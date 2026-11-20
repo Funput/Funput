@@ -116,7 +116,7 @@ extension KeyboardViewController {
 
     func applyPresentationToSurfaces(_ presentation: KeyboardPresentation) {
         (inputView as? KeyboardAudioInputView)?.isKeySoundEnabled = presentation.isKeySoundEnabled
-        keyboardView.presentation = presentation
+        ownedSurface?.presentation = presentation
         applyPresentationToSupplementarySurfaces(presentation)
     }
 

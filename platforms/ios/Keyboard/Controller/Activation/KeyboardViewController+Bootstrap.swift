@@ -29,7 +29,9 @@ extension KeyboardViewController {
         followSeedLanguage()
         inputCoordinator.apply(source.configuration)
         applyTextInputTraits(force: true)
-        applyAdoptedPresentation()
+        // In a process that already has a surface, this controller only takes it if
+        // nobody is showing it; otherwise `viewWillAppear` does.
+        applyAdoptedPresentation(claimingAt: .loading)
         activatePreferredHeightForBootstrap()
     }
 }

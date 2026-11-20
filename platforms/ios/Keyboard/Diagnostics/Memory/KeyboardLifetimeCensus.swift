@@ -6,11 +6,11 @@ import UIKit
 /// process.
 ///
 /// iOS builds a new `KeyboardViewController` in every host app but keeps the
-/// process. Whatever outlives its host keeps memory that only comes back when the
-/// extension is killed, and memory then climbs with every app switch. Counting the
-/// controller alone is not enough: a surface can be held after its controller is
-/// gone, and the surface is the heavy part. Both counts go into every `Footprint`
-/// event, and a leak is logged as a fault.
+/// process, and it keeps a host app's controller for as long as that app stays
+/// alive in the background: several controllers at once is how the system works,
+/// not a leak. The surface is the heavy part, and the process is meant to have
+/// exactly one, moved from controller to controller. Both counts go into every
+/// `Footprint` event; a second surface is logged as a fault.
 enum KeyboardLifetimeCensus {
     enum Kind: Int, CaseIterable, Sendable {
         case controller, surface
@@ -53,19 +53,17 @@ enum KeyboardLifetimeCensus {
         objc_setAssociatedObject(view, &enrollmentKey, Enrollment(kind), .OBJC_ASSOCIATION_RETAIN)
     }
 
-    /// iOS may build the next keyboard before it lets the last one go, so two at once
-    /// is normal for a moment. Two seconds after appearing, only the one on screen
-    /// should be left.
+    /// How long after appearing the count is taken, so a surface on its way out has
+    /// had time to go.
     static let settleDelay: Duration = .seconds(2)
 
     static func reportLeakIfAny() {
-        let controllers = liveCount(.controller)
         let surfaces = liveCount(.surface)
-        guard controllers > 1 || surfaces > 1 else { return }
+        guard surfaces > 1 else { return }
         os_log(
             .fault, log: log,
-            "Keyboard leak: %{public}d controllers and %{public}d surfaces alive after settling",
-            controllers, surfaces
+            "Keyboard leak: %{public}d surfaces alive after settling, with %{public}d controllers",
+            surfaces, liveCount(.controller)
         )
     }
 }

@@ -59,7 +59,7 @@ extension KeyboardViewController {
     /// One answer for both places a paste can be offered, so the panel can never
     /// invite a paste the toolbar has already withdrawn.
     private func showClipboardHint(_ hint: KeyboardClipboardHint?) {
-        keyboardView.updateClipboardHint(hint)
+        ownedSurface?.updateClipboardHint(hint)
         clipboardPanelView?.updatePasteHint(hint)
     }
 

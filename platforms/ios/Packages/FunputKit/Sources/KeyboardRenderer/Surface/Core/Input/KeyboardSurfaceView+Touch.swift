@@ -40,6 +40,27 @@ extension KeyboardSurfaceView {
         touchCoordinator.reset()
     }
 
+    /// Forgets every touch in flight: tracked identities, held keys and key repeat,
+    /// the preview and the alternates palette.
+    func discardTouches() {
+        touchOverlay.forgetTrackedTouches()
+        interactionController.cancelAll()
+        resetTouchPipeline()
+    }
+
+    /// Returns the surface to how a new one starts, before it is handed to the
+    /// keyboard of another host app. Moving between input views is not guaranteed to
+    /// pass through a window-less moment, so the touches are discarded here rather
+    /// than left to `didMoveToWindow`: a Backspace held in one app must not go on
+    /// deleting in the next. Its new holder pushes its own presentation and callbacks.
+    public func resetForReuse() {
+        discardTouches()
+        updateSuggestions([])
+        updateClipboardHint(nil)
+        onSuggestionEdit = nil
+        isHidden = false
+    }
+
     public func updateSuggestions(_ candidates: [KeyboardSuggestionCandidate]) {
         toolbarView.updateSuggestions(candidates)
     }
