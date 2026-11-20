@@ -1,6 +1,7 @@
 package app.funput.funput.keyboard.rendering
 
 import android.graphics.Canvas
+import app.funput.funput.keyboard.rendering.clipboard.ClipboardKeyIconRenderer
 import app.funput.funput.keyboard.rendering.microphone.MicrophoneKeyIconRenderer
 import app.funput.funput.keyboard.layout.ResolvedKey
 import app.funput.funput.keyboard.model.KeyRole

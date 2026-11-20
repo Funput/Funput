@@ -32,7 +32,6 @@ internal class EmojiBrowserView(context: Context) : KeyboardPanelComposeView(con
     var onEmojiSelected: (EmojiItem, EmojiCategory) -> Unit = { _, _ -> }
     var onCategoryChanged: (EmojiCategory) -> Unit = {}
     private var sections by mutableStateOf(EmojiSections(emptyList()))
-    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var requestedCategory by mutableStateOf<EmojiCategory?>(null)
     private var requestId by mutableIntStateOf(0)
 

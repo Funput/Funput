@@ -34,7 +34,6 @@ internal class EmojiSearchContentView(context: Context) : KeyboardPanelComposeVi
     var onCancel: () -> Unit = {}
     private var state by mutableStateOf(EmojiSearchState())
     private var items by mutableStateOf(emptyList<EmojiItem>())
-    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var theme by mutableStateOf<KeyboardTheme?>(null)
     private var haptics by mutableStateOf(true)
     private var sounds by mutableStateOf(true)

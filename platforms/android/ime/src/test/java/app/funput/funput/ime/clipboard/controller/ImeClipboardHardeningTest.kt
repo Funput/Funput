@@ -88,7 +88,7 @@ class ImeClipboardHardeningTest {
         val controller = ImeClipboardHistoryController(
             CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
             MutableStateFlow(ClipboardPreferences.Default), { failing }, {}, {}, {},
-            { cleared += 1 }, Dispatchers.Unconfined,
+            { if (it) cleared += 1 }, Dispatchers.Unconfined,
         )
         controller.start(KeyboardEditorMode.TEXT)
         controller.open()

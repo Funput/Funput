@@ -1,5 +1,8 @@
 package app.funput.funput.keyboard.interaction
 
+import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import app.funput.funput.keyboard.layout.KeyboardGeometry
 import app.funput.funput.keyboard.layout.KeyboardGeometrySpec
@@ -86,6 +89,20 @@ class KeyboardInteractionTargetsTest {
         val bounds = requireNotNull(keyboard.suggestionBar).suggestionsBounds
 
         assertNull(keyboard.interactionTargetAt(bounds.centerX, bounds.centerY, 0))
+    }
+
+    @Test
+    fun pasteChipTakesTheWholeBandWhileItHasNoCandidates() {
+        val bar = requireNotNull(keyboard.suggestionBar)
+        val offer = KeyboardClipboardOffer(KeyboardClipboardHint.TEXT, preview = "xin chào")
+        fun target(x: Float, count: Int, value: KeyboardClipboardOffer? = offer) =
+            keyboard.interactionTargetAt(x, bar.suggestionsBounds.centerY, count, value)
+
+        listOf(bar.suggestionsBounds.left + 1f, bar.suggestionsBounds.centerX, bar.suggestionsBounds.right - 1f)
+            .forEach { assertEquals(ClipboardOfferChip.TargetId, target(it, 0)) }
+        assertEquals(SuggestionTargetIds.id(1), target(bar.suggestionsBounds.centerX, SuggestionCount))
+        assertNull(target(bar.suggestionsBounds.centerX, 0, offer.copy(showsChip = false)))
+        assertNull(target(bar.suggestionsBounds.centerX, 0, null))
     }
 
     @Test

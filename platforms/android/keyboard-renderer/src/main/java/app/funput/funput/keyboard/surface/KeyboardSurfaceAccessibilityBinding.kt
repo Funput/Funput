@@ -7,13 +7,15 @@ import android.view.View
 import app.funput.funput.keyboard.accessibility.ClipboardAccessibility
 import app.funput.funput.keyboard.accessibility.KeyboardSurfaceAccessibilityController
 import app.funput.funput.keyboard.accessibility.SmartGestureAccessibility
-import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
 import app.funput.funput.keyboard.R
 import app.funput.funput.keyboard.accessibilityLabel
+import app.funput.funput.keyboard.chipAccessibilityLabel
 import app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction
 import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
 import app.funput.funput.keyboard.model.ShiftState
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 import app.funput.funput.keyboard.suggestion.actions.SuggestionAction
 
 /** Keeps virtual-key accessibility wiring out of the keyboard View. */
@@ -23,7 +25,7 @@ internal class KeyboardSurfaceAccessibilityBinding(
     private val keyboard: () -> ResolvedKeyboard?,
     private val shiftState: () -> ShiftState,
     private val suggestions: () -> List<SuggestionChip>,
-    private val clipboardHint: () -> KeyboardClipboardHint?,
+    private val clipboardOffer: () -> KeyboardClipboardOffer?,
 ) {
     private val resources = host.resources
     private val controller = KeyboardSurfaceAccessibilityController(
@@ -59,15 +61,18 @@ internal class KeyboardSurfaceAccessibilityBinding(
         interaction().areSmartGesturesEnabled,
         interaction().breaksLineOnEnterHold,
         interaction()::isSuggestionEditable,
+        clipboardChipLabel(),
     )
 
-    private fun clipboardKeyLabel(): String {
-        val hint = clipboardHint()
-        return if (hint != null) {
-            hint.accessibilityLabel(resources)
-        } else {
-            resources.getString(R.string.clipboard_open_accessibility)
-        }
+    private fun clipboardKeyLabel(): String = clipboardOffer()?.hint?.accessibilityLabel(resources)
+        ?: resources.getString(R.string.clipboard_open_accessibility)
+
+    /** Null unless the paste chip is on the band right now; see [ClipboardOfferChip.isVisible]. */
+    private fun clipboardChipLabel(): String? {
+        val offer = clipboardOffer() ?: return null
+        val density = resources.displayMetrics.density
+        val shown = ClipboardOfferChip.isVisible(offer, suggestions().size, keyboard()?.suggestionBar, density)
+        return offer.chipAccessibilityLabel(resources).takeIf { shown }
     }
 
     private fun activate(keyId: String) {

@@ -3,11 +3,11 @@ package app.funput.funput.ime.clipboard.persistence
 import android.content.Context
 import app.funput.funput.ime.clipboard.model.ClipboardEntry
 import app.funput.funput.ime.clipboard.model.ClipboardExpiry
+import app.funput.funput.ime.clipboard.model.ClipboardOfferSource
 import java.io.File
 import java.nio.file.Path
 import java.time.Instant
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Blocking, file-backed clipboard history. Call its methods away from the main thread.
@@ -41,17 +41,27 @@ class ClipboardHistoryStore private constructor(
         prune(read().items, now)
     }
 
-    /** Returns the last clipboard generation explicitly captured by Funput. */
-    fun lastCapturedSourceToken(): String? = synchronized(lock) {
-        read().lastCapturedSourceToken
-    }
+    /** Returns what a paste offer for the clipboard generation [sourceToken] can rely on. */
+    internal fun offerSource(sourceToken: String?, now: Instant = Instant.now()) =
+        synchronized(lock) {
+            val current = read()
+            val held = prune(current.items, now).firstOrNull { it.sourceToken == sourceToken }
+            ClipboardOfferSource(current.lastPastedSourceToken, held?.text)
+        }
 
-    /** Records an entry, moves duplicate text to the front, and applies retention limits. */
-    fun record(entry: ClipboardEntry, now: Instant = Instant.now()): List<ClipboardEntry> =
+    /** Records an entry pasted through Funput and marks its clipboard generation as pasted. */
+    fun record(entry: ClipboardEntry, now: Instant = Instant.now()) = add(entry, now, pasted = true)
+
+    /** Records a copy Funput only observed, so the clip stays on offer until it is pasted. */
+    fun capture(entry: ClipboardEntry, now: Instant = Instant.now()) = add(entry, now, pasted = false)
+
+    /** Moves duplicate text to the front and applies retention limits. */
+    private fun add(entry: ClipboardEntry, now: Instant, pasted: Boolean): List<ClipboardEntry> =
         synchronized(lock) {
             val current = read()
             val items = prune(listOf(entry) + current.items.filter { it.text != entry.text }, now)
-            persistedItems(current, ClipboardHistoryPayload(entry.sourceToken, items), now)
+            val token = if (pasted) entry.sourceToken else current.lastPastedSourceToken
+            persistedItems(current, ClipboardHistoryPayload(token, items), now)
         }
 
     /** Pins or unpins an entry and returns the resulting live history. */
@@ -70,7 +80,7 @@ class ClipboardHistoryStore private constructor(
         persistedItems(current, current.copy(items = items), now)
     }
 
-    /** Removes one entry while preserving the last captured source token. */
+    /** Removes one entry while preserving the last pasted source token. */
     fun remove(id: UUID, now: Instant = Instant.now()): List<ClipboardEntry> =
         synchronized(lock) {
             val current = read()
@@ -78,7 +88,7 @@ class ClipboardHistoryStore private constructor(
             persistedItems(current, current.copy(items = items), now)
         }
 
-    /** Clears every entry, including pinned items, and resets the captured source token. */
+    /** Clears every entry, including pinned items, and resets the pasted source token. */
     fun clear() { clearPersisted() }
 
     internal fun clearPersisted(): Boolean = synchronized(lock) {
@@ -128,14 +138,5 @@ class ClipboardHistoryStore private constructor(
 
         internal fun directory(context: Context): File =
             context.applicationContext.noBackupFilesDir.resolve(DirectoryName)
-    }
-}
-
-private object ClipboardStoreLocks {
-    private val locks = ConcurrentHashMap<String, Any>()
-
-    fun forFile(file: File): Any {
-        val path = runCatching { file.canonicalPath }.getOrElse { file.absolutePath }
-        return locks.computeIfAbsent(path) { Any() }
     }
 }

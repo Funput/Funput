@@ -3,6 +3,7 @@ package app.funput.funput.keyboard.interaction
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -20,10 +21,14 @@ class KeyHapticTypeMapperTest {
     }
 
     @Test
-    fun `maps suggestions but ignores empty surface`() {
+    fun `maps suggestions and the paste chip but ignores empty surface`() {
         assertEquals(KeyboardHapticType.CONTROL, KeyHapticTypeMapper.forTarget(null, isSuggestion = true))
         assertNull(KeyHapticTypeMapper.forTarget(null, isSuggestion = false))
         assertNull(KeyHapticTypeMapper.forTarget(key(KeyRole.PLACEHOLDER), isSuggestion = false))
+        assertEquals(
+            KeyboardHapticType.CONTROL,
+            KeyHapticTypeMapper.forTarget(null, isSuggestion = false, targetId = ClipboardOfferChip.TargetId),
+        )
     }
 
     private fun assertMapped(role: KeyRole, expected: KeyboardHapticType) {

@@ -11,6 +11,10 @@ internal data class KeyboardPanelPalette(
     val divider: Int,
     val searchSurface: Int,
     val buttonSurface: Int,
+    /** Translucent wash drawn over a pressed element; see [pressOverlay]. */
+    val pressed: Int,
+    /** Translucent surface of a card laid on the panel background; see [cardSurface]. */
+    val cardSurface: Int,
 ) {
     fun solidSurface(surface: Int): Int = surface.compositedOver(backgroundEnd)
 
@@ -32,7 +36,32 @@ internal data class KeyboardPanelPalette(
             divider = theme.suggestionDividerColor,
             searchSurface = theme.keyColor.compositedOver(theme.backgroundEndColor),
             buttonSurface = theme.specialKeyColor,
+            pressed = pressOverlay(theme.pressedKeyColor, theme.labelColor),
+            cardSurface = cardSurface(theme),
         )
+
+        /**
+         * Cards take the key colour, left translucent so they follow the background gradient the
+         * way keys do. A theme whose keys blend into its background gets a faint wash of readable
+         * ink instead, or its cards would be invisible.
+         */
+        internal fun cardSurface(theme: KeyboardTheme): Int {
+            val ends = intArrayOf(theme.backgroundStartColor, theme.backgroundEndColor)
+            val stands = ends.all { contrast(theme.keyColor.compositedOver(it), it) >= MinCardContrast }
+            if (stands) return theme.keyColor
+            return (contrastForeground(theme.labelColor, ends, 4.5) and Rgb) or (FaintWashAlpha shl 24)
+        }
+
+        /**
+         * A pressed key is repainted in [pressedKey], but a panel draws the press over its
+         * content, so an opaque token is thinned until that content still reads through it.
+         * A theme with no pressed colour falls back to a faint wash of its [label] ink.
+         */
+        internal fun pressOverlay(pressedKey: Int, label: Int): Int {
+            val alpha = pressedKey ushr 24
+            if (alpha == 0) return (label and Rgb) or (FaintWashAlpha shl 24)
+            return (pressedKey and Rgb) or (minOf(alpha, MaxPressAlpha) shl 24)
+        }
 
         private fun Int.compositedOver(background: Int): Int {
             val alpha = (this ushr 24) / 255f
@@ -67,5 +96,11 @@ private fun luminance(color: Int): Double {
 }
 
 private const val Opaque = -0x1000000
+private const val Rgb = 0x00FFFFFF
+private const val MaxPressAlpha = 0x66
+private const val FaintWashAlpha = 0x1F
+
+/** Least contrast between a card and the background behind it for the card to read as one. */
+internal const val MinCardContrast = 1.12
 private const val Black = -0x1000000
 private const val White = -0x1

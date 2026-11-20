@@ -42,14 +42,15 @@ internal class ImeClipboardSession(
         commitText = commitText,
         afterCommit = afterCommit,
         preparePanel = preparePanel,
-        onCleared = controller::historyCleared,
+        onChanged = controller::historyChanged,
     )
     private val systemCapture = ClipboardSystemCapture(
         parentScope = scope,
         preferences = preferences,
         gateway = gateway,
         storeFactory = storeFactory,
-        onRecorded = historyController::entriesChanged,
+        // The offer was built before the copy reached history; rebuild it to pick up the preview.
+        onRecorded = { historyController.entriesChanged(); controller.historyChanged() },
     )
     private val uiBinding = ImeClipboardUiBinding(context, scope, controller, historyController)
 
@@ -66,6 +67,9 @@ internal class ImeClipboardSession(
     }
 
     fun attach(view: FunputKeyboardView) = uiBinding.attach(view)
+
+    /** Forwards whether the user has typed since the keyboard was shown. */
+    fun typingChanged(hasTyped: Boolean) = uiBinding.typingChanged(hasTyped)
 
     fun close() {
         uiBinding.close()

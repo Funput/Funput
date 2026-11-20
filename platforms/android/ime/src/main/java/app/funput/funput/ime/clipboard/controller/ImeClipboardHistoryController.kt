@@ -26,7 +26,7 @@ internal class ImeClipboardHistoryController(
     private val commitText: (String) -> Unit,
     private val afterCommit: () -> Unit,
     private val preparePanel: () -> Unit,
-    private val onCleared: () -> Unit,
+    private val onChanged: (cleared: Boolean) -> Unit,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val job = SupervisorJob(parentScope.coroutineContext[Job])
@@ -97,7 +97,7 @@ internal class ImeClipboardHistoryController(
             }
             if (!valid(currentGeneration, currentStore)) return@launch
             mutableState.value = mutableState.value.copy(loading = false, entries = result.second)
-            if (result.first) onCleared()
+            if (result.first) onChanged(true)
         }
     }
 
@@ -113,6 +113,7 @@ internal class ImeClipboardHistoryController(
             val entries = withContext(ioDispatcher) { block(currentStore) }
             if (valid(currentGeneration, currentStore)) {
                 mutableState.value = mutableState.value.copy(loading = false, entries = entries)
+                onChanged(false) // A removed entry must stop backing the paste offer's preview.
             }
         }
     }

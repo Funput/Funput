@@ -6,8 +6,13 @@ import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * @property lastPastedSourceToken Clipboard generation last pasted through Funput. It is stored
+ * under the key `lastCapturedSourceToken`, the name it had before history also recorded copies
+ * that were only observed.
+ */
 internal data class ClipboardHistoryPayload(
-    val lastCapturedSourceToken: String?,
+    val lastPastedSourceToken: String?,
     val items: List<ClipboardEntry>,
 ) {
     companion object {
@@ -20,7 +25,7 @@ internal object ClipboardHistoryJsonCodec {
 
     fun encode(payload: ClipboardHistoryPayload): String = JSONObject()
         .put("version", SchemaVersion)
-        .put("lastCapturedSourceToken", payload.lastCapturedSourceToken ?: JSONObject.NULL)
+        .put("lastCapturedSourceToken", payload.lastPastedSourceToken ?: JSONObject.NULL)
         .put("items", JSONArray().apply { payload.items.forEach { put(encodeEntry(it)) } })
         .toString()
 

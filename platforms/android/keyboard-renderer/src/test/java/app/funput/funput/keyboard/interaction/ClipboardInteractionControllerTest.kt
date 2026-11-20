@@ -6,6 +6,7 @@ import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.layout.KeyBounds
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -57,6 +58,18 @@ class ClipboardInteractionControllerTest {
         assertEquals(listOf(KeyboardHapticType.CONTROL), haptics)
     }
 
+    @Test
+    fun `paste chip pastes on tap and on accessibility click with control feedback`() {
+        val actions = mutableListOf<String>()
+        val haptics = mutableListOf<KeyboardHapticType>()
+        val controller = controller(actions::add, hasOffer = true, onHaptic = haptics::add)
+        controller.onPointerStarted(1, ClipboardOfferChip.TargetId, 160f, 20f)
+        controller.onKeyReleased(1, ClipboardOfferChip.TargetId, 160f, 20f, 10L)
+        controller.emitClick(ClipboardOfferChip.TargetId, 11L)
+        assertEquals(listOf("paste", "paste"), actions)
+        assertEquals(listOf(KeyboardHapticType.CONTROL, KeyboardHapticType.CONTROL), haptics)
+    }
+
     private fun controller(
         onAction: (String) -> Unit,
         hasOffer: Boolean,
@@ -64,7 +77,10 @@ class ClipboardInteractionControllerTest {
         schedule: (Runnable, Long) -> Unit = { _, _ -> },
         cancel: (Runnable) -> Unit = {},
     ) = KeyboardInteractionController(
-        keySpec = { id -> KeySpec(id, "", KeyRole.CLIPBOARD, accessibilityLabel = "Dán") },
+        // The paste chip is a band target, not a key, so it has no spec.
+        keySpec = { id ->
+            KeySpec(id, "", KeyRole.CLIPBOARD, accessibilityLabel = "Dán").takeIf { id != ClipboardOfferChip.TargetId }
+        },
         suggestionSelection = { null },
         onAction = {},
         utilities = KeyboardUtilityDispatcher {

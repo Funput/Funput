@@ -67,9 +67,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     var suggestions: List<SuggestionChip>
         get() = render.suggestions
         set(value) = suggestionState.update(value)
-    var clipboardHint: KeyboardClipboardHint?
-        get() = render.clipboardHint
-        set(value) { render.clipboardHint = value; accessibility.refresh() }
+    var clipboardOffer: KeyboardClipboardOffer?
+        get() = render.clipboardOffer
+        set(value) { render.clipboardOffer = value; accessibility.refresh() }
     var enterAction by render::enterAction
     var breaksLineOnEnterHold: Boolean get() = interaction.breaksLineOnEnterHold; set(value) { if (value != interaction.breaksLineOnEnterHold) { interaction.breaksLineOnEnterHold = value; accessibility.refresh() } }
     var keyPreviewsEnabled: Boolean by render::keyPreviewsEnabled
@@ -86,7 +86,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         keyboard = { resolvedKeyboard },
         shiftState = { shiftState },
         suggestions = { render.suggestions },
-        clipboardHint = { render.clipboardHint },
+        clipboardOffer = { render.clipboardOffer },
     )
     private val suggestionState: KeyboardSurfaceSuggestionState = KeyboardSurfaceSuggestionState(
         density = { resources.displayMetrics.density },
@@ -97,7 +97,9 @@ class KeyboardSurfaceView @JvmOverloads constructor(
     private val interaction: app.funput.funput.keyboard.interaction.KeyboardSurfaceInteraction = createKeyboardSurfaceInteraction(
         host = this,
         callbacks = callbacks,
-        keyAt = { x, y -> resolvedKeyboard?.interactionTargetAt(x, y, suggestions.size) },
+        keyAt = { x, y ->
+            resolvedKeyboard?.interactionTargetAt(x, y, suggestions.size, clipboardOffer, resources.displayMetrics.density)
+        },
         keyboard = { resolvedKeyboard },
         suggestions = { suggestions },
         onHapticFeedback = { type ->
@@ -110,7 +112,7 @@ class KeyboardSurfaceView @JvmOverloads constructor(
         },
         onSemanticStateChanged = accessibility::refresh,
         surfaceBounds = popoverGeometry::resolve,
-        hasPasteOffer = { render.clipboardHint != null },
+        hasPasteOffer = { render.clipboardOffer != null },
     )
     private val events = KeyboardSurfaceEventDispatcher(
         host = this,

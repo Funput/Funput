@@ -93,7 +93,7 @@ internal class ClipboardSystemCapture(
             if (read !is ClipboardReadResult.Success || read.isSensitive) return@launch
             withContext(ioDispatcher) {
                 if (!shouldCapture() || captureStore !== store) return@withContext
-                captureStore.record(ClipboardEntry(text = read.text, sourceToken = read.sourceToken))
+                captureStore.capture(ClipboardEntry(text = read.text, sourceToken = read.sourceToken))
             }
             if (shouldCapture() && captureStore === store) onRecorded()
         }
