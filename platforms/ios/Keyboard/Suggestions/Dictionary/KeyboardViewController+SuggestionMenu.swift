@@ -11,7 +11,7 @@ extension KeyboardViewController {
     func configureSuggestionMenu(hasFullAccess: Bool) {
         ownedSurface?.onSuggestionEdit = hasFullAccess
             ? { [weak self] candidate, action in
-                self?.personalSuggestionService.edit(candidate, action.dictionaryEdit)
+                self?.ownedSuggestionService?.edit(candidate, action.dictionaryEdit)
             }
             : nil
     }

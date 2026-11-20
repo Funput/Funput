@@ -9,7 +9,7 @@ import UIKit
 
 extension KeyboardViewController {
     func installPersonalSuggestions(on surface: KeyboardSurfaceView) {
-        personalSuggestionService.onCandidates = {
+        ownedSuggestionService?.onCandidates = {
             [weak self, weak surface] generation, candidates in
             guard let self, activationState.accepts(generation) else { return }
             surface?.updateSuggestions(candidates)
@@ -44,7 +44,7 @@ extension KeyboardViewController {
         } else {
             inputCoordinator.correctionDictionary = nil
         }
-        personalSuggestionService.configure(
+        ownedSuggestionService?.configure(
             enabled: configuration.personalSuggestionsEnabled,
             hasFullAccess: hasFullAccess,
             resetToken: configuration.personalSuggestionResetToken,
@@ -55,15 +55,17 @@ extension KeyboardViewController {
     }
 
     /// The shipped Vietnamese data follows the composer from the coordinator's one writer.
-    /// Subscribing hands over the current value, so this works at any point after the
-    /// service exists; the service keeps the value across configurations.
+    /// Subscribing hands over the current value, which is why this runs when the
+    /// surface is bound: the service is shared, and has to hear this controller's
+    /// language the moment it becomes the keyboard, and not before.
     func followSeedLanguage() {
         inputCoordinator.onSeedLanguageChange = { [weak self] language in
-            self?.personalSuggestionService.setSeedLanguage(language)
+            self?.ownedSuggestionService?.setSeedLanguage(language)
         }
     }
 
     func publishPersonalSuggestionUpdate() {
+        guard let service = ownedSuggestionService else { return }
         let state = inputCoordinator.state
         let canQuery = configuration.personalSuggestionsEnabled
             && displayedSurface == .funput
@@ -75,7 +77,7 @@ extension KeyboardViewController {
         if configuration.typoCorrection, let token = update.completedToken {
             correctionWords.learn(token)
         }
-        personalSuggestionService.update(
+        service.update(
             update,
             canQuery: canQuery,
             shift: state.shiftState,
@@ -84,7 +86,7 @@ extension KeyboardViewController {
     }
 
     func clearPersonalSuggestions() {
-        personalSuggestionService.clear()
+        ownedSuggestionService?.clear()
         ownedSurface?.updateSuggestions([])
     }
 
@@ -96,7 +98,7 @@ extension KeyboardViewController {
             "generation=%{public}llu",
             candidate.generation
         )
-        guard let (prefix, text) = personalSuggestionService.acceptance(for: candidate) else {
+        guard let (prefix, text) = ownedSuggestionService?.acceptance(for: candidate) else {
             clearPersonalSuggestions()
             return
         }
@@ -111,7 +113,9 @@ extension KeyboardViewController {
         applyPostCommitEffects(effects)
     }
 
+    /// Not gated on holding the surface: a flush only writes what was learned, and a
+    /// controller that has just lost the keyboard is exactly who should ask for it.
     @objc func flushPersonalSuggestions() {
-        personalSuggestionService.flush()
+        runtime.personalSuggestionService.flush()
     }
 }

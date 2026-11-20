@@ -21,6 +21,15 @@ extension CorrectionWordSource {
         }
     }
 
+    /// Forgets what one host app's typing left behind: the session counts, and the
+    /// words kept from correction. The source now outlives a host app, and neither
+    /// may follow the user into the next one. With Full Access the kept words come
+    /// straight back from their store.
+    public func forgetSession() {
+        personalCounts = [:]
+        restoreKept([])
+    }
+
     /// How likely `word` is: how common a syllable it is in the shipped list, plus
     /// how often this user has typed it this session.
     public func weight(_ word: String) -> UInt32 {

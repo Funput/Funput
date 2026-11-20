@@ -27,13 +27,6 @@ final class KeyboardViewController: UIInputViewController {
     var kaomojiView: KaomojiKeyboardView?
     var clipboardPanelView: ClipboardKeyboardView?
     let emojiCatalogCache = EmojiCatalogCache()
-    /// The word list typo correction weighs candidates against. Separate from the
-    /// store below, and read-only, so the correction handshake can ask it on the
-    /// keystroke path without waiting on that store's queue.
-    let correctionWords = CorrectionWordSource()
-    let personalSuggestionService = PersonalSuggestionService {
-        PersonalSuggestionWorker(onResult: $0)
-    }
     let activationState = KeyboardActivationState()
     var clipboardRetryTask: Task<Void, Never>?
     let clipboardChangeMonitor = ClipboardChangeMonitor()

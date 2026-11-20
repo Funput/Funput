@@ -1,6 +1,7 @@
 import FunputShared
 import KeyboardConfiguration
 import KeyboardRenderer
+import PersonalSuggestions
 import ThemeRuntime
 import ThemeSchema
 import UIKit
@@ -40,7 +41,25 @@ final class KeyboardRuntime {
     /// makes no disk calls; bootstrap reads it first, in `viewDidLoad`.
     lazy var bootstrapSnapshotStore = KeyboardBootstrapSnapshotStore()
 
+    /// The word list typo correction weighs candidates against. Separate from the
+    /// service below, and read-only, so the correction handshake can ask it on the
+    /// keystroke path without waiting on that service's queue. The coordinator holds
+    /// it weakly; this is what keeps it alive.
+    let correctionWords = CorrectionWordSource()
+    /// One service, so one worker and one open store, however many host apps have a
+    /// controller alive.
+    let personalSuggestionService = PersonalSuggestionService {
+        PersonalSuggestionWorker(onResult: $0)
+    }
+
     private init() {}
+
+    /// The surface has passed to another host app's controller: nothing typed in the
+    /// last app may be counted, kept or suggested in this one.
+    func beginTypingSession(hasFullAccess: Bool) {
+        correctionWords.forgetSession()
+        personalSuggestionService.beginSession(hasFullAccess: hasFullAccess)
+    }
 
     /// Installs one activation's configuration and theme.
     ///

@@ -84,6 +84,23 @@ struct CorrectionWordSourceTests {
         #expect(source.weight("là") == 5)
     }
 
+    /// The source outlives a host app, and what was typed in one must not be
+    /// recognized, or kept from correction, in the next.
+    @Test("Forgetting a session drops its counts and its kept words")
+    func forgetsSession() throws {
+        let source = CorrectionWordSource(engine: try #require(PersonalSuggestionEngine.inMemory()))
+        source.learn("zzqx")
+        source.learn("zzqx")
+        source.keep("ko")
+        #expect(source.isFamiliar("zzqx"))
+
+        source.forgetSession()
+
+        #expect(!source.isFamiliar("zzqx"))
+        #expect(source.personalCounts.isEmpty)
+        #expect(!source.isKept("ko"))
+    }
+
     @Test("The rarest word goes once the counts are full")
     func cappedCounts() throws {
         let source = CorrectionWordSource(engine: try #require(PersonalSuggestionEngine.inMemory()))

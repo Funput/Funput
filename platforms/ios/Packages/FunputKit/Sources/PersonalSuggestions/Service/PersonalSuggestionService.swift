@@ -7,7 +7,7 @@ import KeyboardRenderer
 public final class PersonalSuggestionService {
     public var onCandidates: ((UInt64, [KeyboardSuggestionCandidate]) -> Void)?
     private let workerFactory: PersonalSuggestionWorkerFactory
-    private(set) var worker: (any PersonalSuggestionWorking)?
+    var worker: (any PersonalSuggestionWorking)?
     var workerConfiguration = PersonalSuggestionWorkerConfiguration(
         enabled: false,
         hasFullAccess: false,

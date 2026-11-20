@@ -14,9 +14,6 @@ public final class KeyboardSurfaceHost {
     /// Weak, so a controller that dies leaves the surface free rather than held by
     /// nobody who could give it up.
     private weak var holder: (any KeyboardSurfaceClaimant)?
-    /// Advances each time the surface changes hands. Whatever belongs to one host
-    /// app's typing is keyed on it.
-    public private(set) var session = 0
 
     public init() {}
 
@@ -49,7 +46,6 @@ public final class KeyboardSurfaceHost {
         case .take:
             let previous = holder
             holder = claimant
-            session += 1
             previous?.surrenderSurface()
             let surface = reusableSurface() ?? make()
             self.surface = surface

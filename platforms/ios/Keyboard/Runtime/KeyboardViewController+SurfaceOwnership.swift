@@ -1,5 +1,6 @@
 import KeyboardInput
 import KeyboardRenderer
+import PersonalSuggestions
 import UIKit
 
 extension KeyboardViewController: KeyboardSurfaceClaimant {
@@ -17,6 +18,15 @@ extension KeyboardViewController: KeyboardSurfaceClaimant {
         isSurfaceOwner ? runtime.surfaceHost.surface : nil
     }
 
+    /// The process's suggestion service, under the same rule as the surface: a
+    /// controller that does not hold the keyboard must not feed it a prefix, or one
+    /// app's word would be completed on another app's bar.
+    var ownedSuggestionService: PersonalSuggestionService? {
+        isSurfaceOwner ? runtime.personalSuggestionService : nil
+    }
+
+    var correctionWords: CorrectionWordSource { runtime.correctionWords }
+
     /// Asks for the surface. While loading, a surface another controller is showing
     /// is left alone; a controller that is appearing takes it.
     func claimSurface(at moment: KeyboardSurfaceClaimPolicy.Moment) {
@@ -24,6 +34,7 @@ extension KeyboardViewController: KeyboardSurfaceClaimant {
     }
 
     func bind(_ surface: KeyboardSurfaceView) {
+        runtime.beginTypingSession(hasFullAccess: hasFullAccess)
         surface.onKeyEvent = { [weak self] event in
             self?.handleKeyEvent(event)
         }
@@ -33,6 +44,7 @@ extension KeyboardViewController: KeyboardSurfaceClaimant {
         )
         installClipboard(on: surface)
         installPersonalSuggestions(on: surface)
+        followSeedLanguage()
 #if DEBUG
         touchDiagnosticsReporter = KeyboardTouchDiagnosticsReporter(surface: surface)
 #endif

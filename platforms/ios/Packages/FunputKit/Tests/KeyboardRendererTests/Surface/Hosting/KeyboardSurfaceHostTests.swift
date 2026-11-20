@@ -68,13 +68,11 @@ struct KeyboardSurfaceHostTests {
     func holderReattaches() {
         let holder = SurfaceClaimantFake()
         host.claim(for: holder, at: .appearing, make: factory.make)
-        let session = host.session
         host.detach(by: holder)
 
         #expect(host.claim(for: holder, at: .appearing, make: factory.make))
         #expect(host.surface?.superview === holder.surfaceContainer)
         #expect(holder.bound.count == 1)
-        #expect(host.session == session)
     }
 
     @Test("A claimant that lost the surface cannot detach it")
@@ -116,20 +114,6 @@ struct KeyboardSurfaceHostTests {
         }
         #expect(pinning.count == 4)
         #expect(first.surfaceContainer.constraints.isEmpty)
-    }
-
-    @Test("The session advances only when the surface changes hands")
-    func sessionFollowsTheHolder() {
-        let first = SurfaceClaimantFake()
-        let second = SurfaceClaimantFake()
-        host.claim(for: first, at: .loading, make: factory.make)
-        let opening = host.session
-        host.claim(for: first, at: .appearing, make: factory.make)
-        #expect(host.session == opening)
-        host.claim(for: second, at: .loading, make: factory.make)
-        #expect(host.session == opening)
-        host.claim(for: second, at: .appearing, make: factory.make)
-        #expect(host.session == opening + 1)
     }
 }
 #endif
