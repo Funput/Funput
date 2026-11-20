@@ -6,7 +6,7 @@
 > trong tiến trình, hiện lại là gắn lại chứ không dựng lại, đường khởi động chỉ làm
 > việc của frame đầu, và không có đường code nào tự giết tiến trình.
 >
-> **Trạng thái:** B1 và B2 đã hiện thực (11/2026). B3 đến B5 chưa.
+> **Trạng thái:** B1 đến B3 đã hiện thực (11/2026). B4 và B5 chưa.
 >
 > **Cập nhật:** 20/11/2026
 >
@@ -296,6 +296,23 @@ hay giảm âm; hiện lại gõ vẫn có âm.
 alternates, accessibility và trạng thái Shift của spec mới; placeholder của keypad bật
 lại được thành phím thường; các test rollover khi đổi layout hiện có vẫn xanh. Ảnh
 thumbnail theme (`Scripts/export-theme-thumbnails.sh`) không đổi.
+
+**Đã đổi khi hiện thực.**
+
+- Pool là một kiểu riêng, `KeyboardKeyControlPool`
+  (`Sources/KeyboardRenderer/Surface/Keys/`); `rebuildKeys()` chỉ còn gọi nó. Control
+  dư được `park()`: ẩn, không nhận touch, không là phần tử accessibility, nhưng vẫn
+  nằm trong cây view để keycap không bị dựng lại.
+- Pan recognizer cho vuốt ngang được tạo lần đầu một control nhận phím có hành động
+  vuốt, rồi bật hay tắt theo phím; trước đây nó chỉ được tạo trong `init`.
+- `KeyboardKeyControl.swift` đã ở trần 150 dòng, nên phần tương tác chuyển sang
+  `KeyboardKeyControl+Interaction.swift`.
+- Test so từng control tái dùng với một control dựng mới cho cùng spec (nhãn, vai
+  trò, accessibility, custom action, recognizer), thay cho việc liệt kê từng thuộc
+  tính.
+- **Không chạy lại script thumbnail.** Nó mã hoá lại ảnh HEIC trên simulator đang có,
+  nên ảnh khác đi không nói được gì về thay đổi này; đường dựng lần đầu của surface,
+  thứ thumbnail chụp, không đổi.
 
 ### B4: Một surface cho cả tiến trình (T3, M1, K6, K7, K8)
 

@@ -187,6 +187,7 @@ Hai ràng buộc đã biết, **không sửa được**, chỉ quản lý:
 | Vùng nhớ | Trần | Thả khi nào |
 |---|---|---|
 | Primary surface | Cố định theo layout | Sống cùng controller |
+| Phím của surface (`KeyboardKeyControlPool`) | Số phím của layout lớn nhất từng hiện; đổi layout tái dùng, không tạo mới | Sống cùng surface |
 | Controller cũ khi đổi app host | Được thả đúng; `KeyboardLifetimeCensus` đếm và báo fault (A7) | `deinit` khi host đổi |
 | Surface cũ khi đổi app host | Được tháo khỏi `inputView` ở `viewDidDisappear` và đi theo controller (A8) | `deinit` của controller |
 | Emoji/kaomoji/clipboard panel | Theo panel | Rời panel nào thả panel đó; giữ cặp emoji↔kaomoji khi chuyển qua lại; `viewDidDisappear` thả hết |
