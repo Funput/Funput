@@ -4,8 +4,25 @@ import SwiftUI
 import ThemeRuntime
 import ThemeSchema
 
+/// One row of the gallery.
+enum ThemeGallerySection: String {
+    case system
+    case custom
+
+    var title: String { self == .system ? "Hệ thống" : "Của bạn" }
+    /// Identifies the row to the screen's scroll view and to UI tests.
+    var scrollID: String { "appearance.section.\(rawValue)" }
+}
+
+extension AppearanceModel {
+    /// The gallery row holding the previewed theme.
+    var previewSection: ThemeGallerySection { previewCustomTheme == nil ? .system : .custom }
+}
+
 struct ThemeGallery: View {
     @ObservedObject var model: AppearanceModel
+    /// Called after a card was chosen for preview.
+    let onPreview: () -> Void
     let onEdit: (String) -> Void
     let onDelete: (String) -> Void
 
@@ -16,52 +33,33 @@ struct ThemeGallery: View {
             Text("Vuốt ngang để xem các theme, chạm để xem trước.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            section(
-                title: "Hệ thống",
-                identifier: "system",
-                themes: BundledThemes.all,
-                isCustom: false
-            )
+            section(.system, themes: BundledThemes.all)
             if !model.customThemes.isEmpty {
-                section(
-                    title: "Của bạn",
-                    identifier: "custom",
-                    themes: model.customThemes.map(\.theme),
-                    isCustom: true
-                )
+                section(.custom, themes: model.customThemes.map(\.theme))
             }
         }
     }
 
-    private func section(
-        title: String,
-        identifier: String,
-        themes: [KeyboardTheme],
-        isCustom: Bool
-    ) -> some View {
+    private func section(_ section: ThemeGallerySection, themes: [KeyboardTheme]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title)
+            Text(section.title)
                 .font(.subheadline.weight(.semibold))
-                .accessibilityIdentifier("appearance.section.\(identifier)")
-            scroller(themes: themes, isCustom: isCustom, identifier: identifier)
+                .accessibilityIdentifier(section.scrollID)
+            scroller(section, themes: themes)
         }
+        .id(section.scrollID)
     }
 
-    @ViewBuilder
-    private func scroller(
-        themes: [KeyboardTheme],
-        isCustom: Bool,
-        identifier: String
-    ) -> some View {
+    private func scroller(_ section: ThemeGallerySection, themes: [KeyboardTheme]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 16) {
-                ForEach(themes) { theme in themeCard(theme, isCustom: isCustom) }
+                ForEach(themes) { theme in themeCard(theme, isCustom: section == .custom) }
             }
             .padding(.vertical, 4)
             .modifier(ThemeGallerySnapContent())
         }
         .modifier(ThemeGallerySnapContainer())
-        .accessibilityIdentifier("appearance.carousel.\(identifier)")
+        .accessibilityIdentifier("appearance.carousel.\(section.rawValue)")
     }
 
     private func themeCard(_ theme: KeyboardTheme, isCustom: Bool) -> some View {
@@ -78,6 +76,7 @@ struct ThemeGallery: View {
             deleteAction: { onDelete(theme.id) }
         ) {
             withAnimation(.easeInOut(duration: 0.2)) { model.selectTheme(theme.id) }
+            onPreview()
         }
     }
 }

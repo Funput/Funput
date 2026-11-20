@@ -125,4 +125,11 @@ extension KeyboardPresentation {
     var previewSizing: KeyboardSizingProfile {
         sizing.keySizing == .system ? sizing : .default
     }
+
+    /// The height an in-app preview takes: the natural phone-portrait height,
+    /// squeezed down to `limit` on a short screen but never below a usable floor.
+    func previewHeight(limit: CGFloat) -> CGFloat {
+        let natural = KeyboardMetrics.phonePortraitHeight(for: layout, sizing: previewSizing)
+        return min(natural, max(148, limit))
+    }
 }

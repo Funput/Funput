@@ -28,7 +28,7 @@ struct ThemeEditorPreview: View {
                 isInteractive: true
             )
             .id(draft.previewMode)
-            .frame(height: previewHeight)
+            .frame(height: presentation.previewHeight(limit: availableHeight * 0.32))
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .shadow(color: .black.opacity(0.14), radius: 12, y: 6)
             .accessibilityIdentifier("themeEditor.preview")
@@ -36,11 +36,6 @@ struct ThemeEditorPreview: View {
         .padding(.horizontal, 18)
         .padding(.top, 10)
         .padding(.bottom, 12)
-    }
-
-    private var previewHeight: CGFloat {
-        let natural = KeyboardMetrics.phonePortraitHeight(for: presentation.layout, sizing: presentation.previewSizing)
-        return min(natural, max(148, availableHeight * 0.32))
     }
 }
 
