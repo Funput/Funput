@@ -68,6 +68,7 @@ public final class KeyboardSurfaceView: UIView {
         }
     )
     var keyControls: [String: KeyboardKeyControl] = [:]
+    var keyPool = KeyboardKeyControlPool()
     var geometryCache: (
         size: CGSize,
         layout: KeyboardLayout,

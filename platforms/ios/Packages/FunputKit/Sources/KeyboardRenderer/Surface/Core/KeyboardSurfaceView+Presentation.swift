@@ -47,16 +47,16 @@ extension KeyboardSurfaceView {
 #if DEBUG
         keyRebuildCount += 1
 #endif
-        keyControls.values.forEach { $0.removeFromSuperview() }
-        let specs = presentation.layout.rows.flatMap(\.keys)
-        keyControls = Dictionary(uniqueKeysWithValues: specs.map { spec in
+        // Reuses the controls the surface has: see `KeyboardKeyControlPool`.
+        let assignment = keyPool.assign(presentation.layout.rows.flatMap(\.keys)) { spec in
             let control = KeyboardKeyControl(spec: spec)
             control.onEvent = { [weak self, weak control] event in
                 self?.route(event, from: control)
             }
-            return (spec.id, control)
-        })
-        keysHost.install(Array(keyControls.values))
+            return control
+        }
+        keyControls = assignment.byID
+        keysHost.add(assignment.created)
     }
 
     func applyPresentation() {
