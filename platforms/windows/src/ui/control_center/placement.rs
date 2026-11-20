@@ -11,14 +11,12 @@
 //! negative coordinates, where clamping to a fixed origin would fling the flyout
 //! onto the wrong screen.
 
-use windows::Win32::Foundation::POINT;
-use windows::Win32::Graphics::Gdi::{
-    GetMonitorInfoW, HMONITOR, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromPoint,
-};
+use windows::Win32::Foundation::{POINT, RECT};
+use windows::Win32::Graphics::Gdi::HMONITOR;
 use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
-use windows::Win32::UI::WindowsAndMessaging::{
-    SPI_GETWORKAREA, SystemParametersInfoW, USER_DEFAULT_SCREEN_DPI,
-};
+use windows::Win32::UI::WindowsAndMessaging::USER_DEFAULT_SCREEN_DPI;
+
+use crate::shared::monitor;
 
 /// Breathing room kept between the flyout and both the icon and the screen edge.
 const GAP: f64 = 8.0;
@@ -40,6 +38,17 @@ impl Rect {
             top,
             right: left + width,
             bottom: top + height,
+        }
+    }
+}
+
+impl From<RECT> for Rect {
+    fn from(rect: RECT) -> Self {
+        Self {
+            left: f64::from(rect.left),
+            top: f64::from(rect.top),
+            right: f64::from(rect.right),
+            bottom: f64::from(rect.bottom),
         }
     }
 }
@@ -107,45 +116,15 @@ fn scale_override(value: Option<&str>) -> Option<f64> {
 
 /// The monitor under the middle of `tray`, or the nearest one.
 fn monitor_of(tray: Rect) -> HMONITOR {
-    let point = POINT {
+    monitor::at(POINT {
         x: ((tray.left + tray.right) / 2.0) as i32,
         y: ((tray.top + tray.bottom) / 2.0) as i32,
-    };
-    unsafe { MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST) }
+    })
 }
 
 /// Work area — screen minus taskbar — of the monitor under the middle of `tray`.
-///
-/// Falls back to the primary monitor's, which `MONITOR_DEFAULTTONEAREST` already
-/// makes all but unreachable: it only matters if `GetMonitorInfoW` itself fails.
 fn work_area(tray: Rect) -> Rect {
-    let monitor = monitor_of(tray);
-    let mut info = MONITORINFO {
-        cbSize: size_of::<MONITORINFO>() as u32,
-        ..Default::default()
-    };
-    if unsafe { GetMonitorInfoW(monitor, &mut info) }.as_bool() {
-        let work = info.rcWork;
-        return Rect {
-            left: f64::from(work.left),
-            top: f64::from(work.top),
-            right: f64::from(work.right),
-            bottom: f64::from(work.bottom),
-        };
-    }
-    primary_work_area()
-}
-
-fn primary_work_area() -> Rect {
-    let mut rect = windows::Win32::Foundation::RECT::default();
-    let ptr = std::ptr::from_mut(&mut rect).cast();
-    let _ = unsafe { SystemParametersInfoW(SPI_GETWORKAREA, 0, Some(ptr), Default::default()) };
-    Rect {
-        left: f64::from(rect.left),
-        top: f64::from(rect.top),
-        right: f64::from(rect.right),
-        bottom: f64::from(rect.bottom),
-    }
+    monitor::work_area(monitor_of(tray)).into()
 }
 
 #[cfg(test)]

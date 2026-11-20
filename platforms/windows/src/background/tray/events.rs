@@ -23,6 +23,7 @@ use tray_icon::{MouseButton, MouseButtonState, Rect, TrayIconEvent};
 use windows::Win32::UI::Input::KeyboardAndMouse::GetDoubleClickTime;
 
 use super::menu::{CONVERT_ID, QUIT_ID, SETTINGS_ID, UPDATE_ID};
+use super::popup;
 use crate::background::hook;
 use crate::ui;
 
@@ -57,6 +58,10 @@ enum Action {
 /// `try_wait` syscall to every mouse move the low-level hook delivers.
 pub(super) fn drain() {
     while let Ok(ev) = TrayIconEvent::receiver().try_recv() {
+        if let Some(cursor) = popup::right_click(&ev) {
+            super::show_menu(cursor);
+            continue;
+        }
         let Some((left, rect)) = as_left_event(&ev) else {
             continue;
         };
