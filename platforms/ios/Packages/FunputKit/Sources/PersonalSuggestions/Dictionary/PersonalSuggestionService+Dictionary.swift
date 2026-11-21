@@ -11,6 +11,8 @@ extension PersonalSuggestionService {
     public func edit(_ candidate: KeyboardSuggestionCandidate, _ kind: DictionaryEditKind) {
         guard let word = storedWord(for: candidate) else { return }
         ensureWorker()?.edit(kind, word: word)
+        // The word leaves the bar now, not when the answer lands.
+        received = []
         requery()
     }
 
