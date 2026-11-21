@@ -27,7 +27,7 @@ mod compose;
 mod config;
 mod layout;
 mod options;
-mod shortcuts;
+pub(crate) mod shortcuts;
 
 use std::path::PathBuf;
 

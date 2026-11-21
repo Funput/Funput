@@ -85,6 +85,18 @@ fn update_shortcut(
         }
         model.set_row_data(index, entry);
     }
+    // A trigger edit can change what other rows say too (a repeat appears or goes),
+    // so every row's note is refreshed, each in place to keep the field's focus.
+    for (row, note) in funput_desktop::shortcut_notes(&shell::shortcuts())
+        .into_iter()
+        .enumerate()
+    {
+        if let Some(mut entry) = model.row_data(row)
+            && models::set_note(&mut entry, note)
+        {
+            model.set_row_data(row, entry);
+        }
+    }
     window.set_can_add_shortcut(commands::can_add_shortcut());
 }
 

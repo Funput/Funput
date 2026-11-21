@@ -5,7 +5,7 @@ Thiết kế cho các góp ý về gõ tắt trong issue #582 (Windows) và #782
 1. `Ct` chỉ viết hoa chữ đầu, phần còn lại giữ nguyên như đã lưu.
 2. Desktop có Backspace hoàn tác gõ tắt như Android và iOS.
 3. Chữ tắt gõ nhầm sửa được bằng Backspace sau khi đã qua ranh giới.
-4. `BBh` (lỡ giữ Shift) bung như `Bbh` (đã làm), và bảng gõ tắt chặn chữ tắt trùng (chưa làm).
+4. `BBh` (lỡ giữ Shift) bung như `Bbh`, và bảng gõ tắt báo chữ tắt trùng. Đã làm; giao diện báo trùng mới có Windows.
 
 Các góp ý khác trong issue được bàn riêng: chữ dính dấu câu (`abc.vn`) và chữ tắt có ký hiệu (`;ct`) ở [shortcut-glued-words.md](shortcut-glued-words.md); file `.txt` ở [shortcut-file-sync.md](shortcut-file-sync.md) (chưa chốt); Ctrl để hủy ở [ctrl-seal-word.md](ctrl-seal-word.md); phím kích hoạt Enter/Tab ở [shortcut-trigger-keys.md](shortcut-trigger-keys.md); lỗi ô nhập trong bảng gõ tắt ở [windows-composing-field-caret.md](windows-composing-field-caret.md); cách đặt dấu mới ở [implied-circumflex-confirm.md](implied-circumflex-confirm.md).
 
@@ -165,7 +165,7 @@ Unikey vẫn bung được, kể cả khi người dùng đã gõ dài phía sau
 
 ## 4. Chữ hoa lẫn khi gõ và chữ tắt trùng
 
-Trạng thái: chữ hoa lẫn đã làm; chặn chữ tắt trùng chưa làm. Nguồn: #582 (góp ý ngày 21/11 về `BBh`), #782 mục 2.
+Trạng thái: đã làm. Giao diện báo trùng mới có Windows; Android, iOS vẫn chặn trùng nguyên văn như trước, chưa cảnh báo khác hoa/thường. Nguồn: #582 (góp ý ngày 21/11 về `BBh`), #782 mục 2.
 
 ### Hiện trạng
 
@@ -230,6 +230,7 @@ Thế nào là trùng phải theo đúng cách engine tra bảng:
 | `iOS` | `ios` | Cho thêm, không cảnh báo (`iOS` chỉ khớp nguyên văn, hai chữ tắt không che nhau) |
 
 - Android, iOS đã chặn trùng nguyên văn, chỉ thêm cảnh báo khác hoa/thường. Windows cần cả hai, và bảng đang có dòng trùng thì đánh dấu dòng không bao giờ bung.
+- Windows (đã làm, [shell/shortcuts/check.rs](../../crates/funput-desktop/src/shell/shortcuts/check.rs)): sửa bảng ngay tại chỗ, không có nút Lưu, nên "chặn" là: dòng trùng nguyên văn với một dòng phía trên hiện lỗi "Chữ tắt này đã có ở dòng trên, dòng này không bung." và không vào engine; dòng đầu tiên thắng. Trước đây dòng sau thắng một cách lặng lẽ. Dòng vẫn được lưu, để bảng cũ không mất gì.
 - Chỉ khác hoa/thường thì **không chặn**, vì engine cố ý cho hai dạng cùng tồn tại (mục "Chữ tắt lưu bằng chữ hoa" ở trên). Cảnh báo để người dùng biết dạng nào thắng.
 - Phép so khớp nằm trong Rust, cạnh hàm kiểm tra hình dạng chữ tắt của [shortcut-glued-words.md](shortcut-glued-words.md) mục 3. Giao diện mọi nền tảng gọi chung, không tự viết lại luật.
 - Nhập file: dòng trùng nguyên văn với bảng hoặc với dòng trước trong cùng file được xử lý theo chế độ nhập (gộp hay thay, xem [shortcut-file-sync.md](shortcut-file-sync.md)) và được đếm trong thông báo kết quả.

@@ -6,6 +6,8 @@
 //! "no opinion", not "clear it". That rule is what makes importing a partial or
 //! foreign file safe, so each branch below is a plain `if let Some(..)`.
 
+use funput_core::shortcut::check_trigger;
+
 use crate::settings::{
     ExtraOnsetLetters, FlipHotkey, Hotkey, Method, Settings, Shortcut, ToneStyle,
 };
@@ -81,9 +83,14 @@ fn apply_preferences(s: &mut Settings, prefs: &Preferences) {
 }
 
 /// Merge by `trigger`: a matching trigger takes the incoming expansion, a new one
-/// is appended. Existing triggers absent from the file survive.
+/// is appended. Existing triggers absent from the file survive. A row whose
+/// trigger can never fire is left out and counted, rather than stored dead.
 fn merge_shortcuts(s: &mut Settings, incoming: &[PortableShortcut], summary: &mut ImportSummary) {
     for item in incoming {
+        if check_trigger(&item.trigger).is_err() {
+            summary.shortcuts_skipped += 1;
+            continue;
+        }
         if let Some(existing) = s.shortcuts.iter_mut().find(|sc| sc.trigger == item.trigger) {
             if existing.expansion != item.expansion {
                 existing.expansion = item.expansion.clone();

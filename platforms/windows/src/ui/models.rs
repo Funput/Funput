@@ -4,6 +4,7 @@ use slint::{ModelRc, SharedString, VecModel};
 
 use crate::ShortcutEntry;
 use funput_config::{FlipHotkey, Hotkey, KeyCombo, Shortcut};
+use funput_desktop::{ShortcutNote, shortcut_notes};
 
 pub(super) fn caps(hotkey: Hotkey) -> ModelRc<SharedString> {
     keycaps(hotkey.caps())
@@ -26,10 +27,26 @@ fn keycaps(caps: &[&'static str]) -> ModelRc<SharedString> {
 pub(super) fn shortcuts(shortcuts: &[Shortcut]) -> ModelRc<ShortcutEntry> {
     let rows = shortcuts
         .iter()
-        .map(|shortcut| ShortcutEntry {
-            trigger: shortcut.trigger.clone().into(),
-            expansion: shortcut.expansion.clone().into(),
+        .zip(shortcut_notes(shortcuts))
+        .map(|(shortcut, note)| {
+            let mut entry = ShortcutEntry {
+                trigger: shortcut.trigger.clone().into(),
+                expansion: shortcut.expansion.clone().into(),
+                ..ShortcutEntry::default()
+            };
+            set_note(&mut entry, note);
+            entry
         })
         .collect::<Vec<_>>();
     ModelRc::new(VecModel::from(rows))
+}
+
+/// Put the note under a row into its Slint entry; `true` when that changed it.
+pub(super) fn set_note(entry: &mut ShortcutEntry, note: ShortcutNote) -> bool {
+    let error: SharedString = note.error.unwrap_or_default().into();
+    let warning: SharedString = note.warning.unwrap_or_default().into();
+    let changed = entry.error != error || entry.warning != warning;
+    entry.error = error;
+    entry.warning = warning;
+    changed
 }

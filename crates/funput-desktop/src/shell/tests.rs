@@ -1162,6 +1162,66 @@ fn backspace_after_an_enter_expansion_is_plain() {
     assert_eq!(state.on_backspace(), None);
 }
 
+// ---- what the table says about its rows ----
+
+fn shell_with_rows(rows: &[(&str, &str)]) -> ShellState {
+    let mut state = shell();
+    for (index, (trigger, expansion)) in rows.iter().enumerate() {
+        state.add_shortcut();
+        state.set_shortcut_trigger(index, (*trigger).into());
+        state.set_shortcut_expansion(index, (*expansion).into());
+    }
+    state
+}
+
+/// A trigger that can never fire is kept and saved, with the reason under it.
+#[test]
+fn a_trigger_that_never_fires_is_kept_and_explained() {
+    let state = shell_with_rows(&[("c t", "cách"), ("vn", "Việt Nam")]);
+    let notes = crate::shortcut_notes(state.shortcuts());
+    assert_eq!(
+        notes[0].error.as_deref(),
+        Some("Chữ tắt không được có dấu cách.")
+    );
+    assert_eq!(notes[1], crate::ShortcutNote::default());
+    assert_eq!(state.settings().shortcuts.len(), 2);
+}
+
+/// Of two rows spelled the same, the first fires and the second says why it does
+/// not, instead of quietly taking over as it used to.
+#[test]
+fn a_repeated_trigger_keeps_the_first_row() {
+    let mut state = shell_with_rows(&[("ct", "cơm tấm"), ("ct", "công ty")]);
+    assert_eq!(app_text(&mut state, "ct "), "cơm tấm ");
+    let notes = crate::shortcut_notes(state.shortcuts());
+    assert!(notes[0].error.is_none());
+    assert!(notes[1].error.is_some());
+}
+
+/// `tp` and `TP` both fire, each for its own spelling: allowed, with a warning.
+#[test]
+fn a_case_variant_is_allowed_with_a_warning() {
+    let mut state = shell_with_rows(&[("tp", "thành phố"), ("TP", "TP. HCM")]);
+    assert_eq!(app_text(&mut state, "TP "), "TP. HCM ");
+    let notes = crate::shortcut_notes(state.shortcuts());
+    assert!(
+        notes
+            .iter()
+            .all(|n| n.error.is_none() && n.warning.is_some())
+    );
+}
+
+/// A row still being typed says nothing yet.
+#[test]
+fn a_draft_row_has_no_note() {
+    let mut state = shell();
+    state.add_shortcut();
+    assert_eq!(
+        crate::shortcut_notes(state.shortcuts()),
+        vec![crate::ShortcutNote::default()]
+    );
+}
+
 // ---- triggers with symbols ----
 
 /// The hook types exactly what the engine asks, committed text included, so a

@@ -1,6 +1,6 @@
 # Gõ tắt: chữ dính phía trước và chữ tắt có ký hiệu
 
-> **Trạng thái:** mục 1 (từ dính, `@` và `/`) đã làm trong engine cho mọi nền tảng; Windows truyền thêm ký tự trước từ khi mở lại. Mục 2 (chữ tắt có ký hiệu) đã làm trong engine nhưng chỉ Windows bật (xem mục Nền tảng). Mục 3 chưa làm.
+> **Trạng thái:** mục 1 (từ dính, `@` và `/`) đã làm trong engine cho mọi nền tảng; Windows truyền thêm ký tự trước từ khi mở lại. Mục 2 (chữ tắt có ký hiệu) đã làm trong engine nhưng chỉ Windows bật (xem mục Nền tảng). Mục 3: hàm kiểm tra và phần nhập file đã làm; giao diện mới có Windows.
 
 Nguồn: issue #782 mục 3 (chữ tắt có ký hiệu), góp ý ở #737 về `tuoitre.vn`, và lỗi bung trong tên miền phát hiện khi bàn issue #582.
 
@@ -109,7 +109,7 @@ Không hỗ trợ:
 Hiện tại `;ct`, `x.y`, `c t`, `2k` được lưu mà không bao giờ bung, người dùng không biết vì sao. Không nơi nào kiểm tra ký tự của chữ tắt: Windows, Android, iOS, engine và phần nhập file chỉ từ chối chữ tắt rỗng. Thay vào đó:
 
 - Một hàm kiểm tra chung trong Rust quyết định chữ tắt hợp lệ theo hình dạng ở mục 2. Giao diện bảng gõ tắt trên mọi nền tảng và phần nhập file đều gọi hàm này.
-- Thêm tay: chữ tắt không hợp lệ thì không cho lưu, báo lý do ngay dưới ô nhập (ví dụ "Chữ tắt không được có dấu cách").
+- Thêm tay: báo lý do ngay dưới dòng (ví dụ "Chữ tắt không được có dấu cách."), và dòng đó không vào engine. Windows sửa bảng ngay tại chỗ, không có nút Lưu, nên dòng vẫn được lưu như người dùng gõ; nó chỉ không bung cho tới khi sửa.
 - Nhập file: bỏ qua dòng không hợp lệ và báo số dòng bị bỏ qua, như cách đang báo dòng lỗi.
 - Bảng đã lưu sẵn chữ tắt không hợp lệ thì giữ nguyên, không tự xóa, chỉ đánh dấu trong giao diện.
 
@@ -127,7 +127,7 @@ Hiện tại `;ct`, `x.y`, `c t`, `2k` được lưu mà không bao giờ bung, 
 - **Bung bằng Enter, Tab** (`expansion_in_place`): cùng luật dính và phần đầu, không có phần cuối.
 - **Hoàn tác** ([shortcut-undo.md](shortcut-undo.md)): `shown` gồm cả phần đầu, để ⌫ trả lại `;ct␣`; với phần cuối, `written` không kèm phím ranh giới và ⌫ trả lại `ct;`. Lệnh bỏ qua một lần giữ phần chữ, không kèm phần đầu, vì nền tảng chỉ mở lại `ct`.
 - **Mở lại sau Backspace:** mở lại một từ thì phải biết nó có dính không, nếu không `abc.vn␣` ⌫ Space sẽ bung. `Engine::adopt_after(text, before)` nhận ký tự nằm ngay trước từ. `adopt(text)` giữ nghĩa cũ là không biết phía trước, và từ được coi là đứng riêng: coi là dính thì luồng sửa chữ tắt gõ nhầm (`ctss␣` ⌫⌫ `g␣`, #702) sẽ hỏng trên mọi nền tảng chưa truyền ngữ cảnh, đổi một lỗi hiếm lấy một tính năng đang dùng.
-- **Kiểm tra chữ tắt:** hàm kiểm tra hình dạng nằm cạnh bảng gõ tắt trong engine, xuất qua FFI và JNI cho giao diện; `funput-config` dùng nó khi nhập file.
+- **Kiểm tra chữ tắt:** `check_trigger` và `compare_triggers` nằm ở `funput_core::shortcut` ([shortcut/trigger.rs](../../crates/funput-core/src/shortcut/trigger.rs)) cùng luật chữ hoa, để `funput-config` (chỉ phụ thuộc `funput-core`) và mọi giao diện gọi chung. Lỗi có câu tiếng Việt sẵn (`Display`). `MAX_PREFIX` là một hằng số dùng chung với `Lead`. Nhập file (`transfer::apply`, cũng là đường của tệp UniKey) bỏ dòng không hợp lệ và đếm vào `ImportSummary::shortcuts_skipped`. Chưa xuất qua FFI và JNI.
 
 ## Nền tảng
 
@@ -140,7 +140,7 @@ Phần lớn nằm trong engine. Việc của từng nền tảng:
   - **Linux không gạch chân:** đã xóa đúng số ký tự; nhưng khi chưa gõ chữ nào, dấu câu chỉ được đưa vào engine lúc bật tự viết hoa, nên engine không thấy phần đầu.
   - **iOS:** số ký tự xóa vượt vùng đang gõ thì bàn phím bỏ lần bung đó (an toàn, không làm hỏng chữ); cần đo theo văn bản trước con trỏ (`deletionCount(scalars:context:)`).
 - **Dấu câu phải đi qua engine.** Engine chỉ biết từ dính nếu thấy dấu câu đứng trước. Đã kiểm: iOS (`KeyboardInputCoordinator+Text.swift`, phím `.punctuation` gọi `composer.process`) và Android (`ImeTypingHandler`, `engine.processBoundary`) đều đưa dấu câu trên trang ký hiệu qua engine, kể cả khi chưa gõ chữ nào. Ngoại lệ là `insertLiteral` trên iOS (emoji, kaomoji, dán), đúng loại chữ chèn sau lưng engine mà mục 1 đã chấp nhận. Khi engine không chạy (tiếng Anh, không bật gõ tắt) thì không có gì để bung nên không cần trạng thái dính. `CompositionBoundary.kt` trên Android chép lại tập ranh giới của engine; thiết kế này không đổi tập đó.
-- **Giao diện bảng gõ tắt:** gọi hàm kiểm tra chữ tắt, báo lỗi dưới ô nhập. Câu chữ theo quy ước giao diện (câu tự nhiên, không dùng `·` hay `—`).
+- **Giao diện bảng gõ tắt:** gọi hàm kiểm tra chữ tắt, báo lỗi dưới ô nhập. Câu chữ theo quy ước giao diện (câu tự nhiên, không dùng `·` hay `—`). Windows đã làm: `funput_desktop::shortcut_notes` tính lời nhắn từng dòng, `row.slint` hiện lỗi (`Theme.danger`) hoặc cảnh báo (`Theme.warn`) dưới dòng, và thông báo nhập file nêu số dòng bị bỏ qua. macOS, Linux, Android, iOS chưa làm.
 
 ## Kiểm thử
 

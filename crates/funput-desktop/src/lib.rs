@@ -50,4 +50,5 @@ pub use key::{KeyEvent, KeyKind, Mods, TriggerKey, classify};
 pub use layout::is_foreign_layout;
 pub use retone::{CommittedTail, Removed};
 pub use shell::ShellState;
+pub use shell::shortcuts::{ShortcutNote, shortcut_notes};
 pub use shortcut_undo::undo_shortcut;
