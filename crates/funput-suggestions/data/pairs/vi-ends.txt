@@ -1,0 +1,455 @@
+# Vietnamese words whose last syllable also starts a line of vi.txt.
+#
+# Built by hand for Funput, from no external word list or corpus (see NOTICE.md).
+#
+# Predict reads the syllable before the caret. `cảm` starts `cảm ơn`, but in
+# `dũng cảm` it ends a word, and offering `ơn` after that word is a wrong guess.
+# Each line here is one such word: after it, the lines of vi.txt say nothing.
+#
+# Layout: one word per line, two syllables separated by one space, lowercase NFC,
+# tone marks placed the modern way. Any `#` line is a comment; the words are
+# grouped under the syllable they end with.
+#
+# What belongs here: a word people type, whose second syllable starts a line of
+# vi.txt, and after which that line's followers would be wrong. Leave out:
+# - a word vi.txt already spells as a line (`bưu điện`): the engine reads the
+#   lines as words too;
+# - a word the followers are still right after (`ngày hôm` → `nay`, `gọi điện`
+#   → `thoại`).
+#
+# Every line is checked by `funput-lexicon-tool/tests/vi_pairs`.
+
+# cảm
+dũng cảm
+thông cảm
+đồng cảm
+tình cảm
+thiện cảm
+phản cảm
+nhạy cảm
+mẫn cảm
+gợi cảm
+ác cảm
+linh cảm
+bị cảm
+xúc cảm
+thương cảm
+mặc cảm
+đa cảm
+biểu cảm
+truyền cảm
+
+# gia
+tham gia
+quốc gia
+chuyên gia
+đại gia
+tư gia
+luật gia
+oan gia
+thông gia
+quản gia
+hoàng gia
+xuất gia
+tại gia
+
+# sức
+hết sức
+ra sức
+cố sức
+quá sức
+gắng sức
+tận sức
+mất sức
+dốc sức
+kiệt sức
+trang sức
+sung sức
+đuối sức
+công sức
+góp sức
+vừa sức
+
+# khả, sẵn, đảm, đặc
+bất khả
+có sẵn
+làm sẵn
+bán sẵn
+để sẵn
+can đảm
+bảo đảm
+dày đặc
+đông đặc
+
+# quyết
+giải quyết
+kiên quyết
+cương quyết
+phán quyết
+nghị quyết
+biểu quyết
+phủ quyết
+bí quyết
+tự quyết
+cả quyết
+nhất quyết
+
+# hướng, trách, vệ, hạnh
+phương hướng
+định hướng
+xu hướng
+khuynh hướng
+chuyển hướng
+đổi hướng
+lạc hướng
+chí hướng
+phụ trách
+chê trách
+oán trách
+khiển trách
+quở trách
+đáng trách
+tự trách
+bảo vệ
+tự vệ
+phòng vệ
+hộ vệ
+cận vệ
+bất hạnh
+đức hạnh
+phẩm hạnh
+vinh hạnh
+
+# xin, bao, chuẩn
+cầu xin
+van xin
+ăn xin
+đơn xin
+nài xin
+bánh bao
+phong bao
+tiêu chuẩn
+quy chuẩn
+phê chuẩn
+đạt chuẩn
+đúng chuẩn
+
+# kết, cố
+cam kết
+đoàn kết
+liên kết
+tổng kết
+sơ kết
+chung kết
+ký kết
+giao kết
+gắn kết
+cấu kết
+đúc kết
+bán kết
+sự cố
+biến cố
+kiên cố
+củng cố
+
+# thanh, tham, giải, phát
+âm thanh
+truyền thanh
+phát thanh
+siêu thanh
+lòng tham
+lời giải
+bài giải
+hoà giải
+giảng giải
+đoạt giải
+trao giải
+phân giải
+lý giải
+đạt giải
+nhận giải
+xuất phát
+cấp phát
+bột phát
+tự phát
+lạm phát
+phân phát
+ban phát
+bộc phát
+
+# thực, quản, hoàn, hoạt
+hiện thực
+chân thực
+sự thực
+trung thực
+thiết thực
+xác thực
+ẩm thực
+lương thực
+thành thực
+đích thực
+bảo quản
+cai quản
+bồi hoàn
+sinh hoạt
+linh hoạt
+
+# lưu, khám, trò, phản, đào, chỉnh, góp
+giao lưu
+phong lưu
+hạ lưu
+thăm khám
+học trò
+vai trò
+làm trò
+pha trò
+tương phản
+làm phản
+hoa đào
+hoàn chỉnh
+điều chỉnh
+chấn chỉnh
+đóng góp
+
+# thuyết, nghi, lĩnh, phạm, tốc
+tiểu thuyết
+lý thuyết
+giả thuyết
+truyền thuyết
+hoài nghi
+đa nghi
+tình nghi
+bản lĩnh
+vi phạm
+tội phạm
+xâm phạm
+nghi phạm
+tăng tốc
+cao tốc
+gia tốc
+
+# khách, sản, chất
+du khách
+hành khách
+hiếu khách
+quý khách
+thực khách
+tiếp khách
+đón khách
+tiễn khách
+tài sản
+hải sản
+di sản
+đặc sản
+thuỷ sản
+nông sản
+lâm sản
+khoáng sản
+gia sản
+phá sản
+sinh sản
+động sản
+tính chất
+bản chất
+vật chất
+hoá chất
+phẩm chất
+thể chất
+khí chất
+tố chất
+thực chất
+
+# kích, địa, dự, cơ, kinh, chi
+công kích
+bản địa
+nội địa
+thổ địa
+lục địa
+tham dự
+can dự
+danh dự
+vinh dự
+động cơ
+nguy cơ
+thời cơ
+phi cơ
+vô cơ
+hữu cơ
+đầu cơ
+thần kinh
+bắc kinh
+làm chi
+can chi
+hèn chi
+
+# chứng, tài, phương, quy, mục, tiến, chiến, truyền
+bằng chứng
+triệu chứng
+minh chứng
+nhân chứng
+dẫn chứng
+làm chứng
+vật chứng
+thiên tài
+nhân tài
+có tài
+biệt tài
+bất tài
+đề tài
+tiền tài
+phát tài
+địa phương
+đối phương
+tây phương
+đông phương
+bốn phương
+nội quy
+chính quy
+danh mục
+tiết mục
+chuyên mục
+đề mục
+hạng mục
+tiên tiến
+cải tiến
+thăng tiến
+cấp tiến
+xúc tiến
+kháng chiến
+hiếu chiến
+quyết chiến
+tham chiến
+tuyên truyền
+lưu truyền
+di truyền
+
+# ngoại, phụ, khoa, điện, ứng, mật, chương, quần, môi
+bà ngoại
+ông ngoại
+bên ngoại
+đối ngoại
+hải ngoại
+sư phụ
+nha khoa
+bách khoa
+nội khoa
+ngoại khoa
+chuyên khoa
+cúp điện
+mất điện
+tiền điện
+cung điện
+phản ứng
+thích ứng
+đáp ứng
+tương ứng
+hiệu ứng
+cung ứng
+dị ứng
+bí mật
+bảo mật
+thân mật
+cơ mật
+tuyệt mật
+huy chương
+áo quần
+son môi
+
+# nguyên, hậu, chính, bình
+tài nguyên
+tây nguyên
+cao nguyên
+thảo nguyên
+hoàng hậu
+lạc hậu
+khí hậu
+hiền hậu
+phúc hậu
+nhân hậu
+hoa hậu
+tài chính
+hành chính
+bưu chính
+chân chính
+nội chính
+liêm chính
+bất chính
+cải chính
+đính chính
+trung bình
+hoà bình
+bất bình
+phê bình
+thái bình
+công bình
+yên bình
+thanh bình
+
+# tuyệt, tương, đầy, nguy, nghiêm, thuận, trực, độc
+cự tuyệt
+nước tương
+tràn đầy
+lâm nguy
+uy nghiêm
+trang nghiêm
+hoà thuận
+thoả thuận
+đồng thuận
+túc trực
+cương trực
+đơn độc
+cô độc
+ngộ độc
+thuốc độc
+
+# phong, thái, tinh, biểu, yên, thất, đáng, thú, thư, kỷ, tử, hiếm, bổ
+tác phong
+xung phong
+tiên phong
+oai phong
+trạng thái
+hình thái
+sinh thái
+phong thái
+yêu tinh
+hành tinh
+vệ tinh
+đại biểu
+tiêu biểu
+phát biểu
+bình yên
+để yên
+ngồi yên
+đứng yên
+nằm yên
+an yên
+tổn thất
+nội thất
+xứng đáng
+chính đáng
+thoả đáng
+thích đáng
+hứng thú
+sở thú
+cầm thú
+dã thú
+bức thư
+lá thư
+hộp thư
+tiểu thư
+bí thư
+ung thư
+thế kỷ
+ích kỷ
+tự kỷ
+công tử
+hoàng tử
+điện tử
+nguyên tử
+phần tử
+quân tử
+thái tử
+sư tử
+tự tử
+quý hiếm
+tẩm bổ

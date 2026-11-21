@@ -71,11 +71,7 @@ impl SuggestionEngine {
     /// A long context that is `Unsure` ends the question. It has seen enough to
     /// know what follows it is spread out, which is more specific than anything
     /// the word before alone, or a shipped list, could say.
-    pub(super) fn predict(
-        &self,
-        contexts: &Contexts<'_>,
-        previous: Option<&str>,
-    ) -> SuggestionSet<'_> {
+    pub(super) fn predict(&self, contexts: &Contexts<'_>, words: &[&str]) -> SuggestionSet<'_> {
         let mut offered = Habits::NONE;
         for (order, context) in contexts.iter().enumerate() {
             let Some((followers, seen)) = context else {
@@ -92,7 +88,7 @@ impl SuggestionEngine {
             }
         }
         let mut set = self.assemble(offered.ids, offered.len);
-        self.fill_from_pairs(previous, contexts[MAX_CONTEXT - 1], &mut set);
+        self.fill_from_pairs(words, contexts[MAX_CONTEXT - 1], &mut set);
         set
     }
 

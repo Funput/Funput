@@ -17,23 +17,24 @@ use crate::engine::SuggestionEngine;
 use crate::types::SuggestionSet;
 
 impl SuggestionEngine {
-    /// Fills the empty slots of `set` with the shipped words after `previous`,
-    /// in the order the list ranks them. `followed` is what the store holds
-    /// about `previous` as a context.
+    /// Fills the empty slots of `set` with the shipped words after the last word
+    /// of `context`, in the order the list ranks them. `followed` is what the
+    /// store holds about that word as a context.
     ///
-    /// Adds nothing while the data is off, for a word no pair starts with, and
-    /// skips a word the user blocked in either tone style, one `set` already
-    /// holds in either style, and one the user's own typing has stepped away from.
+    /// Adds nothing while the data is off, for a word no pair starts with or one
+    /// that ends a word here (`giao thông`), and skips a word the user blocked in
+    /// either tone style, one `set` already holds in either style, and one the
+    /// user's own typing has stepped away from.
     pub(crate) fn fill_from_pairs<'a>(
         &'a self,
-        previous: Option<&str>,
+        context: &[&str],
         followed: Followed<'_>,
         set: &mut SuggestionSet<'a>,
     ) {
         let SeedSlot::Vietnamese { style, pairs, .. } = self.seed else {
             return;
         };
-        for next in previous.map_or(&[][..], |text| pairs.followers_after(text)) {
+        for next in pairs.followers_in(context) {
             let taken = next.spellings().any(|spelling| {
                 self.blocked.contains(spelling) || set.iter().any(|kept| kept == spelling)
             });

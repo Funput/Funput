@@ -60,11 +60,11 @@ impl SeedWords {
 }
 
 impl SuggestionEngine {
-    /// What the shipped data offers for `prefix` after `previous`, leaving out what
+    /// What the shipped data offers for `prefix` after `context`, leaving out what
     /// `taken` already holds and any word the user blocked. Nothing while it is off.
     pub(crate) fn seed_words(
         &self,
-        previous: Option<&str>,
+        context: &[&str],
         prefix: &str,
         taken: &SuggestionSet<'_>,
     ) -> SeedWords {
@@ -87,7 +87,7 @@ impl SuggestionEngine {
             leaves_one: typed == folded,
             ..SeedWords::NONE
         };
-        for next in previous.map_or(&[][..], |text| pairs.followers_after(text)) {
+        for next in pairs.followers_in(context) {
             let word = next.spelled(style);
             if word != typed
                 && marks::completes(typed, word)

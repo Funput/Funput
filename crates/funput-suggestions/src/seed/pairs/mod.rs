@@ -19,7 +19,9 @@
 //!
 //! - `next` — a following word, in both tone styles.
 //! - `parse` — building a table from a list.
+//! - `ends` — the words a first syllable ends, after which the lines stay quiet.
 
+mod ends;
 mod next;
 mod parse;
 
@@ -27,12 +29,14 @@ use std::borrow::Cow;
 use std::ops::Range;
 use std::sync::OnceLock;
 
+use ends::WordEnds;
 pub(crate) use next::Next;
 
 use crate::engine::MAX_TOKEN_SCALARS;
 use crate::index::normalize;
 
 const VIETNAMESE: &str = include_str!("../../../data/pairs/vi.txt");
+const VIETNAMESE_ENDS: &str = include_str!("../../../data/pairs/vi-ends.txt");
 const ENGLISH: &str = include_str!("../../../data/pairs/en.txt");
 
 static SHIPPED: OnceLock<ShippedPairs> = OnceLock::new();
@@ -41,6 +45,7 @@ static SHIPPED: OnceLock<ShippedPairs> = OnceLock::new();
 pub(crate) fn shipped() -> &'static ShippedPairs {
     SHIPPED.get_or_init(|| ShippedPairs {
         vietnamese: PairTable::parse(VIETNAMESE),
+        ends: WordEnds::parse(VIETNAMESE_ENDS),
         english: PairTable::parse(ENGLISH),
     })
 }
@@ -48,18 +53,43 @@ pub(crate) fn shipped() -> &'static ShippedPairs {
 /// Every shipped list, one table each.
 pub(crate) struct ShippedPairs {
     vietnamese: PairTable,
+    ends: WordEnds,
     english: PairTable,
 }
 
 impl ShippedPairs {
-    /// What Vietnamese mode offers after `previous`, best first: the Vietnamese
-    /// line, else the English supplement's (a first word both lead is refused by
-    /// the tests, and Vietnamese would win it).
-    pub(crate) fn followers_after(&self, previous: &str) -> &[Next] {
+    /// What Vietnamese mode offers after the last word of `context`, best first:
+    /// the Vietnamese line, else the English supplement's (a first word both lead
+    /// is refused by the tests, and Vietnamese would win it).
+    ///
+    /// Nothing when the word before it shows that last word to be the end of a
+    /// word and not the start of one: `thông` after `giao` starts nothing.
+    pub(crate) fn followers_in(&self, context: &[&str]) -> &[Next] {
+        let Some((previous, before)) = context.split_last() else {
+            return &[];
+        };
+        match before.last() {
+            Some(older) if self.ends_word(older, previous) => &[],
+            _ => self.followers_after(previous),
+        }
+    }
+
+    fn followers_after(&self, previous: &str) -> &[Next] {
         match self.vietnamese.followers_after(previous) {
             [] => self.english.followers_after(previous),
             followers => followers,
         }
+    }
+
+    /// Whether `older previous` is one word: a listed end, or a line of the
+    /// Vietnamese list read as the word it spells.
+    fn ends_word(&self, older: &str, previous: &str) -> bool {
+        let mut buffer = [0u8; MAX_TOKEN_SCALARS * 4];
+        let Some(last) = normalize::exact_into(previous, &mut buffer) else {
+            return false;
+        };
+        let spelled = |next: &Next| next.spellings().any(|spelling| spelling == last);
+        self.ends.holds(older, last) || self.vietnamese.followers_after(older).iter().any(spelled)
     }
 }
 
@@ -159,7 +189,8 @@ mod tests {
     #[test]
     fn the_shipped_tables_stay_small() {
         let pairs = shipped();
-        let bytes = pairs.vietnamese.heap_bytes() + pairs.english.heap_bytes();
+        let tables = pairs.vietnamese.heap_bytes() + pairs.english.heap_bytes();
+        let bytes = tables + pairs.ends.heap_bytes();
         assert!(
             bytes <= 128 * 1024,
             "{bytes} bytes is over the 128 KiB budget"

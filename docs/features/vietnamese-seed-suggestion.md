@@ -144,8 +144,34 @@ chuẩn bị
 - Luật "không đứng cuối một từ khác" giữ nguyên, hằng `ALSO_SECOND` đổi tên thành `ALSO_FOLLOWER`
   và có trần 4 ngoại lệ. Luật này là thứ chặn nhiều dòng hiển nhiên nhất (`thông báo` vì
   `giao thông`, `thời gian` vì `tạm thời`, `tình yêu` vì `nhiệt tình`). Lối ra nếu muốn mở tiếp
-  nằm ở engine: im lặng khi hai chữ đứng trước chính là một dòng trong bảng. Chưa làm.
+  nằm ở engine: im lặng khi hai chữ đứng trước chính là một dòng trong bảng. **Đã làm**, xem
+  [Từ mà chữ đứng trước đứng cuối](#từ-mà-chữ-đứng-trước-đứng-cuối) ngay dưới.
 - Ba cặp mà test của ba nền tảng dựa vào (`cảm ơn`, `sức khoẻ`, `tuy nhiên`) cố ý giữ một chữ đi sau.
+
+#### Từ mà chữ đứng trước đứng cuối
+
+Predict đọc âm tiết ngay trước con trỏ, và âm tiết đó không phải lúc nào cũng mở đầu một từ:
+`cảm` mở đầu `cảm ơn` nhưng đứng cuối `dũng cảm`. Engine giờ đọc cả chữ đứng trước nữa
+(`seed/pairs/mod.rs::followers_in`) và **im lặng khi hai chữ đó là một từ**:
+
+- từ có tên trong `data/pairs/vi-ends.txt` (`dũng cảm`, `giao thông`), một file viết tay riêng,
+  mỗi dòng một từ hai âm tiết;
+- hoặc một dòng của chính `vi.txt` đọc như một từ (`bưu điện`, nên sau nó dòng `điện thoại` im).
+
+Hệ quả:
+
+- Luật "không đứng cuối một từ khác" thành "từ hay gặp mà nó đứng cuối phải có trong
+  `vi-ends.txt`". Test `no_first_syllable_ends_another_listed_word` và hằng `ALSO_FOLLOWER` bị
+  bỏ; thay bằng test chạy engine: sau mọi từ như vậy thanh phải trống.
+- Chỉ dữ liệu kèm app bị im. Thói quen của chính người dùng sau `dũng cảm` vẫn được nói.
+- Áp dụng cho cả đường gõ dở (`dũng cảm` + `ơ` không còn đẩy `ơn` lên đầu).
+- Cần hai chữ ngữ cảnh. Khi shell chỉ biết một chữ (chữ đầu tiên sau dấu câu) thì không có gì để
+  tra, và dòng vẫn nói như trước.
+- Vẫn không cứu được chữ đứng cuối quá nhiều từ để liệt kê hết (`bóng`, `năm`), và chữ tự nó là
+  một từ.
+- Chi phí: một lần tra nhị phân nữa khi có hai chữ ngữ cảnh, không cấp phát
+  (`alloc_budget.rs`). Bench `seed/pair` và `seed/predict` chậm thêm khoảng 5% so với trước #713,
+  trong ngân sách 10%.
 
 ### Phần B: `data/syllables/vi.txt` (có sẵn)
 

@@ -18,16 +18,19 @@
 #   cho`). A batch of such lines took the wrong rate on `benchmarks/chat-vi.txt`
 #   from 11% to 47%. The few listed anyway (`xin`, `hôm`, `bao`) are the ones
 #   whose followers still dominate.
-# - Nothing people type often ends with it. Predict reads only the syllable
-#   before, so `bóng đá` would offer `đá` after `đá bóng`, and `tình yêu` would
-#   offer `yêu` after `nhiệt tình`.
+# - The words people type that end with it are listed in vi-ends.txt. Predict
+#   reads the syllable before the caret, so `cảm ơn` would offer `ơn` after
+#   `dũng cảm`; with `dũng cảm` in that file, it says nothing there. A word
+#   this file already spells as a line (`bưu điện`, for the line `điện thoại`)
+#   needs no entry. A syllable that ends more common words than anyone can
+#   list (`bóng`: `đá bóng`, `quả bóng`, `trái bóng`...) still does not belong.
 # - It is not one of the syllables anything can follow (`của`, `và`, `là`), a
 #   number or a pronoun (`năm`, `bố`).
 #
 # Offering wrong words is worse than offering none. No proper nouns: Predict
 # cannot capitalise `nội` after `Hà`.
 #
-# Every line is checked by `funput-lexicon-tool/tests/vi_pairs.rs`. That check
+# Every line is checked by `funput-lexicon-tool/tests/vi_pairs`. That check
 # cannot tell whether a line is sharp enough: measure a batch with
 # `funput dev suggest` before it merges, and have a second pair of eyes on it.
 

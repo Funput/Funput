@@ -147,7 +147,9 @@ fn warm_prediction_does_not_allocate() {
 /// A prediction from the shipped pairs is on the same budget. The tables are
 /// built when the shell turns them on, outside the measurement; every lookup after
 /// that normalizes onto the stack and binary-searches, in both tone styles, for a
-/// context the store holds, one it does not, and one the list has no pair for.
+/// context the store holds, one it does not, and one the list has no pair for. Two
+/// words of context add the look-up of the word they might spell (`dũng cảm`, a
+/// listed end; `bưu điện`, a line; `rất cảm`, neither), on the same budget.
 #[test]
 fn warm_prediction_from_the_shipped_pairs_does_not_allocate() {
     let mut engine = SuggestionEngine::in_memory(SuggestionConfig::default());
@@ -167,6 +169,11 @@ fn warm_prediction_from_the_shipped_pairs_does_not_allocate() {
                         std::hint::black_box(Some(previous)),
                         std::hint::black_box(""),
                     ));
+                }
+                for words in ["dũng cảm", "bưu điện", "rất cảm"] {
+                    std::hint::black_box(
+                        engine.suggest_after_words(std::hint::black_box(words), ""),
+                    );
                 }
             }
         });
