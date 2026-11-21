@@ -65,7 +65,7 @@ struct PersonalSuggestionTwoWordContextTests {
         #expect(coordinator.takePersonalSuggestionUpdate().queryContext == "xin chào")
     }
 
-    @Test("Backspacing past a boundary and a caret move drop both words")
+    @Test("Backspacing past a boundary and a caret move drop both typed words")
     func boundariesDropBoth() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .vni)
         let document = TestKeyboardWriter()
@@ -79,7 +79,9 @@ struct PersonalSuggestionTwoWordContextTests {
         _ = coordinator.takePersonalSuggestionUpdate()
         document.replaceTextExternally(with: "một câu khác ")
         coordinator.synchronizeDocument(document, event: .textChanged)
-        #expect(coordinator.takePersonalSuggestionUpdate().queryContext == nil)
+        let moved = coordinator.takePersonalSuggestionUpdate()
+        #expect(moved.queryContext == "câu khác", "the words now before the caret, borrowed")
+        #expect(moved.learnContext == nil)
     }
 
     @Test("An update with no context carries no older word either")
