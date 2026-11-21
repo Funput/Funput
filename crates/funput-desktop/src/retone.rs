@@ -22,6 +22,10 @@ use funput_engine::{Action, ImeResult};
 
 mod completion;
 mod edits;
+mod words;
+
+use words::is_separator;
+pub(crate) use words::{char_before, word_start};
 
 /// How much committed text to keep, in bytes. Only the word at the caret is read,
 /// but Backspace may walk back over several words to reach a mistyped gõ tắt
@@ -46,6 +50,9 @@ pub struct Removed<'a> {
     pub deleted: char,
     /// `None` when the caret landed on a separator rather than a word.
     pub word: Option<&'a str>,
+    /// The character in front of [`Removed::word`], for
+    /// [`funput_engine::Engine::adopt_after`]; `None` where the shadow begins.
+    pub before: Option<char>,
 }
 
 impl CommittedTail {
@@ -89,8 +96,8 @@ impl CommittedTail {
     }
 
     /// One Backspace with nothing composing. The app deletes [`Removed::deleted`].
-    /// Offer [`Removed::word`] to [`funput_engine::Engine::adopt`] when it is set,
-    /// then report back with [`CommittedTail::resolve`].
+    /// Offer [`Removed::word`] to [`funput_engine::Engine::adopt_after`] when it is
+    /// set, then report back with [`CommittedTail::resolve`].
     pub fn backspace(&mut self) -> Option<Removed<'_>> {
         let deleted = self.tail.pop()?;
         let start = word_start(&self.tail);
@@ -100,7 +107,12 @@ impl CommittedTail {
             self.word_start = start;
             Some(&self.tail[start..])
         };
-        Some(Removed { deleted, word })
+        let before = char_before(&self.tail, start);
+        Some(Removed {
+            deleted,
+            word,
+            before,
+        })
     }
 
     /// What the engine did with the word from [`CommittedTail::backspace`]. `true`:
@@ -130,22 +142,6 @@ impl CommittedTail {
             .map_or(self.tail.len(), |(i, c)| i + c.len_utf8());
         self.tail.drain(..cut);
     }
-}
-
-/// Byte index where the unbroken run of word characters at the end of `text`
-/// begins; `text.len()` when `text` ends on a separator.
-pub(crate) fn word_start(text: &str) -> usize {
-    text.char_indices()
-        .rev()
-        .find(|(_, c)| is_separator(*c))
-        .map_or(0, |(i, c)| i + c.len_utf8())
-}
-
-/// What ends a word on screen, mirroring the engine's own boundary rule. `[` and `]`
-/// compose in advanced Telex rather than separate, but they only ever reach the
-/// shadow inside a gõ tắt expansion, where separating is the right reading.
-fn is_separator(c: char) -> bool {
-    c.is_whitespace() || c.is_ascii_punctuation()
 }
 
 #[cfg(test)]

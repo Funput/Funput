@@ -45,11 +45,18 @@ impl Engine {
         // Snapshotted first: `prepare_key` may consume a sentence start, and
         // Backspace has to restore that together with the key.
         let before = self.session.sentence.snapshot();
+        let had_word = !self.session.keys.is_empty();
         let result = self.compose_key(key, source, touch);
         self.session.sentence.push(key, before);
-        let word_open = !self.session.keys.is_empty();
-        self.session.glue.after_key(key, word_open);
+        self.follow_lead(key, had_word);
         result
+    }
+
+    /// Tell [`crate::model::Lead`] what `key` left in front of the next word.
+    fn follow_lead(&mut self, key: char, had_word: bool) {
+        let word_open = !self.session.keys.is_empty();
+        let ended_word = had_word && !word_open;
+        self.session.lead.after_key(key, ended_word, word_open);
     }
 
     fn compose_key(
@@ -73,7 +80,7 @@ impl Engine {
             compose_key
         };
         if self.session.keys.is_empty() {
-            self.session.glue.start_word();
+            self.session.lead.start_word();
         }
         self.session.push_key(raw_key);
         // Whatever a preview found was about the word as it stood; this key makes it
@@ -100,12 +107,19 @@ impl Engine {
         if !self.session.english_shortcuts() {
             return ImeResult::none();
         }
-        if boundary::is_english_boundary(key) {
-            return boundary::on_english_boundary(&mut self.session, key);
-        }
-        self.session.push_key(key);
-        self.session.buffer.push(key);
-        ImeResult::none()
+        let had_word = !self.session.keys.is_empty();
+        let result = if boundary::is_english_boundary(key) {
+            boundary::on_english_boundary(&mut self.session, key)
+        } else {
+            if !had_word {
+                self.session.lead.start_word();
+            }
+            self.session.push_key(key);
+            self.session.buffer.push(key);
+            ImeResult::none()
+        };
+        self.follow_lead(key, had_word);
+        result
     }
 
     fn prepare_key(&mut self, key: char) -> (char, bool) {

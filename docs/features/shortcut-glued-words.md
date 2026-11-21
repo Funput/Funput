@@ -1,6 +1,6 @@
 # Gõ tắt: chữ dính phía trước và chữ tắt có ký hiệu
 
-> **Trạng thái:** đã chốt thiết kế, chưa làm. Áp dụng cho engine nên có hiệu lực trên mọi nền tảng.
+> **Trạng thái:** mục 1 (từ dính, `@` và `/`) đã làm trong engine, áp dụng cho mọi nền tảng; Windows truyền ký tự trước từ khi mở lại. Mục 2 và 3 chưa làm.
 
 Nguồn: issue #782 mục 3 (chữ tắt có ký hiệu), góp ý ở #737 về `tuoitre.vn`, và lỗi bung trong tên miền phát hiện khi bàn issue #582.
 
@@ -78,7 +78,7 @@ Nguyên tắc giống `NumberGlue`: **bỏ lỡ một lần bung thì được, 
 - Quên dấu cách sau dấu câu (`Xin chào.vn`, `a,k`) thì không bung.
 - `-vn` (gạch đầu dòng không có dấu cách) không bung.
 
-Giới hạn: engine chỉ biết những gì gõ liền mạch. Click ra sau `abc.` rồi gõ `vn␣` thì engine coi như đầu văn bản và vẫn bung. Nền tảng đọc được văn bản trước con trỏ có thể báo cho engine (xem mục Nền tảng); Windows thì không.
+Giới hạn: engine chỉ biết những gì gõ liền mạch. Click ra sau `abc.` rồi gõ `vn␣` thì engine coi như đầu văn bản và vẫn bung. Chuỗi dấu câu đang chờ được quên khi nền tảng báo con trỏ đã dời (`arm_capitalization`, `disarm_capitalization`), nên dấu câu gõ ở chỗ cũ không làm dính từ gõ ở chỗ mới.
 
 ### 2. Chữ tắt có ký hiệu ở đầu hoặc ở cuối
 
@@ -119,20 +119,20 @@ Hiện tại `;ct`, `x.y`, `c t`, `2k` được lưu mà không bao giờ bung, 
 
 ## Engine
 
-- **Trạng thái dính:** mở rộng `NumberGlue` thành một trạng thái chung cho từ đang gõ: có dính hay không, và chuỗi phần đầu (dấu câu, chữ số) dính ngay trước. Chuỗi phần đầu giới hạn độ dài (ví dụ 8 byte), lưu tại chỗ, không cấp phát trên đường gõ. Giống `NumberGlue::Digit`, trạng thái này sống qua `Engine::clear()` để Android (xóa engine ngay sau khi commit) vẫn thấy dấu câu vừa gõ.
-- **Cập nhật:** `after_key` ghi nhận phím không mở từ: khoảng trắng làm sạch trạng thái, dấu câu và chữ số nối vào chuỗi phần đầu, dấu mở được nhớ kèm việc nó có đứng sau khoảng trắng hay không. `start_word` chốt trạng thái cho từ sắp gõ. `seal()` đánh dấu từ kế tiếp là dính.
+- **Trạng thái dính:** `NumberGlue` thành `Lead` ([model/lead.rs](../../crates/funput-engine/src/model/lead.rs)): từ đang gõ có dính hay không, và chuỗi dấu câu, chữ số dính ngay trước (tối đa 8 byte, lưu tại chỗ, không cấp phát trên đường gõ). Chuỗi đang chờ từ sống qua `Engine::clear()` để Android (xóa engine ngay sau khi commit) vẫn thấy dấu câu vừa gõ; `arm_capitalization` và `disarm_capitalization` xóa nó. `size_of::<Engine>()` tăng 200 → 216.
+- **Cập nhật:** `after_key` ghi nhận phím không mở từ, kể cả ở chế độ tiếng Anh: khoảng trắng làm sạch trạng thái, dấu câu và chữ số nối vào chuỗi, phím vừa kết thúc một từ đánh dấu chuỗi là đứng sau chữ. `start_word` chốt trạng thái cho từ sắp gõ. `seal()` đánh dấu từ kế tiếp là dính.
 - **Tra:** `rewrite` trong [shortcut.rs](../../crates/funput-engine/src/compose/boundary/shortcut.rs) thử theo thứ tự: phần đầu + lõi + phần cuối, phần đầu + lõi, lõi + phần cuối, rồi lõi đứng riêng nếu từ không dính. Số ký tự xóa (`backspace`) cộng thêm độ dài phần đầu. Chế độ tiếng Anh có gõ tắt đi cùng đường.
 - **Phím kích hoạt:** `@` và `/` vẫn là ranh giới từ (kết thúc từ, giữ nguyên tập `is_english_boundary` và bản chép trên Android), chỉ không tra gõ tắt. `expansion` trong [shortcut.rs](../../crates/funput-engine/src/compose/boundary/shortcut.rs) bỏ qua khi `boundary_key` là một trong hai dấu này.
 - **Bung bằng Enter, Tab** (`expansion_in_place`): cùng luật dính và phần đầu, không có phần cuối.
 - **Hoàn tác** ([shortcut-undo.md](shortcut-undo.md)): `shown` gồm cả phần đầu, để ⌫ trả lại `;ct␣`.
-- **Mở lại sau Backspace** (`adopt`, `starts_a_trigger`): mở lại một từ thì phải biết nó có dính không, nếu không `abc.vn␣` ⌫ Space sẽ bung. `adopt` nhận thêm ký tự nằm ngay trước từ khi nền tảng có. Không có thì coi như dính, nghĩa là không bung (theo nguyên tắc bỏ lỡ thì được). `starts_a_trigger` xét cả chữ tắt có phần đầu.
+- **Mở lại sau Backspace:** mở lại một từ thì phải biết nó có dính không, nếu không `abc.vn␣` ⌫ Space sẽ bung. `Engine::adopt_after(text, before)` nhận ký tự nằm ngay trước từ. `adopt(text)` giữ nghĩa cũ là không biết phía trước, và từ được coi là đứng riêng: coi là dính thì luồng sửa chữ tắt gõ nhầm (`ctss␣` ⌫⌫ `g␣`, #702) sẽ hỏng trên mọi nền tảng chưa truyền ngữ cảnh, đổi một lỗi hiếm lấy một tính năng đang dùng.
 - **Kiểm tra chữ tắt:** hàm kiểm tra hình dạng nằm cạnh bảng gõ tắt trong engine, xuất qua FFI và JNI cho giao diện; `funput-config` dùng nó khi nhập file.
 
 ## Nền tảng
 
 Phần lớn nằm trong engine. Việc của từng nền tảng:
 
-- **Truyền ký tự trước từ khi mở lại** (`adopt`): Android, iOS, macOS, Linux đọc từ văn bản trước con trỏ; Windows lấy từ `CommittedTail`.
+- **Truyền ký tự trước từ khi mở lại** (`adopt_after`): Windows đã làm, lấy từ `CommittedTail` (`Removed::before`) và từ ô nhập trong Cài đặt. Android, iOS, macOS, Linux đọc được từ văn bản trước con trỏ; chưa nối, vẫn gọi `adopt`.
 - **Dấu câu phải đi qua engine.** Engine chỉ biết từ dính nếu thấy dấu câu đứng trước. Đã kiểm: iOS (`KeyboardInputCoordinator+Text.swift`, phím `.punctuation` gọi `composer.process`) và Android (`ImeTypingHandler`, `engine.processBoundary`) đều đưa dấu câu trên trang ký hiệu qua engine, kể cả khi chưa gõ chữ nào. Ngoại lệ là `insertLiteral` trên iOS (emoji, kaomoji, dán), đúng loại chữ chèn sau lưng engine mà mục 1 đã chấp nhận. Khi engine không chạy (tiếng Anh, không bật gõ tắt) thì không có gì để bung nên không cần trạng thái dính. `CompositionBoundary.kt` trên Android chép lại tập ranh giới của engine; thiết kế này không đổi tập đó.
 - **Giao diện bảng gõ tắt:** gọi hàm kiểm tra chữ tắt, báo lỗi dưới ô nhập. Câu chữ theo quy ước giao diện (câu tự nhiên, không dùng `·` hay `—`).
 

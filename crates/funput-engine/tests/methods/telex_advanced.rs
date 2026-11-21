@@ -143,7 +143,9 @@ fn layout_stays_compact() {
     // (176 → 184) and nothing on the keystroke path. Gõ tắt undo is the same:
     // `Option<Box<_>>`, present only after an expansion (184 → 192). The gõ tắt
     // table's index of capitalized triggers is boxed the same way, present only once
-    // one is stored (192 → 200).
+    // one is stored (192 → 200). `NumberGlue` grew into `Lead`, which keeps up to 8
+    // symbols glued in front of a word inline so the keystroke path never allocates
+    // for them (200 → 216).
     // Keep `benchmarks/README.md` in step when this moves.
-    assert_eq!(std::mem::size_of::<Engine>(), 200);
+    assert_eq!(std::mem::size_of::<Engine>(), 216);
 }
