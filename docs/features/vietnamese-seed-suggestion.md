@@ -445,6 +445,23 @@ tìm lại:
    Giới hạn nhìn thấy được sau đợt này: bảng viết tay theo các luật trên chỉ đưa Predict lên 6,5%
    số cơ hội. Thanh "luôn có ba từ" như bàn phím gốc cần hoặc lối ra phía engine ở trên, hoặc dữ
    liệu từ corpus; cả hai đều chưa làm.
+
+   **Đợt 3 đã làm (#713), sau khi có lối ra phía engine:** 254 → 305 dòng, 355 → 467 chữ đi sau.
+   51 dòng mới là các chữ trước đây bị loại vì đứng cuối từ khác (`thông tin báo cảm`,
+   `thời gian tiết điểm`, `công ty việc nhận`, `tình yêu cảm hình`, `lý do thuyết`...), và
+   7 dòng cũ nhận lại chữ đi sau từng phải bỏ (`giải quyết`, `tham gia`, `chuyên gia`,
+   `tổng kết`, `gắn kết`, `bình yên`, `phát biểu`). `vi-ends.txt` tăng từ 397 lên 766 từ: mỗi
+   chữ mới đi kèm các từ hay gặp mà nó đứng cuối (`tình`: 15 từ, `nhân`: 25 từ, `động`: 23 từ).
+
+   | Bảng | Predict hiện | Đúng | Sai | Sai trên số lần hiện | Phím tiết kiệm (có học / không học) |
+   |---|---:|---:|---:|---:|---:|
+   | Đợt 2 (254 dòng) | 24 (6,5%) | 21 | 3 | 12,5% | 27,9% / 26,7% |
+   | Đợt 3 (305 dòng) | 29 (7,9%) | 26 | 3 | 10,3% | 28,6% / 27,4% |
+
+   Thêm 5 lần đúng, không thêm lần sai nào; mẫu vẫn chỉ 450 chữ nên chỉ nên đọc là "không làm tệ
+   đi". Các chữ vẫn bị loại sau đợt này là chữ tự nó là một từ (`sinh`, `hợp`, `ý`, `báo`, `tin`,
+   `hộ` như trong `mua hộ`) và chữ đứng cuối quá nhiều từ để liệt kê (`bóng`, `năm`). Với luật
+   hiện tại, phần còn lại của khoảng trống so với bàn phím gốc chỉ dữ liệu từ corpus mới lấp được.
 4. **Đo và chỉnh trên máy thật (bước 7):** `context_evidence_seen` (3), trần 2 ô cho prefix không
    dấu, `MAX_VISITS` (64) của `ArenaTrie::find_matching`, bộ nhớ extension iOS.
 5. **Ngữ cảnh dài hơn một chữ** (trigram, cụm cố định như `by the way`, `cảm ơn bạn`): engine chỉ
@@ -586,7 +603,7 @@ không đổi hành vi.
 | 2 | Rust: `SeedLanguage`, đổi kiểu dấu, bảng cặp với danh sách nhỏ (69 cặp), Predict có dữ liệu kèm app, test dữ liệu và engine | #560 |
 | 3 | `funput-ffi` + `funput-jni`: setter | #560 |
 | 4 | iOS + Android gọi setter (hai PR riêng) | #560 |
-| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả `funput dev suggest`; đợt 1 xong (69 → 115), đợt 2 xong (115 → 254 dòng, tối đa ba chữ đi sau) | #560, #713 |
+| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả `funput dev suggest`; đợt 1 xong (69 → 115), đợt 2 xong (115 → 254 dòng, tối đa ba chữ đi sau), đợt 3 xong (254 → 305 dòng, kèm `vi-ends.txt`) | #560, #713 |
 | 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu); xong | #561 |
 | 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |
 

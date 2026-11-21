@@ -195,9 +195,9 @@ cargo run --release -p funput-cli -- dev suggest benchmarks/.corpus/my-chat.txt 
 
 | Setup (`chat-vi.txt`, Telex) | Predict shown | Predict wrong | Completion found | Keys saved |
 |---|---:|---:|---:|---:|
-| Shipped data on, learning on | 6.5% | 12.5% | 85.3% | 27.9% |
+| Shipped data on, learning on | 7.9% | 10.3% | 85.4% | 28.6% |
 | Shipped data off, learning on | 0.0% | n/a | 28.9% | 9.4% |
-| Shipped data on, learning off | 6.5% | 12.5% | 81.6% | 26.7% |
+| Shipped data on, learning off | 7.9% | 10.3% | 81.7% | 27.4% |
 
 With Predict's current thresholds: a follower seen 3 times is a habit, and the habits offered
 together (three at most) have to cover 70% of their context. Under the first ones (one word, 2
