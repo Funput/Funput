@@ -13,10 +13,11 @@ no clear licence and holds some wrong entries.
 
 ## What it is
 
-A map from a first syllable (or English word) to the one second syllable Predict offers after it,
-before the user's own pairs can say anything. No entry carries a number and none was
-measured: whether a pair is sharp enough is a reader's judgement, the kind of thing
-one can write down without a corpus.
+A map from a first syllable (or English word) to the syllables Predict offers after it, in the
+slots the user's own pairs left empty: up to three a line in `vi.txt`, likeliest first, and one
+in `en.txt`. No entry carries a number and none was measured: whether a line is sharp enough,
+and which follower comes first, is a reader's judgement, the kind of thing one can write down
+without a corpus.
 
 ## Growing it
 
@@ -26,10 +27,12 @@ Add pairs and run:
 cargo test -p funput-lexicon-tool --test vi_pairs --test en_pairs
 ```
 
-For `vi.txt` that checks every side composes to a real syllable, that no first syllable
-is listed twice, that no first syllable ends another listed word (Predict would fire
-after that word too), that none of the syllables anything can follow sneaks in, and that the
-engine offers exactly what the file says. For `en.txt` it checks two lowercase ASCII
+For `vi.txt` that checks every side composes to a real syllable, that a line lists one to
+three followers and none twice, that no first syllable is listed twice, that no first
+syllable ends another listed word (Predict would fire after that word too), that none of
+the syllables anything can follow sneaks in, and that the engine offers exactly what the
+file says. Then measure the batch, since no test can: `funput dev suggest` on `main` and on
+the branch (`benchmarks/README.md`). For `en.txt` it checks two lowercase ASCII
 words per line, both in the English lexicon, no first word listed twice or shared with
 `vi.txt`, no first word that is a Vietnamese syllable, and the same engine round trip.
 Neither test can tell a sharp pair from a merely common one, so a new entry wants a
