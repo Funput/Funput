@@ -38,18 +38,17 @@ impl SuggestionEngine {
     /// `suggest` returns.
     pub fn suggest_in(&self, context: &[&str], prefix: &str) -> SuggestionSet<'_> {
         let contexts = self.contexts(context);
-        let previous = context.last().copied();
         if prefix.is_empty() {
             // No prefix means no candidates to reorder, so the context is all
             // there is to go on and a much stricter question applies. The English
             // lexicon has nothing to add: an empty prefix finds nothing in it.
-            return self.predict(&contexts, previous);
+            return self.predict(&contexts, context);
         }
         let (ids, len) = self.prefix_candidates(prefix);
         let (ids, len) = self.with_context(&contexts, prefix, ids, len);
         let mut set = self.assemble(ids, len);
         let yields = self.yields_to(&set);
-        let mut seeds = self.seed_words(previous, prefix, &set);
+        let mut seeds = self.seed_words(context, prefix, &set);
         seeds.fill_before_english(&mut set);
         let mut set = self.complete_from_lexicon(prefix, set, yields);
         seeds.fill_rest(&mut set);
