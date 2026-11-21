@@ -59,6 +59,8 @@ internal class RecordingConnection {
             }
             "commitText" -> true.also { committedTexts += arguments?.first().toString() }
             "finishComposingText" -> true.also { finishCount++ }
+            // This host shows no surrounding text, as an editor that withholds it does.
+            "getTextBeforeCursor" -> null
             "toString" -> "RecordingInputConnection"
             else -> false
         }
