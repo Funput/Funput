@@ -1,12 +1,13 @@
 # Gõ tắt: viết hoa khi bung và sửa chữ tắt sau ranh giới
 
-Thiết kế cho các góp ý về gõ tắt trong issue #582 (Windows). Ba thay đổi, cả ba đã chốt:
+Thiết kế cho các góp ý về gõ tắt trong issue #582 (Windows) và #782. Bốn thay đổi, ba mục đầu đã chốt và đã làm:
 
 1. `Ct` chỉ viết hoa chữ đầu, phần còn lại giữ nguyên như đã lưu.
 2. Desktop có Backspace hoàn tác gõ tắt như Android và iOS.
 3. Chữ tắt gõ nhầm sửa được bằng Backspace sau khi đã qua ranh giới.
+4. `BBh` (lỡ giữ Shift) bung như `Bbh`, và bảng gõ tắt chặn chữ tắt trùng. Đã chốt, chưa làm.
 
-Các góp ý khác trong issue được bàn riêng: file `.txt` ở [shortcut-file-sync.md](shortcut-file-sync.md) (chưa chốt); Ctrl để hủy ở [ctrl-seal-word.md](ctrl-seal-word.md); phím kích hoạt Enter/Tab ở [shortcut-trigger-keys.md](shortcut-trigger-keys.md); lỗi ô nhập trong bảng gõ tắt ở [windows-composing-field-caret.md](windows-composing-field-caret.md); cách đặt dấu mới ở [implied-circumflex-confirm.md](implied-circumflex-confirm.md).
+Các góp ý khác trong issue được bàn riêng: chữ dính dấu câu (`abc.vn`) và chữ tắt có ký hiệu (`;ct`) ở [shortcut-glued-words.md](shortcut-glued-words.md); file `.txt` ở [shortcut-file-sync.md](shortcut-file-sync.md) (chưa chốt); Ctrl để hủy ở [ctrl-seal-word.md](ctrl-seal-word.md); phím kích hoạt Enter/Tab ở [shortcut-trigger-keys.md](shortcut-trigger-keys.md); lỗi ô nhập trong bảng gõ tắt ở [windows-composing-field-caret.md](windows-composing-field-caret.md); cách đặt dấu mới ở [implied-circumflex-confirm.md](implied-circumflex-confirm.md).
 
 ## 1. Viết hoa khi bung
 
@@ -161,3 +162,82 @@ Unikey vẫn bung được, kể cả khi người dùng đã gõ dài phía sau
 - `tests/alloc_budget.rs`: `adopt("Cts")` tốn đúng 2 lần cấp phát (kiểm âm tiết và hạ chữ thường), duyệt bảng không cấp phát.
 - `crates/funput-desktop/tests/retone.rs`: `ctss␣` ⌫⌫ `g␣` → `cơm tấm Sài Gòn␣`; `Ctss␣` → `Cơm tấm Sài Gòn␣`; `ctsgx␣` ⌫⌫ Space bung; xóa lùi qua 160 byte `abc abc …` về chữ tắt rồi sửa vẫn bung (test này hỏng với 64 byte cũ); `hello␣` ⌫ `s` vẫn ra `hellos`.
 - Không chạy differential: `adopt` chỉ chạy khi Backspace lùi vào từ đã xong, đường gõ thường không đi qua.
+
+## 4. Chữ hoa lẫn khi gõ và chữ tắt trùng
+
+Trạng thái: đã chốt thiết kế, chưa làm. Nguồn: #582 (góp ý ngày 21/11 về `BBh`), #782 mục 2.
+
+### Hiện trạng
+
+`classify_case` ([shortcut/case.rs](../../crates/funput-engine/src/compose/boundary/shortcut/case.rs)) chỉ nhận ba dạng sạch: toàn thường, hoa chữ đầu (phần sau thường), toàn hoa. Dạng lẫn rơi về khớp nguyên văn. Bảng có `bbh` → `bún bò Huế`:
+
+| Gõ | Dạng | Ra |
+|---|---|---|
+| `bbh` | thường | bún bò Huế |
+| `Bbh` | hoa chữ đầu | Bún bò Huế |
+| `BBH` | toàn hoa | BÚN BÒ HUẾ |
+| `BBh` | lẫn | `BBh` (không bung) |
+
+Gõ nhanh, giữ Shift lâu quá một nhịp ra đúng `BBh`. Chữ tắt thường là chuỗi vô nghĩa, nên `BBh` gần như chắc chắn là `Bbh` gõ lỡ, không phải một chữ người dùng muốn giữ.
+
+Chống trùng chữ tắt chưa thống nhất giữa các nền tảng:
+
+- **Windows:** không kiểm tra. Thêm chữ tắt đã có thì ra hai dòng ([shell/shortcuts.rs](../../crates/funput-desktop/src/shell/shortcuts.rs)). `push_shortcuts` nạp lần lượt vào engine nên dòng sau thắng; dòng trước vẫn hiện và vẫn được lưu nhưng không bao giờ bung.
+- **Android, iOS:** chặn khi trùng nguyên văn (`ShortcutLibrary.isDuplicate`), báo lỗi và khóa nút Lưu. Không gộp hoa/thường, nên `vn` và `VN` không tính là trùng.
+- **Nhập file** ([transfer/apply.rs](../../crates/funput-config/src/transfer/apply.rs)): gộp theo chữ tắt, chữ tắt đã có thì bị ghi đè; trong cùng một file UniKey, dòng sau thắng.
+
+### Quyết định: chữ đang gõ
+
+Luật mới cho **chữ đang gõ**: chữ cái đầu hoa và không phải toàn hoa thì là hoa chữ đầu.
+
+| Gõ | Dạng | Ra |
+|---|---|---|
+| `Bbh`, `BBh`, `BbH` | hoa chữ đầu | Bún bò Huế |
+| `BBH` | toàn hoa | BÚN BÒ HUẾ |
+| `bBh`, `bBH` | lẫn, khớp nguyên văn | không bung (chữ đầu thường thì không phải lỗi Shift) |
+
+Chữ tắt một chữ cái và hai chữ cái không đổi: `B` vẫn là hoa chữ đầu, `BB` vẫn là toàn hoa.
+
+Rủi ro: một chữ hoa lẫn gõ có chủ ý (`PhD`, `MHz`) mà dạng chữ thường trùng một chữ tắt (`phd`) sẽ bung. Chấp nhận: chữ tắt hiếm khi trùng những chữ này, và Backspace hoàn tác hay Ctrl vẫn giữ được chữ gốc.
+
+### Quyết định: chữ đã lưu giữ luật cũ
+
+Chỉ nới ở phía chữ đang gõ. Phía chữ đã lưu giữ nguyên ba dạng sạch như hiện nay:
+
+- Chữ tắt lưu dạng lẫn (`PhD`, `iOS`, `BBh`) vẫn chỉ khớp nguyên văn. Nếu áp luật mới cho chữ đã lưu thì `PhD` thành hoa chữ đầu, vào `CaseIndex`, và gõ `phd` cũng bung nó.
+- Nhập file UniKey (`normalize_trigger`, [unikey/trigger.rs](../../crates/funput-config/src/unikey/trigger.rs)) không đổi: một chữ tắt `BBh` trong file vẫn được lưu là `BBh`, không bị gộp thành `bbh`.
+- Bảng có đúng `BBh` thì gõ `BBh` khớp nguyên văn trước, như mọi chữ tắt khác.
+
+### Engine
+
+- Tách `classify_case` làm hai: dạng của chữ đang gõ (luật mới) và dạng của chữ đã lưu (luật cũ).
+- `table_form` (tra khi bung) và `starts_a_trigger` (mở lại sau Backspace) dùng dạng chữ đang gõ.
+- `CaseIndex::covers`, `rank` và mức gốc trong `raise` dùng dạng chữ đã lưu.
+- `normalize_trigger` trong `funput-config` vẫn mô phỏng dạng chữ đã lưu; ghi chú trong mã trỏ tới hàm mới cho khỏi lệch.
+- Phần đầu ký hiệu của [shortcut-glued-words.md](shortcut-glued-words.md) không ảnh hưởng: cả hai luật chỉ xét chữ cái.
+
+### Chữ tắt trùng
+
+Ai cũng đồng ý chặn trùng chữ tắt, không chặn trùng nội dung: người dùng cần `ct` và `cta` cùng ra `cơm tấm` trong lúc tập thói quen mới.
+
+Thế nào là trùng phải theo đúng cách engine tra bảng:
+
+| Bảng đã có | Thêm | Xử lý |
+|---|---|---|
+| `ct` | `ct` | Chặn: "Chữ tắt này đã có", trỏ tới dòng đang có để sửa |
+| `ct` | `cta` | Cho thêm (khác chữ tắt) |
+| `tp` | `TP` | Cho thêm, kèm cảnh báo: gõ `tp` ra nội dung của `tp`, gõ `TP` ra nội dung của `TP`, gõ `Tp` ra nội dung của `tp` |
+| `iOS` | `ios` | Cho thêm, không cảnh báo (`iOS` chỉ khớp nguyên văn, hai chữ tắt không che nhau) |
+
+- Android, iOS đã chặn trùng nguyên văn, chỉ thêm cảnh báo khác hoa/thường. Windows cần cả hai, và bảng đang có dòng trùng thì đánh dấu dòng không bao giờ bung.
+- Chỉ khác hoa/thường thì **không chặn**, vì engine cố ý cho hai dạng cùng tồn tại (mục "Chữ tắt lưu bằng chữ hoa" ở trên). Cảnh báo để người dùng biết dạng nào thắng.
+- Phép so khớp nằm trong Rust, cạnh hàm kiểm tra hình dạng chữ tắt của [shortcut-glued-words.md](shortcut-glued-words.md) mục 3. Giao diện mọi nền tảng gọi chung, không tự viết lại luật.
+- Nhập file: dòng trùng nguyên văn với bảng hoặc với dòng trước trong cùng file được xử lý theo chế độ nhập (gộp hay thay, xem [shortcut-file-sync.md](shortcut-file-sync.md)) và được đếm trong thông báo kết quả.
+
+### Kiểm thử
+
+- `crates/funput-engine/tests/words/shortcut.rs`: `BBh`, `BbH` bung hoa chữ đầu; `bBh` không bung; `BBH` vẫn toàn hoa; bảng có `BBh` thì gõ `BBh` khớp nguyên văn; chữ tắt lưu `PhD` không bung khi gõ `phd`; tắt smart case thì `BBh` chỉ khớp nguyên văn.
+- `shortcut/table.rs`: chỉ mục không nhận chữ tắt lưu dạng lẫn.
+- `crates/funput-engine/tests/adopt.rs`: `BBs` mở lại được khi bảng có `bbsg`.
+- `crates/funput-config/src/unikey/tests.rs`: nhập `BBh` giữ nguyên `BBh`.
+- Phép so trùng: bảng ca ở trên.
