@@ -178,8 +178,10 @@ cargo run --release -p funput-cli -- dev suggest benchmarks/.corpus/my-chat.txt 
 It reports how often Predict spoke and how often it was wrong, split by where the guess came
 from (the shipped pairs, or what was learned: a twin engine with the shipped data off tells
 them apart), how full the bar was while typing, and the share of keystrokes a user who always
-took a right suggestion would skip. `--show N` lists the most frequent wrong Predicts and the
-word pairs Predict had nothing for. `--lexicon PATH` attaches a packed `en.lex`.
+took a right suggestion would skip. A Predict is right when the next word sits in any slot of
+the bar; `first` (`right_first` in `--json`) counts the ones that had it in the first slot, and
+`slots` how many words the bars held in all. `--show N` lists the most frequent wrong Predicts
+and the word pairs Predict had nothing for. `--lexicon PATH` attaches a packed `en.lex`.
 
 Predict's three thresholds can be overridden for one run (`--predict-uses`, `--dominance`,
 `--evidence`), or swept: `--sweep` replays the text once per combination (uses 2 to 4,

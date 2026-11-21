@@ -5,7 +5,7 @@ use funput_core::{InputMethod, ToneStyle};
 use funput_suggestions::SuggestionConfig;
 
 use super::complete::keys;
-use super::report::{Source, Tally};
+use super::report::{Predicts, Source, Tally};
 use super::sweep::grid;
 use super::{Options, SuggestArgs, measure, text};
 
@@ -61,9 +61,10 @@ fn json_strings_are_escaped_the_json_way() {
 #[test]
 fn a_shipped_pair_is_a_right_predict_from_the_shipped_data() {
     let tally = replay("Cảm Ơn", true, false);
-    assert_eq!(tally.predict_chances, 1);
-    assert_eq!(tally.predict_right, [1, 0]);
-    assert_eq!(tally.predict_shown(), 1);
+    assert_eq!(tally.predict.chances, 1);
+    assert_eq!(tally.predict.right, [1, 0]);
+    assert_eq!(tally.predict.right_first, 1);
+    assert_eq!(tally.predict.shown(), 1);
     // `cảm` itself may complete from the shipped syllables; `ơn` saves all its keys.
     let first_word = replay("cảm", true, false).saved;
     assert_eq!(tally.saved, first_word + keys("ơn", InputMethod::Telex));
@@ -72,10 +73,10 @@ fn a_shipped_pair_is_a_right_predict_from_the_shipped_data() {
 #[test]
 fn without_shipped_data_predict_is_silent_on_a_new_install() {
     let tally = replay("cảm ơn", false, false);
-    assert_eq!(tally.predict_chances, 1);
-    assert_eq!(tally.predict_shown(), 0);
+    assert_eq!(tally.predict.chances, 1);
+    assert_eq!(tally.predict.shown(), 0);
     assert_eq!(
-        tally.top_silent(1),
+        tally.predict.top_silent(1),
         [(&("cảm".to_owned(), "ơn".to_owned()), 1)]
     );
 }
@@ -84,18 +85,30 @@ fn without_shipped_data_predict_is_silent_on_a_new_install() {
 fn a_learned_pair_is_credited_to_personal_data() {
     let text = "mua rau\n".repeat(5);
     let tally = replay(&text, true, true);
-    assert!(tally.by_source(Source::Personal).0 > 0, "{tally:?}");
-    assert_eq!(tally.by_source(Source::Shipped).0, 0);
+    assert!(tally.predict.by_source(Source::Personal).0 > 0, "{tally:?}");
+    assert_eq!(tally.predict.by_source(Source::Shipped).0, 0);
     let tally = replay(&text, true, false);
-    assert_eq!(tally.predict_shown(), 0, "nothing learned, nothing shipped");
+    assert_eq!(tally.predict.shown(), 0, "nothing learned, nothing shipped");
+}
+
+#[test]
+fn a_word_in_a_later_slot_is_right_but_not_first() {
+    let mut predict = Predicts::default();
+    predict.hit(Source::Shipped, 1, 3);
+    predict.miss(Source::Personal, "xin", &["chào".to_owned()], "phép");
+    predict.silent("của", "tôi");
+    assert_eq!((predict.chances, predict.shown()), (3, 2));
+    assert_eq!((predict.right_total(), predict.right_first), (1, 0));
+    assert_eq!(predict.slots, 4);
+    assert_eq!(predict.by_source(Source::Personal), (0, 1));
 }
 
 #[test]
 fn a_one_letter_word_drops_the_context() {
     // `x` is asked after `cảm`, but `ơn` comes with no context: one chance only.
     let tally = replay("cảm x ơn", true, false);
-    assert_eq!(tally.predict_chances, 1);
-    assert_eq!(tally.predict_wrong, [1, 0]);
+    assert_eq!(tally.predict.chances, 1);
+    assert_eq!(tally.predict.wrong, [1, 0]);
 }
 
 #[test]
@@ -116,22 +129,22 @@ fn the_shipped_text_replays_the_same_way_every_time() {
     let runs = text::load(&shipped_text()).expect("benchmarks/chat-vi.txt");
     let first = measure(&runs, &options(true, true)).expect("no lexicon");
     let second = measure(&runs, &options(true, true)).expect("no lexicon");
-    assert!(first.predict_chances > 0 && first.completion_words > 0);
+    assert!(first.predict.chances > 0 && first.completion_words > 0);
     assert_eq!(
         (
             first.saved,
-            first.predict_right,
-            first.predict_wrong,
+            first.predict.right,
+            first.predict.wrong,
             first.bar
         ),
         (
             second.saved,
-            second.predict_right,
-            second.predict_wrong,
+            second.predict.right,
+            second.predict.wrong,
             second.bar
         )
     );
-    assert_eq!(first.top_wrong(50), second.top_wrong(50));
+    assert_eq!(first.predict.top_wrong(50), second.predict.top_wrong(50));
 }
 
 /// Parse threshold flags the way `funput dev suggest` would.
@@ -151,7 +164,7 @@ fn personal(text: &str, config: SuggestionConfig) -> (usize, usize) {
         ..options(false, true)
     };
     let tally = measure(&text::runs(text), &options).expect("no lexicon");
-    tally.by_source(Source::Personal)
+    tally.predict.by_source(Source::Personal)
 }
 
 #[test]

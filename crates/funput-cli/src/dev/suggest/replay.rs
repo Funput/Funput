@@ -5,7 +5,7 @@
 use funput_core::InputMethod;
 use funput_suggestions::SuggestionEngine;
 
-use super::complete::{complete, first, keys};
+use super::complete::{complete, keys, lowercase};
 use super::report::{Source, Tally};
 
 /// Shortest word the shells learn, and the shortest prefix they ask about.
@@ -61,6 +61,21 @@ impl Engines {
             twin.learn_after(previous, word);
         }
     }
+
+    /// Where `offered` came from: personal when the engine without shipped
+    /// data offers it after `context` too, or when there is no such engine.
+    fn source(&self, context: &str, offered: &str) -> Source {
+        match &self.twin {
+            Some(twin) if !holds(twin, context, offered) => Source::Shipped,
+            _ => Source::Personal,
+        }
+    }
+}
+
+fn holds(engine: &SuggestionEngine, context: &str, word: &str) -> bool {
+    lowercase(engine.suggest_after_words(context, ""))
+        .iter()
+        .any(|offered| offered == word)
 }
 
 fn type_word(
@@ -89,7 +104,7 @@ fn type_word(
     }
 }
 
-/// Ask Predict before `word` is typed; true when it offered `word`.
+/// Ask Predict before `word` is typed; true when the bar held `word`.
 fn predict(
     word: &str,
     previous: &str,
@@ -97,20 +112,22 @@ fn predict(
     engines: &Engines,
     tally: &mut Tally,
 ) -> bool {
-    tally.predict_chances += 1;
-    let Some(guess) = first(engines.main.suggest_after_words(context, "")) else {
-        tally.predict_silent(previous, word);
+    let bar = lowercase(engines.main.suggest_after_words(context, ""));
+    let Some(top) = bar.first() else {
+        tally.predict.silent(previous, word);
         return false;
     };
-    let source = match &engines.twin {
-        Some(twin) if twin.suggest_after_words(context, "").is_empty() => Source::Shipped,
-        _ => Source::Personal,
-    };
-    if guess == word {
-        tally.predict_hit(source);
-        true
-    } else {
-        tally.predict_miss(source, previous, &guess, word);
-        false
+    match bar.iter().position(|offered| offered == word) {
+        Some(slot) => {
+            let source = engines.source(context, word);
+            tally.predict.hit(source, slot, bar.len());
+            true
+        }
+        // A wrong bar is charged to the data its first word came from.
+        None => {
+            let source = engines.source(context, top);
+            tally.predict.miss(source, previous, &bar, word);
+            false
+        }
     }
 }

@@ -30,8 +30,8 @@ pub(in crate::dev::suggest) fn print_sweep_header(text: &Path, options: &Options
 }
 
 pub(in crate::dev::suggest) fn print_sweep_row(config: &SuggestionConfig, tally: &Tally) {
-    let (right, shown) = tally.by_source(Source::Personal);
-    let (shipped_right, shipped_shown) = tally.by_source(Source::Shipped);
+    let (right, shown) = tally.predict.by_source(Source::Personal);
+    let (shipped_right, shipped_shown) = tally.predict.by_source(Source::Shipped);
     let share = pct(right, shown);
     let mark = if shown > 0 && share >= TARGET_RIGHT_PCT {
         '*'
@@ -48,7 +48,7 @@ pub(in crate::dev::suggest) fn print_sweep_row(config: &SuggestionConfig, tally:
         config.context_predict_uses,
         config.context_dominance_percent,
         config.context_evidence_seen,
-        tally.predict_shown(),
+        tally.predict.shown(),
         right,
         shown,
         share,
