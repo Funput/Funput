@@ -69,12 +69,14 @@ internal class PersonalSuggestionService(
     fun consume(update: AuthoredSuggestionUpdate) {
         update.completedToken
             ?.takeIf { eligible() && policy.allowsPersonalizedLearning }
-            ?.let { worker?.learn(it, latest.context) }
+            ?.let { worker?.learn(it, latest.learnContext) }
+        // The caret can move to other words with no key typed: then the same empty prefix asks anew.
+        val unchanged = update.prefix == prefix && update.queryContext == latest.queryContext
         latest = update
         // A prediction answers a context with no prefix at all. One character is
         // neither a prefix worth completing nor a word boundary, and stays out.
         val predicts = eligible() && update.prefix.isEmpty() && latest.context != null
-        if (update.completedToken == null && update.prefix == prefix && predicts == predicting) {
+        if (update.completedToken == null && unchanged && predicts == predicting) {
             // Shift arrives here: same words, new shape, nothing to ask the engine.
             if (eligible()) candidates.draw(prefix)
             return

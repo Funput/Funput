@@ -84,6 +84,24 @@ class ImeKeyActionHandlerTest {
         assertEquals(AuthoredSuggestionUpdate.Empty, handler.takeSuggestionUpdate())
         assertFalse(handler.acceptSuggestion("password", "pa"))
     }
+
+    @Test
+    fun `a field that already holds text lends its last words, to ask about and not to learn`() {
+        val connection = RecordingCommitConnection().apply { document.append("Xin cảm ơn "); moveCursor(11) }
+        val handler = handler(connection)
+
+        handler.start(allowComposition = false)
+        val lent = handler.takeSuggestionUpdate()
+        assertEquals("cảm ơn", lent.queryContext)
+        assertEquals(null, lent.learnContext)
+
+        connection.moveCursor(4)
+        handler.onSelectionChanged(4, 4, -1, -1)
+        assertEquals("the caret moved after another word", "Xin", handler.takeSuggestionUpdate().queryContext)
+
+        handler.start(allowComposition = false, allowSuggestions = false)
+        assertEquals("a secure field lends nothing", AuthoredSuggestionUpdate.Empty, handler.takeSuggestionUpdate())
+    }
 }
 
 private class RecordingCommitConnection {
