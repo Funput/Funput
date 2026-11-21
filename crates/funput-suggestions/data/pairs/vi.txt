@@ -83,6 +83,59 @@ tạm biệt thời
 hôm nay qua trước
 bao nhiêu giờ lâu
 
+# --- first syllables that also end words (those words are in vi-ends.txt)
+thông tin báo cảm
+thời gian tiết điểm
+tình yêu cảm hình
+công ty việc nhận
+nhân viên vật tiện
+quan trọng tâm hệ
+đồng ý nghiệp hồ
+kế hoạch toán
+sử dụng
+xử lý
+lý do thuyết
+vấn đề
+hiện tại nay giờ
+tâm trạng lý sự
+trung tâm bình thực
+thành phố công viên
+thể thao dục loại
+văn phòng bản hoá
+giáo viên dục
+tiết kiệm lộ
+tác dụng giả phẩm
+thiết bị kế
+nội dung bộ thất
+trạng thái
+xã hội
+giới thiệu hạn
+nhiệm vụ kỳ
+hệ thống
+thống kê nhất
+động vật lực
+nghệ thuật sĩ
+đại học diện
+quốc tế gia
+an toàn ninh tâm
+chức năng vụ
+khảo sát
+kiến thức trúc
+đối với tượng
+xác nhận định
+nhiệt tình độ
+truy cập
+ẩm thực
+ích kỷ
+tế nhị
+sở thích hữu
+xúc động
+lợi ích nhuận
+luyện tập
+diễn viên
+âm nhạc thanh
+hành động trình lý
+
 # --- `nhiên` endings
 dĩ nhiên
 đương nhiên
@@ -100,9 +153,9 @@ cố gắng lên
 liên hệ quan lạc
 đăng ký nhập
 thanh toán niên
-tham khảo
-giải thích pháp
-phát triển hiện
+tham gia khảo
+giải quyết thích pháp
+phát triển hiện biểu
 thực sự ra tế
 quản lý
 hoàn toàn thành hảo
@@ -130,12 +183,12 @@ thảo luận
 phản hồi đối
 thuyết phục trình
 tuyên bố
-tổng hợp thống
+tổng hợp kết thống
 phân vân tích biệt
 đào tạo
 huấn luyện
 rèn luyện
-gắn bó
+gắn bó kết
 tha thứ
 phàn nàn
 khiếu nại
@@ -157,7 +210,7 @@ dự án định kiến
 cơ hội bản sở
 kinh nghiệm doanh tế
 chi tiết phí tiêu
-chuyên nghiệp môn
+chuyên nghiệp gia môn
 chứng minh nhận
 tài khoản liệu xế
 phương pháp tiện án
@@ -200,7 +253,7 @@ nông thôn dân
 nguyên nhân tắc
 hậu quả
 chính xác thức
-bình thường luận
+bình thường luận yên
 tuyệt vời đối
 tương tự lai đối
 hầu hết như

@@ -21,9 +21,7 @@
 
 # cảm
 dũng cảm
-thông cảm
 đồng cảm
-tình cảm
 thiện cảm
 phản cảm
 nhạy cảm
@@ -40,9 +38,6 @@ biểu cảm
 truyền cảm
 
 # gia
-tham gia
-quốc gia
-chuyên gia
 đại gia
 tư gia
 luật gia
@@ -82,7 +77,6 @@ dày đặc
 đông đặc
 
 # quyết
-giải quyết
 kiên quyết
 cương quyết
 phán quyết
@@ -138,12 +132,10 @@ phê chuẩn
 cam kết
 đoàn kết
 liên kết
-tổng kết
 sơ kết
 chung kết
 ký kết
 giao kết
-gắn kết
 cấu kết
 đúc kết
 bán kết
@@ -153,7 +145,6 @@ kiên cố
 củng cố
 
 # thanh, tham, giải, phát
-âm thanh
 truyền thanh
 phát thanh
 siêu thanh
@@ -181,10 +172,8 @@ bộc phát
 hiện thực
 chân thực
 sự thực
-trung thực
 thiết thực
 xác thực
-ẩm thực
 lương thực
 thành thực
 đích thực
@@ -213,7 +202,6 @@ chấn chỉnh
 
 # thuyết, nghi, lĩnh, phạm, tốc
 tiểu thuyết
-lý thuyết
 giả thuyết
 truyền thuyết
 hoài nghi
@@ -376,7 +364,6 @@ liêm chính
 bất chính
 cải chính
 đính chính
-trung bình
 hoà bình
 bất bình
 phê bình
@@ -407,7 +394,6 @@ tác phong
 xung phong
 tiên phong
 oai phong
-trạng thái
 hình thái
 sinh thái
 phong thái
@@ -416,15 +402,12 @@ hành tinh
 vệ tinh
 đại biểu
 tiêu biểu
-phát biểu
-bình yên
 để yên
 ngồi yên
 đứng yên
 nằm yên
 an yên
 tổn thất
-nội thất
 xứng đáng
 chính đáng
 thoả đáng
@@ -440,7 +423,6 @@ tiểu thư
 bí thư
 ung thư
 thế kỷ
-ích kỷ
 tự kỷ
 công tử
 hoàng tử
@@ -453,3 +435,486 @@ sư tử
 tự tử
 quý hiếm
 tẩm bổ
+
+# thông
+giao thông
+lưu thông
+tinh thông
+
+# thời
+đồng thời
+kịp thời
+đương thời
+nhất thời
+lỗi thời
+hợp thời
+tức thời
+
+# tình
+vô tình
+cố tình
+tâm tình
+thật tình
+chân tình
+thất tình
+ân tình
+tận tình
+thân tình
+trữ tình
+đa tình
+si tình
+bạc tình
+thâm tình
+hữu tình
+
+# công
+tấn công
+thủ công
+thi công
+phân công
+chấm công
+gia công
+nhân công
+bãi công
+đình công
+kỳ công
+lập công
+uổng công
+tốn công
+mất công
+bõ công
+dày công
+
+# nhân
+cá nhân
+bệnh nhân
+hôn nhân
+công nhân
+nạn nhân
+quân nhân
+thân nhân
+cử nhân
+chủ nhân
+doanh nhân
+thương nhân
+tội nhân
+phạm nhân
+tình nhân
+vĩ nhân
+phu nhân
+danh nhân
+đại nhân
+tiểu nhân
+quý nhân
+ân nhân
+cố nhân
+mỹ nhân
+giai nhân
+siêu nhân
+
+# quan
+cơ quan
+lạc quan
+khách quan
+bi quan
+hải quan
+chủ quan
+trực quan
+tương quan
+giác quan
+tham quan
+sĩ quan
+bàng quan
+mỹ quan
+cảnh quan
+
+# đồng
+hợp đồng
+hội đồng
+đại đồng
+tương đồng
+nhi đồng
+cánh đồng
+bất đồng
+hoà đồng
+mục đồng
+
+# kế
+nhiệt kế
+mưu kế
+sinh kế
+diệu kế
+
+# sử
+lịch sử
+tiểu sử
+học sử
+môn sử
+
+# xử
+đối xử
+cư xử
+ứng xử
+phán xử
+xét xử
+phân xử
+
+# lý
+hợp lý
+vô lý
+có lý
+vật lý
+địa lý
+nguyên lý
+pháp lý
+đạo lý
+công lý
+đại lý
+chân lý
+trợ lý
+thụ lý
+hộ lý
+luân lý
+sinh lý
+bệnh lý
+triết lý
+
+# vấn
+tư vấn
+phỏng vấn
+cố vấn
+thẩm vấn
+chất vấn
+học vấn
+
+# hiện
+thực hiện
+xuất hiện
+thể hiện
+tái hiện
+ẩn hiện
+
+# tâm
+nhẫn tâm
+tận tâm
+lương tâm
+thành tâm
+chuyên tâm
+vô tâm
+hảo tâm
+nội tâm
+bận tâm
+lưu tâm
+nhiệt tâm
+để tâm
+thân tâm
+khổ tâm
+hữu tâm
+toàn tâm
+đồng tâm
+nhất tâm
+thiện tâm
+dã tâm
+tĩnh tâm
+cam tâm
+
+# trung
+tập trung
+tiếng trung
+miền trung
+không trung
+
+# thành
+trưởng thành
+hình thành
+tạo thành
+trở thành
+chân thành
+trung thành
+tán thành
+kinh thành
+nội thành
+ngoại thành
+hợp thành
+cấu thành
+biến thành
+đạt thành
+khánh thành
+lòng thành
+
+# thể
+có thể
+cụ thể
+tập thể
+cơ thể
+thân thể
+toàn thể
+không thể
+chủ thể
+tổng thể
+đoàn thể
+cá thể
+vật thể
+giải thể
+trọng thể
+hình thể
+lập thể
+thi thể
+như thể
+
+# văn
+nhà văn
+ngữ văn
+bài văn
+môn văn
+học văn
+thơ văn
+làm văn
+anh văn
+công văn
+luận văn
+
+# giáo
+cô giáo
+thầy giáo
+tôn giáo
+phật giáo
+công giáo
+hồi giáo
+đạo giáo
+tà giáo
+nhà giáo
+mẫu giáo
+
+# tiết
+tình tiết
+điều tiết
+khí tiết
+tiểu tiết
+
+# tác
+hợp tác
+công tác
+đối tác
+sáng tác
+thao tác
+tương tác
+cộng tác
+canh tác
+kiệt tác
+chế tác
+
+# thiết
+cần thiết
+thân thiết
+tha thiết
+cấp thiết
+mật thiết
+kiến thiết
+giả thiết
+
+# nội
+hà nội
+ông nội
+bà nội
+bên nội
+quốc nội
+cụ nội
+cháu nội
+
+# trạng
+tình trạng
+hiện trạng
+thực trạng
+tội trạng
+cáo trạng
+nguyên trạng
+
+# xã
+bà xã
+ông xã
+thị xã
+làng xã
+
+# giới
+thế giới
+biên giới
+môi giới
+nam giới
+nữ giới
+cảnh giới
+ranh giới
+
+# nhiệm
+chủ nhiệm
+bổ nhiệm
+tín nhiệm
+đảm nhiệm
+miễn nhiệm
+tiền nhiệm
+uỷ nhiệm
+bãi nhiệm
+
+# hệ
+thế hệ
+
+# động
+cảm động
+lao động
+vận động
+chủ động
+tự động
+bạo động
+di động
+chấn động
+kích động
+biến động
+rung động
+bị động
+năng động
+linh động
+phát động
+sinh động
+cử động
+dao động
+náo động
+bất động
+lưu động
+thụ động
+tác động
+
+# nghệ
+công nghệ
+văn nghệ
+tài nghệ
+
+# đại
+hiện đại
+vĩ đại
+cổ đại
+thời đại
+phóng đại
+cận đại
+đương đại
+
+# quốc
+trung quốc
+hàn quốc
+tổ quốc
+toàn quốc
+vương quốc
+ái quốc
+cường quốc
+ngoại quốc
+đế quốc
+anh quốc
+
+# an
+bình an
+công an
+trị an
+bảo an
+hội an
+nghệ an
+
+# chức
+công chức
+viên chức
+quan chức
+cách chức
+giáng chức
+thăng chức
+từ chức
+nhậm chức
+tại chức
+đương chức
+
+# khảo
+giám khảo
+tra khảo
+
+# kiến
+ý kiến
+chứng kiến
+định kiến
+thành kiến
+sáng kiến
+phong kiến
+cao kiến
+
+# đối
+chống đối
+
+# xác
+thể xác
+
+# nhiệt
+hạ nhiệt
+tăng nhiệt
+giải nhiệt
+
+# ích
+có ích
+hữu ích
+vô ích
+
+# tế
+y tế
+tinh tế
+cứu tế
+
+# sở
+trụ sở
+hội sở
+xứ sở
+công sở
+
+# xúc
+cảm xúc
+tiếp xúc
+bức xúc
+
+# lợi
+tiện lợi
+quyền lợi
+có lợi
+phúc lợi
+bất lợi
+thắng lợi
+hưởng lợi
+sinh lợi
+
+# luyện
+tập luyện
+tôi luyện
+
+# diễn
+trình diễn
+công diễn
+tái diễn
+
+# âm
+ghi âm
+phát âm
+thu âm
+tạp âm
+hồi âm
+nguyên âm
+phụ âm
+
+# hành
+thực hành
+bảo hành
+phát hành
+điều hành
+thi hành
+tiến hành
+vận hành
+ban hành
+lưu hành
+chấp hành
+song hành
+đồng hành
+du hành
+khởi hành
+học hành
