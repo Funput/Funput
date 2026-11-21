@@ -195,14 +195,17 @@ cargo run --release -p funput-cli -- dev suggest benchmarks/.corpus/my-chat.txt 
 
 | Setup (`chat-vi.txt`, Telex) | Predict shown | Predict wrong | Completion found | Keys saved |
 |---|---:|---:|---:|---:|
-| Shipped data on, learning on | 1.9% | 14.3% | 85.0% | 25.5% |
+| Shipped data on, learning on | 2.4% | 11.1% | 85.2% | 25.8% |
 | Shipped data off, learning on | 0.0% | n/a | 28.9% | 9.4% |
-| Shipped data on, learning off | 1.9% | 14.3% | 80.9% | 24.2% |
+| Shipped data on, learning off | 2.4% | 11.1% | 81.1% | 24.6% |
 
-With Predict's current thresholds (a pair seen 3 times, leading with 60% of its context). Under
-the first ones (2 times, 40%), learning on and shipped data on read 6.2% shown, 52.2% wrong and
-26.1% saved: the text is too short for any pair to be seen 3 times, so learned Predicts are gone
-from it, and with them 11 of the 12 wrong guesses.
+With Predict's current thresholds: a follower seen 3 times is a habit, and the habits offered
+together (three at most) have to cover 70% of their context. Under the first ones (one word, 2
+times, 40%), learning on and shipped data on read 6.2% shown, 52.2% wrong and 26.1% saved: the
+text is too short for any pair to be seen 3 times, so learned Predicts are gone from it, and with
+them 11 of the 12 wrong guesses. The same shortness hides what three slots change; replayed four
+times over, the text reads 29.3% shown and 7.7% wrong against 26.0% and 14.1% for one word at 60%
+(`docs/features/context-suggestion.md`).
 
 `chat-vi.txt` is small (450 words) and only keeps the tests honest. Measure real changes on
 a larger text of your own in `.corpus/` (gitignored). To judge a change to

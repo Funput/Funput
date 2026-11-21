@@ -191,6 +191,21 @@ predict_with_seed(prev):
 `context_seen`. Tham số đổi tên thành `context_evidence_seen` vì nó là tính chất của bigram
 cá nhân, không riêng gì dữ liệu kèm app.
 
+**Đổi ở #713 (ba ô sau dấu cách).** Bảng không còn chỉ nói thay khi kho cá nhân im: nó **lấp các ô
+còn trống** sau thói quen của người dùng (`seed/query.rs::fill_from_pairs`), và mỗi dòng của bảng
+có thể mang tối đa ba chữ đi sau. Luật rút lui áp dụng cho **từng chữ đi sau**:
+
+- Ngữ cảnh còn non (gặp dưới `context_evidence_seen` lần): mọi chữ đi sau trong bảng đều được nói.
+- Ngữ cảnh đã đủ bằng chứng: một chữ trong bảng chỉ ở lại khi người dùng cũng đang theo sau ngữ
+  cảnh đó bằng chính chữ ấy. Gõ `cảm` ba lần với ba chữ khác nhau mà không lần nào là `ơn` thì
+  `ơn` vẫn lùi như trước; gõ `cảm thấy` ba lần và `cảm ơn` một lần thì thanh là `thấy`, `ơn`.
+- "Đang theo sau" đọc từ 4 ô follower kho còn giữ, nên là xấp xỉ: một chữ từng theo sau một lần rồi
+  bị chữ phổ biến hơn đẩy khỏi ô sẽ bị coi như chưa từng. Sai về phía im lặng.
+- Một chữ người dùng đã có trên thanh không lặp lại ở kiểu dấu kia (`khỏe` và `khoẻ` là một ô).
+
+Bảng trạng thái ở trên vẫn đúng cho `judge`, với hai khác biệt: `Speaks` mang mọi thói quen (tối
+đa ba), và chỉ `Unsure` của ngữ cảnh hai chữ mới làm cả thanh im.
+
 - **Cá nhân luôn đứng trước.** Nếu bigram cá nhân đã đủ tự tin để nói, nó nói, kể cả khi
   khác bảng tĩnh. Người hay gõ `cảm thấy` sẽ thấy `thấy`, không phải `ơn`.
 - **Rút lui khi người dùng đã có dữ liệu.** Khi người dùng đã gõ chữ đứng trước đủ

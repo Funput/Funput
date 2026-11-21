@@ -153,6 +153,19 @@ là bằng chứng cụ thể hơn bậc dưới, nên lùi xuống bậc 2 đ�
 đảo: thà im còn hơn đoán bừa. Chỉ `NoEvidence` mới lùi, giữ đúng luật ở
 `src/bigram/query/mod.rs` hôm nay.
 
+**Đổi ở #713 (ba ô sau dấu cách).** `Speaks` mang tối đa ba từ và không còn dừng: bậc 3 nói
+trước, thói quen của bậc 2 lấp ô còn trống, rồi tới dữ liệu kèm app. `Unsure` ở bậc 3 vẫn làm cả
+thanh im; `Unsure` ở bậc 2 chỉ có nghĩa là bậc 2 không góp từ nào.
+
+```text
+predict(context, prefix rỗng):
+    với từng bậc từ cao xuống 2, nếu context đủ dài cho bậc đó:
+        Speaks(các thói quen) -> thêm vào thanh, bỏ trùng, đi tiếp
+        Unsure ở bậc 3        -> trả rỗng, dừng
+        còn lại               -> đi tiếp
+    dữ liệu kèm app lấp ô còn trống (fill_from_pairs, chữ cuối)
+```
+
 **Đường prefix (Rerank).** Follower bậc cao lên trước, rồi follower bậc 2, rồi kết quả prefix; bỏ
 trùng, lọc bằng `marks::completes` như hôm nay, cắt ở `TOP_K`. `yields_to` và phần dữ liệu kèm app
 không đổi.
