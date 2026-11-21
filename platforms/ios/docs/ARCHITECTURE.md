@@ -709,13 +709,20 @@ App Store yêu cầu keyboard vẫn hoạt động khi không có Full Access. V
 - `os.Logger` chỉ được ghi lifecycle, error code và số liệu thời gian không chứa nội dung.
 - Không dùng analytics/ad SDK trong extension.
 - Không ghi composition buffer vào disk hoặc App Group.
-- `documentContextBeforeInput` chỉ dùng trong memory để đồng bộ state.
+- `documentContextBeforeInput` chỉ dùng trong memory: để đồng bộ state, và để hỏi engine
+  gợi ý (xem "ngữ cảnh mượn" bên dưới). Không ghi ra disk, không học từ nó.
 - Privacy policy phải mô tả rõ extension và dữ liệu được/không được xử lý.
 
 ### Personal Suggestions
 
 - Chỉ học token được tạo bởi chính mutation `insertText`/`deleteBackward` của Funput;
   không học document context, selection, autocorrection hoặc nội dung có sẵn của host.
+- **Ngữ cảnh mượn (#713).** Khi host đổi tài liệu hoặc dời con trỏ, tracker bị reset và
+  đọc lại một hoặc hai từ đứng ngay trước con trỏ từ snapshot đang có sẵn (không đọc proxy
+  thêm), chỉ khi chúng kết thúc bằng một từ và đúng một dấu cách. Các từ này chỉ dùng để
+  **hỏi** engine (Predict và Rerank). Một từ gõ sau từ mượn được học riêng lẻ:
+  `KeyboardSuggestionInputUpdate.learnContext` là `nil` khi ngữ cảnh là mượn, nên không
+  cặp nào được ghi từ chữ của host.
 - Không Full Access dùng lexicon in-memory. Khi có quyền, snapshot và journal nằm
   trong `PersonalSuggestions/` của App Group, được loại khỏi device backup.
 - Extension là writer duy nhất. Containing app chỉ gửi reset token qua cấu hình;
