@@ -35,12 +35,8 @@ pub(super) fn complete(
     }
 }
 
-pub(super) fn first(set: SuggestionSet<'_>) -> Option<String> {
-    lowercase(set).into_iter().next()
-}
-
 /// The bar's words, lowercased: lexicon words keep their own case (`iPhone`).
-fn lowercase(set: SuggestionSet<'_>) -> Vec<String> {
+pub(super) fn lowercase(set: SuggestionSet<'_>) -> Vec<String> {
     set.iter().map(str::to_lowercase).collect()
 }
 

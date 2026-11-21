@@ -4,7 +4,7 @@ use std::path::Path;
 
 use funput_core::{InputMethod, ToneStyle};
 
-use super::{Source, Tally, pct};
+use super::{Predicts, Source, Tally, pct};
 use crate::dev::suggest::Options;
 
 pub(in crate::dev::suggest) fn print_human(text: &Path, tally: &Tally, options: &Options) {
@@ -27,25 +27,7 @@ pub(in crate::dev::suggest) fn print_human(text: &Path, tally: &Tally, options: 
         options.config.context_dominance_percent,
         options.config.context_evidence_seen
     );
-    let shown = tally.predict_shown();
-    println!("Predict (after a space)");
-    println!("  chances       {:>7}", tally.predict_chances);
-    println!(
-        "  shown         {:>7}  ({:.1}% of chances)",
-        shown,
-        pct(shown, tally.predict_chances)
-    );
-    println!(
-        "    right       {:>7}  ({:.1}% of shown)  {}",
-        tally.predict_right_total(),
-        pct(tally.predict_right_total(), shown),
-        by_source(tally)
-    );
-    println!(
-        "    wrong       {:>7}  ({:.1}% of shown)",
-        tally.predict_wrong_total(),
-        pct(tally.predict_wrong_total(), shown)
-    );
+    predicts(&tally.predict);
     println!("Completion (while typing a word of 3+ letters)");
     println!("  words         {:>7}", tally.completion_words);
     println!(
@@ -65,18 +47,46 @@ pub(in crate::dev::suggest) fn print_human(text: &Path, tally: &Tally, options: 
         tally.keys,
         pct(tally.saved, tally.keys)
     );
-    samples(tally, options.show);
+    samples(&tally.predict, options.show);
 }
 
-fn samples(tally: &Tally, show: usize) {
-    let wrong = tally.top_wrong(show);
+fn predicts(predict: &Predicts) {
+    let shown = predict.shown();
+    println!("Predict (after a space)");
+    println!("  chances       {:>7}", predict.chances);
+    println!(
+        "  shown         {:>7}  ({:.1}% of chances, {:.1} words a bar)",
+        shown,
+        pct(shown, predict.chances),
+        average(predict.slots, shown)
+    );
+    println!(
+        "    right       {:>7}  ({:.1}% of shown)  {}",
+        predict.right_total(),
+        pct(predict.right_total(), shown),
+        by_source(predict)
+    );
+    println!(
+        "      first     {:>7}  ({:.1}% of shown)",
+        predict.right_first,
+        pct(predict.right_first, shown)
+    );
+    println!(
+        "    wrong       {:>7}  ({:.1}% of shown)",
+        predict.wrong_total(),
+        pct(predict.wrong_total(), shown)
+    );
+}
+
+fn samples(predict: &Predicts, show: usize) {
+    let wrong = predict.top_wrong(show);
     if !wrong.is_empty() {
-        println!("\nWrong Predicts: previous → guess (typed instead), times");
+        println!("\nWrong Predicts: previous → bar (typed instead), times");
         for ((previous, guess, word, source), n) in wrong {
             println!("  {previous} → {guess} ({word}), {n}×  [{}]", source.name());
         }
     }
-    let silent = tally.top_silent(show);
+    let silent = predict.top_silent(show);
     if !silent.is_empty() {
         println!("\nSilent Predicts: word pairs the bar had nothing for, times");
         for ((previous, word), n) in silent {
@@ -85,11 +95,11 @@ fn samples(tally: &Tally, show: usize) {
     }
 }
 
-fn by_source(tally: &Tally) -> String {
+fn by_source(predict: &Predicts) -> String {
     Source::ALL
         .iter()
         .map(|&source| {
-            let (right, shown) = tally.by_source(source);
+            let (right, shown) = predict.by_source(source);
             format!("{} {right}/{shown}", source.name())
         })
         .collect::<Vec<_>>()
