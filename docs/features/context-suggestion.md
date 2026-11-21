@@ -112,6 +112,38 @@ nào (mẫu quá ngắn để cặp nào gặp đủ 3 lần), dữ liệu kèm 
 lâu hơn, tổng số lần đoán sai giảm từ 12 xuống 1, phím tiết kiệm giảm từ 26,1% xuống 25,5%. Kiểm
 lại bằng cảm giác trên máy thật ở bước 7.
 
+### Ba ô sau dấu cách (#713)
+
+Luật "chỉ hiện ứng viên dẫn đầu" làm thanh gợi ý gần như luôn trống sau dấu cách: trên
+`benchmarks/chat-vi.txt` Predict chỉ nói ở 9 trên 368 cơ hội. Người dùng mới so với bàn phím gốc
+(luôn có ba từ) và kết luận tính năng không chạy. Luật được đổi như sau, hiện thực ở
+`bigram/query/predict.rs::judge`:
+
+- **Thói quen** của một ngữ cảnh là mọi follower còn sống đã gặp `context_predict_uses` lần trở
+  lên. Chúng được đưa ra **cùng nhau**, nhiều lần nhất đứng trước, tối đa ba từ.
+- **Ngưỡng áp đảo thành ngưỡng phủ.** Cả tập thói quen phải chiếm `context_dominance_percent`
+  số lần gặp ngữ cảnh. `hôm` qua ngưỡng nhờ `nay` và `qua` cộng lại; `của` có hàng chục follower,
+  ba từ nào cũng không phủ nổi, nên vẫn im.
+- **Ngưỡng mặc định lên 70.** Tỉ lệ phủ chính là tỉ lệ thanh đã chứa đúng từ kế tiếp cho tới giờ,
+  nên đặt bằng mục tiêu 70%. Với một từ phải tự vượt ngưỡng thì 60 còn hợp lý; ba ô chạm ngưỡng
+  sớm hơn, và ở 60 chúng nói cả cho ngữ cảnh quá tản.
+- **Dữ liệu kèm app lấp ô trống** thay vì chỉ nói khi kho cá nhân im
+  (xem [`vietnamese-seed-suggestion.md`](vietnamese-seed-suggestion.md)).
+- **Giữ nguyên:** chữ dẫn đầu áp đảo nhưng còn non vẫn là `NoEvidence`, và trigram `Unsure` vẫn
+  làm cả thanh im (xem [`trigram-suggestion.md`](trigram-suggestion.md)).
+
+Số đo, cùng lưu ý cũ là chưa có văn bản thật: `chat-vi.txt` quá ngắn để cặp cá nhân nào đạt 3 lần,
+nên trên nó kết quả không đổi. Trên chính văn bản đó lặp 4 lần (thói quen ổn định hơn thực tế):
+
+| Cấu hình | Predict hiện | Sai trên số lần hiện | Phím tiết kiệm |
+|---|---:|---:|---:|
+| Một từ, ngưỡng 60 (trước #713) | 26,0% | 14,1% | 43,4% |
+| Ba ô, ngưỡng phủ 60 | 33,0% | 17,3% | 45,9% |
+| Ba ô, ngưỡng phủ 70 (mặc định) | 29,3% | 7,7% | 45,7% |
+| Ba ô, ngưỡng phủ 80 | 27,5% | 4,7% | 45,4% |
+
+Một thanh được tính là đúng khi từ kế tiếp nằm ở bất kỳ ô nào (`funput dev suggest`).
+
 ## Follower nằm trong `WordRecord`, không có bảng cạnh riêng
 
 Quyết định trung tâm. Mỗi từ nhớ luôn vài từ hay đi sau nó:
@@ -221,7 +253,7 @@ Cấu hình thêm ba khoá, và `engine/config.rs::sanitize` phải kẹp cả b
 ```rust
 context_rerank_uses: u16,        // mặc định 1
 context_predict_uses: u16,       // mặc định 3 (ban đầu 2)
-context_dominance_percent: u8,   // mặc định 60 (ban đầu 40), kẹp 0..=100
+context_dominance_percent: u8,   // mặc định 70 (ban đầu 40, rồi 60), kẹp 0..=100
 ```
 
 ## Ranh giới ngữ cảnh do platform quyết định
@@ -402,7 +434,9 @@ Viết ra để thành test, không phải để làm khẩu hiệu:
    → **#287** (crate), **#288** (iOS), **#289** (Android). **Đã đổi khi hiện thực**:
    chỉ hiện **ứng viên dẫn đầu**, hai ô còn lại để trống — chính ngưỡng áp đảo đã nói
    phần còn lại của phân phối là vụn, nên hiện chúng ra là tự mâu thuẫn. Dùng chung
-   công tắc "Gợi ý từ" hiện có, không thêm preference nào.
+   công tắc "Gợi ý từ" hiện có, không thêm preference nào. **Đổi lại ở #713**: đưa ra mọi
+   thói quen cùng lúc, tối đa ba từ (xem
+   [Ba ô sau dấu cách](#ba-ô-sau-dấu-cách-713)).
 7. Đo trên máy thật. **Tiêu chí dừng: nếu bước 6 làm p99 độ trễ phím xấu đi, giữ vĩnh
    viễn ở bước 5.** Tính năng này không đáng đánh đổi cảm giác gõ.
    → **Chưa làm.** Ba con số dưới đây chờ hiệu chỉnh trên máy thật; hai số đầu đã chỉnh một lần
@@ -410,7 +444,7 @@ Viết ra để thành test, không phải để làm khẩu hiệu:
 
    | Hằng | Hiện tại | Quyết định điều gì |
    |---|---:|---|
-   | `context_dominance_percent` | 60 (ban đầu 40) | Follower dẫn đầu phải chiếm bao nhiêu phần thì bar mới nói |
+   | `context_dominance_percent` | 70 (ban đầu 40, rồi 60) | Các thói quen được đưa ra phải cùng chiếm bao nhiêu phần thì bar mới nói |
    | `context_predict_uses` | 3 (ban đầu 2) | Thấy cặp mấy lần mới được đoán |
    | `AGING_AFTER` | 256 | Bao lâu thì chia đôi điểm để thói quen mới chen lên được |
 

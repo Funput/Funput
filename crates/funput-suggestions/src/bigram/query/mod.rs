@@ -10,17 +10,14 @@
 mod predict;
 mod rerank;
 
-use predict::Prediction;
-
-use crate::bigram::follower::{FOLLOWER_SLOTS, Follower};
+use crate::bigram::follower::Followed;
 use crate::engine::SuggestionEngine;
-use crate::index::{NONE, TOP_K};
 use crate::ngram::MAX_CONTEXT;
 use crate::types::SuggestionSet;
 use crate::types::WordRef;
 
 /// The follower sets a context offers, longest context first.
-type Contexts<'a> = [Option<(&'a [Follower; FOLLOWER_SLOTS], u16)>; MAX_CONTEXT];
+type Contexts<'a> = [Followed<'a>; MAX_CONTEXT];
 
 impl SuggestionEngine {
     /// [`Self::suggest_in`] with one word of context, or none.
@@ -32,8 +29,8 @@ impl SuggestionEngine {
     /// The words `prefix` could become, with the ones that have followed the
     /// `context` before moved to the front, and any slot still empty filled from
     /// the shipped Vietnamese data and the attached English lexicon. With no
-    /// prefix, the word most likely to follow the context, from the user's own
-    /// pairs and trigrams or the shipped pairs.
+    /// prefix, the words most likely to follow the context: the user's own pairs
+    /// and trigrams first, then the shipped pairs.
     ///
     /// `context` is the words before, oldest first; only the last two are read.
     /// It is the caller's business, as it is for `learn_after`: a platform that
@@ -44,19 +41,9 @@ impl SuggestionEngine {
         let previous = context.last().copied();
         if prefix.is_empty() {
             // No prefix means no candidates to reorder, so the context is all
-            // there is to go on and a much stricter question applies. The user's
-            // own data answers first, longest context first; shipped data only
-            // speaks where none of it has evidence either way. The English
+            // there is to go on and a much stricter question applies. The English
             // lexicon has nothing to add: an empty prefix finds nothing in it.
-            return match self.predict(&contexts) {
-                Prediction::Speaks(word) => {
-                    let mut ids = [NONE; TOP_K];
-                    ids[0] = word;
-                    self.assemble(ids, 1)
-                }
-                Prediction::Unsure => SuggestionSet::EMPTY,
-                Prediction::NoEvidence => self.seed_after(previous),
-            };
+            return self.predict(&contexts, previous);
         }
         let (ids, len) = self.prefix_candidates(prefix);
         let (ids, len) = self.with_context(&contexts, prefix, ids, len);

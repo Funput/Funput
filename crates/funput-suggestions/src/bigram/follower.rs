@@ -11,6 +11,24 @@ use crate::types::{WordRecord, WordRef};
 /// arrives and fill with typos instead.
 pub(crate) const FOLLOWER_SLOTS: usize = 4;
 
+/// What the store holds about one context: the words that followed it and how
+/// often the context itself has been seen. `None` for a context it never recorded.
+pub(crate) type Followed<'a> = Option<(&'a [Follower; FOLLOWER_SLOTS], u16)>;
+
+/// `slots` with the most used first. A stable insertion sort in place: two
+/// followers seen equally often keep their slot order, so a reader gets the same
+/// answer every time, and four slots need no allocation.
+pub(crate) fn ranked(mut slots: [Follower; FOLLOWER_SLOTS]) -> [Follower; FOLLOWER_SLOTS] {
+    for index in 1..FOLLOWER_SLOTS {
+        let mut at = index;
+        while at > 0 && slots[at].uses > slots[at - 1].uses {
+            slots.swap(at, at - 1);
+            at -= 1;
+        }
+    }
+    slots
+}
+
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Follower {
     pub(crate) word: u32,

@@ -1,9 +1,9 @@
 //! Shipped data for a bar the user has not taught anything yet: Vietnamese first,
 //! with a short English supplement for English typed in Vietnamese mode.
 //!
-//! - `pairs` — the hand-written pair lists Predict falls back on (`vi.txt`, and the
+//! - `pairs/` — the hand-written pair lists behind Predict (`vi.txt`, and the
 //!   English supplement `en.txt`), one table per language.
-//! - `query` — what those lists offer once the user's pairs have no evidence.
+//! - `query` — what those lists add to the slots the user's own pairs left empty.
 //! - `syllables` — the shipped syllable list, indexed for completing a prefix.
 //! - `complete` — where pairs and syllables fill the slots a prefix left empty.
 //!
