@@ -1,8 +1,8 @@
 //! Where the shipped data fills the slots a prefix left empty.
 //!
-//! The user's own words keep the slots they took. After them, in order: the second
-//! syllable of a shipped pair after the previous word, if the prefix could become it
-//! (`tuy` + `nh` → `nhiên`), then the commonest listed syllables the prefix could become.
+//! The user's own words keep the slots they took. After them, in order: the shipped
+//! followers of the previous word that the prefix could become (`tuy` + `nh` →
+//! `nhiên`), then the commonest listed syllables the prefix could become.
 //! An unmarked prefix (`th`) may still be English, so the shipped words stop one slot
 //! short, the English lexicon gets its turn, and only then is the rest filled. The
 //! words are looked up once per keystroke and handed out over those two turns. See
@@ -87,7 +87,7 @@ impl SuggestionEngine {
             leaves_one: typed == folded,
             ..SeedWords::NONE
         };
-        if let Some(next) = previous.and_then(|text| pairs.next_after(text)) {
+        for next in previous.map_or(&[][..], |text| pairs.followers_after(text)) {
             let word = next.spelled(style);
             if word != typed
                 && marks::completes(typed, word)
@@ -99,9 +99,9 @@ impl SuggestionEngine {
                 seeds.push(word);
             }
         }
-        let pair = seeds.words[0];
+        let paired = seeds.words;
         let (best, len) = syllables.top(typed, folded, style, |word| {
-            word == pair || self.blocked.contains(word) || contains(taken, word)
+            paired.contains(&word) || self.blocked.contains(word) || contains(taken, word)
         });
         best[..len].iter().for_each(|word| seeds.push(word));
         seeds

@@ -4,6 +4,7 @@
 //! `tuy nhiên`). Dropping one from `data/pairs/vi.txt` means picking another here.
 
 mod english;
+mod habits;
 mod prefix;
 
 use funput_core::ToneStyle::{Modern, Traditional};

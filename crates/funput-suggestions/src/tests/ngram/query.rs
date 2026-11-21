@@ -3,8 +3,9 @@ use funput_core::ToneStyle::Modern;
 use super::{engine, suggested, typed};
 use crate::{SeedLanguage, SuggestionConfig, SuggestionEngine};
 
-/// `ơn` on its own is led by `trời`, typed after `nhờ`; after `cảm` it is
-/// followed by `bạn`, and after `biết` by three different words.
+/// `ơn` on its own is led by `trời`, typed after `nhờ`, with `bạn` a habit
+/// behind it; after `cảm` it is followed by `bạn`, and after `biết` by three
+/// different words.
 fn trained(config: SuggestionConfig) -> SuggestionEngine {
     let mut engine = SuggestionEngine::in_memory(config);
     typed(&mut engine, "nhờ ơn trời", 10);
@@ -16,16 +17,16 @@ fn trained(config: SuggestionConfig) -> SuggestionEngine {
 }
 
 #[test]
-fn two_words_of_context_speak_where_one_would_say_something_else() {
+fn two_words_of_context_speak_before_the_word_before_does() {
     let engine = trained(SuggestionConfig::default());
-    assert_eq!(suggested(&engine, &["ơn"], ""), ["trời"]);
-    assert_eq!(suggested(&engine, &["cảm", "ơn"], ""), ["bạn"]);
+    assert_eq!(suggested(&engine, &["ơn"], ""), ["trời", "bạn"]);
+    assert_eq!(suggested(&engine, &["cảm", "ơn"], ""), ["bạn", "trời"]);
 }
 
 #[test]
 fn an_unsure_trigram_stays_silent_instead_of_asking_the_word_before() {
     // After `biết ơn` the user has typed three different words: spread out, and
-    // seen often enough to say so. `ơn` alone would have offered `trời`.
+    // seen often enough to say so. `ơn` alone would have offered `trời` and `bạn`.
     let engine = trained(SuggestionConfig::default());
     assert!(suggested(&engine, &["biết", "ơn"], "").is_empty());
 }
@@ -33,7 +34,7 @@ fn an_unsure_trigram_stays_silent_instead_of_asking_the_word_before() {
 #[test]
 fn a_trigram_with_no_evidence_steps_down_to_the_word_before() {
     let engine = trained(SuggestionConfig::default());
-    assert_eq!(suggested(&engine, &["mới", "ơn"], ""), ["trời"]);
+    assert_eq!(suggested(&engine, &["mới", "ơn"], ""), ["trời", "bạn"]);
 }
 
 #[test]
@@ -42,7 +43,7 @@ fn order_two_reads_only_the_word_before() {
         context_order: 2,
         ..SuggestionConfig::default()
     });
-    assert_eq!(suggested(&engine, &["cảm", "ơn"], ""), ["trời"]);
+    assert_eq!(suggested(&engine, &["cảm", "ơn"], ""), ["trời", "bạn"]);
 }
 
 #[test]
@@ -50,7 +51,7 @@ fn only_the_last_two_words_of_a_longer_context_count() {
     let engine = trained(SuggestionConfig::default());
     assert_eq!(
         suggested(&engine, &["nhờ", "biết", "cảm", "ơn"], ""),
-        ["bạn"]
+        ["bạn", "trời"]
     );
 }
 
@@ -91,8 +92,8 @@ fn a_spaced_context_reads_as_its_words() {
             .map(str::to_owned)
             .collect()
     };
-    assert_eq!(spaced("cảm ơn"), ["bạn"]);
-    assert_eq!(spaced("nhờ  cảm ơn "), ["bạn"]);
-    assert_eq!(spaced("ơn"), ["trời"]);
+    assert_eq!(spaced("cảm ơn"), ["bạn", "trời"]);
+    assert_eq!(spaced("nhờ  cảm ơn "), ["bạn", "trời"]);
+    assert_eq!(spaced("ơn"), ["trời", "bạn"]);
     assert_eq!(spaced(""), suggested(&engine, &[], ""));
 }

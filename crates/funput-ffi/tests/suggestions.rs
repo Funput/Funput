@@ -181,8 +181,13 @@ fn two_words_of_context_reach_the_trigram_through_c_abi() {
     }
 
     assert_eq!(candidate(&query_with(engine, "ơn", ""), 0), "trời");
+    // The two words speak first; the word before fills the next slot.
     let two = query_in(engine, "cảm ơn", "");
-    assert_eq!((two.count, candidate(&two, 0)), (1, "bạn".to_owned()));
+    assert_eq!(two.count, 2);
+    assert_eq!(
+        (candidate(&two, 0), candidate(&two, 1)),
+        ("bạn".to_owned(), "trời".to_owned())
+    );
     // One word, or none, is what `query_with` already says.
     assert_eq!(candidate(&query_in(engine, "ơn", ""), 0), "trời");
     let none =

@@ -82,8 +82,9 @@ fn bench_predict(c: &mut Criterion) {
     for _ in 0..8 {
         engine.learn_after(Some(SHARP_CONTEXT), "ơn");
     }
-    // A flat one: four followers sharing its sightings, so the bar stays quiet.
-    for word in ["tôi", "bạn", "anh", "chị"] {
+    // A flat one: more followers than the bar has slots sharing its sightings,
+    // so no three of them account for enough of it and the bar stays quiet.
+    for word in ["tôi", "bạn", "anh", "chị", "em", "họ", "nó", "mình"] {
         for _ in 0..3 {
             engine.learn_after(Some(FLAT_CONTEXT), word);
         }
