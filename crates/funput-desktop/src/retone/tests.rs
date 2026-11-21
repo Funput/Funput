@@ -199,3 +199,25 @@ fn rewrite_end_clears_a_shadow_that_does_not_match() {
     assert!(!tail.rewrite_end("Việt Nam ", "vn "));
     assert_eq!(tail.backspace(), None);
 }
+
+/// A gõ tắt prefix (`;ct`) is deleted with the word, so the shadow drops it too.
+#[test]
+fn an_expansion_takes_its_prefix_out_of_the_shadow() {
+    let mut tail = CommittedTail::new();
+    commit(&mut tail, "an", ' ');
+    tail.before_key("");
+    tail.after_key(';', &none(), "");
+    tail.before_key("ct");
+    tail.after_key(' ', &send(3, "cơm tấm "), "");
+    assert!(tail.ends_with("an cơm tấm "));
+}
+
+/// More prefix than the shadow holds empties it rather than keep a stale front.
+#[test]
+fn a_prefix_longer_than_the_shadow_empties_it() {
+    let mut tail = CommittedTail::new();
+    tail.before_key("ct");
+    tail.after_key(' ', &send(4, "cơm tấm "), "");
+    assert!(tail.ends_with("cơm tấm "));
+    assert_eq!(tail.backspace().map(|hit| hit.deleted), Some(' '));
+}

@@ -1,6 +1,8 @@
 //! Keeping the shadow true through the edits no keystroke carries: Backspace taking
 //! back a gõ tắt expansion, and a word sealed where it stands.
 
+use funput_engine::ImeResult;
+
 use super::CommittedTail;
 
 impl CommittedTail {
@@ -23,6 +25,21 @@ impl CommittedTail {
         self.tail.push_str(shown);
         self.trim();
         true
+    }
+
+    /// The shell typed `result.output` in place of `key`: an English restore or a gõ
+    /// tắt expansion, boundary character included. The deletions paired with it
+    /// remove the live composition, which is not in `tail`, and the symbols of a
+    /// trigger prefix (`;ct`), which are. A shadow shorter than those symbols is
+    /// emptied, which still leaves it a suffix of the screen.
+    pub(super) fn type_over(&mut self, result: &ImeResult) {
+        let composing = self.composing.chars().count();
+        for _ in composing..result.backspace {
+            if self.tail.pop().is_none() {
+                break;
+            }
+        }
+        self.tail.push_str(&result.output);
     }
 
     /// The word being composed ended as shown with no key behind it: a sealed word.

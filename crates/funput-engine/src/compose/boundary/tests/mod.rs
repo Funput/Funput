@@ -20,6 +20,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
             shortcuts_enabled: true,
             shortcut_smart_case: true,
             shortcuts_in_english: true,
+            shortcut_affixes: false,
             typo_correction: false,
         },
         buffer: buffer.into(),

@@ -1,6 +1,6 @@
 # Gõ tắt: chữ dính phía trước và chữ tắt có ký hiệu
 
-> **Trạng thái:** mục 1 (từ dính, `@` và `/`) đã làm trong engine, áp dụng cho mọi nền tảng; Windows truyền ký tự trước từ khi mở lại. Mục 2 và 3 chưa làm.
+> **Trạng thái:** mục 1 (từ dính, `@` và `/`) đã làm trong engine cho mọi nền tảng; Windows truyền thêm ký tự trước từ khi mở lại. Mục 2 (chữ tắt có ký hiệu) đã làm trong engine nhưng chỉ Windows bật (xem mục Nền tảng). Mục 3 chưa làm.
 
 Nguồn: issue #782 mục 3 (chữ tắt có ký hiệu), góp ý ở #737 về `tuoitre.vn`, và lỗi bung trong tên miền phát hiện khi bàn issue #582.
 
@@ -102,6 +102,7 @@ Không hỗ trợ:
 
 - **Dấu câu ở giữa** (`x.y`) và **dấu cách** (`c t`). Muốn làm phải nhìn ngược qua nhiều từ, tốn công cho một nhu cầu hiếm.
 - **Phần cuối dài hơn một ký tự** (`ct;;`).
+- **Mở lại chữ tắt có phần đầu sau Backspace.** Nền tảng chỉ trao lại phần chữ trước con trỏ (`ct`), không kèm `;`, nên `;ctss␣` ⌫⌫ `g␣` không sửa được thành `;ctsg`. Chữ tắt có phần cuối (`ctsg;`) vẫn sửa được.
 
 ### 3. Bảng chỉ nhận chữ tắt bung được
 
@@ -121,10 +122,10 @@ Hiện tại `;ct`, `x.y`, `c t`, `2k` được lưu mà không bao giờ bung, 
 
 - **Trạng thái dính:** `NumberGlue` thành `Lead` ([model/lead.rs](../../crates/funput-engine/src/model/lead.rs)): từ đang gõ có dính hay không, và chuỗi dấu câu, chữ số dính ngay trước (tối đa 8 byte, lưu tại chỗ, không cấp phát trên đường gõ). Chuỗi đang chờ từ sống qua `Engine::clear()` để Android (xóa engine ngay sau khi commit) vẫn thấy dấu câu vừa gõ; `arm_capitalization` và `disarm_capitalization` xóa nó. `size_of::<Engine>()` tăng 200 → 216.
 - **Cập nhật:** `after_key` ghi nhận phím không mở từ, kể cả ở chế độ tiếng Anh: khoảng trắng làm sạch trạng thái, dấu câu và chữ số nối vào chuỗi, phím vừa kết thúc một từ đánh dấu chuỗi là đứng sau chữ. `start_word` chốt trạng thái cho từ sắp gõ. `seal()` đánh dấu từ kế tiếp là dính.
-- **Tra:** `rewrite` trong [shortcut.rs](../../crates/funput-engine/src/compose/boundary/shortcut.rs) thử theo thứ tự: phần đầu + lõi + phần cuối, phần đầu + lõi, lõi + phần cuối, rồi lõi đứng riêng nếu từ không dính. Số ký tự xóa (`backspace`) cộng thêm độ dài phần đầu. Chế độ tiếng Anh có gõ tắt đi cùng đường.
+- **Tra:** [shortcut/candidates.rs](../../crates/funput-engine/src/compose/boundary/shortcut/candidates.rs) thử theo thứ tự: phần đầu + lõi + phần cuối, phần đầu + lõi, lõi + phần cuối, rồi lõi đứng riêng nếu từ không dính, mỗi dạng với phím gõ, `keys` rồi `buffer`. Chuỗi ghép nằm trên stack (tối đa 64 byte), nên tra ở mỗi dấu câu không cấp phát; bảng không có chữ tắt ký hiệu chỉ tốn thêm vài lần tra băm. Số ký tự xóa (`backspace`) cộng thêm độ dài phần đầu. Chế độ tiếng Anh có gõ tắt đi cùng đường (ở đó chữ số là một phần của từ, nên `2k` khớp nguyên văn).
 - **Phím kích hoạt:** `@` và `/` vẫn là ranh giới từ (kết thúc từ, giữ nguyên tập `is_english_boundary` và bản chép trên Android), chỉ không tra gõ tắt. `expansion` trong [shortcut.rs](../../crates/funput-engine/src/compose/boundary/shortcut.rs) bỏ qua khi `boundary_key` là một trong hai dấu này.
 - **Bung bằng Enter, Tab** (`expansion_in_place`): cùng luật dính và phần đầu, không có phần cuối.
-- **Hoàn tác** ([shortcut-undo.md](shortcut-undo.md)): `shown` gồm cả phần đầu, để ⌫ trả lại `;ct␣`.
+- **Hoàn tác** ([shortcut-undo.md](shortcut-undo.md)): `shown` gồm cả phần đầu, để ⌫ trả lại `;ct␣`; với phần cuối, `written` không kèm phím ranh giới và ⌫ trả lại `ct;`. Lệnh bỏ qua một lần giữ phần chữ, không kèm phần đầu, vì nền tảng chỉ mở lại `ct`.
 - **Mở lại sau Backspace:** mở lại một từ thì phải biết nó có dính không, nếu không `abc.vn␣` ⌫ Space sẽ bung. `Engine::adopt_after(text, before)` nhận ký tự nằm ngay trước từ. `adopt(text)` giữ nghĩa cũ là không biết phía trước, và từ được coi là đứng riêng: coi là dính thì luồng sửa chữ tắt gõ nhầm (`ctss␣` ⌫⌫ `g␣`, #702) sẽ hỏng trên mọi nền tảng chưa truyền ngữ cảnh, đổi một lỗi hiếm lấy một tính năng đang dùng.
 - **Kiểm tra chữ tắt:** hàm kiểm tra hình dạng nằm cạnh bảng gõ tắt trong engine, xuất qua FFI và JNI cho giao diện; `funput-config` dùng nó khi nhập file.
 
@@ -133,6 +134,11 @@ Hiện tại `;ct`, `x.y`, `c t`, `2k` được lưu mà không bao giờ bung, 
 Phần lớn nằm trong engine. Việc của từng nền tảng:
 
 - **Truyền ký tự trước từ khi mở lại** (`adopt_after`): Windows đã làm, lấy từ `CommittedTail` (`Removed::before`) và từ ô nhập trong Cài đặt. Android, iOS, macOS, Linux đọc được từ văn bản trước con trỏ; chưa nối, vẫn gọi `adopt`.
+- **Chữ tắt có ký hiệu cần nền tảng làm đúng lệnh của engine** (`EngineConfig::shortcut_affixes`, mặc định tắt). Phần đầu bắt nền tảng xóa cả ký tự đã commit trước vùng đang gõ, phần cuối bắt nền tảng ghi một nội dung không kết thúc bằng phím ranh giới. Hiện chỉ Windows bật (hook + inject làm đúng `backspace` và `output`, `CommittedTail` theo kịp). Ở nền tảng khác chữ tắt có ký hiệu giữ nguyên như gõ, như trước đây. Muốn bật thì từng nền tảng phải sửa:
+  - **Android:** JNI `nativeBoundary` chỉ trả `output`, bỏ số ký tự xóa; `CompositionDocumentEditor` chỉ thay vùng đang gõ.
+  - **macOS** (cả gạch chân lẫn gõ trực tiếp) và **Linux có gạch chân:** chỉ thay vùng đang gõ, và tự cắt ký tự cuối của `output` coi là phím ranh giới.
+  - **Linux không gạch chân:** đã xóa đúng số ký tự; nhưng khi chưa gõ chữ nào, dấu câu chỉ được đưa vào engine lúc bật tự viết hoa, nên engine không thấy phần đầu.
+  - **iOS:** số ký tự xóa vượt vùng đang gõ thì bàn phím bỏ lần bung đó (an toàn, không làm hỏng chữ); cần đo theo văn bản trước con trỏ (`deletionCount(scalars:context:)`).
 - **Dấu câu phải đi qua engine.** Engine chỉ biết từ dính nếu thấy dấu câu đứng trước. Đã kiểm: iOS (`KeyboardInputCoordinator+Text.swift`, phím `.punctuation` gọi `composer.process`) và Android (`ImeTypingHandler`, `engine.processBoundary`) đều đưa dấu câu trên trang ký hiệu qua engine, kể cả khi chưa gõ chữ nào. Ngoại lệ là `insertLiteral` trên iOS (emoji, kaomoji, dán), đúng loại chữ chèn sau lưng engine mà mục 1 đã chấp nhận. Khi engine không chạy (tiếng Anh, không bật gõ tắt) thì không có gì để bung nên không cần trạng thái dính. `CompositionBoundary.kt` trên Android chép lại tập ranh giới của engine; thiết kế này không đổi tập đó.
 - **Giao diện bảng gõ tắt:** gọi hàm kiểm tra chữ tắt, báo lỗi dưới ô nhập. Câu chữ theo quy ước giao diện (câu tự nhiên, không dùng `·` hay `—`).
 
