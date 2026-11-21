@@ -122,6 +122,31 @@ thoải mái
   nhỏ đã review kỹ, mở rộng theo đợt.
 - Có `NOTICE.md` bên cạnh, cùng giọng với `data/syllables/NOTICE.md`.
 
+**Đổi ở #713 (ba ô sau dấu cách).** Mỗi dòng giờ là một chữ đứng trước và **một đến ba chữ đi
+sau**, chữ dễ gặp nhất đứng trước:
+
+```text
+xin chào lỗi phép
+hôm nay qua trước
+kết quả thúc hợp
+chuẩn bị
+```
+
+- Luật "mỗi chữ đứng trước chỉ có một chữ đi sau" thành "mỗi chữ đứng trước một dòng". `xin` vào
+  bảng; `của`, `và`, `là` vẫn không (danh sách `FLAT` trong test).
+- Tiêu chí vào bảng: chữ đứng trước được theo sau bởi **một trong các chữ đã liệt kê** trong phần
+  lớn trường hợp.
+- **Luật mới: chữ đứng trước hiếm khi tự nó là một từ.** `chuẩn` gần như luôn là `chuẩn bị`; còn
+  `vui`, `gọi`, `quán`, `tối` là từ, và sau một từ thì gõ gì cũng được (`vui quá`, `gọi cho`). Luật
+  này rút ra từ số đo, không phải từ lý lẽ: bản nháp đầu của đợt 2 có khoảng 135 dòng kiểu đó và
+  làm tỉ lệ sai trên `chat-vi.txt` từ 11,1% lên 46,6% (xem bước 5). Số ít từ đứng riêng được vẫn
+  có trong bảng (`xin`, `hôm`, `bao`) là những chữ mà các chữ đi sau vẫn áp đảo.
+- Luật "không đứng cuối một từ khác" giữ nguyên, hằng `ALSO_SECOND` đổi tên thành `ALSO_FOLLOWER`
+  và có trần 4 ngoại lệ. Luật này là thứ chặn nhiều dòng hiển nhiên nhất (`thông báo` vì
+  `giao thông`, `thời gian` vì `tạm thời`, `tình yêu` vì `nhiệt tình`). Lối ra nếu muốn mở tiếp
+  nằm ở engine: im lặng khi hai chữ đứng trước chính là một dòng trong bảng. Chưa làm.
+- Ba cặp mà test của ba nền tảng dựa vào (`cảm ơn`, `sức khoẻ`, `tuy nhiên`) cố ý giữ một chữ đi sau.
+
 ### Phần B: `data/syllables/vi.txt` (có sẵn)
 
 2.100 âm tiết, 4 bậc, viết tay, MIT. Hôm nay chỉ làm prior cho sửa lỗi gõ
@@ -374,6 +399,26 @@ tìm lại:
    mở rộng từ 69 lên vài trăm, kèm công cụ đánh giá offline
    (`funput dev`) đo số phím tiết kiệm và tỉ lệ đoán sai trên văn bản tự viết; một đợt làm tỉ lệ
    sai tăng rõ thì không merge.
+
+   **Đợt 2 đã làm (#713):** 115 → 254 dòng, 115 → 355 chữ đi sau, cùng lúc với việc cho mỗi dòng
+   tối đa ba chữ đi sau. Dò bằng Viet74K như đợt 1. Đo trên `chat-vi.txt` (Telex):
+
+   | Bảng | Predict hiện | Đúng | Sai | Sai trên số lần hiện | Phím tiết kiệm (có học / không học) |
+   |---|---:|---:|---:|---:|---:|
+   | Đợt 1 (115 cặp) | 9 (2,4%) | 8 | 1 | 11,1% | 25,8% / 24,6% |
+   | Nháp đợt 2 (250 dòng, có cả từ đứng riêng được) | 58 (15,8%) | 31 | 27 | 46,6% | 29,3% / 28,3% |
+   | Đợt 2 (254 dòng) | 24 (6,5%) | 21 | 3 | 12,5% | 27,9% / 26,7% |
+
+   Bản nháp bị bỏ đúng theo luật "tỉ lệ sai tăng rõ thì không merge". Các lần sai của nó cùng một
+   kiểu: `bận` → `rộn` (gõ `quá`), `gọi` → `điện` (gõ `cho`), `quán` → `ăn`, `nước` (gõ `cà`),
+   `tối` → `nay`, `qua`, `mai` (gõ `mình`). Đó là nguồn của luật "hiếm khi tự nó là một từ". Khoảng
+   60 chữ khác bị loại vì đứng cuối một từ hay gặp, vài ví dụ: `năm` (`thứ năm`, và là số),
+   `bóng` (`đá bóng`), `tình` (`nhiệt tình`), `giáo` (`cô giáo`), `bệnh` (`bị bệnh`), `vấn`
+   (`tư vấn`), `kế` (`thiết kế`), `sử` (`lịch sử`), `xử` (`đối xử`).
+
+   Giới hạn nhìn thấy được sau đợt này: bảng viết tay theo các luật trên chỉ đưa Predict lên 6,5%
+   số cơ hội. Thanh "luôn có ba từ" như bàn phím gốc cần hoặc lối ra phía engine ở trên, hoặc dữ
+   liệu từ corpus; cả hai đều chưa làm.
 4. **Đo và chỉnh trên máy thật (bước 7):** `context_evidence_seen` (3), trần 2 ô cho prefix không
    dấu, `MAX_VISITS` (64) của `ArenaTrie::find_matching`, bộ nhớ extension iOS.
 5. **Ngữ cảnh dài hơn một chữ** (trigram, cụm cố định như `by the way`, `cảm ơn bạn`): engine chỉ
@@ -515,7 +560,7 @@ không đổi hành vi.
 | 2 | Rust: `SeedLanguage`, đổi kiểu dấu, bảng cặp với danh sách nhỏ (69 cặp), Predict có dữ liệu kèm app, test dữ liệu và engine | #560 |
 | 3 | `funput-ffi` + `funput-jni`: setter | #560 |
 | 4 | iOS + Android gọi setter (hai PR riêng) | #560 |
-| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả `funput dev suggest`; đợt 1 xong (69 → 115) | #560 |
+| 5 | Mở rộng `pairs/vi.txt` theo đợt, mỗi đợt kèm kết quả `funput dev suggest`; đợt 1 xong (69 → 115), đợt 2 xong (115 → 254 dòng, tối đa ba chữ đi sau) | #560, #713 |
 | 6 | Rust: phần B (âm tiết cho prefix, cặp tĩnh khớp prefix, trần 2 ô cho prefix không dấu); xong | #561 |
 | 7 | Đo trên máy thật (độ trễ, bộ nhớ extension iOS, cảm giác gõ); chỉnh `context_evidence_seen` và trần 2 ô | cả hai |
 

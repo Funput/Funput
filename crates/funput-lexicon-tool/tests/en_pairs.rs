@@ -22,8 +22,8 @@ const FLAT: &[&str] = &[
     "that", "the", "this", "to", "we", "what", "will", "with", "you",
 ];
 
-fn pairs_of(list: &'static str) -> Vec<(&'static str, &'static str)> {
-    list.lines()
+fn pairs() -> Vec<(&'static str, &'static str)> {
+    LIST.lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .map(|line| {
@@ -34,10 +34,6 @@ fn pairs_of(list: &'static str) -> Vec<(&'static str, &'static str)> {
             (first, next)
         })
         .collect()
-}
-
-fn pairs() -> Vec<(&'static str, &'static str)> {
-    pairs_of(LIST)
 }
 
 #[test]
@@ -98,9 +94,11 @@ fn no_pair_starts_with_a_word_anything_can_follow() {
 
 #[test]
 fn no_first_word_is_listed_twice_or_in_both_lists() {
-    let mut seen: BTreeSet<&str> = pairs_of(VIETNAMESE)
-        .into_iter()
-        .map(|(first, _)| first)
+    // A Vietnamese line lists up to three followers; only its first word matters here.
+    let mut seen: BTreeSet<&str> = VIETNAMESE
+        .lines()
+        .filter(|line| !line.starts_with('#'))
+        .filter_map(|line| line.split_whitespace().next())
         .collect();
     let repeated: Vec<&str> = pairs()
         .into_iter()
