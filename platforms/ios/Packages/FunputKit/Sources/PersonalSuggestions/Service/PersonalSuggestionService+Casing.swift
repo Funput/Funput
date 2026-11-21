@@ -5,10 +5,14 @@ extension PersonalSuggestionService {
     /// The stored words in the case the user is typing in. Derived rather than kept, so
     /// the list on screen and the list `acceptance(for:)` matches can never disagree —
     /// a tap is refused when they do.
+    ///
+    /// Each carries the generation it answered, not the current one: words kept on the
+    /// bar while a newer question is out were found for an older prefix, and a tap on
+    /// one would write it over the new prefix.
     var visibleCandidates: [KeyboardSuggestionCandidate] {
         let style = SuggestionCaseStyle.resolve(prefix: prefix, shift: shift)
         return received.map {
-            KeyboardSuggestionCandidate(text: style.apply(to: $0.text), generation: generation)
+            KeyboardSuggestionCandidate(text: style.apply(to: $0.text), generation: answered)
         }
     }
 
