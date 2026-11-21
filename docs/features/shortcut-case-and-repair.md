@@ -5,7 +5,7 @@ Thiết kế cho các góp ý về gõ tắt trong issue #582 (Windows) và #782
 1. `Ct` chỉ viết hoa chữ đầu, phần còn lại giữ nguyên như đã lưu.
 2. Desktop có Backspace hoàn tác gõ tắt như Android và iOS.
 3. Chữ tắt gõ nhầm sửa được bằng Backspace sau khi đã qua ranh giới.
-4. `BBh` (lỡ giữ Shift) bung như `Bbh`, và bảng gõ tắt chặn chữ tắt trùng. Đã chốt, chưa làm.
+4. `BBh` (lỡ giữ Shift) bung như `Bbh` (đã làm), và bảng gõ tắt chặn chữ tắt trùng (chưa làm).
 
 Các góp ý khác trong issue được bàn riêng: chữ dính dấu câu (`abc.vn`) và chữ tắt có ký hiệu (`;ct`) ở [shortcut-glued-words.md](shortcut-glued-words.md); file `.txt` ở [shortcut-file-sync.md](shortcut-file-sync.md) (chưa chốt); Ctrl để hủy ở [ctrl-seal-word.md](ctrl-seal-word.md); phím kích hoạt Enter/Tab ở [shortcut-trigger-keys.md](shortcut-trigger-keys.md); lỗi ô nhập trong bảng gõ tắt ở [windows-composing-field-caret.md](windows-composing-field-caret.md); cách đặt dấu mới ở [implied-circumflex-confirm.md](implied-circumflex-confirm.md).
 
@@ -165,7 +165,7 @@ Unikey vẫn bung được, kể cả khi người dùng đã gõ dài phía sau
 
 ## 4. Chữ hoa lẫn khi gõ và chữ tắt trùng
 
-Trạng thái: đã chốt thiết kế, chưa làm. Nguồn: #582 (góp ý ngày 21/11 về `BBh`), #782 mục 2.
+Trạng thái: chữ hoa lẫn đã làm; chặn chữ tắt trùng chưa làm. Nguồn: #582 (góp ý ngày 21/11 về `BBh`), #782 mục 2.
 
 ### Hiện trạng
 
@@ -210,10 +210,10 @@ Chỉ nới ở phía chữ đang gõ. Phía chữ đã lưu giữ nguyên ba d�
 
 ### Engine
 
-- Tách `classify_case` làm hai: dạng của chữ đang gõ (luật mới) và dạng của chữ đã lưu (luật cũ).
-- `table_form` (tra khi bung) và `starts_a_trigger` (mở lại sau Backspace) dùng dạng chữ đang gõ.
-- `CaseIndex::covers`, `rank` và mức gốc trong `raise` dùng dạng chữ đã lưu.
-- `normalize_trigger` trong `funput-config` vẫn mô phỏng dạng chữ đã lưu; ghi chú trong mã trỏ tới hàm mới cho khỏi lệch.
+- Hai cách đọc nằm ở `funput_core::shortcut` ([shortcut/case.rs](../../crates/funput-core/src/shortcut/case.rs)): `typed_case` cho chữ đang gõ (luật mới), `stored_case` cho chữ đã lưu (luật cũ). Engine và `funput-config` cùng gọi, không còn bản chép tay.
+- `table_form` (tra khi bung) và `starts_a_trigger` (mở lại sau Backspace) dùng `typed_case`.
+- `CaseIndex::covers`, `rank` và mức gốc trong `raise` dùng `stored_case`.
+- `normalize_trigger` ([unikey/trigger.rs](../../crates/funput-config/src/unikey/trigger.rs)) gọi thẳng `stored_case`.
 - Phần đầu ký hiệu của [shortcut-glued-words.md](shortcut-glued-words.md) không ảnh hưởng: cả hai luật chỉ xét chữ cái.
 
 ### Chữ tắt trùng

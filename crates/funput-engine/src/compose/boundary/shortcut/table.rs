@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use super::case::{self, ShortcutCase};
+use super::case::{self, TriggerCase};
 use super::index::CaseIndex;
 
 /// Trigger → expansion exactly as the user stored them, plus the [`CaseIndex`] that
@@ -19,7 +19,7 @@ pub(crate) struct ShortcutTable {
 /// it to when the word was typed in a higher case than the trigger is stored in.
 pub(super) struct Hit<'a> {
     expansion: &'a str,
-    raise: Option<ShortcutCase>,
+    raise: Option<TriggerCase>,
 }
 
 impl Hit<'_> {
@@ -66,8 +66,9 @@ impl ShortcutTable {
     }
 
     /// The trigger `word` reaches. The exact spelling comes first, so a table holding
-    /// both `tp` and `TP` answers each as typed. With smart case on, a cleanly cased
-    /// word then tries its lowercase form, then a trigger stored in capitals.
+    /// both `tp` and `TP` answers each as typed. With smart case on, a word with a
+    /// typed case (`tp`, `Tp`, `TP`, `TPh`) then tries its lowercase form, then a
+    /// trigger stored in capitals.
     pub(super) fn find(&self, word: &str, smart: bool) -> Option<Hit<'_>> {
         if let Some(expansion) = self.entries.get(word) {
             return Some(Hit {
@@ -77,7 +78,7 @@ impl ShortcutTable {
         }
         let (folded, typed) = case::table_form(word, smart);
         let typed = typed?;
-        if typed > ShortcutCase::Lower
+        if typed > TriggerCase::Lower
             && let Some(expansion) = self.entries.get(folded.as_ref())
         {
             return Some(Hit {
@@ -88,7 +89,7 @@ impl ShortcutTable {
         let trigger = self.indexed(&folded)?;
         Some(Hit {
             expansion: self.entries.get(trigger)?,
-            raise: case::raise(typed, case::classify_case(trigger)?),
+            raise: case::raise(typed, case::stored_case(trigger)?),
         })
     }
 

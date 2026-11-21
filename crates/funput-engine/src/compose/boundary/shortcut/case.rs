@@ -1,27 +1,26 @@
 //! Smart case for gõ tắt: how a trigger was typed decides how its expansion comes
-//! out, and how it is looked up in the table.
+//! out (`vn` → as stored, `Vn` → first letter capitalized, `VN` → UPPERCASE), and
+//! how it is looked up in the table. Case is only ever raised, never lowered: what
+//! the user stored is the floor, the trigger's spelling as much as its expansion.
+//! Only consulted while `shortcut_smart_case` is on.
+//!
+//! How a word reads is [`funput_core::shortcut`]'s answer, shared with the settings
+//! code: a typed word is read leniently ([`typed_case`]), a stored trigger strictly
+//! ([`stored_case`]), so `BBh` reaches `bbh` while a stored `PhD` stays exact.
 
 use std::borrow::Cow;
 
-/// The letter-casing pattern of a trigger, used to raise the expansion's case to
-/// match (`vn` → as stored, `Vn` → first letter capitalized, `VN` → UPPERCASE), the
-/// way UniKey does. Case is only ever raised, never lowered: what the user stored is
-/// the floor, the trigger's spelling as much as its expansion. Only consulted while
-/// `shortcut_smart_case` is on. Declared in rank order: `Lower < Title < Upper`.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub(super) enum ShortcutCase {
-    Lower,
-    Title,
-    Upper,
-}
+use funput_core::shortcut::typed_case;
+pub(super) use funput_core::shortcut::{TriggerCase, stored_case};
 
 /// `word` folded the way the table indexes it, and the case it was typed in. With
-/// smart case off, or for a mixed-case word (`iOS`), that is the exact word and no
-/// case. A lowercase word already is its own fold: only re-cased words pay for a copy.
-pub(super) fn table_form(word: &str, smart: bool) -> (Cow<'_, str>, Option<ShortcutCase>) {
-    let case = if smart { classify_case(word) } else { None };
+/// smart case off, or for a word no Shift slip explains (`iOS`), that is the exact
+/// word and no case. A lowercase word already is its own fold: only re-cased words
+/// pay for a copy.
+pub(super) fn table_form(word: &str, smart: bool) -> (Cow<'_, str>, Option<TriggerCase>) {
+    let case = if smart { typed_case(word) } else { None };
     let form = match case {
-        Some(ShortcutCase::Lower) | None => Cow::Borrowed(word),
+        Some(TriggerCase::Lower) | None => Cow::Borrowed(word),
         Some(_) => Cow::Owned(word.to_lowercase()),
     };
     (form, case)
@@ -30,45 +29,18 @@ pub(super) fn table_form(word: &str, smart: bool) -> (Cow<'_, str>, Option<Short
 /// The case to raise an expansion to when a trigger stored as `stored` was typed as
 /// `typed`: only a typed case above the stored one asks for more. A trigger kept as
 /// `TP` gives its expansion as stored whether typed `tp`, `Tp` or `TP`.
-pub(super) fn raise(typed: ShortcutCase, stored: ShortcutCase) -> Option<ShortcutCase> {
+pub(super) fn raise(typed: TriggerCase, stored: TriggerCase) -> Option<TriggerCase> {
     (typed > stored).then_some(typed)
-}
-
-/// Classify the case pattern of `keys` from its cased characters (letters), ignoring
-/// digits and punctuation. Returns `None` when the keys don't fit a clean pattern
-/// (e.g. `vNa`), so the caller falls back to an exact, unmodified lookup — this keeps
-/// deliberately mixed-case triggers (like `iOS`) working exactly as defined. That same
-/// `None` path is what the smart-case switch reuses when it is off.
-pub(super) fn classify_case(keys: &str) -> Option<ShortcutCase> {
-    let mut letters = keys.chars().filter(|c| c.is_alphabetic());
-    let first = letters.next()?;
-    let (mut rest_lower, mut rest_upper, mut rest_empty) = (true, true, true);
-    for letter in letters {
-        rest_empty = false;
-        rest_lower &= letter.is_lowercase();
-        rest_upper &= letter.is_uppercase();
-    }
-    if first.is_lowercase() {
-        rest_lower.then_some(ShortcutCase::Lower)
-    } else if !rest_empty && rest_upper {
-        Some(ShortcutCase::Upper)
-    } else if rest_lower {
-        // A single uppercase letter (`rest` empty) also lands here: capitalizing one
-        // word reads more naturally than shouting the whole expansion.
-        Some(ShortcutCase::Title)
-    } else {
-        None
-    }
 }
 
 /// Raise the case of `expansion` to match `case`. Nothing is ever lowered: a stored
 /// `TP. HCM` stays `TP. HCM` under `Tp`. Unicode-aware `to_uppercase` keeps accented
 /// Vietnamese letters right (`đ` → `Đ`, `ệ` → `Ệ`).
-pub(super) fn apply(expansion: &str, case: ShortcutCase) -> String {
+pub(super) fn apply(expansion: &str, case: TriggerCase) -> String {
     match case {
-        ShortcutCase::Lower => expansion.to_string(),
-        ShortcutCase::Upper => expansion.to_uppercase(),
-        ShortcutCase::Title => capitalize_first_letter(expansion),
+        TriggerCase::Lower => expansion.to_string(),
+        TriggerCase::Upper => expansion.to_uppercase(),
+        TriggerCase::Title => capitalize_first_letter(expansion),
     }
 }
 
