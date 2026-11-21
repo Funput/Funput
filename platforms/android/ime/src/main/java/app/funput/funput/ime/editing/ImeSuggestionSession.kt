@@ -20,7 +20,27 @@ internal class ImeSuggestionSession(
 
     fun takeUpdate(): AuthoredSuggestionUpdate = tracker.consume()
 
-    fun reconcileDirectSelection() {
+    /**
+     * The caret moved without a key. A direct prefix the document no longer ends with is
+     * dropped; then, with nothing selected, the words before the caret are read back.
+     */
+    fun reconcileSelection(direct: Boolean, collapsed: Boolean) {
+        if (direct) reconcileDirectPrefix()
+        if (collapsed) readContext()
+    }
+
+    /**
+     * Reads the words before the caret from the document, so the bar can ask after text
+     * Funput did not type. Only between words: a word in progress has its context already.
+     */
+    fun readContext() {
+        if (tracker.currentPrefix().isNotEmpty()) return
+        // An editor that reports nothing cannot be told from an empty one: the context stays as it is.
+        val before = connection()?.getTextBeforeCursor(ContextLookback, 0)?.takeIf { it.isNotEmpty() }
+        before?.let(tracker::reconcileContext)
+    }
+
+    private fun reconcileDirectPrefix() {
         val prefix = tracker.currentPrefix()
         if (prefix.isEmpty()) return
         val current = connection()

@@ -47,6 +47,7 @@ class FunputInputMethodService : InputMethodService() {
         session.startActionHandler()
         shortcuts.activate()
         suggestionService.start(editorRuntime.policy)
+        suggestionService.consume(actionHandler.takeSuggestionUpdate()) // the words already before the caret
     }
 
     override fun onStartInputView(attribute: EditorInfo, restarting: Boolean) {
