@@ -68,8 +68,11 @@ public final class PersonalSuggestionService {
             )
         }
         if let token = update.completedToken, workerConfiguration.enabled {
-            ensureWorker()?.learn(token, after: latest.context)
+            ensureWorker()?.learn(token, after: latest.learnContext)
         }
+        // The host can move the caret to other words with no key typed: then the
+        // same empty prefix asks anew.
+        let sameWords = update.queryContext == latest.queryContext
         latest = update
         self.shift = shift
         let allowed = canQuery && workerConfiguration.enabled
@@ -77,7 +80,7 @@ public final class PersonalSuggestionService {
         // A prediction answers a context with no prefix at all. One character is
         // neither a prefix worth completing nor a word boundary, and stays out.
         let predicts = allowed && update.prefix.isEmpty && latest.context != nil
-        if update.completedToken == nil, next == prefix, predicts == predicting { return }
+        if update.completedToken == nil, next == prefix, predicts == predicting, sameWords { return }
         prefix = next
         predicting = predicts
         requery()

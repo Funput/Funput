@@ -99,7 +99,7 @@ struct PersonalSuggestionTokenTests {
         #expect(coordinator.takePersonalSuggestionUpdate().context == "bạn")
     }
 
-    @Test("A caret that leaves the word abandons the context")
+    @Test("A caret that leaves the word abandons it, and nothing is learned from where it lands")
     func caretMoveClearsContext() {
         let coordinator = KeyboardInputCoordinator(inputMethod: .vni)
         let document = TestKeyboardWriter()
@@ -108,7 +108,9 @@ struct PersonalSuggestionTokenTests {
         _ = coordinator.takePersonalSuggestionUpdate()
         document.replaceTextExternally(with: "một câu khác ")
         coordinator.synchronizeDocument(document, event: .textChanged)
-        #expect(coordinator.takePersonalSuggestionUpdate().context == nil)
+        let update = coordinator.takePersonalSuggestionUpdate()
+        #expect(update.learnContext == nil)
+        #expect(update.context == "khác", "the document's own word, to ask about only")
     }
 
     @Test("A prediction is accepted with nothing to replace")

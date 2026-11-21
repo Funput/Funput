@@ -92,6 +92,10 @@ extension KeyboardInputCoordinator {
         event: KeyboardDocumentEvent
     ) {
         suggestionTracker.reset()
+        // Nothing typed here vouches for a document the host changed; the bar may still ask.
+        if tracksPersonalSuggestions, !snapshot.hasSelection {
+            suggestionTracker.borrowContext(from: snapshot.contextBeforeInput)
+        }
         let previous = documentSynchronizer.snapshot
         let documentChanged = previous?.documentIdentifier != snapshot.documentIdentifier
         let snapshotChanged = previous != snapshot
