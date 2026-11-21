@@ -69,6 +69,7 @@ internal class ImeKeyActionHandler(
         composition.setEnabled(usesVietnameseComposition)
         shortcutCoordinator.finish()
         suggestions.reset()
+        if (mode.suggestionsAllowed) suggestions.readContext()
         gestures.reset()
     }
 
@@ -113,12 +114,10 @@ internal class ImeKeyActionHandler(
     /** Mirrors `onUpdateSelection`: the composing bounds are -1 when the editor has no region. */
     fun onSelectionChanged(newStart: Int, newEnd: Int, composingStart: Int, composingEnd: Int) {
         gestures.onSelectionChanged(newStart)
-        if (!usesVietnameseComposition) {
-            if (mode.suggestionsAllowed) suggestions.reconcileDirectSelection()
-            shortcutCoordinator.reconcile()
-            return
-        }
-        if (composition.disownsSelection(connection(), newStart, newEnd, composingStart, composingEnd)) finish()
+        val direct = !usesVietnameseComposition
+        val disowned = !direct && composition.disownsSelection(connection(), newStart, newEnd, composingStart, composingEnd)
+        if (direct) shortcutCoordinator.reconcile() else if (disowned) finish()
+        if (mode.suggestionsAllowed) suggestions.reconcileSelection(direct, collapsed = newStart == newEnd)
     }
     fun takeSuggestionUpdate(): AuthoredSuggestionUpdate =
         if (mode.suggestionsAllowed) suggestions.takeUpdate() else AuthoredSuggestionUpdate.Empty

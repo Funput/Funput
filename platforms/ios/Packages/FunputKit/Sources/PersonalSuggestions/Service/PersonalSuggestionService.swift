@@ -14,7 +14,7 @@ public final class PersonalSuggestionService {
         resetToken: nil
     )
     private(set) var generation: UInt64 = 0
-    private var activationGeneration: UInt64 = 0
+    private(set) var activationGeneration: UInt64 = 0
     private(set) var prefix = ""
     /// The tracker's last update: what the next word follows, and the words the bar asks after.
     private var latest = KeyboardSuggestionInputUpdate.empty
@@ -22,13 +22,16 @@ public final class PersonalSuggestionService {
     private var predicting = false
     /// As the engine returned them. `visibleCandidates` puts them in the user's case.
     var received: [PersonalSuggestionCandidate] = []
+    /// The generation `received` answered. It trails `generation` while the answer to
+    /// a newer question is on its way: the words stay on the bar and take no tap.
+    private(set) var answered: UInt64 = 0
     var shift: ShiftState = .lowercase
     /// What typo correction says about the word under the caret; drawn ahead of
     /// the stored words. See `SuggestionBarComposer`.
     var correction: CorrectionPreview?
-    /// Last drawn, by text and kind; `nil` after a reconfigure, so reactivation
-    /// always redraws.
-    private var published: [String]?
+    /// Last drawn, by kind, text and the generation it answered; `nil` after a
+    /// reconfigure, so reactivation always redraws.
+    var published: [String]?
 
     public init(workerFactory: @escaping PersonalSuggestionWorkerFactory) {
         self.workerFactory = workerFactory
@@ -65,8 +68,11 @@ public final class PersonalSuggestionService {
             )
         }
         if let token = update.completedToken, workerConfiguration.enabled {
-            ensureWorker()?.learn(token, after: latest.context)
+            ensureWorker()?.learn(token, after: latest.learnContext)
         }
+        // The host can move the caret to other words with no key typed: then the
+        // same empty prefix asks anew.
+        let sameWords = update.queryContext == latest.queryContext
         latest = update
         self.shift = shift
         let allowed = canQuery && workerConfiguration.enabled
@@ -74,19 +80,25 @@ public final class PersonalSuggestionService {
         // A prediction answers a context with no prefix at all. One character is
         // neither a prefix worth completing nor a word boundary, and stays out.
         let predicts = allowed && update.prefix.isEmpty && latest.context != nil
-        if update.completedToken == nil, next == prefix, predicts == predicting { return }
+        if update.completedToken == nil, next == prefix, predicts == predicting, sameWords { return }
         prefix = next
         predicting = predicts
         requery()
     }
 
-    /// Asks again for what the bar is answering, dropping whatever it showed.
+    /// Asks again for what the bar is answering. What it showed stays up until the
+    /// answer lands, so the bar does not blink between keystrokes; with nothing to
+    /// ask, or nobody to ask, it is dropped at once.
     func requery() {
         generation &+= 1
-        received = []
-        publish([])
-        guard !prefix.isEmpty || predicting else { return }
-        ensureWorker()?.query(.init(prefix: prefix, generation: generation, context: latest.queryContext))
+        guard !prefix.isEmpty || predicting, let worker = ensureWorker() else {
+            received = []
+            return publish([])
+        }
+        // The kept words still carry the generation they answered, so a tap on one
+        // is refused; the correction slots are stamped for this one.
+        publish(visibleCandidates)
+        worker.query(.init(prefix: prefix, generation: generation, context: latest.queryContext))
     }
 
     public func clear() { invalidateAndPublish() }
@@ -126,23 +138,12 @@ public final class PersonalSuggestionService {
               request.generation == generation, request.prefix == prefix
         else { return }
         received = candidates
+        answered = generation
         let values = visibleCandidates
         publish(values)
         PersonalSuggestionServiceSignposts.recordUI(
             generation: generation,
             count: values.count
         )
-    }
-
-    func publish(_ personal: [KeyboardSuggestionCandidate]) {
-        let candidates = SuggestionBarComposer.compose(
-            correction: correction, personal: personal, generation: generation
-        )
-        // Prediction adds a bar update after every space, most of them one empty
-        // list after another. Comparing here keeps that cost off UIKit.
-        let drawn = candidates.map { "\($0.kind.rawValue) \($0.text)" }
-        guard drawn != published else { return }
-        published = drawn
-        onCandidates?(activationGeneration, candidates)
     }
 }

@@ -69,14 +69,17 @@ internal class PersonalSuggestionService(
     fun consume(update: AuthoredSuggestionUpdate) {
         update.completedToken
             ?.takeIf { eligible() && policy.allowsPersonalizedLearning }
-            ?.let { worker?.learn(it, latest.context) }
+            ?.let { worker?.learn(it, latest.learnContext) }
+        // The caret can move to other words with no key typed: then the same empty prefix asks anew.
+        val unchanged = update.prefix == prefix && update.queryContext == latest.queryContext
         latest = update
         // A prediction answers a context with no prefix at all. One character is
         // neither a prefix worth completing nor a word boundary, and stays out.
         val predicts = eligible() && update.prefix.isEmpty() && latest.context != null
-        if (update.completedToken == null && update.prefix == prefix && predicts == predicting) {
+        if (update.completedToken == null && unchanged && predicts == predicting) {
             // Shift arrives here: same words, new shape, nothing to ask the engine.
-            return draw()
+            if (eligible()) candidates.draw(prefix)
+            return
         }
         prefix = update.prefix
         predicting = predicts
@@ -95,10 +98,13 @@ internal class PersonalSuggestionService(
         if (!isEditable(selection)) return
         val stored = candidates.stored(selection.index, selection.text) ?: return
         worker?.edit(kind, stored)
+        candidates.clear()
         requery()
     }
 
     fun select(selection: SuggestionSelection, handler: ImeKeyActionHandler): Boolean {
+        // A held word answered an older prefix. The tap is dropped; the answer on its way still lands.
+        if (candidates.held) return false
         // An empty prefix is the ordinary shape of accepting a prediction: it
         // replaces nothing and inserts a word.
         if (!candidates.isShown(selection.index, selection.text) || !eligible()) return reject()
@@ -116,15 +122,12 @@ internal class PersonalSuggestionService(
         suggestionCounter("SuggestionQueryToToolbarUs", (System.nanoTime() - request.startedNanos) / 1_000)
     }
 
-    private fun draw() {
-        if (eligible()) candidates.draw(prefix)
-    }
-
-    /** Asks again for what the bar is answering, dropping whatever it showed. */
+    /** Asks again for what the bar is answering. What it showed stays up, untappable, until the answer lands. */
     private fun requery() {
         generation += 1
-        candidates.clear()
-        worker?.query(PersonalSuggestionRequest(prefix, generation, session, latest.queryContext))
+        candidates.hold()
+        // No worker means no answer on its way, and nothing to hold the bar for.
+        worker?.query(PersonalSuggestionRequest(prefix, generation, session, latest.queryContext)) ?: candidates.clear()
     }
 
     private fun eligible() = preferences.enabled && policy.allowsPersonalSuggestions &&
@@ -141,8 +144,7 @@ internal class PersonalSuggestionService(
         worker?.clearQueries()
         candidates.clear()
     }
-
-    private companion object {
-        const val MinimumPrefix = 2
-    }
 }
+
+/** The shortest prefix worth completing. A single character is asked about only as a prediction's context. */
+private const val MinimumPrefix = 2
