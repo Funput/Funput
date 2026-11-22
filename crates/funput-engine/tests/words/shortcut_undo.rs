@@ -327,6 +327,66 @@ fn clearing_the_engine_drops_the_undo_and_the_refusal() {
 }
 
 #[test]
+fn rearming_undoes_an_expansion_deleted_back_to_after_more_words() {
+    // #782: the user types on past an expansion, deletes back to it, and still wants
+    // the trigger back, then fixes it into another one.
+    let mut engine = engine_with(&[("ct", "cơm tấm"), ("cf", "cà phê")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "ct nayf raast ngon");
+    assert_eq!(doc.text(), "cơm tấm này rất ngon");
+    assert!(!engine.has_shortcut_undo());
+
+    backspace_times(&mut engine, &mut doc, "này rất ngon".chars().count());
+    assert_eq!(doc.text(), "cơm tấm ");
+    assert!(engine.rearm_shortcut_undo());
+    assert_eq!(engine.shortcut_undo_written(), Some("cơm tấm "));
+    undo(&mut engine, &mut doc);
+    assert_eq!(doc.text(), "ct ");
+
+    backspace_times(&mut engine, &mut doc, 2);
+    type_into(&mut engine, &mut doc, "f ");
+    assert_eq!(doc.text(), "cà phê ");
+}
+
+#[test]
+fn nothing_is_rearmed_while_a_word_is_composed() {
+    let mut engine = engine_with(&[("ct", "cơm tấm")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "ct ng");
+
+    assert!(!engine.rearm_shortcut_undo());
+    assert!(!engine.has_shortcut_undo());
+}
+
+#[test]
+fn an_expansion_taken_dismissed_or_cleared_cannot_be_rearmed() {
+    let mut engine = engine_with(&[("ct", "cơm tấm")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "ct ");
+    undo(&mut engine, &mut doc);
+    assert!(!engine.rearm_shortcut_undo());
+
+    type_into(&mut engine, &mut doc, "x ct ");
+    engine.dismiss_shortcut_undo();
+    assert!(!engine.rearm_shortcut_undo());
+
+    type_into(&mut engine, &mut doc, "ct ");
+    engine.clear();
+    assert!(!engine.rearm_shortcut_undo());
+}
+
+#[test]
+fn a_newer_expansion_replaces_the_remembered_one() {
+    let mut engine = engine_with(&[("ct", "cơm tấm"), ("cf", "cà phê")]);
+    let mut doc = Document::new();
+    type_into(&mut engine, &mut doc, "ct cf n");
+    backspace(&mut engine, &mut doc);
+
+    assert!(engine.rearm_shortcut_undo());
+    assert_eq!(engine.shortcut_undo_written(), Some("cà phê "));
+}
+
+#[test]
 fn english_mode_undoes_the_same_way() {
     let mut engine = engine_with(&[("vn", "Việt Nam")]);
     engine.set_enabled(false);

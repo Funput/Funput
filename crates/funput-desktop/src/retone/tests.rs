@@ -212,6 +212,80 @@ fn an_expansion_takes_its_prefix_out_of_the_shadow() {
     assert!(tail.ends_with("an cơm tấm "));
 }
 
+/// The caret is at the expansion end only at its own length, before and after the
+/// shadow grows and shrinks past it.
+#[test]
+fn the_expansion_end_is_found_again_by_deleting_back_to_it() {
+    let mut tail = CommittedTail::new();
+    tail.before_key("ct");
+    tail.after_key(' ', &send(2, "cơm tấm "), "");
+    tail.mark_expansion_end();
+    assert!(tail.at_expansion_end());
+
+    commit(&mut tail, "ngon", ' ');
+    assert!(!tail.at_expansion_end());
+    for _ in "ngon ".chars() {
+        tail.backspace();
+    }
+    assert!(tail.at_expansion_end());
+
+    tail.clear();
+    assert!(!tail.at_expansion_end());
+}
+
+/// Trimming the front moves the mark with it, and forgets it once the cut reaches it.
+#[test]
+fn trimming_moves_the_expansion_end_or_forgets_it() {
+    let mut tail = CommittedTail::new();
+    commit(&mut tail, "front", ' ');
+    while tail.tail.len() < CAPACITY - 20 {
+        commit(&mut tail, "abc", ' ');
+    }
+    tail.mark_expansion_end();
+    commit(&mut tail, "abcdefghijklmnopqrstu", ' ');
+    for _ in "abcdefghijklmnopqrstu ".chars() {
+        tail.backspace();
+    }
+    assert!(tail.at_expansion_end(), "the cut stopped before the mark");
+
+    for _ in 0..40 {
+        commit(&mut tail, "abcdefghij", ' ');
+    }
+    for _ in 0..40 * "abcdefghij ".len() {
+        tail.backspace();
+    }
+    assert!(!tail.at_expansion_end(), "the cut reached the mark");
+}
+
+/// A cut landing exactly on the mark drops the expansion from the shadow, so the mark
+/// goes with it rather than survive as a mark at the very start.
+#[test]
+fn a_cut_exactly_at_the_expansion_end_forgets_it() {
+    let mut tail = CommittedTail::new();
+    commit(&mut tail, "front", ' ');
+    tail.mark_expansion_end();
+    commit(&mut tail, &"a".repeat(CAPACITY - 6), ' ');
+    assert!(!tail.tail.starts_with("front"), "the cut took `front `");
+    while tail.backspace().is_some() {}
+    assert!(!tail.at_expansion_end());
+}
+
+/// Backspace landing right after an expansion keeps its last word closed: the next
+/// Backspace is for the whole expansion, not for editing its last word.
+#[test]
+fn backspace_onto_an_expansion_end_offers_no_word() {
+    let mut tail = CommittedTail::new();
+    tail.before_key("ct");
+    tail.after_key(';', &send(2, "cơm tấm"), "");
+    tail.mark_expansion_end();
+    commit(&mut tail, "", ' ');
+    assert_eq!(tail.backspace().map(|hit| hit.word), Some(None));
+
+    tail.forget_expansion_end();
+    commit(&mut tail, "", ' ');
+    assert_eq!(tail.backspace().and_then(|hit| hit.word), Some("tấm"));
+}
+
 /// More prefix than the shadow holds empties it rather than keep a stale front.
 #[test]
 fn a_prefix_longer_than_the_shadow_empties_it() {

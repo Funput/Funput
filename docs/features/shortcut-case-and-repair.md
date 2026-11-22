@@ -88,7 +88,7 @@ Ngoài engine, các test đang khẳng định hành vi cũ cũng đổi theo: `
 
 ## 2. Backspace hoàn tác gõ tắt trên desktop
 
-Trạng thái: đã làm trên Windows (PR #733). macOS và Linux chưa.
+Trạng thái: đã làm trên Windows (PR #733), macOS và Linux (#737). Hoàn tác sau khi đã gõ thêm rồi xóa lùi về (#782 mục 1): Windows và macOS, xem [shortcut-undo.md](shortcut-undo.md).
 
 ### Hiện trạng
 

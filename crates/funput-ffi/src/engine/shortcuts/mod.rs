@@ -13,8 +13,9 @@ use std::ffi::c_void;
 
 pub use expand::funput_engine_expand_shortcut;
 pub use undo::{
-    funput_engine_dismiss_shortcut_undo, funput_engine_shortcut_undo_text,
-    funput_engine_shortcut_undo_written, funput_engine_undo_shortcut,
+    funput_engine_dismiss_shortcut_undo, funput_engine_rearm_shortcut_undo,
+    funput_engine_shortcut_undo_text, funput_engine_shortcut_undo_written,
+    funput_engine_undo_shortcut,
 };
 
 use super::{FunputEngine, FunputResult, compose::decode_source};

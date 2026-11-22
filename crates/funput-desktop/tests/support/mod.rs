@@ -7,7 +7,9 @@
 #![allow(dead_code)]
 
 use funput_core::InputMethod;
-use funput_desktop::{CommittedTail, ImeResult, KeySource, plan_inject, undo_shortcut};
+use funput_desktop::{
+    CommittedTail, ImeResult, KeySource, plan_inject, track_expansion, undo_shortcut,
+};
 use funput_engine::Engine;
 
 pub struct Shell {
@@ -34,6 +36,7 @@ impl Shell {
         self.tail.before_key(self.engine.buffer());
         let result = self.engine.process_key(c, KeySource::Standard);
         self.tail.after_key(c, &result, self.engine.buffer());
+        track_expansion(&self.engine, &mut self.tail);
 
         if !self.inject(&result) {
             self.app.push(c);

@@ -1,7 +1,9 @@
 //! One-tap undo of a gõ tắt expansion over the C ABI.
 //!
-//! The engine arms the undo when an expansion lands and spends it on the next key.
-//! A host with a suggestion bar reads the word the expansion replaced
+//! The engine arms the undo when an expansion lands and spends it on the next key; a
+//! host that sees the caret back right after the expansion can arm it again
+//! ([`funput_engine_rearm_shortcut_undo`]). A host with a suggestion bar reads the word
+//! the expansion replaced
 //! ([`funput_engine_shortcut_undo_text`]) to name the `↩` chip, checks the document
 //! still ends with what it wrote ([`funput_engine_shortcut_undo_written`]), and takes
 //! the expansion back with [`funput_engine_undo_shortcut`] on Backspace or a tap.
@@ -108,8 +110,26 @@ pub unsafe extern "C" fn funput_engine_undo_shortcut(
     }
 }
 
-/// Drop the undo and the one-time refusal it left behind: the user went on to edit
-/// the word (any Backspace that is not the undo), or the caret left the field.
+/// Arm the undo of the last expansion again, after the next key spent it: the user
+/// typed on, then deleted back until the caret sits right after the expansion.
+/// Returns whether an undo is now armed, ready for [`funput_engine_undo_shortcut`].
+///
+/// Only the host knows the caret is back at that exact spot rather than at the same
+/// text typed elsewhere, so it checks before calling. `false` while a word is being
+/// composed, once the expansion was taken back, dismissed or cleared, or for a null
+/// handle.
+///
+/// # Safety
+/// `engine` must be a valid handle or null.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn funput_engine_rearm_shortcut_undo(engine: *mut FunputEngine) -> bool {
+    unsafe { abi::with_engine_mut(engine, |e| e.rearm_shortcut_undo()) }
+}
+
+/// Drop the undo, the remembered expansion and the one-time refusal: the caret left the
+/// field, or the expansion is no longer what sits before it. A host that only offers the
+/// one-key undo may also call this on any Backspace that is not the undo; one that uses
+/// [`funput_engine_rearm_shortcut_undo`] must not, or there is nothing left to re-arm.
 ///
 /// # Safety
 /// `engine` must be a valid handle or null.
@@ -207,6 +227,35 @@ mod tests {
             let context = (&mut output as *mut String).cast();
             funput_engine_undo_shortcut(engine, Some(collect), context);
             assert_eq!(output, format!("{trigger} "));
+            funput_engine_free(engine);
+        }
+    }
+
+    #[test]
+    fn rearming_brings_back_the_undo_the_next_key_spent() {
+        unsafe {
+            let engine = funput_engine_new();
+            add(engine, "vn", "Việt Nam");
+            assert!(
+                !funput_engine_rearm_shortcut_undo(engine),
+                "nothing expanded yet"
+            );
+
+            type_keys(engine, "vn ");
+            type_keys(engine, "x");
+            assert!(
+                !funput_engine_rearm_shortcut_undo(engine),
+                "a word is composed"
+            );
+            funput_backspace(engine);
+            assert_eq!(written(engine), None, "spent by the next key");
+
+            assert!(funput_engine_rearm_shortcut_undo(engine));
+            assert_eq!(written(engine).as_deref(), Some("Việt Nam "));
+            let result = funput_engine_undo_shortcut(engine, None, std::ptr::null_mut());
+            assert_eq!(result.action, ACTION_SEND);
+            assert!(!funput_engine_rearm_shortcut_undo(engine), "taken back");
+            assert!(!funput_engine_rearm_shortcut_undo(std::ptr::null_mut()));
             funput_engine_free(engine);
         }
     }

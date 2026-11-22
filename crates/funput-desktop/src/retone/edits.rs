@@ -13,14 +13,15 @@ impl CommittedTail {
         self.tail.ends_with(written)
     }
 
-    /// The app replaced `written` at the caret with `shown`. Returns whether the
-    /// shadow could follow; on `false` it no longer matches the screen and is
-    /// cleared, so nothing downstream acts on a word that is not there.
+    /// The app replaced `written` at the caret with `shown`, the expansion taken back.
+    /// Returns whether the shadow could follow; on `false` it no longer matches the
+    /// screen and is cleared, so nothing downstream acts on a word that is not there.
     pub fn rewrite_end(&mut self, written: &str, shown: &str) -> bool {
         if !self.ends_with(written) {
             self.clear();
             return false;
         }
+        self.expansion_end = None;
         self.tail.truncate(self.tail.len() - written.len());
         self.tail.push_str(shown);
         self.trim();

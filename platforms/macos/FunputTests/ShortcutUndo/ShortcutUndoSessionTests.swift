@@ -17,15 +17,16 @@ final class ShortcutUndoSessionTests: XCTestCase {
         composer.addShortcut(trigger: "vn", expansion: "Việt Nam")
     }
 
-    private func type(_ keys: String) {
+    /// `field` is the document as it stands after these keys: where an expansion ends.
+    private func type(_ keys: String, on field: FakeCompositionSurface = FakeCompositionSurface()) {
         for key in keys.unicodeScalars {
             composer.process(key)
-            undo.keyHandled(by: composer)
+            undo.keyHandled(by: composer, on: field)
         }
     }
 
     private func backspace(on field: FakeCompositionSurface) -> Bool {
-        defer { undo.keyHandled(by: composer) }
+        defer { undo.keyHandled(by: composer, on: field) }
         return undo.backspace(composer: composer, on: field)
     }
 
@@ -104,6 +105,69 @@ final class ShortcutUndoSessionTests: XCTestCase {
         let field = FakeCompositionSurface(document: "Việt Nam ")
         XCTAssertTrue(backspace(on: field))
         XCTAssertEqual(field.document, "vn ")
+    }
+
+    /// #782: typed on past the expansion, then deleted back to its end.
+    func testBackspaceBackAtTheExpansionAfterMoreWordsUndoesIt() {
+        type("vn ", on: FakeCompositionSurface(document: "Việt Nam "))
+        type("nhe ")
+        XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "Việt Nam nhe ")))
+
+        let field = FakeCompositionSurface(document: "Việt Nam ")
+        XCTAssertTrue(backspace(on: field))
+        XCTAssertEqual(field.document, "vn ")
+        XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "vn ")), "taken once")
+    }
+
+    /// The Backspace that lands right after the expansion keeps its last word closed, so
+    /// retone does not re-open it and the next Backspace takes the expansion back.
+    func testLandingRightAfterTheExpansionKeepsItsLastWordClosed() {
+        type("vn ", on: FakeCompositionSurface(document: "Việt Nam "))
+        type("x ")
+        XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "Việt Nam x ")))
+        XCTAssertFalse(undo.keepsWordClosed)
+        XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "Việt Nam x")))
+        XCTAssertTrue(undo.keepsWordClosed)
+
+        XCTAssertTrue(backspace(on: FakeCompositionSurface(document: "Việt Nam ")))
+        XCTAssertFalse(undo.keepsWordClosed)
+    }
+
+    func testTheSameTextFurtherOnIsNotTakenBack() {
+        type("vn ", on: FakeCompositionSurface(document: "Việt Nam "))
+        type("x ")
+        let field = FakeCompositionSurface(document: "Việt Nam x Việt Nam ")
+        XCTAssertFalse(backspace(on: field))
+        XCTAssertEqual(field.document, "Việt Nam x Việt Nam ")
+    }
+
+    func testAClickBeforeDeletingBackDropsTheExpansion() {
+        type("vn ", on: FakeCompositionSurface(document: "Việt Nam "))
+        type("x ")
+        clicks += 1
+        let field = FakeCompositionSurface(document: "Việt Nam ")
+        XCTAssertFalse(backspace(on: field))
+        XCTAssertTrue(field.reads.isEmpty, "the click alone rules the undo out")
+    }
+
+    func testAClientThatWouldNotPlaceItsCaretGetsNoSecondChance() {
+        let blind = FakeCompositionSurface(document: "Việt Nam ")
+        blind.placesCaret = false
+        type("vn ", on: blind)
+        type("x ")
+        XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "Việt Nam ")))
+    }
+
+    func testAClearedComposerHasNothingToTakeBack() {
+        type("vn ", on: FakeCompositionSurface(document: "Việt Nam "))
+        type("x ")
+        composer.clear()
+        let field = FakeCompositionSurface(document: "Việt Nam ")
+        XCTAssertFalse(backspace(on: field))
+        XCTAssertEqual(field.document, "Việt Nam ")
+        let later = FakeCompositionSurface(document: "Việt Nam ")
+        XCTAssertFalse(backspace(on: later))
+        XCTAssertTrue(later.calls.isEmpty, "forgotten, so the app is not asked again")
     }
 
     func testWithNothingArmedTheAppIsNeverAsked() {

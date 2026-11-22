@@ -68,7 +68,7 @@ pub(crate) fn reopened(session: &mut Session, word: &str) {
 fn spend(session: &mut Session) -> Option<Refusal> {
     let undo = session.shortcut_undo.as_mut()?;
     let refusal = undo.suppressed.take()?;
-    if undo.armed.is_none() {
+    if undo.expansion.is_none() {
         session.shortcut_undo = None;
     }
     Some(refusal)

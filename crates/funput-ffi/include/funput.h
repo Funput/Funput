@@ -1391,8 +1391,25 @@ FunputResult funput_engine_undo_shortcut(FunputEngine *engine,
                                          void *context);
 
 /**
- * Drop the undo and the one-time refusal it left behind: the user went on to edit
- * the word (any Backspace that is not the undo), or the caret left the field.
+ * Arm the undo of the last expansion again, after the next key spent it: the user
+ * typed on, then deleted back until the caret sits right after the expansion.
+ * Returns whether an undo is now armed, ready for [`funput_engine_undo_shortcut`].
+ *
+ * Only the host knows the caret is back at that exact spot rather than at the same
+ * text typed elsewhere, so it checks before calling. `false` while a word is being
+ * composed, once the expansion was taken back, dismissed or cleared, or for a null
+ * handle.
+ *
+ * # Safety
+ * `engine` must be a valid handle or null.
+ */
+bool funput_engine_rearm_shortcut_undo(FunputEngine *engine);
+
+/**
+ * Drop the undo, the remembered expansion and the one-time refusal: the caret left the
+ * field, or the expansion is no longer what sits before it. A host that only offers the
+ * one-key undo may also call this on any Backspace that is not the undo; one that uses
+ * [`funput_engine_rearm_shortcut_undo`] must not, or there is nothing left to re-arm.
  *
  * # Safety
  * `engine` must be a valid handle or null.

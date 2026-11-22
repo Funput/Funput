@@ -22,9 +22,9 @@ use funput_engine::{Action, ImeResult};
 
 mod completion;
 mod edits;
+mod expansion;
 mod words;
 
-use words::is_separator;
 pub(crate) use words::{char_before, word_start};
 
 /// How much committed text to keep, in bytes. Only the word at the caret is read,
@@ -42,13 +42,18 @@ pub struct CommittedTail {
     composing: String,
     /// Where the word handed out by [`CommittedTail::backspace`] starts in `tail`.
     word_start: usize,
+    /// The length of `tail` right after the last gõ tắt expansion, while the shadow
+    /// still reaches back that far: see [`CommittedTail::at_expansion_end`].
+    expansion_end: Option<usize>,
 }
 
 /// The character Backspace removed, and the word now ending at the caret, if any.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Removed<'a> {
     pub deleted: char,
-    /// `None` when the caret landed on a separator rather than a word.
+    /// `None` when the caret landed on a separator rather than a word, or right after
+    /// the last gõ tắt expansion, whose last word stays closed for the next Backspace
+    /// to take the whole expansion back.
     pub word: Option<&'a str>,
     /// The character in front of [`Removed::word`], for
     /// [`funput_engine::Engine::adopt_after`]; `None` where the shadow begins.
@@ -65,6 +70,7 @@ impl CommittedTail {
         self.tail.clear();
         self.composing.clear();
         self.word_start = 0;
+        self.expansion_end = None;
     }
 
     /// Snapshot the engine's composition *before* it processes the next key.
@@ -99,7 +105,7 @@ impl CommittedTail {
     pub fn backspace(&mut self) -> Option<Removed<'_>> {
         let deleted = self.tail.pop()?;
         let start = word_start(&self.tail);
-        let word = if start == self.tail.len() {
+        let word = if start == self.tail.len() || self.at_expansion_end() {
             None
         } else {
             self.word_start = start;
@@ -124,21 +130,6 @@ impl CommittedTail {
         if adopted {
             self.tail.truncate(self.word_start);
         }
-    }
-
-    /// Keep the shadow bounded. Drops from the front only as far as a separator, so
-    /// what remains never starts mid-word — and stays a suffix of the real text.
-    fn trim(&mut self) {
-        if self.tail.len() <= CAPACITY {
-            return;
-        }
-        let floor = self.tail.len() - CAPACITY;
-        let cut = self
-            .tail
-            .char_indices()
-            .find(|(i, c)| *i >= floor && is_separator(*c))
-            .map_or(self.tail.len(), |(i, c)| i + c.len_utf8());
-        self.tail.drain(..cut);
     }
 }
 
