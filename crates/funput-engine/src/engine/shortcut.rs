@@ -11,7 +11,7 @@ use crate::compose::boundary::{self, shortcut_undo};
 use crate::{Engine, ImeResult};
 
 impl Engine {
-    /// Whether Backspace can still put the last expansion back.
+    /// Whether the undo is armed: Backspace can put the last expansion back right now.
     pub fn has_shortcut_undo(&self) -> bool {
         shortcut_undo::is_armed(&self.session)
     }
@@ -60,7 +60,8 @@ impl Engine {
         Some(result)
     }
 
-    /// Drop the undo and any one-time refusal. The caret has left this field.
+    /// Drop the undo, the remembered expansion and any one-time refusal: the caret has
+    /// left this field, or the expansion is no longer what sits before it.
     pub fn dismiss_shortcut_undo(&mut self) {
         shortcut_undo::dismiss(&mut self.session);
     }

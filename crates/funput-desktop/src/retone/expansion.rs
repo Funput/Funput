@@ -10,6 +10,11 @@ impl CommittedTail {
         self.expansion_end = Some(self.tail.len());
     }
 
+    /// The engine no longer remembers the expansion: there is nothing to come back to.
+    pub fn forget_expansion_end(&mut self) {
+        self.expansion_end = None;
+    }
+
     /// Whether the caret is back exactly where the last expansion ended. The shadow is
     /// the text before the caret, so the same length is the same spot; the same text
     /// typed again further on is longer. Whether the expansion is still intact there

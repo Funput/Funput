@@ -36,6 +36,7 @@ pub fn undo_shortcut(engine: &mut Engine, tail: &mut CommittedTail) -> Option<Im
     let written = engine.shortcut_undo_written()?;
     if !tail.ends_with(written) {
         engine.dismiss_shortcut_undo();
+        tail.forget_expansion_end();
         return None;
     }
     let written = written.to_owned();

@@ -24,6 +24,10 @@ struct ShortcutUndoSession {
     private var expansion: Expansion?
     /// Whether the undo was armed after the previous key, so one expansion is noted once.
     private var wasArmed = false
+    /// Whether the last Backspace lands the caret right after the remembered expansion.
+    /// Its last word then stays closed (`reopenPreviousWord` leaves it), so the next
+    /// Backspace takes the whole expansion back, even one ending on a letter (`ct;`).
+    private(set) var keepsWordClosed = false
 
     init(clicks: @escaping () -> Int) {
         self.clicks = clicks
@@ -44,11 +48,16 @@ struct ShortcutUndoSession {
     /// to the app; an undo that no longer applies is dropped rather than left to rewrite
     /// text that may not be there.
     mutating func backspace(composer: FunputComposer, on surface: CompositionSurface) -> Bool {
+        keepsWordClosed = false
         guard let expansion else { return false }
         guard expansion.clicks == clicks() else { return forget(composer) }
         if !composer.hasShortcutUndo {
-            guard let end = expansion.end, ShortcutUndoDocument.caret(on: surface) == end
+            guard let end = expansion.end, let caret = ShortcutUndoDocument.caret(on: surface)
             else { return false }
+            guard caret == end else {
+                keepsWordClosed = caret - 1 == end
+                return false
+            }
             guard composer.rearmShortcutUndo() else { return forget(composer) }
         }
         guard let written = composer.shortcutUndoWritten(),

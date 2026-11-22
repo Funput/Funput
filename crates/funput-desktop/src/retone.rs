@@ -51,7 +51,9 @@ pub struct CommittedTail {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Removed<'a> {
     pub deleted: char,
-    /// `None` when the caret landed on a separator rather than a word.
+    /// `None` when the caret landed on a separator rather than a word, or right after
+    /// the last gõ tắt expansion, whose last word stays closed for the next Backspace
+    /// to take the whole expansion back.
     pub word: Option<&'a str>,
     /// The character in front of [`Removed::word`], for
     /// [`funput_engine::Engine::adopt_after`]; `None` where the shadow begins.
@@ -103,7 +105,7 @@ impl CommittedTail {
     pub fn backspace(&mut self) -> Option<Removed<'_>> {
         let deleted = self.tail.pop()?;
         let start = word_start(&self.tail);
-        let word = if start == self.tail.len() {
+        let word = if start == self.tail.len() || self.at_expansion_end() {
             None
         } else {
             self.word_start = start;

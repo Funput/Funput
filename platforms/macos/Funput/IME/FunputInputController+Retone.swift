@@ -18,8 +18,12 @@ extension FunputInputController {
     /// re-open a word per repeat — an underline flickering through text on its way out —
     /// and would put a cross-process document read on every one of them. A deliberate
     /// single press never repeats, so the feature itself loses nothing.
+    ///
+    /// A Backspace landing right after a remembered gõ tắt expansion re-opens nothing:
+    /// the next one takes the whole expansion back (`ShortcutUndoSession.keepsWordClosed`).
     func reopenPreviousWord(_ client: IMKTextInput, event: NSEvent) -> Bool {
-        guard AppSettings.shared.retoneAfterBackspace, !event.isARepeat else { return false }
+        guard AppSettings.shared.retoneAfterBackspace, !event.isARepeat, !shortcutUndo.keepsWordClosed
+        else { return false }
         let document = IMKRetoneDocument(client: client)
         guard let plan = Retone.plan(document: document, adopt: composer.adopt) else {
             return false

@@ -119,6 +119,20 @@ final class ShortcutUndoSessionTests: XCTestCase {
         XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "vn ")), "taken once")
     }
 
+    /// The Backspace that lands right after the expansion keeps its last word closed, so
+    /// retone does not re-open it and the next Backspace takes the expansion back.
+    func testLandingRightAfterTheExpansionKeepsItsLastWordClosed() {
+        type("vn ", on: FakeCompositionSurface(document: "Việt Nam "))
+        type("x ")
+        XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "Việt Nam x ")))
+        XCTAssertFalse(undo.keepsWordClosed)
+        XCTAssertFalse(backspace(on: FakeCompositionSurface(document: "Việt Nam x")))
+        XCTAssertTrue(undo.keepsWordClosed)
+
+        XCTAssertTrue(backspace(on: FakeCompositionSurface(document: "Việt Nam ")))
+        XCTAssertFalse(undo.keepsWordClosed)
+    }
+
     func testTheSameTextFurtherOnIsNotTakenBack() {
         type("vn ", on: FakeCompositionSurface(document: "Việt Nam "))
         type("x ")

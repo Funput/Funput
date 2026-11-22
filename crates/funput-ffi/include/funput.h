@@ -1406,8 +1406,10 @@ FunputResult funput_engine_undo_shortcut(FunputEngine *engine,
 bool funput_engine_rearm_shortcut_undo(FunputEngine *engine);
 
 /**
- * Drop the undo and the one-time refusal it left behind: the user went on to edit
- * the word (any Backspace that is not the undo), or the caret left the field.
+ * Drop the undo, the remembered expansion and the one-time refusal: the caret left the
+ * field, or the expansion is no longer what sits before it. A host that only offers the
+ * one-key undo may also call this on any Backspace that is not the undo; one that uses
+ * [`funput_engine_rearm_shortcut_undo`] must not, or there is nothing left to re-arm.
  *
  * # Safety
  * `engine` must be a valid handle or null.

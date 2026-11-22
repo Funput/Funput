@@ -102,7 +102,8 @@ impl ShellState {
     /// a gõ tắt trigger no longer expands at Space. Returns whether a word was sealed.
     ///
     /// The caret has not moved, so unlike [`ShellState::caret_moved`] this keeps the
-    /// shadow and adds the word to it: Backspace still re-opens it.
+    /// shadow and adds the word to it: Backspace still re-opens it. Sealing clears the
+    /// engine, gõ tắt undo included, so the shadow forgets the expansion end with it.
     pub fn seal_word(&mut self, tapped: Mods) -> bool {
         if !self.settings.ctrl_seals_word || tapped != CTRL_ALONE {
             return false;
@@ -111,6 +112,7 @@ impl ShellState {
             return false;
         };
         self.tail.commit(&word);
+        self.tail.forget_expansion_end();
         true
     }
 
