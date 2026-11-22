@@ -42,6 +42,35 @@ fn revert_then_space_keeps_reverted_word() {
 }
 
 #[test]
+fn real_words_the_rhyme_table_once_missed_survive_the_boundary() {
+    // `giếc` (`gi` + `iêc`) and the `ưm` interjections were restored to their raw
+    // keys on Space, in every key order (#757).
+    for (keys, expected) in [
+        ("gieces", "giếc"),
+        ("gieecs", "giếc"),
+        ("gieesc", "giếc"),
+        ("giesce", "giếc"),
+        ("giesec", "giếc"),
+        ("uwmf", "ừm"),
+        ("hufmw", "hừm"),
+        ("hufwm", "hừm"),
+        ("humfw", "hừm"),
+        ("humwf", "hừm"),
+        ("huwfm", "hừm"),
+        ("huwmf", "hừm"),
+        ("ngufmw", "ngừm"),
+        ("ngumwf", "ngừm"),
+        ("nguwmf", "ngừm"),
+    ] {
+        assert_eq!(
+            crate::support::app_text(InputMethod::Telex, &format!("{keys} ")),
+            format!("{expected} "),
+            "{keys}"
+        );
+    }
+}
+
+#[test]
 fn telex_eager_restore_step() {
     // "tẽ" is still valid Vietnamese, so it composes; the closing "t" makes
     // "tẽt" a dead end, restoring "text" the instant it is typed — no boundary.

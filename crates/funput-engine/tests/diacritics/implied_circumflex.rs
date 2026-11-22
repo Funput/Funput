@@ -249,10 +249,14 @@ fn known_side_effects() {
 fn an_incomplete_word_keeps_the_revert() {
     assert_eq!(type_keys_buffer(InputMethod::Telex, "viecjze"), "viece");
     assert_eq!(type_keys_buffer(InputMethod::Vni, "viec506"), "viec6");
-    // `giếc` is accepted by no rhyme table, so `giecse` reverts to `giéce` and the
-    // boundary leaves it alone, exactly as before.
-    assert_eq!(app_text(InputMethod::Telex, "giecse "), "giéce ");
-    assert_eq!(app_text(InputMethod::Vni, "giec16 "), "giéc6 ");
+}
+
+/// After `gi` the `i` of `iêc` is absorbed, so `giếc` is a complete syllable and
+/// the mũ typed after the tone completes it like `viếc` (#757).
+#[test]
+fn gi_completes_the_ie_rhyme_it_absorbs() {
+    assert_eq!(app_text(InputMethod::Telex, "giecse "), "giếc ");
+    assert_eq!(app_text(InputMethod::Vni, "giec16 "), "giếc ");
 }
 
 /// English words with `ie` + consonant + `e` show no complete syllable when the

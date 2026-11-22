@@ -15,7 +15,7 @@ use crate::validation::parse::parse_syllable;
 use crate::validation::rhyme::{is_valid_rhyme, matches_deshaped};
 use crate::validation::rules::SyllableRules;
 
-use super::spelling::{onset_admits_rhyme, violates_ckg_spelling};
+use super::spelling::{gi_spells_ie_rhyme, onset_admits_rhyme, violates_ckg_spelling};
 
 /// How a finished buffer sits against Vietnamese syllable structure.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -66,7 +66,7 @@ pub(crate) fn classify(buffer: &str, rules: SyllableRules) -> SyllableStatus {
     let rhyme = toneless_rhyme(&parts, coda);
     let status = if ethnic::admits(parts.onset) {
         SyllableStatus::Complete
-    } else if is_valid_rhyme(&rhyme) {
+    } else if is_valid_rhyme(&rhyme) || gi_spells_ie_rhyme(parts.onset, &rhyme) {
         if !onset_admits_rhyme(parts.onset, &rhyme) {
             return SyllableStatus::Invalid;
         }
