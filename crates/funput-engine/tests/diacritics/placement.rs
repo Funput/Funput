@@ -2,6 +2,8 @@
 
 use funput_core::{InputMethod, ToneStyle};
 use funput_engine::Engine;
+
+use crate::support::app_text;
 fn run(m: InputMethod, keys: &str) -> String {
     let mut e = Engine::new();
     e.set_method(m);
@@ -75,6 +77,20 @@ fn glide_onsets_survive_a_tone_typed_before_the_nucleus() {
     }
     // The restore itself still works for words that really are not Vietnamese.
     assert_eq!(run(InputMethod::Telex, "text"), "text");
+}
+
+#[test]
+fn tone_typed_before_the_shape_lands_on_the_shaped_vowel() {
+    // `hues` puts the tone on `u` of the open rhyme `ue`; the later mũ makes `ê`
+    // the nucleus, in both styles and at the word boundary.
+    for style_run in [run, run_modern] {
+        assert_eq!(style_run(InputMethod::Telex, "huese"), "huế");
+        assert_eq!(style_run(InputMethod::Telex, "tueje"), "tuệ");
+        assert_eq!(style_run(InputMethod::Vni, "hue16"), "huế");
+        assert_eq!(style_run(InputMethod::Telex, "hoafwng"), "hoằng");
+    }
+    assert_eq!(app_text(InputMethod::Telex, "huese "), "huế ");
+    assert_eq!(app_text(InputMethod::Vni, "tue56 "), "tuệ ");
 }
 
 #[test]

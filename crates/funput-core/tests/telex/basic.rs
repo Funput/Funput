@@ -184,6 +184,55 @@ fn telex_free_position_circumflex() {
 }
 
 #[test]
+fn tone_before_adjacent_shape_moves_to_the_shaped_vowel() {
+    // Typed before the mũ, the tone sits on `u` of the open rhyme `ue`; once the
+    // `e` becomes `ê` it is the tonal nucleus and the tone has to follow it.
+    for (tone_before, tone_after, expected) in [
+        ("huese", "huees", "huế"),
+        ("husee", "huees", "huế"),
+        ("huefe", "hueef", "huề"),
+        ("hueje", "hueej", "huệ"),
+        ("thuere", "thueer", "thuể"),
+        ("dueje", "dueej", "duệ"),
+        ("chuese", "chuees", "chuế"),
+        ("nhueje", "nhueej", "nhuệ"),
+        ("tueje", "tueej", "tuệ"),
+        ("uese", "uees", "uế"),
+        ("xuere", "xueer", "xuể"),
+        ("HUESE", "HUEES", "HUẾ"),
+    ] {
+        assert_eq!(type_keys(tone_before), expected, "{tone_before}");
+        assert_eq!(type_keys(tone_after), expected, "{tone_after}");
+    }
+
+    // Every adjacent shape follows the same rule. `tuầ` and `hoằ` are only states
+    // mid-word: the tone now moves on the shape key instead of the next letter,
+    // and the whole word comes out the same either way.
+    for (mid_word, whole_word, expected) in [
+        ("tuafa", "tuafan", "tuần"),
+        ("luaja", "luajan", "luận"),
+        ("hoafw", "hoafwng", "hoằng"),
+        ("toasw", "toaswn", "toắn"),
+    ] {
+        assert!(expected.starts_with(&type_keys(mid_word)), "{mid_word}");
+        assert_eq!(type_keys(whole_word), expected, "{whole_word}");
+    }
+
+    // A newer tone already on the shaped vowel wins over a stray older one.
+    assert_eq!(type_keys("oafasw"), "òắ");
+
+    // A tone already on the shaped vowel stays put.
+    assert_eq!(type_keys("asw"), "ắ");
+    assert_eq!(type_keys("uasw"), "ứa");
+    assert_eq!(type_keys("thuorw"), "thuở");
+
+    // Not Vietnamese rhymes, so the tone stays where it was typed: English such
+    // as `career` keeps the doubled keys its restore relies on.
+    assert_eq!(type_keys("caree"), "cảê");
+    assert_eq!(type_keys("khuyara"), "khuỷâ");
+}
+
+#[test]
 fn telex_free_position_circumflex_keeps_existing_regressions() {
     assert_eq!(type_keys("booong"), "boong");
 }
