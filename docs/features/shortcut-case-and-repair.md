@@ -5,7 +5,7 @@ Thiết kế cho các góp ý về gõ tắt trong issue #582 (Windows) và #782
 1. `Ct` chỉ viết hoa chữ đầu, phần còn lại giữ nguyên như đã lưu.
 2. Desktop có Backspace hoàn tác gõ tắt như Android và iOS.
 3. Chữ tắt gõ nhầm sửa được bằng Backspace sau khi đã qua ranh giới.
-4. `BBh` (lỡ giữ Shift) bung như `Bbh`, và bảng gõ tắt báo chữ tắt trùng. Đã làm; giao diện báo trùng mới có Windows.
+4. `BBh` (lỡ giữ Shift) bung như `Bbh`, và bảng gõ tắt báo chữ tắt trùng. Đã làm; giao diện báo trùng mới có Windows. macOS, Linux, Android, iOS làm sau, khi bản Windows đã thử tay và chạy ổn.
 
 Các góp ý khác trong issue được bàn riêng: chữ dính dấu câu (`abc.vn`) và chữ tắt có ký hiệu (`;ct`) ở [shortcut-glued-words.md](shortcut-glued-words.md); file `.txt` ở [shortcut-file-sync.md](shortcut-file-sync.md) (chưa chốt); Ctrl để hủy ở [ctrl-seal-word.md](ctrl-seal-word.md); phím kích hoạt Enter/Tab ở [shortcut-trigger-keys.md](shortcut-trigger-keys.md); lỗi ô nhập trong bảng gõ tắt ở [windows-composing-field-caret.md](windows-composing-field-caret.md); cách đặt dấu mới ở [implied-circumflex-confirm.md](implied-circumflex-confirm.md).
 
@@ -165,7 +165,7 @@ Unikey vẫn bung được, kể cả khi người dùng đã gõ dài phía sau
 
 ## 4. Chữ hoa lẫn khi gõ và chữ tắt trùng
 
-Trạng thái: đã làm. Giao diện báo trùng mới có Windows; Android, iOS vẫn chặn trùng nguyên văn như trước, chưa cảnh báo khác hoa/thường. Nguồn: #582 (góp ý ngày 21/11 về `BBh`), #782 mục 2.
+Trạng thái: đã làm. Giao diện báo trùng mới có Windows; Android, iOS vẫn chặn trùng nguyên văn như trước, chưa cảnh báo khác hoa/thường. Các nền tảng khác làm sau, khi bản Windows đã thử tay và chạy ổn. Nguồn: #582 (góp ý ngày 21/11 về `BBh`), #782 mục 2.
 
 ### Hiện trạng
 

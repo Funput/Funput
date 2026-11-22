@@ -1,6 +1,8 @@
 # Gõ tắt: chữ dính phía trước và chữ tắt có ký hiệu
 
 > **Trạng thái:** mục 1 (từ dính, `@` và `/`) đã làm trong engine cho mọi nền tảng; Windows truyền thêm ký tự trước từ khi mở lại. Mục 2 (chữ tắt có ký hiệu) đã làm trong engine nhưng chỉ Windows bật (xem mục Nền tảng). Mục 3: hàm kiểm tra và phần nhập file đã làm; giao diện mới có Windows.
+>
+> **Thứ tự nền tảng:** làm Windows trước. macOS, Linux, Android, iOS chỉ bắt đầu khi bản Windows đã được thử tay và chạy ổn (thanh địa chỉ với bung bằng Enter, `;ct` trong vài app, bảng gõ tắt). Việc của từng nền tảng ghi ở mục Nền tảng.
 
 Nguồn: issue #782 mục 3 (chữ tắt có ký hiệu), góp ý ở #737 về `tuoitre.vn`, và lỗi bung trong tên miền phát hiện khi bàn issue #582.
 
@@ -131,7 +133,7 @@ Hiện tại `;ct`, `x.y`, `c t`, `2k` được lưu mà không bao giờ bung, 
 
 ## Nền tảng
 
-Phần lớn nằm trong engine. Việc của từng nền tảng:
+Phần lớn nằm trong engine. Việc của từng nền tảng dưới đây; ngoài Windows, tất cả để sau khi Windows chạy ổn:
 
 - **Truyền ký tự trước từ khi mở lại** (`adopt_after`): Windows đã làm, lấy từ `CommittedTail` (`Removed::before`) và từ ô nhập trong Cài đặt. Android, iOS, macOS, Linux đọc được từ văn bản trước con trỏ; chưa nối, vẫn gọi `adopt`.
 - **Chữ tắt có ký hiệu cần nền tảng làm đúng lệnh của engine** (`EngineConfig::shortcut_affixes`, mặc định tắt). Phần đầu bắt nền tảng xóa cả ký tự đã commit trước vùng đang gõ, phần cuối bắt nền tảng ghi một nội dung không kết thúc bằng phím ranh giới. Hiện chỉ Windows bật (hook + inject làm đúng `backspace` và `output`, `CommittedTail` theo kịp). Ở nền tảng khác chữ tắt có ký hiệu giữ nguyên như gõ, như trước đây. Muốn bật thì từng nền tảng phải sửa:
