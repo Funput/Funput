@@ -12,7 +12,8 @@ use windows::Win32::System::Threading::{
 use super::{control_center, convert, onboarding, settings_window};
 
 pub(crate) use child::{
-    current_child_handle, launch_convert, launch_onboarding, launch_settings, terminate_children,
+    control_center_open, current_child_handle, launch_convert, launch_onboarding, launch_settings,
+    terminate_children,
 };
 pub(crate) use flyout::{reap_ui_child, toggle_control_center};
 

@@ -79,6 +79,16 @@ pub(crate) fn current_child_handle() -> Option<HANDLE> {
     UI_PROCESS.with(|cell| cell.borrow().as_ref().map(|(_, child)| child.handle()))
 }
 
+/// Whether the tracked child is the Control Center. The hook arms a settings
+/// timer only then — see [`crate::background::hook`].
+pub(crate) fn control_center_open() -> bool {
+    UI_PROCESS.with(|cell| {
+        cell.borrow()
+            .as_ref()
+            .is_some_and(|(kind, _)| *kind == UiKind::ControlCenter)
+    })
+}
+
 pub(crate) fn terminate_children() {
     UI_PROCESS.with(|cell| {
         if let Some((_, child)) = cell.borrow_mut().take() {

@@ -17,6 +17,7 @@ mod access_keys;
 mod foreground;
 mod keyboard;
 mod mouse;
+mod settings_watch;
 mod toggle;
 
 use std::sync::atomic::AtomicBool;
@@ -27,7 +28,7 @@ use windows::Win32::UI::Accessibility::SetWinEventHook;
 use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, EVENT_SYSTEM_FOREGROUND, MSG, PM_REMOVE, PeekMessageW, PostQuitMessage,
     SetWindowsHookExW, TranslateMessage, WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT,
-    WM_QUIT,
+    WM_QUIT, WM_TIMER,
 };
 
 use crate::background::instance::{self, WaitKind};
@@ -96,7 +97,10 @@ pub fn run() {
         let mut msg = MSG::default();
         loop {
             // Re-read every turn: reaping one child can spawn the next (flyout →
-            // Settings), so the handle to wait on changes as we go.
+            // Settings), so the handle to wait on changes as we go. The timer
+            // follows the flyout's settings file for the tray icon; see
+            // [`settings_watch`].
+            settings_watch::set_open(ui::control_center_open());
             let child = ui::current_child_handle();
             match instance::wait_activate_message_or_child(child) {
                 WaitKind::Activate => {
@@ -116,6 +120,14 @@ pub fn run() {
                         // from a window message that happens to share the number.
                         if msg.message == toggle::WM_TOGGLED && msg.hwnd.0.is_null() {
                             toggle::run_pending();
+                            continue;
+                        }
+                        // Same reason: a thread timer has no window, so dispatch
+                        // would drop it. `deliver` ignores any other `WM_TIMER`.
+                        if msg.message == WM_TIMER
+                            && msg.hwnd.0.is_null()
+                            && settings_watch::deliver(msg.wParam.0)
+                        {
                             continue;
                         }
                         let _ = TranslateMessage(&msg);
