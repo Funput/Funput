@@ -53,8 +53,9 @@ fn note(rows: &[Shortcut], index: usize) -> ShortcutNote {
 }
 
 /// Whether row `index` is one the engine gets: a trigger that can fire, not
-/// spelled exactly like an earlier row. The first of two repeats wins, so a row
-/// added below one already there never takes its place.
+/// spelled exactly like an earlier row. The first row in the list wins. A new
+/// row is inserted at the top, so a repeat of one already there takes its place
+/// and the older row is the one that does not fire.
 pub(in crate::shell) fn fires(rows: &[Shortcut], index: usize) -> bool {
     check_trigger(&rows[index].trigger).is_ok() && !repeats_an_earlier_row(rows, index)
 }

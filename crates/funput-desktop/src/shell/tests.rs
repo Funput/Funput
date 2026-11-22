@@ -632,6 +632,28 @@ fn a_half_typed_shortcut_stays_visible_but_is_not_persisted() {
 }
 
 #[test]
+fn a_new_shortcut_row_is_inserted_above_the_ones_already_there() {
+    let mut state = shell();
+    state.add_shortcut();
+    state.set_shortcut_trigger(0, "vn".into());
+    state.set_shortcut_expansion(0, "Việt Nam".into());
+
+    state.add_shortcut();
+    assert_eq!(state.shortcuts()[0].trigger, "");
+    assert_eq!(state.shortcuts()[0].expansion, "");
+    assert_eq!(state.shortcuts()[1].trigger, "vn");
+    // The blank row is at the top, so another Thêm must wait until it is filled.
+    assert!(!state.can_add_shortcut());
+
+    state.set_shortcut_trigger(0, "cf".into());
+    assert!(!state.can_add_shortcut());
+    state.set_shortcut_expansion(0, "cà phê".into());
+    assert!(state.can_add_shortcut());
+    assert_eq!(state.shortcuts()[0].trigger, "cf");
+    assert_eq!(state.shortcuts()[1].trigger, "vn");
+}
+
+#[test]
 fn pruning_drops_drafts_and_keeps_complete_rows() {
     let mut state = shell();
     state.add_shortcut();
@@ -1166,10 +1188,13 @@ fn backspace_after_an_enter_expansion_is_plain() {
 
 fn shell_with_rows(rows: &[(&str, &str)]) -> ShellState {
     let mut state = shell();
-    for (index, (trigger, expansion)) in rows.iter().enumerate() {
+    // A new row is inserted at the top, so filling index 0 each time would
+    // reverse the slice. Add from the bottom upward and the final order matches
+    // the slice the tests name.
+    for (trigger, expansion) in rows.iter().rev() {
         state.add_shortcut();
-        state.set_shortcut_trigger(index, (*trigger).into());
-        state.set_shortcut_expansion(index, (*expansion).into());
+        state.set_shortcut_trigger(0, (*trigger).into());
+        state.set_shortcut_expansion(0, (*expansion).into());
     }
     state
 }

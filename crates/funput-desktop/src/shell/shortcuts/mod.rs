@@ -61,20 +61,27 @@ impl ShellState {
         self.settings.shortcuts = drafts;
     }
 
-    /// "Thêm" is allowed when the list is empty or the last row is already
-    /// complete — otherwise a second blank row would appear above the first.
+    /// "Thêm" is allowed only when every row is already complete. The new row is
+    /// inserted at the top, so looking at the last row is not enough: a blank
+    /// there would let a second blank appear above it.
     pub fn can_add_shortcut(&self) -> bool {
-        self.settings.shortcuts.last().is_none_or(is_complete)
+        self.settings.shortcuts.iter().all(is_complete)
     }
 
     pub fn add_shortcut(&mut self) {
         if !self.can_add_shortcut() {
             return;
         }
-        self.settings.shortcuts.push(Shortcut {
-            trigger: String::new(),
-            expansion: String::new(),
-        });
+        // At the top, directly under the Thêm button. A long table otherwise
+        // hides the row the user has to fill in. It stays at index 0 while they
+        // type — moving it when it becomes complete would steal the field.
+        self.settings.shortcuts.insert(
+            0,
+            Shortcut {
+                trigger: String::new(),
+                expansion: String::new(),
+            },
+        );
         self.commit_shortcuts();
     }
 
