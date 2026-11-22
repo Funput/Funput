@@ -76,6 +76,7 @@ impl Engine {
     /// opens a sentence. What a shell calls when a field takes focus — the one moment
     /// it knows something about the caret that the keystrokes cannot say.
     pub fn arm_capitalization(&mut self) {
+        self.session.lead.forget();
         if self.session.config.auto_capitalize {
             self.session.sentence.arm();
         }
@@ -86,15 +87,18 @@ impl Engine {
     /// sentence stands. The next letter is left as typed until the keys typed from
     /// here end a sentence. Not gated on the switch: a lost position is lost either
     /// way, and [`Self::configure`] resets to the same state when it turns off.
+    /// Either call also forgets the symbols typed before the caret moved, so the
+    /// next word is not read as glued to them (`abc.` then a click, then `vn`).
     pub fn disarm_capitalization(&mut self) {
+        self.session.lead.forget();
         self.session.sentence.disarm();
     }
 
     /// Reset per-word state without changing settings.
     ///
-    /// A digit that just passed through is kept, like the sentence scanner: a host
-    /// that clears right after committing a word-start digit must still have the next
-    /// word read as glued to that number (`500k` is not the trigger `k`).
+    /// Symbols that just passed through are kept, like the sentence scanner: a host
+    /// that clears right after committing a word-start digit or a boundary must still
+    /// have the next word read as glued to them (`500k`, `abc.vn` are no triggers).
     pub fn clear(&mut self) {
         self.session.clear();
         // The caret has moved or the field has changed: a correction parked for the

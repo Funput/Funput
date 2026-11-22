@@ -2,7 +2,7 @@
 //! whenever it shows something the composer did not make.
 
 use super::{FieldComposer, FieldEdit, FieldView};
-use crate::retone::word_start;
+use crate::retone::{char_before, word_start};
 
 impl FieldComposer {
     /// Rebuild the model from `field` unless it shows exactly what the composer
@@ -39,7 +39,8 @@ impl FieldComposer {
     /// the engine will not take (`hello`) stays plain text.
     pub(super) fn reopen_word(&mut self) {
         let start = word_start(&self.before);
-        if start < self.before.len() && self.engine.adopt(&self.before[start..]) {
+        let before = char_before(&self.before, start);
+        if start < self.before.len() && self.engine.adopt_after(&self.before[start..], before) {
             self.before.truncate(start);
         }
     }

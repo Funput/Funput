@@ -24,7 +24,17 @@ impl Engine {
     ///
     /// Any word but the one a gõ tắt undo just put back ends that undo's one-time
     /// refusal, taken or not: the caret only reaches it by deleting the refused word.
+    ///
+    /// Nothing is known about the text in front of the word, so the word stands
+    /// alone for gõ tắt; [`Self::adopt_after`] says what is there when the host can.
     pub fn adopt(&mut self, text: &str) -> bool {
+        self.adopt_after(text, None)
+    }
+
+    /// [`Self::adopt`], with the character the host sees right before the word
+    /// (`None` when there is none or it cannot read it). A word glued to text in
+    /// front (`abc.vn`) is re-opened but never expands, as when it was first typed.
+    pub fn adopt_after(&mut self, text: &str, before: Option<char>) -> bool {
         shortcut_undo::reopened(&mut self.session, text);
         let session = &self.session;
         let takes = !text.is_empty()
@@ -46,6 +56,7 @@ impl Engine {
         self.session.buffer.push_str(text);
         self.session.keys.push_str(text);
         self.session.vn_form.push_str(text);
+        self.session.lead.reopen(before);
         true
     }
 
@@ -57,14 +68,15 @@ impl Engine {
     /// nothing is written. The word is already on screen or in the host's preedit, so
     /// putting it into the document is the host's job, and it can still offer the
     /// word back to [`Engine::adopt`] when Backspace returns to it. The next key
-    /// starts a new word right behind this one, and since no key was typed the
-    /// sentence stands where it was.
+    /// starts a new word glued right behind this one (so `ct` Ctrl `.vn` stays as
+    /// typed), and since no key was typed the sentence stands where it was.
     pub fn seal(&mut self) -> Option<String> {
         if self.session.buffer.is_empty() {
             return None;
         }
         let shown = self.session.buffer.clone();
         self.clear();
+        self.session.lead.follow_text();
         Some(shown)
     }
 

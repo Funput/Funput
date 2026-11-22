@@ -551,13 +551,15 @@ fn a_trigger_after_numpad_digits_stays_literal() {
     assert_eq!(app, "500k ");
 }
 
+/// Whitespace after the number frees the trigger; punctuation glued to it does not
+/// (`500.k`, see `shortcut_glued.rs`).
 #[test]
-fn a_boundary_after_the_number_frees_the_trigger() {
+fn whitespace_after_the_number_frees_the_trigger() {
     let shortcuts = [("k", "không")];
     let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "500 k ");
     assert_eq!(text, "500 không ");
     let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "500.k ");
-    assert_eq!(text, "500.không ");
+    assert_eq!(text, "500.k ");
 }
 
 #[test]

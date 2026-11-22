@@ -385,6 +385,31 @@ fn a_trigger_is_reached_back_over_several_words() {
     assert_eq!(shell.app, "cơm tấm Sài Gòn ");
 }
 
+/// The repair still works on a trigger with a word and a space in front of it.
+#[test]
+fn a_mistyped_trigger_after_another_word_is_fixed_too() {
+    let mut shell = shell_with_ctsg();
+    shell.type_str("an ctss ");
+    shell.backspace();
+    shell.backspace();
+    shell.type_str("g ");
+    assert_eq!(shell.app, "an cơm tấm Sài Gòn ");
+}
+
+/// A word Backspace re-opens is glued to what the shadow saw in front of it: the
+/// domain that did not expand when typed does not expand on a second Space either.
+#[test]
+fn a_reopened_word_glued_to_a_full_stop_does_not_expand() {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("vn", "Việt Nam");
+    shell.type_str("tuoitre.vn ");
+    assert_eq!(shell.app, "tuoitre.vn ");
+
+    shell.backspace();
+    shell.key(' ');
+    assert_eq!(shell.app, "tuoitre.vn ");
+}
+
 /// A word that begins no trigger stays as literal as before.
 #[test]
 fn a_word_no_trigger_starts_with_is_not_reopened() {

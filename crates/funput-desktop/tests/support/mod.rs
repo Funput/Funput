@@ -75,7 +75,7 @@ impl Shell {
         };
         self.engine.rewind_sentence(removed.deleted);
         if let Some(word) = removed.word {
-            let adopted = self.engine.adopt(word);
+            let adopted = self.engine.adopt_after(word, removed.before);
             self.tail.resolve(adopted);
         }
     }

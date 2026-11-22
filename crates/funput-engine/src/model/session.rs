@@ -5,7 +5,7 @@ use crate::compose::boundary::ShortcutTable;
 use crate::compose::boundary::shortcut_undo::ShortcutUndo;
 use crate::compose::doubled::Literal;
 use crate::correction::CorrectionState;
-use crate::model::{EngineConfig, NumberGlue, SentenceTrace};
+use crate::model::{EngineConfig, Lead, SentenceTrace};
 
 /// Mutable session held by [`crate::Engine`]. Internal — not part of the public API.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,10 +53,10 @@ pub(crate) struct Session {
     /// until the setting is switched on — off, the feature costs one null check per
     /// keystroke and eight bytes here.
     pub(crate) correction: Option<Box<CorrectionState>>,
-    /// Whether the current word is glued to a number on screen, which keeps gõ tắt
-    /// off it. Unlike the rest of the per-word state, a digit still waiting for its
-    /// word survives `clear()` — see [`NumberGlue`].
-    pub(crate) glue: NumberGlue,
+    /// What sits right before the current word, which keeps gõ tắt off a word glued
+    /// to text (`500k`, `abc.vn`). Unlike the rest of the per-word state, symbols
+    /// still waiting for their word survive `clear()` — see [`Lead`].
+    pub(crate) lead: Lead,
 }
 
 impl Session {
@@ -73,7 +73,7 @@ impl Session {
             vn_form: String::new(),
             restore_override: None,
             correction: None,
-            glue: NumberGlue::Loose,
+            lead: Lead::default(),
         }
     }
 
@@ -101,7 +101,7 @@ impl Session {
         self.literal.reset();
         self.vn_form.clear();
         self.restore_override = None;
-        self.glue.end_word();
+        self.lead.end_word();
         // Only the touch log is per-word. A correction parked by the boundary that
         // is calling this has to outlive it — the platform answers it afterwards.
         if let Some(state) = self.correction.as_mut() {
@@ -173,12 +173,13 @@ mod tests {
     #[test]
     fn clear_keeps_a_pending_digit_but_frees_the_glued_word() {
         let mut session = Session::new();
-        session.glue = NumberGlue::Digit;
+        session.lead.after_key('5', false, false);
         session.clear();
-        assert_eq!(session.glue, NumberGlue::Digit);
-        session.glue = NumberGlue::Word;
+        session.lead.start_word();
+        assert!(session.lead.is_glued());
         session.clear();
-        assert_eq!(session.glue, NumberGlue::Loose);
+        session.lead.start_word();
+        assert!(!session.lead.is_glued());
     }
 
     #[test]

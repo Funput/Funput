@@ -9,7 +9,7 @@ pub(crate) use table::ShortcutTable;
 
 use crate::ImeResult;
 use crate::compose::doubled;
-use crate::model::{NumberGlue, Session};
+use crate::model::Session;
 
 /// What the live word expands to: the trigger form that matched, the expansion
 /// cased to match it, and how many characters on screen it replaces.
@@ -19,7 +19,16 @@ struct Rewrite {
     backspace: usize,
 }
 
+/// `@` and `/` end a word but expand nothing: they sit inside addresses and paths
+/// (`ct@gmail.com`, `ct/abc`), almost never right after a word in prose.
+fn triggers_expansion(boundary_key: char) -> bool {
+    !matches!(boundary_key, '@' | '/')
+}
+
 pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<ImeResult> {
+    if !triggers_expansion(boundary_key) {
+        return None;
+    }
     let Rewrite {
         matched,
         cased,
@@ -49,11 +58,11 @@ pub(crate) fn expansion_in_place(session: &mut Session) -> Option<ImeResult> {
 fn rewrite(session: &Session) -> Option<Rewrite> {
     // Gated here rather than by clearing the table: the rows stay loaded, so the
     // switch is instant in both directions and nothing has to be re-pushed. A word
-    // glued to a number (`500k`) is a unit on that number, never a trigger.
+    // glued to text is part of something larger (`500k`, `abc.vn`), never a trigger.
     if !session.config.shortcuts_enabled
         || session.shortcuts.is_empty()
         || session.keys.is_empty()
-        || session.glue == NumberGlue::Word
+        || session.lead.is_glued()
     {
         return None;
     }

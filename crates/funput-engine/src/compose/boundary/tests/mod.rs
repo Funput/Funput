@@ -2,7 +2,7 @@ use funput_core::{InputMethod, SyllableRules, ToneStyle};
 
 use crate::compose::boundary::ShortcutTable;
 use crate::compose::doubled::Literal;
-use crate::model::{EngineConfig, NumberGlue, SentenceTrace, Session};
+use crate::model::{EngineConfig, Lead, SentenceTrace, Session};
 
 fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
     Session {
@@ -31,7 +31,7 @@ fn session(method: InputMethod, buffer: &str, keys: &str) -> Session {
         vn_form: String::new(),
         restore_override: None,
         correction: None,
-        glue: NumberGlue::Loose,
+        lead: Lead::default(),
     }
 }
 

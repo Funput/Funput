@@ -62,7 +62,7 @@ impl ShellState {
         // adopt — and that full stop is what the sentence scanner must forget.
         self.engine.rewind_sentence(removed.deleted);
         if let Some(word) = removed.word {
-            let adopted = self.engine.adopt(word);
+            let adopted = self.engine.adopt_after(word, removed.before);
             self.tail.resolve(adopted);
         }
         None
