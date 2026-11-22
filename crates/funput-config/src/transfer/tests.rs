@@ -232,6 +232,21 @@ fn merges_shortcuts_by_trigger() {
     );
 }
 
+/// A trigger that can never fire is counted and left out, not stored dead.
+#[test]
+fn skips_shortcuts_whose_trigger_never_fires() {
+    let mut s = Settings::default();
+    let doc: ConfigDocument = serde_json::from_str(
+        r#"{"schema":"app.funput.config","version":1,"shortcuts":[{"trigger":"c t","expansion":"cách"},{"trigger":"x.y","expansion":"xy"},{"trigger":";ct","expansion":"cơm tấm"}]}"#,
+    )
+    .unwrap();
+    let summary = apply(&mut s, &doc);
+    assert_eq!(summary.shortcuts_skipped, 2);
+    assert_eq!(summary.shortcuts_added, 1);
+    assert_eq!(s.shortcuts.len(), 1);
+    assert_eq!(s.shortcuts[0].trigger, ";ct");
+}
+
 #[test]
 fn imports_macos_file_ignoring_its_platform_block() {
     // A macOS export: portable parts + platform.macos (KeyCombo) which we ignore.

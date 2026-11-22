@@ -4,12 +4,17 @@
 //! long as the user is typing it. Those drafts have to stay in the list the UI
 //! renders, but must never reach the engine or the disk — an expansion with an
 //! empty trigger would fire on every word boundary. So each edit persists the
-//! complete rows only and puts the drafts straight back.
+//! complete rows only and puts the drafts straight back. What each row's trigger
+//! means, and which rows reach the engine, is [`check`]'s answer.
+
+mod check;
 
 use funput_config::Shortcut;
 
 use super::ShellState;
 use super::config::push_shortcuts;
+pub(in crate::shell) use check::fires;
+pub use check::{ShortcutNote, shortcut_notes};
 
 /// A row the engine and disk will keep — both sides filled (whitespace ignored).
 fn is_complete(sc: &Shortcut) -> bool {

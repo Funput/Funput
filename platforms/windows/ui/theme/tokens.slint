@@ -12,6 +12,10 @@ export struct SegOption {
 export struct ShortcutEntry {
     trigger: string,
     expansion: string,
+    // Shown under the row: why it never expands, or how it shares a word with
+    // another row. Empty when there is nothing to say.
+    error: string,
+    warning: string,
 }
 
 export global Theme {

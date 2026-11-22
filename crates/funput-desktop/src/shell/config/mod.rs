@@ -12,6 +12,7 @@ use funput_core::SyllableRules;
 use funput_engine::{Engine, EngineConfig};
 
 use super::ShellState;
+use super::shortcuts::fires;
 
 impl ShellState {
     /// Push everything in `settings` to the engine and start from a clean slate.
@@ -118,11 +119,14 @@ impl ShellState {
     }
 }
 
-/// Replace the engine's gõ tắt table (empty triggers are skipped by the engine).
-/// The whole table is re-pushed after any edit — it's small and cheap.
+/// Replace the engine's gõ tắt table with the rows that can fire: a trigger that
+/// can never expand, or one an earlier row already holds, stays saved but out of
+/// the engine. The whole table is re-pushed after any edit — it's small and cheap.
 pub(super) fn push_shortcuts(engine: &mut Engine, shortcuts: &[Shortcut]) {
     engine.clear_shortcuts();
-    for sc in shortcuts {
-        engine.add_shortcut(sc.trigger.clone(), sc.expansion.clone());
+    for (index, sc) in shortcuts.iter().enumerate() {
+        if fires(shortcuts, index) {
+            engine.add_shortcut(sc.trigger.clone(), sc.expansion.clone());
+        }
     }
 }

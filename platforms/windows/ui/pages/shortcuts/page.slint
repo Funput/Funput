@@ -123,6 +123,8 @@ export component ShortcutsPage inherits VerticalLayout {
         for entry[i] in root.shortcuts: ShortcutRow {
             trigger: entry.trigger;
             expansion: entry.expansion;
+            error: entry.error;
+            warning: entry.warning;
             edit-trigger(t) => { root.edit-trigger(i, t); }
             edit-expansion(t) => { root.edit-expansion(i, t); }
             remove => { root.remove-shortcut(i); }

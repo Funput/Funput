@@ -24,7 +24,8 @@ pub(super) fn shown_path(path: &std::path::Path) -> String {
 /// be confidently wrong about an encoding Funput does not implement, and the user
 /// is the only one who can look at the result and tell.
 pub(super) fn unikey_body(summary: &ImportSummary, charset: Option<Charset>) -> String {
-    let counts = if summary.shortcuts_added == 0 && summary.shortcuts_updated == 0 {
+    let unchanged = summary.shortcuts_added == 0 && summary.shortcuts_updated == 0;
+    let mut counts = if unchanged && summary.shortcuts_skipped == 0 {
         "Bảng gõ tắt đã có sẵn các mục này, không có gì thay đổi.".to_string()
     } else {
         format!(
@@ -32,6 +33,9 @@ pub(super) fn unikey_body(summary: &ImportSummary, charset: Option<Charset>) -> 
             summary.shortcuts_added, summary.shortcuts_updated
         )
     };
+    if let Some(skipped) = skipped_line(summary) {
+        counts = format!("{counts}\n{skipped}");
+    }
     // Only when the text was actually *reinterpreted*. A file that read as ordinary
     // Unicode had nothing guessed about it, and warning on every import teaches the
     // user to ignore the line that matters.
@@ -57,6 +61,7 @@ pub(super) fn import_body(summary: &ImportSummary) -> String {
     } else {
         lines.push("Không có gõ tắt mới.".to_string());
     }
+    lines.extend(skipped_line(summary));
     if summary.applied_platform {
         lines.push("Đã áp phím tắt và danh sách app bỏ qua.".to_string());
     }
@@ -64,4 +69,14 @@ pub(super) fn import_body(summary: &ImportSummary) -> String {
         lines.push("Lưu ý: tệp từ phiên bản mới hơn — một số mục có thể bị bỏ qua.".to_string());
     }
     lines.join("\n")
+}
+
+/// The rows an import left out because their trigger can never fire, if any.
+fn skipped_line(summary: &ImportSummary) -> Option<String> {
+    (summary.shortcuts_skipped > 0).then(|| {
+        format!(
+            "Bỏ qua {} chữ tắt không bao giờ bung được (có dấu cách hoặc ký hiệu ở giữa).",
+            summary.shortcuts_skipped
+        )
+    })
 }

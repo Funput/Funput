@@ -5,6 +5,9 @@
 pub struct ImportSummary {
     pub shortcuts_added: usize,
     pub shortcuts_updated: usize,
+    /// Rows left out because their trigger can never fire (`c t`, `x.y`), as
+    /// [`funput_core::shortcut::check_trigger`] judges it.
+    pub shortcuts_skipped: usize,
     pub applied_platform: bool,
     /// The file was written by a newer Funput. It still imported, but fields this
     /// build does not know were dropped, so the user is told.

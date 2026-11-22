@@ -1,8 +1,8 @@
 //! What sits right before the word being typed.
 
-/// Longest run of symbols kept in front of a word, in bytes. A gõ tắt trigger may
-/// open with this many (`;`, `;;`, `2`); a longer run still glues the word.
-const RUN_CAP: usize = 8;
+/// Longest run of symbols kept in front of a word, in bytes: as many as a gõ tắt
+/// trigger may open with (`;`, `;;`, `2`). A longer run still glues the word.
+const RUN_CAP: usize = funput_core::shortcut::MAX_PREFIX;
 
 /// What sits right before the word being typed: whether it stands alone, and the
 /// ASCII punctuation and digits glued to its front.
