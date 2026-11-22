@@ -90,5 +90,15 @@ class ClipboardHistoryStoreBehaviorTest {
         assertTrue(store.load(ClipboardEpoch).isEmpty())
     }
 
+    @Test
+    fun `a system copy joins the history without becoming the captured clip`() {
+        val store = store()
+        store.record(clipboardEntry("đã dán", sourceToken = "pasted"), ClipboardEpoch)
+        store.recordCopy(clipboardEntry("vừa chép", sourceToken = "copied"), ClipboardEpoch)
+
+        assertEquals(listOf("vừa chép", "đã dán"), store.load(ClipboardEpoch).map { it.text })
+        assertEquals("pasted", store.lastCapturedSourceToken())
+    }
+
     private fun store() = ClipboardHistoryStore(temporaryClipboardDirectory())
 }
