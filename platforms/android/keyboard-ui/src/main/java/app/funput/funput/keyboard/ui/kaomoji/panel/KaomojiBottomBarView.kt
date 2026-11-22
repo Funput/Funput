@@ -38,7 +38,6 @@ internal class KaomojiBottomBarView(context: Context) : KeyboardPanelComposeView
     var onEmojiRequested: () -> Unit = {}
     var onBackspaceRequested: () -> Unit = {}
     var onCategoryRequested: (KaomojiCategory) -> Unit = {}
-    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
     private var selectedCategory by mutableStateOf(KaomojiCategory.HAPPY)
 
     init { setContent { Content() } }

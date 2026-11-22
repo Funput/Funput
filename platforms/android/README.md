@@ -99,6 +99,7 @@ Mặc định lần đầu chạy là **VNI**. Đổi trong **Bàn phím → Gõ
 | **Gõ đúp phím cách** | Chèn dấu chấm và một khoảng trắng |
 | **Giữ phím cách rồi kéo** | Rê con trỏ **theo mọi hướng**, không chỉ trái phải |
 | **Vuốt trái trên phím xoá** | Xoá cả từ thay vì từng ký tự |
+| **Chạm ô dán trên thanh gợi ý** | Dán nội dung vừa sao chép. Ô hiện ngay khi mở bàn phím và cho xem trước nội dung nếu đang bật lưu mọi nội dung sao chép; nó ẩn đi khi bạn bắt đầu gõ |
 | **Chạm phím copy trên thanh công cụ** | Dán nội dung vừa sao chép (chấm sáng khi có gì để dán); nếu trống thì mở lịch sử |
 | **Giữ phím copy** | Mở lịch sử clipboard |
 

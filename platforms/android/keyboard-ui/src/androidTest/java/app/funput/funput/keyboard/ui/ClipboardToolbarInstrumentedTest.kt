@@ -10,6 +10,7 @@ import app.funput.funput.keyboard.ui.support.descendants
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
 import app.funput.funput.keyboard.KeyboardSurfaceView
 import app.funput.funput.keyboard.R
 import app.funput.funput.keyboard.ui.clipboard.ClipboardPanelView
@@ -31,14 +32,14 @@ class ClipboardToolbarInstrumentedTest {
     fun hintAndPasteCallbackAreForwardedWithoutExposingContent() = withKeyboard { keyboard ->
         var requests = 0
         keyboard.callbacks.onClipboardPasteRequested = { requests++ }
-        keyboard.clipboardHint = KeyboardClipboardHint.SENSITIVE
+        keyboard.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.SENSITIVE)
 
         val surface = keyboard.surface()
-        assertSame(KeyboardClipboardHint.SENSITIVE, surface.clipboardHint)
+        assertSame(KeyboardClipboardHint.SENSITIVE, surface.clipboardOffer?.hint)
         surface.callbacks.onClipboardPasteRequested?.invoke()
         assertEquals(1, requests)
-        keyboard.clipboardHint = null
-        assertEquals(null, surface.clipboardHint)
+        keyboard.clipboardOffer = null
+        assertEquals(null, surface.clipboardOffer)
     }
 
     @Test
@@ -46,9 +47,17 @@ class ClipboardToolbarInstrumentedTest {
         val surface = keyboard.surface()
         surface.clipboardKeyVisible = true
         val before = surface.bitmap()
-        keyboard.clipboardHint = KeyboardClipboardHint.TEXT
+        keyboard.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.TEXT)
         val after = surface.bitmap()
         assertNotEquals(before.sameAs(after), true)
+        keyboard.suggestionBarEnabled = true
+        val chip = KeyboardClipboardOffer(KeyboardClipboardHint.TEXT, preview = "Funput là bộ gõ")
+        keyboard.clipboardOffer = chip
+        val previewed = surface.bitmap()
+        assertNotEquals(after.sameAs(previewed), true)
+        // Once typing starts the chip leaves the band and only the badge on the key is left.
+        keyboard.clipboardOffer = chip.copy(showsChip = false)
+        assertNotEquals(previewed.sameAs(surface.bitmap()), true)
 
         val config = Configuration(keyboard.resources.configuration).apply {
             setLocales(LocaleList(Locale.forLanguageTag("vi")))
@@ -74,7 +83,7 @@ class ClipboardToolbarInstrumentedTest {
             KeyboardThemes.Orchid,
         )
         keyboard.surface().clipboardKeyVisible = true
-        keyboard.clipboardHint = KeyboardClipboardHint.LINK
+        keyboard.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.LINK)
         themes.forEach { theme ->
             keyboard.keyboardTheme = theme
             assertEquals(keyboard.surface().width, keyboard.surface().bitmap().width)

@@ -11,6 +11,7 @@ import app.funput.funput.ime.clipboard.controller.ClipboardHistoryState
 import app.funput.funput.ime.clipboard.policy.ClipboardOffer
 import app.funput.funput.ime.clipboard.policy.ClipboardOfferKind
 import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
 import app.funput.funput.keyboard.ui.FunputKeyboardView
 import app.funput.funput.keyboard.ui.clipboard.KeyboardClipboardEntry
 import kotlinx.coroutines.CoroutineScope
@@ -26,9 +27,8 @@ internal class ImeClipboardUiBinding(
 ) {
     private val appContext = context.applicationContext
     private var view: FunputKeyboardView? = null
-    private val observation: Job = scope.launch {
-        controller.offer.collectLatest { offer -> view?.clipboardHint = offer.toHint() }
-    }
+    private var hasTyped = false
+    private val observation: Job = scope.launch { controller.offer.collectLatest(::showOffer) }
     private val historyObservation: Job = scope.launch {
         historyController.state.collectLatest(::showHistory)
     }
@@ -37,7 +37,7 @@ internal class ImeClipboardUiBinding(
         detachView()
         historyController.viewChanged()
         view = value
-        value.clipboardHint = controller.offer.value.toHint()
+        showOffer(controller.offer.value)
         showHistory(historyController.state.value)
         value.callbacks.onClipboardPasteRequested = {
             controller.pasteCurrent(::showResult)
@@ -49,6 +49,15 @@ internal class ImeClipboardUiBinding(
         value.callbacks.onClipboardPinToggled = { historyController.togglePin(it.id, !it.isPinned) }
         value.callbacks.onClipboardEntryRemoved = { historyController.remove(it.id) }
         value.callbacks.onClipboardClearRequested = historyController::clear
+    }
+
+    /**
+     * The paste chip is an opening offer: it leaves the band at the first key of a keyboard
+     * session, while the badge on the clipboard key stays for as long as the offer does.
+     */
+    fun typingChanged(value: Boolean) {
+        hasTyped = value
+        showOffer(controller.offer.value)
     }
 
     fun close() {
@@ -64,10 +73,14 @@ internal class ImeClipboardUiBinding(
         view?.callbacks?.onClipboardPinToggled = null
         view?.callbacks?.onClipboardEntryRemoved = null
         view?.callbacks?.onClipboardClearRequested = null
-        view?.clipboardHint = null
+        view?.clipboardOffer = null
         view?.clipboardPanelEnabled = false
         view?.clipboardEntries = emptyList()
         view = null
+    }
+
+    private fun showOffer(offer: ClipboardOffer?) {
+        view?.clipboardOffer = offer.toKeyboardOffer(showsChip = !hasTyped)
     }
 
     private fun showHistory(state: ClipboardHistoryState) {
@@ -84,11 +97,14 @@ internal class ImeClipboardUiBinding(
     }
 }
 
-internal fun ClipboardOffer?.toHint(): KeyboardClipboardHint? = when (this?.kind) {
-    ClipboardOfferKind.TEXT -> KeyboardClipboardHint.TEXT
-    ClipboardOfferKind.LINK -> KeyboardClipboardHint.LINK
-    ClipboardOfferKind.SENSITIVE -> KeyboardClipboardHint.SENSITIVE
-    null -> null
+internal fun ClipboardOffer?.toKeyboardOffer(showsChip: Boolean = true): KeyboardClipboardOffer? {
+    val hint = when (this?.kind) {
+        ClipboardOfferKind.TEXT -> KeyboardClipboardHint.TEXT
+        ClipboardOfferKind.LINK -> KeyboardClipboardHint.LINK
+        ClipboardOfferKind.SENSITIVE -> KeyboardClipboardHint.SENSITIVE
+        null -> return null
+    }
+    return KeyboardClipboardOffer(hint, preview, showsChip)
 }
 
 @StringRes

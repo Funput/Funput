@@ -58,7 +58,7 @@ class ImeClipboardControllerTest {
         fixture.controller.pasteCurrent()
         assertEquals(listOf("clipboard"), fixture.committed)
         assertTrue(fixture.store.load().isEmpty())
-        assertNull(fixture.store.lastCapturedSourceToken())
+        assertNull(fixture.store.offerSource(null).lastPastedSourceToken)
         assertNull(fixture.controller.offer.value)
     }
 

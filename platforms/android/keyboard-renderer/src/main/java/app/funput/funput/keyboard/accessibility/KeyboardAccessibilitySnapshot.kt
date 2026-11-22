@@ -9,6 +9,7 @@ import app.funput.funput.keyboard.interaction.selectionForTarget
 import app.funput.funput.keyboard.model.SuggestionSelection
 import app.funput.funput.keyboard.popover.accessibility.AlternateAccessibilityAction
 import app.funput.funput.keyboard.popover.accessibility.alternateAccessibilityActions
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 import app.funput.funput.keyboard.suggestion.SuggestionChip
 import app.funput.funput.keyboard.suggestion.actions.SuggestionAction
 
@@ -21,6 +22,7 @@ internal class KeyboardAccessibilitySnapshot(
     smartGesturesEnabled: Boolean = true,
     breaksLineOnEnterHold: Boolean = false,
     suggestionEditable: (SuggestionSelection) -> Boolean = { false },
+    clipboardChipLabel: String? = null,
 ) {
     val nodes: List<KeyboardAccessibilityNode> = buildList {
         keyboard.keys.filterNot { it.spec.role == KeyRole.PLACEHOLDER }.forEach { key ->
@@ -58,6 +60,9 @@ internal class KeyboardAccessibilitySnapshot(
                 }
                 add(KeyboardAccessibilityNode(size, id, chip.accessibilityLabel, segment, target, false, customActions = actions))
             }
+        } else if (bounds != null && hit != null && clipboardChipLabel != null) {
+            // The paste chip is alone on the band, so it is announced across all of it.
+            add(KeyboardAccessibilityNode(size, ClipboardOfferChip.TargetId, clipboardChipLabel, bounds, hit, false))
         }
     }
 

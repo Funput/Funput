@@ -21,7 +21,6 @@ internal class SpeechPanelView(context: Context) : KeyboardPanelComposeView(cont
     var onAction: (SpeechPanelAction) -> Unit = {}
     var state by mutableStateOf(SpeechPanelState())
         private set
-    private var palette by mutableStateOf<KeyboardPanelPalette?>(null)
 
     private var style by mutableStateOf<SpeechPanelStyle?>(null)
     // Android may dispatch visibility callbacks from the superclass constructor.

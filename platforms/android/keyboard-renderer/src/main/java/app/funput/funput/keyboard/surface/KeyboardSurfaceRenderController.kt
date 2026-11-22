@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Canvas
 import app.funput.funput.keyboard.interaction.PressedKeyState
-import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
 import app.funput.funput.keyboard.isPhoneLandscape
 import app.funput.funput.keyboard.layout.KeyboardSizingProfile
 import app.funput.funput.keyboard.layout.ResolvedKeyboard
@@ -32,7 +32,7 @@ internal class KeyboardSurfaceRenderController(
         onSizingChanged = { renderer.updateSizing(it); requestLayout(); resolveGeometry(); invalidate() },
         onBackgroundImageChanged = background::update,
         onSuggestionsChanged = invalidate,
-        onClipboardHintChanged = invalidate,
+        onClipboardOfferChanged = invalidate,
         onEnterActionChanged = invalidate,
     )
 
@@ -50,7 +50,7 @@ internal class KeyboardSurfaceRenderController(
             presentation.sizingProfile = value.constrainedForLandscape(resources.configuration.isPhoneLandscape)
         }
     var suggestions: List<SuggestionChip> by presentation::suggestions
-    var clipboardHint: KeyboardClipboardHint? by presentation::clipboardHint
+    var clipboardOffer: KeyboardClipboardOffer? by presentation::clipboardOffer
     var enterAction by presentation::enterAction
 
     /** The user's "Xem trước phím"; the next press draws with it, so nothing needs redrawing now. */
@@ -81,7 +81,7 @@ internal class KeyboardSurfaceRenderController(
         background.image,
         background.bitmap,
         suggestions,
-        clipboardHint,
+        clipboardOffer,
         pressedKeys,
         shiftState,
         language,

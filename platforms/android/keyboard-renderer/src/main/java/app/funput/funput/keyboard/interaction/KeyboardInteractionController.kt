@@ -83,7 +83,7 @@ internal class KeyboardInteractionController(
         private set
     fun onPointerStarted(pointerId: Int, keyId: String?, x: Float, y: Float) {
         val key = keyId?.let(keySpec)
-        KeyHapticTypeMapper.forTarget(key, keyId?.let(suggestionSelection) != null)?.let(onHapticFeedback)
+        KeyHapticTypeMapper.forTarget(key, keyId?.let(suggestionSelection) != null, keyId)?.let(onHapticFeedback)
         swipeGestures.start(pointerId, key, x, y)
         alternateSelection.start(pointerId, key, x, y)
         gestures.onStarted(pointerId, key, x, y)
@@ -118,7 +118,7 @@ internal class KeyboardInteractionController(
         }
     }
     fun emitClick(keyId: String, eventTimeMillis: Long) {
-        KeyHapticTypeMapper.forTarget(keySpec(keyId), false)?.let(onHapticFeedback)
+        KeyHapticTypeMapper.forTarget(keySpec(keyId), false, keyId)?.let(onHapticFeedback)
         utilityActions.dispatch(keyId, keySpec(keyId), null) {
             actionDispatcher.dispatch(it, eventTimeMillis)
         }

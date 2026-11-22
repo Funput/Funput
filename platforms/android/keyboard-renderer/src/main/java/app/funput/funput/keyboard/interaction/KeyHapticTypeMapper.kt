@@ -3,11 +3,13 @@ package app.funput.funput.keyboard.interaction
 import app.funput.funput.keyboard.KeyboardHapticType
 import app.funput.funput.keyboard.model.KeyRole
 import app.funput.funput.keyboard.model.KeySpec
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 
 internal object KeyHapticTypeMapper {
-    fun forTarget(key: KeySpec?, isSuggestion: Boolean): KeyboardHapticType? = when {
+    /** [targetId] names a band target that is neither a key nor a candidate: the paste chip. */
+    fun forTarget(key: KeySpec?, isSuggestion: Boolean, targetId: String? = null): KeyboardHapticType? = when {
         key != null -> forRole(key.role)
-        isSuggestion -> KeyboardHapticType.CONTROL
+        isSuggestion || targetId == ClipboardOfferChip.TargetId -> KeyboardHapticType.CONTROL
         else -> null
     }
 

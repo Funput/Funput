@@ -1,5 +1,6 @@
 package app.funput.funput.keyboard.accessibility
 
+import app.funput.funput.keyboard.suggestion.ClipboardOfferChip
 import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import app.funput.funput.keyboard.KeyboardDimensions
 import app.funput.funput.keyboard.layout.KeyboardLayoutResolver
@@ -70,6 +71,15 @@ class KeyboardAccessibilitySnapshotTest {
     }
 
     @Test
+    fun `paste chip is one node across the band until candidates replace it`() {
+        val chip = snapshot(clipboardChipLabel = "Dán, xin chào").nodes.single { it.keyId == ClipboardOfferChip.TargetId }
+        assertEquals("Dán, xin chào", chip.label)
+        assertNotNull(snapshot(clipboardChipLabel = "Dán, xin chào").nodeAt(chip.bounds.centerX, chip.bounds.centerY))
+        val typing = snapshot(suggestions = listOf("xin"), clipboardChipLabel = "Dán, xin chào")
+        assertFalse(typing.nodes.any { it.keyId == ClipboardOfferChip.TargetId })
+    }
+
+    @Test
     fun `letter alternates become shifted TalkBack actions`() {
         val actions = snapshot(shiftState = ShiftState.ON).nodes
             .first { it.keyId == "character-a" }.alternateActions
@@ -113,6 +123,7 @@ class KeyboardAccessibilitySnapshotTest {
         systemSwitcherVisible: Boolean = false,
         suggestions: List<String> = emptyList(),
         clipboardKeyLabel: String? = null,
+        clipboardChipLabel: String? = null,
     ): KeyboardAccessibilitySnapshot {
         val profile = KeyboardSizingProfile.Normal
         val layout = KeyboardLayoutResolver.resolve(
@@ -130,6 +141,7 @@ class KeyboardAccessibilitySnapshotTest {
         ))
         return KeyboardAccessibilitySnapshot(
             keyboard, shiftState, suggestions.asSuggestionChips(), clipboardKeyLabel,
+            clipboardChipLabel = clipboardChipLabel,
         )
     }
 }

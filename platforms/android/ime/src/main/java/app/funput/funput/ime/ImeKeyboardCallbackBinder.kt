@@ -15,7 +15,10 @@ internal object ImeKeyboardCallbackBinder {
     ) = with(view.callbacks) {
         val handler = editing.actionHandler
         val suggestions = editing.suggestionService
-        handler.typingSession.observe { hasTyped -> view.placementKeyVisible = !hasTyped }
+        handler.typingSession.observe { hasTyped ->
+            view.placementKeyVisible = !hasTyped
+            editing.clipboard.typingChanged(hasTyped)
+        }
         onKeyAction = { action ->
             editing.letterReturn.dispatch(action, view) { dispatch(editing, action) }
         }

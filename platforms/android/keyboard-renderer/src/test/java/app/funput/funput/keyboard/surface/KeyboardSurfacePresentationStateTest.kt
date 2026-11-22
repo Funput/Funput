@@ -1,5 +1,7 @@
 package app.funput.funput.keyboard.surface
 
+import app.funput.funput.keyboard.KeyboardClipboardHint
+import app.funput.funput.keyboard.KeyboardClipboardOffer
 import app.funput.funput.keyboard.suggestion.asSuggestionChips
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -27,17 +29,19 @@ class KeyboardSurfacePresentationStateTest {
     }
 
     @Test
-    fun `clipboard hint invalidates only when its metadata changes`() {
+    fun `clipboard offer invalidates only when it changes`() {
         var changes = 0
         val state = KeyboardSurfacePresentationState(
             onThemeChanged = {}, onSizingChanged = {}, onBackgroundImageChanged = {},
-            onSuggestionsChanged = {}, onClipboardHintChanged = { changes++ },
+            onSuggestionsChanged = {}, onClipboardOfferChanged = { changes++ },
             onEnterActionChanged = {},
         )
-        state.clipboardHint = app.funput.funput.keyboard.KeyboardClipboardHint.TEXT
-        state.clipboardHint = app.funput.funput.keyboard.KeyboardClipboardHint.TEXT
-        state.clipboardHint = app.funput.funput.keyboard.KeyboardClipboardHint.SENSITIVE
+        state.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.TEXT)
+        state.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.TEXT)
+        state.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.TEXT, preview = "xin chào")
+        state.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.TEXT, "xin chào", showsChip = false)
+        state.clipboardOffer = KeyboardClipboardOffer(KeyboardClipboardHint.SENSITIVE)
 
-        assertEquals(2, changes)
+        assertEquals(4, changes)
     }
 }

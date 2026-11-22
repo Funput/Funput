@@ -84,10 +84,33 @@ class ClipboardHistoryStoreBehaviorTest {
 
         store.remove(entry.id, ClipboardEpoch)
         assertTrue(store.load(ClipboardEpoch).isEmpty())
-        assertEquals("source-77", store.lastCapturedSourceToken())
+        assertEquals("source-77", store.offerSource(null).lastPastedSourceToken)
         store.clear()
-        assertNull(store.lastCapturedSourceToken())
+        assertNull(store.offerSource(null).lastPastedSourceToken)
         assertTrue(store.load(ClipboardEpoch).isEmpty())
+    }
+
+    @Test
+    fun `an observed copy joins history without counting as pasted`() {
+        val store = store()
+        store.record(clipboardEntry("đã dán", sourceToken = "source-1"), ClipboardEpoch)
+        store.capture(clipboardEntry("vừa sao chép", sourceToken = "source-2"), ClipboardEpoch)
+
+        assertEquals(listOf("vừa sao chép", "đã dán"), store.load(ClipboardEpoch).map { it.text })
+        val source = store.offerSource("source-2", ClipboardEpoch)
+        assertEquals("source-1", source.lastPastedSourceToken)
+        assertEquals("vừa sao chép", source.heldText)
+    }
+
+    @Test
+    fun `an offer finds no text for a clip history does not hold`() {
+        val store = store()
+        val old = ClipboardEpoch.minus(ClipboardExpiry.Default.duration).minusSeconds(1)
+        store.capture(clipboardEntry("hết hạn", capturedAt = old, sourceToken = "source-old"), old)
+
+        assertNull(store.offerSource("source-old", ClipboardEpoch).heldText)
+        assertNull(store.offerSource("source-unknown", ClipboardEpoch).heldText)
+        assertNull(store.offerSource(null, ClipboardEpoch).heldText)
     }
 
     private fun store() = ClipboardHistoryStore(temporaryClipboardDirectory())

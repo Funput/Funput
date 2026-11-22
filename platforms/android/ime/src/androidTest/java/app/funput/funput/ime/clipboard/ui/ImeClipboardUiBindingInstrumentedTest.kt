@@ -47,7 +47,7 @@ class ImeClipboardUiBindingInstrumentedTest {
         val history = ImeClipboardHistoryController(
             scope, MutableStateFlow(ClipboardPreferences.Default),
             { ClipboardHistoryStore(directory, it) }, committed::add, {}, {},
-            controller::historyCleared, Dispatchers.Unconfined,
+            controller::historyChanged, Dispatchers.Unconfined,
         )
         val binding = ImeClipboardUiBinding(context, scope, controller, history)
         val first = FunputKeyboardView(context)
@@ -56,18 +56,18 @@ class ImeClipboardUiBindingInstrumentedTest {
         binding.attach(first)
         controller.start(KeyboardEditorMode.TEXT)
         history.start(KeyboardEditorMode.TEXT)
-        assertSame(KeyboardClipboardHint.TEXT, first.clipboardHint)
+        assertSame(KeyboardClipboardHint.TEXT, first.clipboardOffer?.hint)
         assertEquals(true, first.clipboardPanelEnabled)
         binding.attach(second)
-        assertNull(first.clipboardHint)
+        assertNull(first.clipboardOffer)
         assertNull(first.callbacks.onClipboardPasteRequested)
         assertNull(first.callbacks.onClipboardPanelOpened)
         assertFalse(first.clipboardPanelEnabled)
-        assertSame(KeyboardClipboardHint.TEXT, second.clipboardHint)
+        assertSame(KeyboardClipboardHint.TEXT, second.clipboardOffer?.hint)
         assertEquals(true, second.clipboardPanelEnabled)
         second.callbacks.onClipboardPasteRequested?.invoke()
         assertEquals(listOf("clipboard"), committed)
-        assertNull(second.clipboardHint)
+        assertNull(second.clipboardOffer)
 
         binding.close()
         history.close()
