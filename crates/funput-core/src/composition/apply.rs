@@ -7,12 +7,13 @@
 
 use crate::composition::replace_char_at;
 use crate::composition::uo_horn::{apply_uo_compound, uo_pair_in_vowel_cluster};
-use crate::orthography::{tone_target_vowel, tone_vowel_index};
+use crate::orthography::{reposition_existing_tone, tone_target_vowel, tone_vowel_index};
 use crate::unicode::marks::{
     Tone, apply_tone_to_vowel, is_vowel, stroke_d, tone_on_vowel, vowel_stem,
 };
 use crate::unicode::shapes::{VowelShape, apply_shape_to_vowel, shape_target_index};
-use crate::{ToneStyle, TransformKind, TransformResult};
+use crate::validation::syllable::is_viable_shape_candidate;
+use crate::{ComposeOptions, ToneStyle, TransformKind, TransformResult};
 
 fn ignored(buffer: &str) -> TransformResult {
     TransformResult {
@@ -104,7 +105,11 @@ pub(crate) fn shape_apply_target_exists(buffer: &str, shape: VowelShape) -> bool
 /// (`uơ`): that is the completed open rhyme in `thuở`/`huơ`/`quơ`. If another
 /// vowel or coda arrives, [`crate::composition::uo_horn::complete_uo_horn_for_continuation`]
 /// turns it into `ươ` (`thương`, `hươu`).
-pub(crate) fn apply_shape_key(buffer: &str, shape: VowelShape) -> TransformResult {
+pub(crate) fn apply_shape_key(
+    buffer: &str,
+    shape: VowelShape,
+    options: ComposeOptions,
+) -> TransformResult {
     if shape == VowelShape::Horn
         && let Some(text) = apply_uo_compound(buffer)
     {
@@ -126,10 +131,15 @@ pub(crate) fn apply_shape_key(buffer: &str, shape: VowelShape) -> TransformResul
     // drops it (it shapes the bare stem). This makes the mark order free: shaping a
     // toned vowel keeps the tone (`asw` → `ắ`, not `ă`; `uasw` → `ứa`), matching the
     // usual shape-then-tone order and VNI's position-free modifiers.
-    let shaped = match tone_on_vowel(vowel) {
-        Some(tone) => apply_tone_to_vowel(shaped, tone).unwrap_or(shaped),
-        None => shaped,
+    let Some(tone) = tone_on_vowel(vowel) else {
+        let text = replace_char_at(buffer, vowel_idx, shaped);
+        // The shaped vowel is now the nucleus, so a tone on another vowel follows
+        // it (`húe` + `e` → `huế`) when that leaves a viable shaped rhyme; English
+        // such as `career` (`cảe` + `e`) needs the tone left where it was typed.
+        let moved = reposition_existing_tone(&text, options.tone_style)
+            .filter(|moved| is_viable_shape_candidate(moved, options.syllable_rules));
+        return applied(moved.unwrap_or(text));
     };
-
+    let shaped = apply_tone_to_vowel(shaped, tone).unwrap_or(shaped);
     applied(replace_char_at(buffer, vowel_idx, shaped))
 }

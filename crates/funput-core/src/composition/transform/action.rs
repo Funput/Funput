@@ -91,14 +91,14 @@ fn shape(
     }
     if shape_apply_target_exists(buffer, shape) {
         let result = gates::validation(buffer, key, validate_shape(buffer, options.syllable_rules))
-            .unwrap_or_else(|| apply_shape_key(buffer, shape));
+            .unwrap_or_else(|| apply_shape_key(buffer, shape, options));
         return gates::spell_check(buffer, key, options, result);
     }
     if let Some(text) = try_revert_shape(buffer, shape) {
         return reverted(append(&text, key));
     }
     let result = gates::validation(buffer, key, validate_shape(buffer, options.syllable_rules))
-        .unwrap_or_else(|| apply_shape_key(buffer, shape));
+        .unwrap_or_else(|| apply_shape_key(buffer, shape, options));
     gates::spell_check(buffer, key, options, result)
 }
 

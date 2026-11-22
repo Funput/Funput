@@ -113,6 +113,27 @@ fn vni_shape_switch() {
 }
 
 #[test]
+fn vni_tone_before_shape_moves_to_the_shaped_vowel() {
+    let keys = |k| crate::support::type_keys(InputMethod::Vni, k);
+    for (tone_before, tone_after, expected) in [
+        ("hue16", "hue61", "huế"),
+        ("hue56", "hue65", "huệ"),
+        ("tue56", "tue65", "tuệ"),
+        ("xue36", "xue63", "xuể"),
+    ] {
+        assert_eq!(keys(tone_before), expected, "{tone_before}");
+        assert_eq!(keys(tone_after), expected, "{tone_after}");
+    }
+    // Mid-word states of `tuần` and `hoằng`: the whole word was already right.
+    for (tone_before, tone_after, expected) in
+        [("tua26", "tua62", "tuầ"), ("hoa28", "hoa82", "hoằ")]
+    {
+        assert_eq!(keys(tone_before), expected, "{tone_before}");
+        assert_eq!(keys(tone_after), expected, "{tone_after}");
+    }
+}
+
+#[test]
 fn vni_shape_syllables() {
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "uo7"), "uơ");
     assert_eq!(crate::support::type_keys(InputMethod::Vni, "uo73"), "uở");
