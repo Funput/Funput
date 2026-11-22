@@ -8,7 +8,7 @@
 //! means, and which rows reach the engine, is [`check`]'s answer.
 //!
 //! Every index here is a row's place in storage, oldest first. The page lists the
-//! table newest first; [`listing`] maps between the two.
+//! table in its own order, each row carrying that index; see [`listing`].
 
 mod check;
 mod listing;
@@ -19,6 +19,7 @@ use super::ShellState;
 use super::config::push_shortcuts;
 pub(in crate::shell) use check::fires;
 pub use check::{ShortcutNote, shortcut_notes};
+pub use listing::ListedShortcut;
 
 /// A row the engine and disk will keep — both sides filled (whitespace ignored).
 fn is_complete(sc: &Shortcut) -> bool {
@@ -76,7 +77,7 @@ impl ShellState {
             return;
         }
         // Last in storage, so a repeat of an older row stays the one that does not
-        // fire. The page lists it first, under the button; see [`listing`].
+        // fire. The page still lists it first, under the button; see [`listing`].
         self.settings.shortcuts.push(Shortcut {
             trigger: String::new(),
             expansion: String::new(),

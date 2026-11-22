@@ -14,4 +14,6 @@ funput-engine = { path = "../funput-engine" }
 # `ShellState` owns the persisted settings and pushes them into the engine.
 funput-config = { path = "../funput-config" }
 # `InputMethod`/`ToneStyle` — core types the engine takes but does not re-export.
-funput-core = { path = "../funput-core" }
+# `textcase` for bỏ dấu, which the gõ tắt listing sorts by. It is off by default to
+# keep it out of the mobile keyboards; this crate only ships in desktop shells.
+funput-core = { path = "../funput-core", features = ["textcase"] }

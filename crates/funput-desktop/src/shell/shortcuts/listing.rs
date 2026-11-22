@@ -1,39 +1,64 @@
-//! The gõ tắt table the way the Settings page lists it: newest row first.
+//! The gõ tắt table the way the Settings page lists it.
 //!
 //! Rows are stored in the order they were added, and that order also settles two
 //! rows that share a trigger: the one added first keeps firing (see [`super::check`]).
-//! The page lists the table the other way up, so the row "Thêm" adds sits right
-//! under the button in a table of any length, while a repeat typed into it is the
-//! row that gets the error, never one the user already relies on further down.
-//!
-//! Every `position` here counts from the top of that listing.
+//! The page lists them for reading instead: the row "Thêm" just added sits first,
+//! right under the button, and every other row follows by trigger. Each listed row
+//! carries its stored index, which is what every edit takes.
 
 use funput_config::Shortcut;
+use funput_core::textcase::{self, Transform};
 
 use super::check::{ShortcutNote, shortcut_notes};
+use super::is_complete;
 use crate::shell::ShellState;
 
+/// One row as the page lists it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ListedShortcut {
+    /// Where the row is stored: the index every edit and removal takes.
+    pub index: usize,
+    pub shortcut: Shortcut,
+    pub note: ShortcutNote,
+}
+
 impl ShellState {
-    /// The rows newest first, each with the note the page shows under it.
-    pub fn listed_shortcuts(&self) -> Vec<(Shortcut, ShortcutNote)> {
+    /// The rows in the page's order, each with its stored index and its note.
+    pub fn listed_shortcuts(&self) -> Vec<ListedShortcut> {
         let rows = self.shortcuts();
-        rows.iter()
-            .cloned()
-            .zip(shortcut_notes(rows))
-            .rev()
+        let mut notes = shortcut_notes(rows);
+        listing_order(rows)
+            .into_iter()
+            .map(|index| ListedShortcut {
+                index,
+                shortcut: rows[index].clone(),
+                note: std::mem::take(&mut notes[index]),
+            })
             .collect()
     }
+}
 
-    /// The notes alone, in the same order, for refreshing them in place while a
-    /// field keeps its focus.
-    pub fn listed_shortcut_notes(&self) -> Vec<ShortcutNote> {
-        let mut notes = shortcut_notes(self.shortcuts());
-        notes.reverse();
-        notes
-    }
+/// Stored indexes in listing order.
+///
+/// Only the newest row, while it is still being typed, is pinned first. Any other
+/// row stays where its trigger puts it, even emptied for retyping, so it does not
+/// jump to the top. Equal triggers keep stored order, which lists the row that
+/// fires above its repeat.
+fn listing_order(rows: &[Shortcut]) -> Vec<usize> {
+    let draft = rows
+        .len()
+        .checked_sub(1)
+        .filter(|&newest| !is_complete(&rows[newest]));
+    let mut sorted: Vec<usize> = (0..rows.len()).filter(|&i| Some(i) != draft).collect();
+    sorted.sort_by_cached_key(|&index| (sort_key(&rows[index].trigger), index));
+    draft.into_iter().chain(sorted).collect()
+}
 
-    /// Where the row listed at `position` is stored, or `None` past the end.
-    pub fn listed_shortcut_index(&self, position: usize) -> Option<usize> {
-        self.shortcuts().len().checked_sub(position)?.checked_sub(1)
-    }
+/// Sorts the way a reader looks a trigger up: by its letters without tone marks
+/// or case (`đi` next to `di`, `Ăn` next to `an`), then by the exact lowercase
+/// spelling so the plain letter comes before its marked forms.
+fn sort_key(trigger: &str) -> (String, String) {
+    let lower = trigger.to_lowercase();
+    let letters = textcase::apply(&lower, Transform::NoDiacritics, Default::default());
+    (letters, lower)
 }
