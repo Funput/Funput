@@ -80,12 +80,17 @@ fn a_clean_case_pattern_folds_so_the_engine_can_smart_case_it() {
 
 #[test]
 fn a_deliberately_mixed_trigger_is_left_alone() {
-    // `classify_case` gives up on these and looks them up verbatim, so folding
-    // would store a row nothing can ever match.
-    let rows = parse_macros("iOS:hệ điều hành iOS\nvNa:gì đó\n");
+    // The engine looks a stored mixed spelling up verbatim, so folding would
+    // store a row nothing can ever match. `BBh` too: only a *typed* `BBh` reads as
+    // a held Shift.
+    let rows = parse_macros("iOS:hệ điều hành iOS\nvNa:gì đó\nBBh:bún bò Huế\n");
     assert_eq!(
         pairs(&rows),
-        vec![("iOS", "hệ điều hành iOS"), ("vNa", "gì đó")]
+        vec![
+            ("iOS", "hệ điều hành iOS"),
+            ("vNa", "gì đó"),
+            ("BBh", "bún bò Huế")
+        ]
     );
 }
 

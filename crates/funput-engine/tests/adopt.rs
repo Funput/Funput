@@ -287,12 +287,13 @@ fn refuses_a_word_no_trigger_starts_with() {
 }
 
 /// The start of a trigger matches the way the trigger itself would: smart case folds
-/// `Cts`/`CTS`, and with it off only the exact spelling counts.
+/// `Cts`/`CTS`/`CTs` (a held Shift), and with it off only the exact spelling counts.
 #[test]
 fn a_trigger_start_follows_smart_case() {
     let mut smart = engine_with_trigger("ctsg");
     assert!(smart.adopt("Cts"));
     assert!(smart.adopt("CTS"));
+    assert!(smart.adopt("CTs"));
     assert!(!smart.adopt("cTs"));
 
     let mut exact = engine_with_trigger("ctsg");

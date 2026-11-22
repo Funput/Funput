@@ -5,8 +5,8 @@
 //! trigger typed as lowercase, Title Case, or UPPERCASE all resolve to the same
 //! entry however it was stored, and the expansion's case is raised when the trigger
 //! is typed above its stored case, never lowered below what the table stores.
-//! Keystrokes with a mixed case that doesn't fit one of those three patterns fall
-//! back to an exact match only. See `src/compose/boundary/shortcut/` for the
+//! A capital first letter short of all capitals (`BBh`, Shift held a beat too long)
+//! reads as Title Case; any other mixed case (`vNa`) falls back to an exact match. See `src/compose/boundary/shortcut/` for the
 //! matching logic.
 
 use funput_core::InputMethod;
@@ -153,6 +153,46 @@ fn deliberately_mixed_case_trigger_still_matches_exactly() {
     assert_eq!(text, "iPhone OS ");
 }
 
+/// Typing fast, Shift held a beat too long turns `Bbh` into `BBh`: it expands like
+/// `Bbh`, first letter capitalized (#582).
+#[test]
+fn a_capital_first_letter_short_of_all_caps_reads_as_title_case() {
+    let shortcuts = [("bbh", "bún bò Huế")];
+    for keys in ["BBh ", "BbH ", "Bbh "] {
+        let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, keys);
+        assert_eq!(text, "Bún bò Huế ", "{keys:?}");
+    }
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "BBH ");
+    assert_eq!(text, "BÚN BÒ HUẾ ");
+}
+
+/// Only a capital *first* letter is a Shift slip: `bBh` stays as typed.
+#[test]
+fn a_lowercase_first_letter_followed_by_capitals_stays_as_typed() {
+    let text = app_text_with_shortcuts(InputMethod::Telex, &[("bbh", "bún bò Huế")], "bBh ");
+    assert_eq!(text, "bBh ");
+}
+
+#[test]
+fn a_stored_mixed_spelling_answers_its_exact_spelling_first() {
+    let shortcuts = [("bbh", "bún bò Huế"), ("BBh", "Bún Bò Huế")];
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "BBh ");
+    assert_eq!(text, "Bún Bò Huế ");
+}
+
+/// Only the typed word reads leniently: a trigger stored as `PhD` is still reached
+/// by its exact spelling alone, never by folding `phd` or `Phd` onto it.
+#[test]
+fn a_stored_mixed_spelling_is_not_reached_by_folding() {
+    let shortcuts = [("PhD", "tiến sĩ")];
+    for keys in ["phd ", "Phd "] {
+        let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, keys);
+        assert!(!text.contains("tiến"), "{keys:?} expanded: {text:?}");
+    }
+    let text = app_text_with_shortcuts(InputMethod::Telex, &shortcuts, "PhD ");
+    assert_eq!(text, "tiến sĩ ");
+}
+
 #[test]
 fn shortcut_only_at_boundary_not_mid_word() {
     // `vna` (no boundary after `vn`) must not expand.
@@ -265,6 +305,12 @@ fn smart_case_off_leaves_a_differently_cased_trigger_alone() {
         app_text_without_smart_case(&[("tp", "TP. HCM")], "TP "),
         "TP "
     );
+}
+
+#[test]
+fn smart_case_off_leaves_a_held_shift_alone() {
+    let text = app_text_without_smart_case(&[("bbh", "bún bò Huế")], "BBh ");
+    assert_eq!(text, "BBh ");
 }
 
 #[test]

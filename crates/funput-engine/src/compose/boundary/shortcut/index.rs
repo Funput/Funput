@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use super::case::{self, ShortcutCase};
+use super::case::{self, TriggerCase};
 
 /// Lowercase form → the trigger stored in Title Case or UPPERCASE under it. Lowercase
 /// triggers need no entry (a folded word looks them up directly), and mixed-case ones
@@ -16,7 +16,7 @@ pub(super) struct CaseIndex(HashMap<String, String>);
 impl CaseIndex {
     /// Whether `trigger` is spelled in Title Case or UPPERCASE, the spellings indexed.
     pub(super) fn covers(trigger: &str) -> bool {
-        case::classify_case(trigger).is_some_and(|case| case > ShortcutCase::Lower)
+        case::stored_case(trigger).is_some_and(|case| case > TriggerCase::Lower)
     }
 
     pub(super) fn is_empty(&self) -> bool {
@@ -64,6 +64,6 @@ impl CaseIndex {
 }
 
 /// The order capitalized spellings of one trigger are preferred in.
-fn rank(trigger: &str) -> (Option<ShortcutCase>, &str) {
-    (case::classify_case(trigger), trigger)
+fn rank(trigger: &str) -> (Option<TriggerCase>, &str) {
+    (case::stored_case(trigger), trigger)
 }
