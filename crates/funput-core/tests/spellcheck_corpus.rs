@@ -94,6 +94,8 @@ const MUST_REJECT: &[&str] = &[
     "tuớ", "nuớ", "giuờ", "truờ", "luơ",
     // `êc` stands only for `iêc` after `gi`; no other onset takes it.
     "tếc", "bếc",
+    // `ơng` is a place-name rhyme; elsewhere it is a stray `w` (`kwong` → `kơng`).
+    "kơng", "tơng", "cơng", "ơng",
 ];
 
 #[test]
@@ -167,7 +169,10 @@ fn tay_nguyen_place_names_accepted() {
         "glong", // cluster onset gl (Đắk Glong)
         "chư",   // Chư Pưh / Chư Sê
         "kông",  // k + ô — loanword/toponym (Hồng Kông, Kông Chro)
-        "pơng",  // ơng rhyme (Chư Pơng)
+        "pơng",  // ơng rhyme (Chư Pơng, Pơng Drang)
+        "lơng",  // Kông Lơng Khơng
+        "khơng", // Kông Lơng Khơng
+        "krơng", // Đắk Krơng
         "pắc",   // Krông Pắc
         "búk",   // Krông Búk — final k ≈ c
         "nông",  // Đắk Nông

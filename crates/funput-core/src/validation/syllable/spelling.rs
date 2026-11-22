@@ -37,7 +37,14 @@ pub(super) fn violates_ckg_spelling(onset: &str, parts: &SyllableParts) -> bool 
 /// `ường` (`trưo` + `f` → `truờ` → `trường`), so after any other onset a word
 /// that *ends* on it is a typing transient or English, never Vietnamese:
 /// `twos` → `tuớ`. (`quơ` is the `qu` onset + `ơ`, not this rhyme.)
-const RESTRICTED_RHYMES: &[(&str, &[&str])] = &[("uơ", &["", "h", "kh", "th"])];
+///
+/// `ơng` is no native rhyme; only Tây Nguyên place names spell it: `Chư Pơng`,
+/// `Pơng Drang`, `Kông Lơng Khơng`, `Đắk Krơng`. After any other onset it is a
+/// `w` typed before the `o` of a word that is not Vietnamese: `kwong` → `kơng` (#711).
+const RESTRICTED_RHYMES: &[(&str, &[&str])] = &[
+    ("uơ", &["", "h", "kh", "th"]),
+    ("ơng", &["p", "l", "kh", "kr"]),
+];
 
 /// Whether `rhyme` (toneless, lowercase) may follow `onset`. A rhyme with no row
 /// in [`RESTRICTED_RHYMES`] follows any onset.
@@ -71,6 +78,16 @@ mod tests {
         }
         for onset in ["t", "n", "tr", "gi", "l", "ng"] {
             assert!(!onset_admits_rhyme(onset, "uơ"), "{onset:?}");
+        }
+    }
+
+    #[test]
+    fn ong_with_horn_follows_only_place_name_onsets() {
+        for onset in ["p", "P", "l", "kh", "Kh", "kr"] {
+            assert!(onset_admits_rhyme(onset, "ơng"), "{onset:?}");
+        }
+        for onset in ["", "k", "t", "c", "tr", "ng"] {
+            assert!(!onset_admits_rhyme(onset, "ơng"), "{onset:?}");
         }
     }
 
