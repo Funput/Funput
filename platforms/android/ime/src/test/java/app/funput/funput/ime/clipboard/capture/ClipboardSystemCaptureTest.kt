@@ -1,5 +1,7 @@
 package app.funput.funput.ime.clipboard.capture
 
+import app.funput.funput.ime.clipboard.policy.ClipboardOfferKind
+import app.funput.funput.ime.clipboard.policy.ClipboardOfferPolicy
 import app.funput.funput.ime.settings.ClipboardPreferences
 import app.funput.funput.keyboard.model.KeyboardEditorMode
 import java.util.concurrent.CountDownLatch
@@ -23,6 +25,21 @@ class ClipboardSystemCaptureTest {
         yield()
         assertEquals(listOf("hello"), fixture.store.load().map { it.text })
         assertEquals(1, fixture.recordedCount)
+        fixture.capture.close()
+    }
+
+    @Test
+    fun `a recorded copy still offers one-tap paste`() = runBlocking {
+        val fixture = ClipboardSystemCaptureFixture(capture = true)
+        yield()
+        fixture.gateway.notifyChanged()
+        yield()
+        val offer = ClipboardOfferPolicy.offer(
+            fixture.gateway.snapshot(),
+            fixture.store.lastCapturedSourceToken(),
+            ClipboardOfferPolicy.Context(enabled = true, active = true, editorMode = KeyboardEditorMode.TEXT),
+        )
+        assertEquals(ClipboardOfferKind.TEXT, offer?.kind)
         fixture.capture.close()
     }
 
