@@ -27,10 +27,15 @@ pub(crate) struct ShortcutUndo {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Armed {
-    /// Word on screen before the expansion. Backspace puts this back.
+    /// Text on screen before the expansion: the trigger's symbol prefix, if any,
+    /// then the word. Backspace puts this back.
     shown: String,
+    /// Where the word starts in `shown`, past the prefix.
+    word_at: usize,
+    /// The word's form that matched, without the symbols around it.
     matched: String,
-    /// Expansion plus the boundary character. Backspace deletes this.
+    /// The expansion, plus the boundary character unless the trigger ends with it
+    /// (`ct;`). Backspace deletes this.
     written: String,
     boundary: char,
 }
@@ -60,11 +65,13 @@ pub(super) fn arm(
     session: &mut Session,
     matched: &str,
     shown: &str,
+    word_at: usize,
     written: &str,
     boundary: char,
 ) {
     slot(session).armed = Some(Armed {
         shown: shown.to_owned(),
+        word_at,
         matched: matched.to_owned(),
         written: written.to_owned(),
         boundary,
@@ -113,7 +120,9 @@ pub(crate) fn written(session: &Session) -> Option<&str> {
 pub(crate) fn undo(session: &mut Session) -> Option<ImeResult> {
     let undo = session.shortcut_undo.as_mut()?;
     let armed = undo.armed.take()?;
-    undo.suppressed = Some(Refusal::new(armed.matched, armed.shown.clone()));
+    // The refusal is for the word: a host re-opens `ct`, never the `;` before it.
+    let word = armed.shown[armed.word_at..].to_owned();
+    undo.suppressed = Some(Refusal::new(armed.matched, word));
     let mut output = armed.shown;
     output.push(armed.boundary);
     Some(ImeResult::send(armed.written.chars().count(), output))

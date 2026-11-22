@@ -39,6 +39,13 @@ impl Lead {
         self.has(LIVE | GLUED)
     }
 
+    /// The symbols glued to the live word's front, when they fit a trigger prefix.
+    pub(crate) fn prefix(&self) -> Option<&str> {
+        let run = &self.run[..usize::from(self.len)];
+        let fits = self.has(LIVE) && !run.is_empty() && self.flags & OVERFLOW == 0;
+        fits.then(|| std::str::from_utf8(run).ok()).flatten()
+    }
+
     /// Before the first key of a word lands. Settles whether the word is glued; the
     /// run stays as the word's prefix until the word ends.
     pub(crate) fn start_word(&mut self) {
@@ -182,10 +189,21 @@ mod tests {
     }
 
     #[test]
-    fn a_long_run_of_symbols_still_glues() {
+    fn the_symbols_in_front_are_the_prefix() {
+        let mut lead = after("x ;;");
+        lead.start_word();
+        assert_eq!(lead.prefix(), Some(";;"));
         let mut long = after(" ;;;;;;;;;");
         long.start_word();
         assert!(long.is_glued());
+        assert_eq!(long.prefix(), None, "longer than a trigger prefix");
+    }
+
+    #[test]
+    fn a_word_with_nothing_in_front_has_no_prefix() {
+        let mut lead = after("x ");
+        lead.start_word();
+        assert_eq!(lead.prefix(), None);
     }
 
     #[test]

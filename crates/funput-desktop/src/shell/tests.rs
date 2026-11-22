@@ -1161,3 +1161,24 @@ fn backspace_after_an_enter_expansion_is_plain() {
 
     assert_eq!(state.on_backspace(), None);
 }
+
+// ---- triggers with symbols ----
+
+/// The hook types exactly what the engine asks, committed text included, so a
+/// trigger with a symbol prefix expands here, and Backspace gives the prefix back.
+#[test]
+fn a_trigger_with_a_symbol_prefix_expands_and_undoes() {
+    let mut state = shell();
+    state.add_shortcut();
+    state.set_shortcut_trigger(0, ";ct".into());
+    state.set_shortcut_expansion(0, "cơm tấm".into());
+
+    let mut app = app_text(&mut state, "an ;ct ");
+    assert_eq!(app, "an cơm tấm ");
+
+    let undo = state.on_backspace().expect("the expansion is undone");
+    app.truncate(app.len() - "cơm tấm ".len());
+    app.push_str(&undo.output);
+    assert_eq!(undo.backspace, "cơm tấm ".chars().count());
+    assert_eq!(app, "an ;ct ");
+}

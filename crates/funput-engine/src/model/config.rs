@@ -67,6 +67,13 @@ pub struct EngineConfig {
     /// diacritics, no English restore, no auto-capitalize, no flip — the raw keys
     /// are tracked only so a trigger can still be recognized at a word boundary.
     pub shortcuts_in_english: bool,
+    /// Whether gõ tắt reaches triggers that carry symbols: a prefix typed in front
+    /// of the word (`;ct`) or a suffix that is the boundary key (`ct;`). Off by
+    /// default: a prefix asks the host to delete text already committed before the
+    /// composition, and a suffix to write an expansion that does not end with the
+    /// boundary key, so only a host that applies `backspace` and `output` verbatim
+    /// may turn it on.
+    pub shortcut_affixes: bool,
     /// Auto-correct a mistyped neighbouring key at the end of a word ("Tự sửa lỗi gõ
     /// nhầm phím"). Off by default, and inert until the host also reports where each
     /// touch landed — see [`crate::Engine::set_next_key_touch`].
@@ -88,6 +95,7 @@ impl Default for EngineConfig {
             shortcuts_enabled: true,
             shortcut_smart_case: true,
             shortcuts_in_english: true,
+            shortcut_affixes: false,
             typo_correction: false,
         }
     }

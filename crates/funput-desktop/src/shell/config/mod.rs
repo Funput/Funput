@@ -41,6 +41,9 @@ impl ShellState {
             shortcuts_enabled: self.settings.shortcuts_enabled,
             shortcut_smart_case: self.settings.shortcut_smart_case,
             shortcuts_in_english: self.settings.shortcuts_in_english,
+            // Inject deletes and types exactly what the engine asks, committed text
+            // included, so triggers like `;ct` and `ct;` can be honored.
+            shortcut_affixes: true,
             typo_correction: false, // no touch positions from a physical keyboard
         });
     }

@@ -1,6 +1,8 @@
 //! Shortcut expansion at a word boundary. Smart case lives in [`case`], the table in
-//! [`table`] and its case-folded index in [`index`].
+//! [`table`] and its case-folded index in [`index`], the spellings a word is looked
+//! up by in [`candidates`].
 
+mod candidates;
 mod case;
 mod index;
 mod table;
@@ -8,14 +10,12 @@ mod table;
 pub(crate) use table::ShortcutTable;
 
 use crate::ImeResult;
-use crate::compose::doubled;
 use crate::model::Session;
+use candidates::Found;
 
-/// What the live word expands to: the trigger form that matched, the expansion
-/// cased to match it, and how many characters on screen it replaces.
+/// What the live word expands to, and how many characters on screen it replaces.
 struct Rewrite {
-    matched: String,
-    cased: String,
+    found: Found,
     backspace: usize,
 }
 
@@ -29,15 +29,28 @@ pub(super) fn expansion(session: &mut Session, boundary_key: char) -> Option<Ime
     if !triggers_expansion(boundary_key) {
         return None;
     }
-    let Rewrite {
-        matched,
-        cased,
-        backspace,
-    } = rewrite(session)?;
-    let shown = super::shortcut_undo::plain_form(session);
-    let mut written = cased;
-    written.push(boundary_key);
-    super::shortcut_undo::arm(session, &matched, &shown, &written, boundary_key);
+    let Rewrite { found, backspace } = rewrite(session, Some(boundary_key))?;
+    // Undo puts back what the app showed: the prefix the expansion swallowed, then
+    // the word as the boundary would have left it.
+    let word = super::shortcut_undo::plain_form(session);
+    let word_at = found.prefix.len();
+    let shown = if word_at == 0 {
+        word
+    } else {
+        found.prefix + &word
+    };
+    let mut written = found.cased;
+    if !found.suffixed {
+        written.push(boundary_key);
+    }
+    super::shortcut_undo::arm(
+        session,
+        &found.core,
+        &shown,
+        word_at,
+        &written,
+        boundary_key,
+    );
     Some(ImeResult::send(backspace, written))
 }
 
@@ -49,58 +62,23 @@ pub(crate) fn expansion_in_place(session: &mut Session) -> Option<ImeResult> {
     if super::shortcut_undo::declined(session) {
         return None;
     }
-    let Rewrite {
-        cased, backspace, ..
-    } = rewrite(session)?;
-    Some(ImeResult::send(backspace, cased))
+    let Rewrite { found, backspace } = rewrite(session, None)?;
+    Some(ImeResult::send(backspace, found.cased))
 }
 
-fn rewrite(session: &Session) -> Option<Rewrite> {
+fn rewrite(session: &Session, boundary: Option<char>) -> Option<Rewrite> {
     // Gated here rather than by clearing the table: the rows stay loaded, so the
-    // switch is instant in both directions and nothing has to be re-pushed. A word
-    // glued to text is part of something larger (`500k`, `abc.vn`), never a trigger.
-    if !session.config.shortcuts_enabled
-        || session.shortcuts.is_empty()
-        || session.keys.is_empty()
-        || session.lead.is_glued()
+    // switch is instant in both directions and nothing has to be re-pushed.
+    if !session.config.shortcuts_enabled || session.shortcuts.is_empty() || session.keys.is_empty()
     {
         return None;
     }
-    let (matched, cased) = matched_expansion(session)?;
+    let found = candidates::find(session, boundary)?;
     // Undo restores the word, not the raw keys: `ddc` composes to `đc` before it
-    // expands. What has to be deleted is what the app shows right now: `buffer`.
-    let backspace = session.buffer.chars().count();
-    Some(Rewrite {
-        matched,
-        cased,
-        backspace,
-    })
-}
-
-/// The expansion and the form that matched it: typed keys, then `keys`, then buffer.
-///
-/// A trigger is written however the user thinks of the word: as keys (`vn`, `ddc`)
-/// or as the Vietnamese they compose to (`đc`, `mấy`). Keys as typed come before
-/// what a revert left of them, so `pass` reaches a `pass` trigger whether or not the
-/// word was decided mid-word, and still reaches `pas`.
-fn matched_expansion(session: &Session) -> Option<(String, String)> {
-    let typed = doubled::typed_keys(session);
-    let keys = session.keys.as_str();
-    let buffer = session.buffer.as_str();
-    let hit = |word: &str| lookup(session, word).map(|expansion| (word.to_owned(), expansion));
-    hit(typed)
-        .or_else(|| (keys != typed).then(|| hit(keys)).flatten())
-        .or_else(|| {
-            (buffer != keys && buffer != typed)
-                .then(|| hit(buffer))
-                .flatten()
-        })
-}
-
-/// The expansion `word` triggers, re-cased to match it.
-fn lookup(session: &Session, word: &str) -> Option<String> {
-    let smart = session.config.shortcut_smart_case;
-    session.shortcuts.find(word, smart).map(|hit| hit.cased())
+    // expands. What has to be deleted is what the app shows right now: `buffer`,
+    // and the prefix in front of it (ASCII, so its length counts characters).
+    let backspace = session.buffer.chars().count() + found.prefix.len();
+    Some(Rewrite { found, backspace })
 }
 
 /// Whether `word` begins a trigger (or is one), cased as a lookup would. Backspace

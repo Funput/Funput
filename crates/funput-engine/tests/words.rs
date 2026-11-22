@@ -10,6 +10,8 @@ mod expand_shortcut;
 mod seal;
 #[path = "words/shortcut.rs"]
 mod shortcut;
+#[path = "words/shortcut_affixed.rs"]
+mod shortcut_affixed;
 #[path = "words/shortcut_composed.rs"]
 mod shortcut_composed;
 #[path = "words/shortcut_glued.rs"]

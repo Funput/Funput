@@ -81,10 +81,8 @@ impl CommittedTail {
             return; // still inside a word — it joins the shadow when it commits
         }
         match result.action {
-            // The shell types `output` and swallows `key`: an English restore or a
-            // gõ tắt expansion, boundary character included. The deletions paired
-            // with it only ever remove the live composition, which is not in `tail`.
-            Action::Send | Action::Restore => self.tail.push_str(&result.output),
+            // The shell types `output` and swallows `key`: see `type_over`.
+            Action::Send | Action::Restore => self.type_over(result),
             // Nothing injected: the app keeps the word already on screen (empty when
             // the key composed nothing, e.g. a second space) and echoes `key` itself.
             Action::None => {
