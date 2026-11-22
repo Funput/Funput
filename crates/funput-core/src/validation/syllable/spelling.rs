@@ -3,6 +3,7 @@
 
 use crate::unicode::marks::vowel_stem;
 use crate::validation::parse::SyllableParts;
+use crate::validation::rhyme::is_valid_rhyme;
 
 /// True when the onset cannot precede the first nucleus vowel under Vietnamese
 /// spelling rules (`c` before back vowels only, `gh`/`ngh` before front vowels).
@@ -47,6 +48,18 @@ pub(super) fn onset_admits_rhyme(onset: &str, rhyme: &str) -> bool {
         .is_none_or(|(_, onsets)| onsets.iter().any(|o| o.eq_ignore_ascii_case(onset)))
 }
 
+/// Whether `rhyme` (toneless, lowercase) is an `iê` rhyme written after `gi`, which
+/// absorbs the rhyme's `i`: `giếc` is `gi` + `iêc`, and the parse leaves `êc`.
+///
+/// Only a fallback for a rhyme that fails as written, so `giê` (Giê-su) still
+/// reads as `ê`. Most `iê` rhymes need no help — `êt`, `êng`, `êm` already exist —
+/// which leaves `iêc` as the one this admits.
+pub(super) fn gi_spells_ie_rhyme(onset: &str, rhyme: &str) -> bool {
+    onset.eq_ignore_ascii_case("gi")
+        && rhyme.starts_with('ê')
+        && is_valid_rhyme(&format!("i{rhyme}"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -59,6 +72,17 @@ mod tests {
         for onset in ["t", "n", "tr", "gi", "l", "ng"] {
             assert!(!onset_admits_rhyme(onset, "uơ"), "{onset:?}");
         }
+    }
+
+    #[test]
+    fn gi_absorbs_the_i_of_an_ie_rhyme() {
+        for onset in ["gi", "Gi", "GI"] {
+            assert!(gi_spells_ie_rhyme(onset, "êc"), "{onset:?}");
+        }
+        assert!(!gi_spells_ie_rhyme("t", "êc"));
+        assert!(!gi_spells_ie_rhyme("g", "êc"));
+        assert!(!gi_spells_ie_rhyme("gi", "ơc"));
+        assert!(!gi_spells_ie_rhyme("gi", "êb"));
     }
 
     #[test]

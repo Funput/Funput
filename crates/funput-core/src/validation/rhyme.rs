@@ -28,8 +28,8 @@ pub(crate) const VALID_RHYMES: &[&str] = &[
     "ây", "eo", "êu", "iu", "oa", "oe", "oi", "ôi", "ơi", "ua", "ui", "uê", "uy", "uơ", "ưa", "ưi",
     "ưu", "oai", "oay", "oeo", "uôi", "uây", "uya", "uyu", "ươi", "ươu", "iêu", "yêu", "oao",
     "uêu", // -m
-    "am", "ăm", "âm", "em", "êm", "im", "om", "ôm", "ơm", "um", "iêm", "yêm", "uôm", "ươm", "oam",
-    "oăm", "oem", // -p
+    "am", "ăm", "âm", "em", "êm", "im", "om", "ôm", "ơm", "um", "ưm", "iêm", "yêm", "uôm", "ươm",
+    "oam", "oăm", "oem", // -p
     "ap", "ăp", "âp", "ep", "êp", "ip", "op", "ôp", "ơp", "up", "iêp", "ươp", "oap", "uyp",
     // -n
     "an", "ăn", "ân", "en", "ên", "in", "on", "ôn", "ơn", "un", "ưn", "iên", "yên", "uôn", "ươn",
@@ -136,6 +136,8 @@ mod tests {
             "uâng", "ynh",
             // Loanword / onomatopoeia rhymes added for spell-check completeness.
             "uyt", "yt", "oong", "ooc", "ec", "êng", "yêng", "oăm", "uych", "uyp", "uyn", "uêu",
+            // Interjections: `ừm`, `hừm`, `ngừm`.
+            "ưm",
         ] {
             assert!(is_valid_rhyme(ok), "{ok} should be a valid rhyme");
         }

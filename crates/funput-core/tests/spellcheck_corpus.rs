@@ -65,6 +65,11 @@ const MUST_ACCEPT: &[&str] = &[
     "ngoém",
     "héc",
     "véc",
+    // `gi` absorbs the `i` of `iêc` (cá giếc), and the interjection rhyme `ưm`.
+    "giếc",
+    "ừm",
+    "hừm",
+    "ngừm",
     // The open `uơ`, with every onset Viet74K gives it, and `qu` + `ơ` beside it.
     "thuở",
     "huơ",
@@ -87,6 +92,8 @@ const MUST_REJECT: &[&str] = &[
     // The open `uơ` behind an onset no word gives it: what `ưo` + a tone leaves on
     // the way to `ường`, or English typed in Telex (`twos` → `tuớ`).
     "tuớ", "nuớ", "giuờ", "truờ", "luơ",
+    // `êc` stands only for `iêc` after `gi`; no other onset takes it.
+    "tếc", "bếc",
 ];
 
 #[test]
