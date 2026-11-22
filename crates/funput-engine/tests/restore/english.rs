@@ -71,6 +71,19 @@ fn real_words_the_rhyme_table_once_missed_survive_the_boundary() {
 }
 
 #[test]
+fn a_horned_ong_outside_place_names_restores_on_the_boundary() {
+    // A `w` typed before the `o` horns it, but `ơng` is a place-name rhyme, so
+    // `kơng` is no word and Space gives the keys back (#711).
+    for keys in ["kwong", "kowng", "twong", "cwong"] {
+        assert_eq!(
+            crate::support::app_text(InputMethod::Telex, &format!("{keys} ")),
+            format!("{keys} "),
+            "{keys}"
+        );
+    }
+}
+
+#[test]
 fn telex_eager_restore_step() {
     // "tẽ" is still valid Vietnamese, so it composes; the closing "t" makes
     // "tẽt" a dead end, restoring "text" the instant it is typed — no boundary.

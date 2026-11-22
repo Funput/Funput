@@ -27,6 +27,18 @@ fn cluster_onsets_and_final_k_type_in_both_methods() {
 }
 
 #[test]
+fn place_names_keep_their_horned_ong() {
+    assert_eq!(
+        telex("Powng Kông Lowng Khowng Krowng "),
+        "Pơng Kông Lơng Khơng Krơng "
+    );
+    assert_eq!(
+        vni("Po7ng Ko6ng Lo7ng Kho7ng Kro7ng "),
+        "Pơng Kông Lơng Khơng Krơng "
+    );
+}
+
+#[test]
 fn m_drak_strikes_its_d_on_the_spot() {
     // M'Đrắk: the apostrophe ends a word, so `Đrắk` is typed on its own.
     for keys in ["Ddrawsk ", "Ddrawks "] {
