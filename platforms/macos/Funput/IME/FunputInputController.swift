@@ -46,7 +46,7 @@ final class FunputInputController: IMKInputController {
     override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
         guard let event, let client = sender as? IMKTextInput else { return false }
         guard event.type == .keyDown else { return false }
-        defer { shortcutUndo.keyHandled(by: composer) }
+        defer { shortcutUndo.keyHandled(by: composer, on: IMKCompositionSurface(client: client)) }
 
         syncSettings(client: client)
         if session.endIfClicked() { composer.clear() }

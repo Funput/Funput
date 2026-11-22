@@ -27,6 +27,13 @@ extension FunputComposer {
         return result.action == ACTION_SEND ? restored : nil
     }
 
+    /// Arm the undo of the last expansion again, after the next key spent it: the caret is
+    /// back right after the expansion. False while a word is composed or once the
+    /// expansion was taken back, dismissed or cleared.
+    func rearmShortcutUndo() -> Bool {
+        funput_engine_rearm_shortcut_undo(handle)
+    }
+
     /// Drop the undo, and the refusal it would leave: the expansion is no longer known to
     /// sit before the caret.
     func dismissShortcutUndo() {

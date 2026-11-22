@@ -81,12 +81,13 @@ pub use engine::{
     funput_engine_dismiss_shortcut_undo, funput_engine_expand_shortcut, funput_engine_free,
     funput_engine_has_correction_undo, funput_engine_has_pending_correction, funput_engine_new,
     funput_engine_pending_correction_backspace, funput_engine_preview_correction,
-    funput_engine_rank_correction, funput_engine_refuse_correction, funput_engine_seal,
-    funput_engine_set_next_key_touch, funput_engine_shortcut_undo_text,
-    funput_engine_shortcut_undo_written, funput_engine_undo_shortcut, funput_flip_composing,
-    funput_process_char, funput_process_key, funput_process_key_text, funput_set_enabled,
-    funput_set_extra_onsets, funput_set_method, funput_set_shortcut_smart_case,
-    funput_set_shortcuts_enabled, funput_set_shortcuts_in_english, funput_set_typo_correction,
+    funput_engine_rank_correction, funput_engine_rearm_shortcut_undo,
+    funput_engine_refuse_correction, funput_engine_seal, funput_engine_set_next_key_touch,
+    funput_engine_shortcut_undo_text, funput_engine_shortcut_undo_written,
+    funput_engine_undo_shortcut, funput_flip_composing, funput_process_char, funput_process_key,
+    funput_process_key_text, funput_set_enabled, funput_set_extra_onsets, funput_set_method,
+    funput_set_shortcut_smart_case, funput_set_shortcuts_enabled, funput_set_shortcuts_in_english,
+    funput_set_typo_correction,
 };
 pub use sentence::{funput_starts_sentence, funput_starts_word};
 pub use suggestion::dictionary::*;

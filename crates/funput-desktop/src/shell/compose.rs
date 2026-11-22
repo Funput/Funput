@@ -7,7 +7,7 @@
 use funput_engine::{ImeResult, KeySource};
 
 use super::ShellState;
-use crate::{Caret, Mods, TriggerKey, undo_shortcut};
+use crate::{Caret, Mods, TriggerKey, track_expansion, undo_shortcut};
 
 /// The bare-modifier gesture that seals the word being composed.
 const CTRL_ALONE: Mods = Mods {
@@ -23,13 +23,15 @@ impl ShellState {
     ///
     /// The two `tail` calls bracket the engine: the shadow needs the composition as
     /// it stood *before* the key (a word boundary wipes it, and that is exactly the
-    /// text that just became committed) and the engine's verdict *after*.
+    /// text that just became committed) and the engine's verdict *after*. A gõ tắt
+    /// expansion is then marked, so Backspace can find its end again.
     pub fn process_key(&mut self, c: char, source: KeySource) -> ImeResult {
         // A completion list stays open while its word is typed on, and closes with it.
         self.completion &= !c.is_whitespace();
         self.tail.before_key(self.engine.buffer());
         let result = self.engine.process_key(c, source);
         self.tail.after_key(c, &result, self.engine.buffer());
+        track_expansion(&self.engine, &mut self.tail);
         result
     }
 

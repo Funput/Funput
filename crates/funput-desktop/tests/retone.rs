@@ -308,6 +308,87 @@ fn an_expansion_longer_than_the_shadow_is_not_undone() {
     assert_eq!(shell.app, long.trim_end());
 }
 
+fn shell_with_ct_cf() -> Shell {
+    let mut shell = Shell::new(InputMethod::Telex);
+    shell.engine.add_shortcut("ct", "cơm tấm");
+    shell.engine.add_shortcut("cf", "cà phê");
+    shell
+}
+
+fn backspace_times(shell: &mut Shell, times: usize) {
+    for _ in 0..times {
+        shell.backspace();
+    }
+}
+
+/// #782: typed on past an expansion, deleted back to it, and the trigger was the
+/// wrong one. Backspace still takes the expansion back, then the trigger is fixed.
+#[test]
+fn backspace_back_at_an_expansion_after_more_words_undoes_it() {
+    let mut shell = shell_with_ct_cf();
+    shell.type_str("ct nayf raast ngon");
+    assert_eq!(shell.app, "cơm tấm này rất ngon");
+
+    backspace_times(&mut shell, "này rất ngon".chars().count());
+    assert_eq!(shell.app, "cơm tấm ");
+    shell.backspace();
+    assert_eq!(shell.app, "ct ");
+
+    backspace_times(&mut shell, 2);
+    shell.type_str("f ");
+    assert_eq!(shell.app, "cà phê ");
+}
+
+/// The same text typed further on is not the expansion: only its own end counts.
+#[test]
+fn the_same_text_typed_again_is_not_taken_back() {
+    let mut shell = shell_with_ct_cf();
+    shell.type_str("ct cowm taams ");
+    assert_eq!(shell.app, "cơm tấm cơm tấm ");
+
+    shell.backspace();
+    assert_eq!(shell.app, "cơm tấm cơm tấm");
+}
+
+/// A caret move in between leaves the expansion behind for good.
+#[test]
+fn a_caret_move_after_more_words_forgets_the_expansion() {
+    let mut shell = shell_with_ct_cf();
+    shell.type_str("ct x");
+    shell.flush();
+
+    backspace_times(&mut shell, 2);
+    assert_eq!(shell.app, "cơm tấm");
+}
+
+/// Typed so far on that the shadow dropped the expansion, deleting back to it is
+/// plain Backspace: the shell no longer knows the spot.
+#[test]
+fn an_expansion_the_shadow_dropped_is_not_taken_back() {
+    let mut shell = shell_with_ct_cf();
+    let filler = "abc ".repeat(80);
+    shell.type_str("ct ");
+    shell.type_str(&filler);
+
+    backspace_times(&mut shell, filler.chars().count());
+    assert_eq!(shell.app, "cơm tấm ");
+    shell.backspace();
+    assert_eq!(shell.app, "cơm tấm");
+}
+
+/// English mode with gõ tắt on finds the expansion the same way.
+#[test]
+fn english_mode_takes_the_expansion_back_after_more_words() {
+    let mut shell = shell_with_ct_cf();
+    shell.engine.set_enabled(false);
+    shell.type_str("ct is good");
+    assert_eq!(shell.app, "cơm tấm is good");
+
+    backspace_times(&mut shell, "is good".chars().count());
+    shell.backspace();
+    assert_eq!(shell.app, "ct ");
+}
+
 /// Reported: `dungh` + Space, then Backspace twice to drop the space and the stray
 /// `h`. The caret now sits at the end of `dung`, so the tone key has to reach it.
 #[test]

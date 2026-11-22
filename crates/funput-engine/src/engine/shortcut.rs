@@ -4,7 +4,8 @@
 //! [`Engine::on_backspace`] does not take the undo, because only the host knows whether
 //! the expansion still sits before the caret. Android and iOS check the document;
 //! the desktop shell checks its shadow of what it typed. Each then asks
-//! [`Engine::undo_shortcut`] when Backspace is still the next key.
+//! [`Engine::undo_shortcut`] when Backspace is still the next key, or first
+//! [`Engine::rearm_shortcut_undo`] when the user typed on and deleted back to it.
 
 use crate::compose::boundary::{self, shortcut_undo};
 use crate::{Engine, ImeResult};
@@ -29,6 +30,17 @@ impl Engine {
     /// The trigger is then kept once, the next time it is typed.
     pub fn undo_shortcut(&mut self) -> Option<ImeResult> {
         shortcut_undo::undo(&mut self.session)
+    }
+
+    /// Arm the undo of the last expansion again, after the next key spent it: the user
+    /// typed on, then deleted back until the caret sits right after the expansion
+    /// (`cơm tấm␣này` ⌫⌫⌫ → `cơm tấm␣`). Returns whether an undo is now armed.
+    ///
+    /// Only the host can tell the caret is back at that exact spot, not at the same
+    /// text typed somewhere else, so it checks before calling. `false` while a word is
+    /// being composed, or once the expansion was taken back, dismissed, or cleared.
+    pub fn rearm_shortcut_undo(&mut self) -> bool {
+        shortcut_undo::rearm(&mut self.session)
     }
 
     /// Expand the live word if it is a gõ tắt trigger, for a key that ends the word
