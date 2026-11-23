@@ -34,6 +34,15 @@ fn parse_syllable_cases() {
 }
 
 #[test]
+fn name_spellings_win_over_their_native_prefix() {
+    // `dz` is tried before `d`, in any case, and keeps the rest a native rhyme.
+    assert_eq!(parts("dzũng"), ok("dz", "ũ", "ng"));
+    assert_eq!(parts("Dzếnh"), ok("Dz", "ế", "nh"));
+    assert_eq!(parts("DZOÃN"), ok("DZ", "OÃ", "N"));
+    assert_eq!(parts("dung"), ok("d", "u", "ng"));
+}
+
+#[test]
 fn onset_never_reaches_past_the_consonant_run() {
     // Only the `qu`/`gi` glides carry a vowel into the onset; every other onset,
     // Tây Nguyên clusters included, is the leading consonant run or part of it.
