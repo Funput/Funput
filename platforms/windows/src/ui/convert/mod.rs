@@ -23,7 +23,7 @@ use std::path::PathBuf;
 
 use slint::{ComponentHandle, ModelRc, VecModel};
 
-use crate::ui::{mica, system_accent};
+use crate::ui::{common, mica, system_accent};
 use crate::{ConvertWindow, Theme};
 
 use view::{WINDOW, ask, current, edit};
@@ -57,6 +57,7 @@ pub(super) fn open() {
             win32::accept(window.window(), dropped);
         }
     });
+    common::center_once_shown(&window);
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
     edit(|session| session.set_row_window(0, ROWS));
 }

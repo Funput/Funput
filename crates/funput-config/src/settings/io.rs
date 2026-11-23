@@ -62,14 +62,44 @@ impl Settings {
     }
 
     /// Write to `path`, creating its directory. Silent on failure — see above.
+    ///
+    /// The document is staged beside `path` and renamed over it, so a reader sees
+    /// the old file or the new one, never the empty file a plain write truncates to
+    /// first. On Windows the hook and each window are separate processes that read
+    /// this file while another one writes it; an empty read loads as defaults.
     pub fn save_to(&self, path: &Path) {
         if let Some(directory) = path.parent() {
             let _ = fs::create_dir_all(directory);
         }
-        if let Ok(json) = serde_json::to_string_pretty(self) {
+        let Ok(json) = serde_json::to_string_pretty(self) else {
+            return;
+        };
+        if !replace(path, &json) {
             let _ = fs::write(path, json);
         }
     }
+}
+
+/// Swap `json` in for `path` with one rename. `false` when the caller has to fall
+/// back to a plain write: a rename would turn a symlinked file (a dotfiles
+/// checkout) into a regular one, and Windows refuses it while another program
+/// holds the file open without sharing delete.
+fn replace(path: &Path, json: &str) -> bool {
+    if fs::symlink_metadata(path).is_ok_and(|meta| meta.file_type().is_symlink()) {
+        return false;
+    }
+    let Some(name) = path.file_name() else {
+        return false;
+    };
+    // Per process, so two processes saving at once never share a staging file.
+    let mut staged = name.to_os_string();
+    staged.push(format!(".{}.tmp", std::process::id()));
+    let staged = path.with_file_name(staged);
+    if fs::write(&staged, json).is_ok() && fs::rename(&staged, path).is_ok() {
+        return true;
+    }
+    let _ = fs::remove_file(&staged);
+    false
 }
 
 #[cfg(test)]
@@ -93,6 +123,53 @@ mod tests {
         settings.save_to(&path);
 
         assert_eq!(Settings::load_from(&path), settings);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// The rename replaces the file in place and takes its staging file with it.
+    #[test]
+    fn saving_over_a_file_replaces_it_and_leaves_nothing_behind() {
+        let dir = tmp_dir();
+        let path = dir.join("settings.json");
+        Settings::default().save_to(&path);
+        let changed = Settings {
+            spell_check: true,
+            ..Settings::default()
+        };
+        changed.save_to(&path);
+
+        assert_eq!(Settings::load_from(&path), changed);
+        let names: Vec<_> = fs::read_dir(&dir)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name())
+            .collect();
+        assert_eq!(names, ["settings.json"]);
+        let _ = fs::remove_dir_all(dir);
+    }
+
+    /// A rename would put a regular file where the link was, and the user's
+    /// dotfiles would stop seeing their settings.
+    #[cfg(unix)]
+    #[test]
+    fn a_symlinked_file_stays_a_symlink() {
+        let dir = tmp_dir();
+        let target = dir.join("dotfiles.json");
+        let link = dir.join("settings.json");
+        Settings::default().save_to(&target);
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+        let changed = Settings {
+            spell_check: true,
+            ..Settings::default()
+        };
+        changed.save_to(&link);
+
+        assert!(
+            fs::symlink_metadata(&link)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
+        assert_eq!(Settings::load_from(&target), changed);
         let _ = fs::remove_dir_all(dir);
     }
 

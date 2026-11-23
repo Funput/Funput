@@ -15,6 +15,7 @@
 //! synthetic input — so the Vietnamese fields compose in-process through
 //! [`funput_desktop::FieldComposer`] (wired in `settings_callbacks`).
 
+mod common;
 mod control_center;
 mod convert;
 mod lifecycle;

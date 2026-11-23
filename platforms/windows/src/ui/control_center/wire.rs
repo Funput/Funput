@@ -16,8 +16,7 @@ pub(super) fn attach(window: &ControlCenterWindow) {
     window.on_toggle_enabled(move |on| {
         shell::set_enabled(on);
         if let Some(w) = weak.upgrade() {
-            w.set_enabled(on);
-            w.set_status(status_line(on, shell::snapshot().method).into());
+            show_vi_en(&w, on);
         }
     });
 
@@ -73,4 +72,11 @@ pub(super) fn attach(window: &ControlCenterWindow) {
     window.on_open_keyboard(|| request_exit(EXIT_KEYBOARD));
     window.on_open_settings(|| request_exit(EXIT_SETTINGS));
     window.on_dismiss(|| request_exit(EXIT_DISMISS));
+}
+
+/// Show VI/EN as `on`: the switch, and the status line that names it. Also what
+/// `common::follow_vi_en` calls when a hotkey flipped it in the hook process.
+pub(super) fn show_vi_en(window: &ControlCenterWindow, on: bool) {
+    window.set_enabled(on);
+    window.set_status(status_line(on, shell::snapshot().method).into());
 }

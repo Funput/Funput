@@ -43,6 +43,8 @@ pub(crate) fn run_settings(check_update: bool) {
     } else {
         settings_window::open();
     }
+    // Held across the loop: dropping it stops the timer once the window closes.
+    let _vi_en = settings_window::follow_vi_en();
     let _ = slint::run_event_loop();
 }
 
