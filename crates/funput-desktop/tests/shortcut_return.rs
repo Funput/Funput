@@ -21,12 +21,10 @@ impl Typist {
     fn with_rows(rows: &[(&str, &str)]) -> Self {
         let mut state = ShellState::new(None);
         state.set_method(InputMethod::Telex);
-        // A new row is inserted at the top. Add from the bottom of the slice
-        // upward, filling index 0, so the finished table matches `rows`.
-        for (trigger, expansion) in rows.iter().rev() {
+        for (row, (trigger, expansion)) in rows.iter().enumerate() {
             state.add_shortcut();
-            state.set_shortcut_trigger(0, (*trigger).into());
-            state.set_shortcut_expansion(0, (*expansion).into());
+            state.set_shortcut_trigger(row, (*trigger).into());
+            state.set_shortcut_expansion(row, (*expansion).into());
         }
         Self {
             state,

@@ -632,28 +632,6 @@ fn a_half_typed_shortcut_stays_visible_but_is_not_persisted() {
 }
 
 #[test]
-fn a_new_shortcut_row_is_inserted_above_the_ones_already_there() {
-    let mut state = shell();
-    state.add_shortcut();
-    state.set_shortcut_trigger(0, "vn".into());
-    state.set_shortcut_expansion(0, "Việt Nam".into());
-
-    state.add_shortcut();
-    assert_eq!(state.shortcuts()[0].trigger, "");
-    assert_eq!(state.shortcuts()[0].expansion, "");
-    assert_eq!(state.shortcuts()[1].trigger, "vn");
-    // The blank row is at the top, so another Thêm must wait until it is filled.
-    assert!(!state.can_add_shortcut());
-
-    state.set_shortcut_trigger(0, "cf".into());
-    assert!(!state.can_add_shortcut());
-    state.set_shortcut_expansion(0, "cà phê".into());
-    assert!(state.can_add_shortcut());
-    assert_eq!(state.shortcuts()[0].trigger, "cf");
-    assert_eq!(state.shortcuts()[1].trigger, "vn");
-}
-
-#[test]
 fn pruning_drops_drafts_and_keeps_complete_rows() {
     let mut state = shell();
     state.add_shortcut();
@@ -1188,13 +1166,10 @@ fn backspace_after_an_enter_expansion_is_plain() {
 
 fn shell_with_rows(rows: &[(&str, &str)]) -> ShellState {
     let mut state = shell();
-    // A new row is inserted at the top, so filling index 0 each time would
-    // reverse the slice. Add from the bottom upward and the final order matches
-    // the slice the tests name.
-    for (trigger, expansion) in rows.iter().rev() {
+    for (index, (trigger, expansion)) in rows.iter().enumerate() {
         state.add_shortcut();
-        state.set_shortcut_trigger(0, (*trigger).into());
-        state.set_shortcut_expansion(0, (*expansion).into());
+        state.set_shortcut_trigger(index, (*trigger).into());
+        state.set_shortcut_expansion(index, (*expansion).into());
     }
     state
 }
@@ -1245,6 +1220,52 @@ fn a_draft_row_has_no_note() {
         crate::shortcut_notes(state.shortcuts()),
         vec![crate::ShortcutNote::default()]
     );
+}
+
+// ---- the page's listing: newest first ----
+
+/// "Thêm" adds the row the page lists first, right under the button, however long
+/// the table is. Storage keeps adding order.
+#[test]
+fn a_new_row_is_listed_first() {
+    let mut state = shell_with_rows(&[("vn", "Việt Nam"), ("hn", "Hà Nội")]);
+    state.add_shortcut();
+
+    let listed: Vec<_> = state
+        .listed_shortcuts()
+        .into_iter()
+        .map(|(row, _)| row.trigger)
+        .collect();
+    assert_eq!(listed, ["", "hn", "vn"]);
+    assert_eq!(state.shortcuts()[2].trigger, "", "stored last");
+}
+
+/// Typing a trigger the table already holds into the new row: the row the user
+/// already relies on keeps firing, and the error lands on the row being typed.
+#[test]
+fn a_repeat_typed_into_the_new_row_leaves_the_older_row_firing() {
+    let mut state = shell_with_rows(&[("ct", "cơm tấm"), ("vn", "Việt Nam")]);
+    state.add_shortcut();
+    let new_row = state.listed_shortcut_index(0).expect("the new row");
+    state.set_shortcut_trigger(new_row, "ct".into());
+    state.set_shortcut_expansion(new_row, "cà phê".into());
+
+    assert_eq!(app_text(&mut state, "ct "), "cơm tấm ");
+    let notes = state.listed_shortcut_notes();
+    assert_eq!(
+        notes[0].error.as_deref(),
+        Some("Chữ tắt này đã có trong bảng, dòng này không bung.")
+    );
+    assert!(notes[1..].iter().all(|note| note.error.is_none()));
+}
+
+#[test]
+fn listed_positions_map_back_to_storage() {
+    let state = shell_with_rows(&[("a", "x"), ("b", "y"), ("c", "z")]);
+    assert_eq!(state.listed_shortcut_index(0), Some(2));
+    assert_eq!(state.listed_shortcut_index(2), Some(0));
+    assert_eq!(state.listed_shortcut_index(3), None);
+    assert_eq!(shell().listed_shortcut_index(0), None);
 }
 
 // ---- triggers with symbols ----
