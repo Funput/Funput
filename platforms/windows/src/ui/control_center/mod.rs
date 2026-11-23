@@ -10,7 +10,7 @@ use slint::winit_030::{EventResult, WinitWindowAccessor};
 use slint::{ComponentHandle, PhysicalPosition, Weak};
 
 use crate::shared::shell;
-use crate::ui::{mica, system_accent};
+use crate::ui::{common, mica, system_accent};
 use crate::{ControlCenterWindow, Theme};
 use funput_config::{Method, ToneStyle};
 
@@ -35,6 +35,7 @@ pub(super) fn open() -> u8 {
     position_above_tray(window.window());
     schedule_backdrop(window.as_weak());
     watch_focus_loss(window.as_weak());
+    let _vi_en = common::follow_vi_en(&window, wire::show_vi_en);
     let _ = slint::run_event_loop();
     EXIT_CODE.load(Ordering::SeqCst)
 }

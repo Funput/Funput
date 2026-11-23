@@ -12,6 +12,7 @@
 
 mod settings;
 
+use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 
 use funput_desktop::{Caret, ImeResult, KeySource, Mods, ShellState, TriggerKey};
@@ -27,7 +28,11 @@ pub const INJECT_TAG: usize = 0x4655_4E50; // "FUNP"
 static SHELL: OnceLock<Mutex<ShellState>> = OnceLock::new();
 
 fn shell() -> &'static Mutex<ShellState> {
-    SHELL.get_or_init(|| Mutex::new(ShellState::new(settings_path::settings_path())))
+    SHELL.get_or_init(|| {
+        Mutex::new(ShellState::new(
+            settings_path::settings_path().map(Path::to_path_buf),
+        ))
+    })
 }
 
 pub(super) fn with<R>(f: impl FnOnce(&mut ShellState) -> R) -> R {

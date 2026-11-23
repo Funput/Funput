@@ -97,11 +97,11 @@ pub fn run() {
         let mut msg = MSG::default();
         loop {
             // Re-read every turn: reaping one child can spawn the next (flyout →
-            // Settings), so the handle to wait on changes as we go. The timer
-            // follows the flyout's settings file for the tray icon; see
+            // Settings), so the handle to wait on changes as we go. While a child
+            // runs, a timer follows the settings it writes for the tray icon; see
             // [`settings_watch`].
-            settings_watch::set_open(ui::control_center_open());
             let child = ui::current_child_handle();
+            settings_watch::set_open(child.is_some());
             match instance::wait_activate_message_or_child(child) {
                 WaitKind::Activate => {
                     ui::launch_settings(false);

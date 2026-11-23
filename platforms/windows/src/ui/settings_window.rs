@@ -8,7 +8,7 @@ use super::models;
 use super::settings_callbacks;
 use crate::shared::packaged::{self, STORE_UPDATE_MESSAGE};
 use crate::shared::{commands, shell};
-use crate::ui::{recorder, system_accent};
+use crate::ui::{common, recorder, system_accent};
 use crate::{SettingsWindow, Theme};
 
 thread_local! {
@@ -30,6 +30,7 @@ pub(super) fn open() {
     settings_callbacks::wire(&window);
     let _ = window.show();
     schedule_backdrop(window.as_weak());
+    common::center_once_shown(&window);
     WINDOW.with(|cell| *cell.borrow_mut() = Some(window.as_weak()));
     if let Ok(tab) = std::env::var("FUNPUT_SETTINGS_ACTIVE")
         && !tab.is_empty()
@@ -58,6 +59,12 @@ fn schedule_backdrop(weak: Weak<SettingsWindow>) {
             window.global::<Theme>().set_mica(active);
         }
     });
+}
+
+/// Keep the EN/VI switch on the hook's state while the window is open; see
+/// [`common::follow_vi_en`].
+pub(super) fn follow_vi_en() -> Option<slint::Timer> {
+    current().map(|window| common::follow_vi_en(&window, SettingsWindow::set_vi_enabled))
 }
 
 fn current() -> Option<SettingsWindow> {
