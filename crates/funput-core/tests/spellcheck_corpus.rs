@@ -226,6 +226,19 @@ fn tay_nguyen_out_of_scope_still_rejected() {
     }
 }
 
+/// Personal names written with the older `dz` for `d` (Dzũng, Hồ Dzếnh, Dzoãn).
+/// `dz` spells a native sound, so it takes native rhymes only: the English words
+/// that begin with it (`Dzungar`) are still no syllable.
+#[test]
+fn dz_names_accepted_with_native_rhymes_only() {
+    for s in ["dzũng", "Dzếnh", "dzoãn", "DZUI", "dzậy"] {
+        assert!(is_complete_syllable(s), "dz name wrongly rejected: {s}");
+    }
+    for s in ["dzungar", "dzr", "dză"] {
+        assert!(!is_complete_syllable(s), "not a dz syllable: {s}");
+    }
+}
+
 /// The k≈c allophone must NOT over-accept English: a lone trailing `k` only maps to
 /// `c`, and the stop-coda tone rule still applies, so `book`/`look` (no sắc/nặng)
 /// and `rock` (coda `ck`) stay rejected.

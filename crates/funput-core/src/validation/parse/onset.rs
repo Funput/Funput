@@ -12,18 +12,29 @@ use crate::validation::ethnic::cluster_kind;
 use crate::validation::rules::ExtraOnsets;
 
 /// The native onsets. Tây Nguyên name clusters (`kr`, `kp`, `đr`) are kept apart
-/// in [`crate::validation::ethnic`], so this inventory stays "pure Vietnamese".
+/// in [`crate::validation::ethnic`], and older spellings in [`NAME_SPELLINGS`], so
+/// this inventory stays "pure Vietnamese".
 const VALID_ONSETS: &[&str] = &[
     "b", "c", "ch", "d", "g", "gh", "gi", "h", "k", "kh", "l", "m", "n", "ng", "ngh", "nh", "p",
     "ph", "qu", "r", "s", "t", "th", "tr", "v", "x",
 ];
 
-/// A native onset as spelled, `đ` included, in any case.
-fn is_native(onset: &str) -> bool {
+/// Older spellings of a native onset that personal names still carry: `dz` for
+/// `d` (`Dzũng`, `Hồ Dzếnh`, `Dzoãn`).
+///
+/// Each spells one native sound, so it takes the native rhymes and nothing more —
+/// English `Dzungar` still restores. Unlike the opt-in [`ExtraOnsets`], none
+/// collides with keys a word is typed with, so they need no switch.
+const NAME_SPELLINGS: &[&str] = &["dz"];
+
+/// An onset the inventory spells, `đ` and the name spellings included, in any case.
+fn is_known_spelling(onset: &str) -> bool {
+    let spells = |list: &[&str]| list.iter().any(|o| onset.eq_ignore_ascii_case(o));
     onset.is_empty()
         || onset == "đ"
         || onset == "Đ"
-        || VALID_ONSETS.iter().any(|o| onset.eq_ignore_ascii_case(o))
+        || spells(VALID_ONSETS)
+        || spells(NAME_SPELLINGS)
 }
 
 /// Split `buffer` into (onset, rest, invalid_onset).
@@ -52,7 +63,7 @@ pub(super) fn match_onset(buffer: &str, extra: ExtraOnsets) -> (&str, &str, bool
             continue;
         };
         let (prefix, rest) = buffer.split_at(split);
-        let valid = is_native(prefix)
+        let valid = is_known_spelling(prefix)
             || (len <= consonants && cluster_kind(prefix).is_some())
             || glide::in_onset(prefix).is_some()
             || extra.admits(prefix);

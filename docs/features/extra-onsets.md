@@ -89,6 +89,27 @@ vần với phụ âm đầu bản ngữ vẫn bị hôm nay (`vast` → `vát`,
 Đo trên `/usr/share/dict/words` (235 976 từ), chỉ có Telex bị ảnh hưởng: 638 từ
 (0,27 %) đổi — `f` 342, `w` 158, `j` 79, `z` 59. VNI: 0.
 
+## `dz` luôn bật
+
+`dz` là cách viết cũ của `d` mà tên riêng còn giữ (`Dzũng`, `Hồ Dzếnh`, `Dzoãn`),
+issue #796. Nó nằm trong bảng âm đầu của core (`NAME_SPELLINGS` trong
+`validation/parse/onset.rs`), không qua `ExtraOnsets`, nên không có công tắc và
+cả 5 nền tảng nhận ngay.
+
+Không cần công tắc vì `dz` không va chạm phím gõ: chữ `z` đứng trước mọi dấu nên
+không có gì để xoá. `dz` chỉ đi với vần tiếng Việt, đúng như `d`, nên `dzungx` ra
+`dzũng` còn `Dzungar` vẫn giữ nguyên.
+
+Đo so với `main`, với Viet74K (dấu ở mọi vị trí) và `dict/words` + `en.tsv`
+(246 934 từ):
+
+- Không từ tiếng Việt nào đổi. Mỗi chuỗi phím `d…` gõ thành `dz…` đều ra đúng kết
+  quả của `d…`, trừ cụm tên Tây Nguyên (`Drăng` không thành `Dzrăng`).
+- Tiếng Anh: VNI 0 từ. Telex 1 từ, `dzeren` → `dzển`, đúng như `deren` → `dển`.
+- Sửa lỗi gõ (`funput dev typos`, Telex): 1 trên 2 861 lần chạm nhầm đổi từ "sửa
+  được" sang "thành từ khác" (`Dần` chạm `a` thành `z` ra `Dzàn`, nay là âm tiết hợp lệ).
+  VNI không đổi.
+
 ## Kiến trúc
 
 - `funput-core/src/validation/rules/`
@@ -114,8 +135,9 @@ tả sau này là một trường mới của `SyllableRules`, không phải s�
 ## Thêm một âm đầu mới
 
 1. Thêm hằng vào `ExtraOnsets` và một dòng vào `SPELLINGS`, kèm ví dụ thật. Âm nhiều
-   chữ (vd `dz`) thắng tiền tố bản ngữ (`d`) vì `match_onset` thử tiền tố dài nhất
-   trước.
+   chữ thắng tiền tố bản ngữ ngắn hơn vì `match_onset` thử tiền tố dài nhất trước.
+   Âm nào không va chạm với phím gõ thì không cần công tắc: đưa vào bảng âm đầu như
+   `dz` (xem [`dz` luôn bật](#dz-luôn-bật)).
 2. Thêm test vào `validation/rules/tests.rs`, `tests/spellcheck_corpus.rs` (core) và
    `tests/restore/extra_onsets.rs` (engine), cùng một từ tiếng Anh mà âm đó có thể
    làm hỏng.
@@ -212,7 +234,7 @@ Windows link thẳng Rust nên không qua FFI. Ba tầng, mỗi tầng một vi�
   Bit bên trong là private, không bao giờ ghi ra đĩa, nên không dính tới bit của core
   hay bit wire `ONSET_*` của FFI. Thiếu trường = không chữ nào (file cũ giữ hành vi
   cũ); nhập file không có trường thì giữ lựa chọn cục bộ; chữ lạ bị bỏ qua. Thêm một
-  chữ mới (vd `dz`) là thêm một biến thể `OnsetLetter` — các `match` đầy đủ sẽ chỉ ra
+  chữ mới là thêm một biến thể `OnsetLetter` — các `match` đầy đủ sẽ chỉ ra
   mọi chỗ cần sửa, kể cả ví dụ hiển thị trên UI.
 - **`funput-desktop`** — `ShellState::sync_engine_config` dựng
   `SyllableRules::STANDARD.with_extra_onsets(..)` từ settings, nên thao tác trong Cài

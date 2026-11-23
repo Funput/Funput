@@ -66,7 +66,7 @@ impl ExtraOnsets {
 }
 
 /// How each extra onset is spelled. Adding one is a constant above and a row here;
-/// a longer spelling (say `dz`) wins over a native prefix (`d`) because onset
+/// a spelling of several letters wins over a shorter native prefix because onset
 /// matching tries the longest prefix first.
 const SPELLINGS: [(ExtraOnsets, &str); 4] = [
     (ExtraOnsets::F, "f"),

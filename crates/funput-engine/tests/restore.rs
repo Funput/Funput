@@ -10,6 +10,8 @@ mod doubled;
 mod english;
 #[path = "restore/extra_onsets.rs"]
 mod extra_onsets;
+#[path = "restore/name_spellings.rs"]
+mod name_spellings;
 #[path = "restore/place_names.rs"]
 mod place_names;
 #[path = "restore/retone.rs"]
