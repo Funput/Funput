@@ -51,8 +51,10 @@ open = "5"
 # Native Open/Save + message dialogs for config Export/Import (Win32 IFileDialog,
 # no WebView).
 rfd = "0.18.0"
-# Decode the tray PNGs to RGBA for `tray_icon::Icon::from_rgba`.
-image = { version = "0.25", default-features = false, features = ["png"] }
+# Draw the tray glyph from icons/tray.svg at the taskbar's exact icon size (see
+# src/background/tray/glyph.rs). Already linked through Slint's SVG support, so
+# this adds no crate; no default features, as the logo has no text or images.
+resvg = { version = "0.47", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 dirs = "7"

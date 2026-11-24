@@ -1,38 +1,50 @@
-//! Tray icon assets and hover tooltip text.
+//! The tray glyphs, cached per size, and the hover tooltip text.
 
 use std::cell::RefCell;
 
 use funput_core::InputMethod;
 use tray_icon::Icon;
 
-const TRAY_PNG: &[u8] = include_bytes!("../../../icons/tray.png"); // VI: brand colour
-const TRAY_MONO_PNG: &[u8] = include_bytes!("../../../icons/tray-mono.png"); // EN: high-contrast white
+use super::glyph;
 
 thread_local! {
-    /// The two glyphs, decoded on first use and kept: they never change, and
-    /// every VI/EN switch asks for one. Indexed by `on`. `Icon` owns a refcounted
-    /// handle, so handing out a clone costs nothing. Thread-local like the tray
-    /// itself — both belong to the hook thread that built them.
-    static ICONS: RefCell<[Option<Icon>; 2]> = const { RefCell::new([None, None]) };
+    /// Both glyphs at the size last asked for, drawn on first use. Every VI/EN
+    /// switch asks for one, and they are drawn again only when the taskbar's
+    /// scale changes. `Icon` owns a refcounted handle, so handing out a clone
+    /// costs nothing. Thread-local like the tray itself: both belong to the hook
+    /// thread that built them.
+    static ICONS: RefCell<Glyphs> = const { RefCell::new(Glyphs::EMPTY) };
 }
 
-/// The enabled (colour) or disabled (mono) 32×32 tray glyph.
-pub(super) fn make_icon(on: bool) -> Option<Icon> {
+struct Glyphs {
+    px: u32,
+    /// Indexed by `on`: mono (EN, high-contrast white), then colour (VI).
+    icons: [Option<Icon>; 2],
+}
+
+impl Glyphs {
+    const EMPTY: Self = Self {
+        px: 0,
+        icons: [None, None],
+    };
+}
+
+/// The enabled (colour) or disabled (mono) tray glyph, `px` pixels square.
+pub(super) fn make_icon(on: bool, px: u32) -> Option<Icon> {
     ICONS.with(|cache| {
         let mut cache = cache.borrow_mut();
-        let slot = &mut cache[usize::from(on)];
+        if cache.px != px {
+            *cache = Glyphs {
+                px,
+                ..Glyphs::EMPTY
+            };
+        }
+        let slot = &mut cache.icons[usize::from(on)];
         if slot.is_none() {
-            *slot = decode(on);
+            *slot = glyph::draw(px, !on).and_then(|rgba| Icon::from_rgba(rgba, px, px).ok());
         }
         slot.clone()
     })
-}
-
-fn decode(on: bool) -> Option<Icon> {
-    let bytes = if on { TRAY_PNG } else { TRAY_MONO_PNG };
-    let img = image::load_from_memory(bytes).ok()?.into_rgba8();
-    let (w, h) = img.dimensions();
-    Icon::from_rgba(img.into_raw(), w, h).ok()
 }
 
 /// Hover text: brand, language mode, and method when Vietnamese is on.

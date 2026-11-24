@@ -18,6 +18,7 @@ mod foreground;
 mod keyboard;
 mod mouse;
 mod settings_watch;
+mod thread_message;
 mod toggle;
 
 use std::sync::atomic::AtomicBool;
@@ -28,7 +29,7 @@ use windows::Win32::UI::Accessibility::SetWinEventHook;
 use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, EVENT_SYSTEM_FOREGROUND, MSG, PM_REMOVE, PeekMessageW, PostQuitMessage,
     SetWindowsHookExW, TranslateMessage, WH_KEYBOARD_LL, WH_MOUSE_LL, WINEVENT_OUTOFCONTEXT,
-    WM_QUIT, WM_TIMER,
+    WM_QUIT,
 };
 
 use crate::background::instance::{self, WaitKind};
@@ -114,20 +115,7 @@ pub fn run() {
                         if msg.message == WM_QUIT {
                             return;
                         }
-                        // The toggle work the hook refused to do itself. Posted to
-                        // the thread, so it has no window and dispatching would
-                        // drop it — and the null `hwnd` is what tells it apart
-                        // from a window message that happens to share the number.
-                        if msg.message == toggle::WM_TOGGLED && msg.hwnd.0.is_null() {
-                            toggle::run_pending();
-                            continue;
-                        }
-                        // Same reason: a thread timer has no window, so dispatch
-                        // would drop it. `deliver` ignores any other `WM_TIMER`.
-                        if msg.message == WM_TIMER
-                            && msg.hwnd.0.is_null()
-                            && settings_watch::deliver(msg.wParam.0)
-                        {
+                        if thread_message::handle(&msg) {
                             continue;
                         }
                         let _ = TranslateMessage(&msg);
