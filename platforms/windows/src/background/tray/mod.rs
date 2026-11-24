@@ -14,15 +14,21 @@ use crate::background::hook;
 use crate::shared::shell;
 
 mod events;
+mod glyph;
 mod icon;
 mod menu;
 mod popup;
+mod scale;
+
+pub use scale::WM_RESCALE;
 
 struct TrayState {
     tray: TrayIcon,
     /// The same menu the tray holds, kept for its handle: the tray will not give
     /// it back, and [`show_menu`] opens it itself.
     menu: Menu,
+    /// The glyph size the icon was last drawn at; see [`scale`].
+    px: u32,
 }
 
 thread_local! {
@@ -34,6 +40,7 @@ pub fn install() {
     let on = shell::enabled();
     let method = shell::method();
     let menu = menu::build();
+    let px = scale::icon_px();
 
     // The tray still takes the menu — that is what routes a chosen item back as a
     // `MenuEvent` — but it is told not to open it on either button: it would open
@@ -43,11 +50,12 @@ pub fn install() {
         .with_menu_on_left_click(false)
         .with_menu_on_right_click(false)
         .with_tooltip(icon::tooltip(on, method))
-        .with_icon(icon::make_icon(on).expect("tray icon"))
+        .with_icon(icon::make_icon(on, px).expect("tray icon"))
         .build()
         .expect("build tray icon");
 
-    TRAY.with(|c| *c.borrow_mut() = Some(TrayState { tray, menu }));
+    scale::watch(HWND(tray.window_handle()));
+    TRAY.with(|c| *c.borrow_mut() = Some(TrayState { tray, menu, px }));
     hook::set_on_toggle(refresh);
 }
 
@@ -76,11 +84,26 @@ pub fn sync_from_shell() {
     refresh(shell::enabled());
 }
 
+/// Draw the glyph again if the taskbar now shows icons at another size, after a
+/// [`WM_RESCALE`] reached the hook pump.
+pub fn rescale() {
+    scale::delivered();
+    let px = scale::icon_px();
+    let changed = TRAY.with(|c| {
+        c.borrow_mut()
+            .as_mut()
+            .is_some_and(|s| std::mem::replace(&mut s.px, px) != px)
+    });
+    if changed {
+        refresh(shell::enabled());
+    }
+}
+
 fn refresh(on: bool) {
     let method = shell::method();
     TRAY.with(|c| {
         if let Some(s) = c.borrow().as_ref() {
-            if let Some(glyph) = icon::make_icon(on) {
+            if let Some(glyph) = icon::make_icon(on, s.px) {
                 let _ = s.tray.set_icon(Some(glyph));
             }
             let _ = s.tray.set_tooltip(Some(icon::tooltip(on, method)));
