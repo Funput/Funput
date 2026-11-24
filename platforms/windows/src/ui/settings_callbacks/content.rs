@@ -77,23 +77,19 @@ fn update_shortcut(
         return;
     };
     let model = window.get_shortcuts();
-    if let Some(mut entry) = model.row_data(index) {
+    // The page is not in stored order, so find the row that carries this index.
+    if let Some(row) = models::row_for(&model, index)
+        && let Some(mut entry) = model.row_data(row)
+    {
         if trigger {
             entry.trigger = text
         } else {
             entry.expansion = text
         }
-        model.set_row_data(index, entry);
+        model.set_row_data(row, entry);
     }
-    // A trigger edit can change what other rows say too (a repeat appears or goes),
-    // so every row's note is refreshed, each in place to keep the field's focus.
-    for (row, note) in shell::listed_shortcut_notes().into_iter().enumerate() {
-        if let Some(mut entry) = model.row_data(row)
-            && models::set_note(&mut entry, note)
-        {
-            model.set_row_data(row, entry);
-        }
-    }
+    // A trigger edit can change what other rows say too (a repeat appears or goes).
+    models::apply_notes(&model, shell::shortcut_notes());
     window.set_can_add_shortcut(commands::can_add_shortcut());
 }
 

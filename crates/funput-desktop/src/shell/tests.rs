@@ -1222,50 +1222,86 @@ fn a_draft_row_has_no_note() {
     );
 }
 
-// ---- the page's listing: newest first ----
+// ---- the page's listing ----
 
-/// "Thêm" adds the row the page lists first, right under the button, however long
-/// the table is. Storage keeps adding order.
-#[test]
-fn a_new_row_is_listed_first() {
-    let mut state = shell_with_rows(&[("vn", "Việt Nam"), ("hn", "Hà Nội")]);
-    state.add_shortcut();
-
-    let listed: Vec<_> = state
+/// `(stored index, trigger)` for each row, in the page's order.
+fn listed(state: &ShellState) -> Vec<(usize, String)> {
+    state
         .listed_shortcuts()
         .into_iter()
-        .map(|(row, _)| row.trigger)
-        .collect();
-    assert_eq!(listed, ["", "hn", "vn"]);
-    assert_eq!(state.shortcuts()[2].trigger, "", "stored last");
+        .map(|row| (row.index, row.shortcut.trigger))
+        .collect()
+}
+
+/// Finished rows read alphabetically, each still pointing at its stored row.
+#[test]
+fn rows_are_listed_by_trigger_with_their_stored_index() {
+    let state = shell_with_rows(&[("cf", "cà phê"), ("vn", "Việt Nam"), ("ct", "cơm tấm")]);
+    assert_eq!(
+        listed(&state),
+        [(0, "cf".into()), (2, "ct".into()), (1, "vn".into())]
+    );
+}
+
+/// Letters decide before tone marks and case: `đi` sits by `di`, and the plain
+/// spelling comes before its marked forms.
+#[test]
+fn vietnamese_triggers_sort_by_their_letters() {
+    let state = shell_with_rows(&[
+        ("đi", "đi đâu"),
+        ("dz", "dzô"),
+        ("Ăn", "ăn cơm"),
+        ("b", "bạn"),
+        ("an", "an toàn"),
+        ("da", "đã"),
+    ]);
+    let triggers: Vec<_> = listed(&state).into_iter().map(|(_, t)| t).collect();
+    assert_eq!(triggers, ["an", "Ăn", "b", "da", "đi", "dz"]);
+}
+
+/// "Thêm" adds the row listed first, right under the button, however long the
+/// table is. It is stored last, and stays first while it is being typed.
+#[test]
+fn a_new_row_is_listed_first_while_it_is_typed() {
+    let mut state = shell_with_rows(&[("vn", "Việt Nam"), ("hn", "Hà Nội")]);
+    state.add_shortcut();
+    state.set_shortcut_trigger(2, "zz".into());
+    assert_eq!(
+        listed(&state),
+        [(2, "zz".into()), (1, "hn".into()), (0, "vn".into())]
+    );
+}
+
+/// A row emptied to be retyped keeps its place instead of jumping to the top.
+#[test]
+fn an_emptied_row_keeps_its_place() {
+    let mut state = shell_with_rows(&[("a", "x"), ("b", "y"), ("c", "z")]);
+    state.set_shortcut_expansion(1, String::new());
+    let triggers: Vec<_> = listed(&state).into_iter().map(|(_, t)| t).collect();
+    assert_eq!(triggers, ["a", "b", "c"]);
 }
 
 /// Typing a trigger the table already holds into the new row: the row the user
-/// already relies on keeps firing, and the error lands on the row being typed.
+/// already relies on keeps firing, is listed above its repeat, and the error lands
+/// on the new row.
 #[test]
 fn a_repeat_typed_into_the_new_row_leaves_the_older_row_firing() {
     let mut state = shell_with_rows(&[("ct", "cơm tấm"), ("vn", "Việt Nam")]);
     state.add_shortcut();
-    let new_row = state.listed_shortcut_index(0).expect("the new row");
-    state.set_shortcut_trigger(new_row, "ct".into());
-    state.set_shortcut_expansion(new_row, "cà phê".into());
+    state.set_shortcut_trigger(2, "ct".into());
+    state.set_shortcut_expansion(2, "cà phê".into());
 
     assert_eq!(app_text(&mut state, "ct "), "cơm tấm ");
-    let notes = state.listed_shortcut_notes();
+    let rows = state.listed_shortcuts();
     assert_eq!(
-        notes[0].error.as_deref(),
+        rows.iter().map(|row| row.index).collect::<Vec<_>>(),
+        [0, 2, 1]
+    );
+    assert_eq!(rows[0].note.error, None);
+    assert_eq!(
+        rows[1].note.error.as_deref(),
         Some("Chữ tắt này đã có trong bảng, dòng này không bung.")
     );
-    assert!(notes[1..].iter().all(|note| note.error.is_none()));
-}
-
-#[test]
-fn listed_positions_map_back_to_storage() {
-    let state = shell_with_rows(&[("a", "x"), ("b", "y"), ("c", "z")]);
-    assert_eq!(state.listed_shortcut_index(0), Some(2));
-    assert_eq!(state.listed_shortcut_index(2), Some(0));
-    assert_eq!(state.listed_shortcut_index(3), None);
-    assert_eq!(shell().listed_shortcut_index(0), None);
 }
 
 // ---- triggers with symbols ----

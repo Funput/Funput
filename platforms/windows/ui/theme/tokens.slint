@@ -12,6 +12,9 @@ export struct SegOption {
 export struct ShortcutEntry {
     trigger: string,
     expansion: string,
+    // Index in the stored table, not the row's place on screen: the page lists
+    // the newest draft first and the rest by trigger. Edits write back here.
+    index: int,
     // Shown under the row: why it never expands, or how it shares a word with
     // another row. Empty when there is nothing to say.
     error: string,
