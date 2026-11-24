@@ -1222,6 +1222,52 @@ fn a_draft_row_has_no_note() {
     );
 }
 
+// ---- the page's listing: newest first ----
+
+/// "Thêm" adds the row the page lists first, right under the button, however long
+/// the table is. Storage keeps adding order.
+#[test]
+fn a_new_row_is_listed_first() {
+    let mut state = shell_with_rows(&[("vn", "Việt Nam"), ("hn", "Hà Nội")]);
+    state.add_shortcut();
+
+    let listed: Vec<_> = state
+        .listed_shortcuts()
+        .into_iter()
+        .map(|(row, _)| row.trigger)
+        .collect();
+    assert_eq!(listed, ["", "hn", "vn"]);
+    assert_eq!(state.shortcuts()[2].trigger, "", "stored last");
+}
+
+/// Typing a trigger the table already holds into the new row: the row the user
+/// already relies on keeps firing, and the error lands on the row being typed.
+#[test]
+fn a_repeat_typed_into_the_new_row_leaves_the_older_row_firing() {
+    let mut state = shell_with_rows(&[("ct", "cơm tấm"), ("vn", "Việt Nam")]);
+    state.add_shortcut();
+    let new_row = state.listed_shortcut_index(0).expect("the new row");
+    state.set_shortcut_trigger(new_row, "ct".into());
+    state.set_shortcut_expansion(new_row, "cà phê".into());
+
+    assert_eq!(app_text(&mut state, "ct "), "cơm tấm ");
+    let notes = state.listed_shortcut_notes();
+    assert_eq!(
+        notes[0].error.as_deref(),
+        Some("Chữ tắt này đã có trong bảng, dòng này không bung.")
+    );
+    assert!(notes[1..].iter().all(|note| note.error.is_none()));
+}
+
+#[test]
+fn listed_positions_map_back_to_storage() {
+    let state = shell_with_rows(&[("a", "x"), ("b", "y"), ("c", "z")]);
+    assert_eq!(state.listed_shortcut_index(0), Some(2));
+    assert_eq!(state.listed_shortcut_index(2), Some(0));
+    assert_eq!(state.listed_shortcut_index(3), None);
+    assert_eq!(shell().listed_shortcut_index(0), None);
+}
+
 // ---- triggers with symbols ----
 
 /// The hook types exactly what the engine asks, committed text included, so a

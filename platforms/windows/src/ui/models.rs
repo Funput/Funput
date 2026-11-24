@@ -4,7 +4,7 @@ use slint::{ModelRc, SharedString, VecModel};
 
 use crate::ShortcutEntry;
 use funput_config::{FlipHotkey, Hotkey, KeyCombo, Shortcut};
-use funput_desktop::{ShortcutNote, shortcut_notes};
+use funput_desktop::ShortcutNote;
 
 pub(super) fn caps(hotkey: Hotkey) -> ModelRc<SharedString> {
     keycaps(hotkey.caps())
@@ -24,14 +24,14 @@ fn keycaps(caps: &[&'static str]) -> ModelRc<SharedString> {
     ModelRc::new(VecModel::from(rows))
 }
 
-pub(super) fn shortcuts(shortcuts: &[Shortcut]) -> ModelRc<ShortcutEntry> {
-    let rows = shortcuts
-        .iter()
-        .zip(shortcut_notes(shortcuts))
+/// The page's rows, in the order given: the shell's listing, newest first.
+pub(super) fn shortcuts(listed: Vec<(Shortcut, ShortcutNote)>) -> ModelRc<ShortcutEntry> {
+    let rows = listed
+        .into_iter()
         .map(|(shortcut, note)| {
             let mut entry = ShortcutEntry {
-                trigger: shortcut.trigger.clone().into(),
-                expansion: shortcut.expansion.clone().into(),
+                trigger: shortcut.trigger.into(),
+                expansion: shortcut.expansion.into(),
                 ..ShortcutEntry::default()
             };
             set_note(&mut entry, note);

@@ -119,7 +119,7 @@ pub(super) fn populate(window: &SettingsWindow) {
     window.set_update_state(state.into());
     window.set_update_version("".into());
     window.set_update_message(message.into());
-    window.set_shortcuts(models::shortcuts(&shell::shortcuts()));
+    window.set_shortcuts(models::shortcuts(shell::listed_shortcuts()));
     window.set_shortcuts_enabled(settings.shortcuts_enabled);
     window.set_shortcut_smart_case(settings.shortcut_smart_case);
     window.set_shortcuts_in_english(settings.shortcuts_in_english);

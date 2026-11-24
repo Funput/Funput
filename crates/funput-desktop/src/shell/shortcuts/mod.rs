@@ -6,8 +6,12 @@
 //! empty trigger would fire on every word boundary. So each edit persists the
 //! complete rows only and puts the drafts straight back. What each row's trigger
 //! means, and which rows reach the engine, is [`check`]'s answer.
+//!
+//! Every index here is a row's place in storage, oldest first. The page lists the
+//! table newest first; [`listing`] maps between the two.
 
 mod check;
+mod listing;
 
 use funput_config::Shortcut;
 
@@ -61,8 +65,8 @@ impl ShellState {
         self.settings.shortcuts = drafts;
     }
 
-    /// "Thêm" is allowed when the list is empty or the last row is already
-    /// complete — otherwise a second blank row would appear above the first.
+    /// "Thêm" is allowed when the list is empty or the newest row is already
+    /// complete — otherwise a second blank row would appear beside the first.
     pub fn can_add_shortcut(&self) -> bool {
         self.settings.shortcuts.last().is_none_or(is_complete)
     }
@@ -71,6 +75,8 @@ impl ShellState {
         if !self.can_add_shortcut() {
             return;
         }
+        // Last in storage, so a repeat of an older row stays the one that does not
+        // fire. The page lists it first, under the button; see [`listing`].
         self.settings.shortcuts.push(Shortcut {
             trigger: String::new(),
             expansion: String::new(),

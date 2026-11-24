@@ -92,6 +92,7 @@ pub fn complete_onboarding() {
 }
 
 // --- Shortcuts (gõ tắt) -----------------------------------------------------
+// A row `position` counts from the top of the page's listing, newest first.
 
 pub fn add_shortcut() {
     shell::add_shortcut();
@@ -105,14 +106,14 @@ pub fn prune_incomplete_shortcuts() {
     shell::prune_incomplete_shortcuts();
 }
 
-pub fn remove_shortcut(index: usize) {
-    shell::remove_shortcut(index);
+pub fn remove_shortcut(position: usize) {
+    shell::remove_shortcut(position);
 }
 
-pub fn set_shortcut_trigger(index: usize, trigger: String) {
-    shell::set_shortcut_trigger(index, trigger);
+pub fn set_shortcut_trigger(position: usize, trigger: String) {
+    shell::set_shortcut_trigger(position, trigger);
 }
 
-pub fn set_shortcut_expansion(index: usize, expansion: String) {
-    shell::set_shortcut_expansion(index, expansion);
+pub fn set_shortcut_expansion(position: usize, expansion: String) {
+    shell::set_shortcut_expansion(position, expansion);
 }
