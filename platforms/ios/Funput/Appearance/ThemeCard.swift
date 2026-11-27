@@ -1,10 +1,13 @@
 import SwiftUI
 import ThemeSchema
+import UIKit
 
 struct ThemeCard: View {
     let theme: KeyboardTheme
     let resolvedTheme: ResolvedTheme
     let backgroundImageData: Data?
+    /// A picture of the real keyboard, when one was captured for this theme.
+    var snapshot: UIImage?
     let interfaceStyle: UIUserInterfaceStyle
     let isPreviewed: Bool
     let isApplied: Bool
@@ -27,6 +30,7 @@ struct ThemeCard: View {
                     themeID: theme.id,
                     theme: resolvedTheme,
                     backgroundImageData: backgroundImageData,
+                    snapshot: snapshot,
                     interfaceStyle: interfaceStyle
                 )
                     .frame(height: 204)
@@ -55,7 +59,8 @@ struct ThemeCard: View {
             .accessibilityHint("Chạm hai lần để xem trước")
             .accessibilityIdentifier("appearance.theme.\(theme.id)")
         }
-        .overlay(alignment: .topTrailing) {
+        // Top leading: the real keyboard's toolbar keeps its icons on the right.
+        .overlay(alignment: .topLeading) {
             if isCustom { actionsMenu.padding(12) }
         }
         .frame(width: cardWidth)

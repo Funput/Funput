@@ -46,6 +46,26 @@ struct ThemeCardThumbnailLayoutTests {
         #expect(!isWhite(image, at: CGPoint(x: frame.minX + 4, y: frame.midY)))
     }
 
+    @Test("A custom theme with a captured picture shows it instead of the sketch")
+    func capturedPictureReplacesSketch() throws {
+        let thumbnail = ThemeCardThumbnail(
+            themeID: "custom-picture",
+            theme: ThemeRuntime.resolve(.funputGlass),
+            backgroundImageData: nil,
+            snapshot: solidPhoto(size: CGSize(width: 948, height: 612)),
+            interfaceStyle: .light
+        )
+        .frame(width: slot.width, height: slot.height)
+
+        let renderer = ImageRenderer(content: thumbnail)
+        renderer.scale = 1
+        let image = try #require(renderer.cgImage)
+
+        // The sketch draws keys across the middle; the picture is plain red there.
+        let middle = pixel(image, at: CGPoint(x: slot.width / 2, y: slot.height / 2))
+        #expect(middle[0] > 200 && middle[1] < 80 && middle[2] < 80)
+    }
+
     private func solidPhoto(size: CGSize) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
@@ -56,6 +76,10 @@ struct ThemeCardThumbnailLayoutTests {
     }
 
     private func isWhite(_ image: CGImage, at point: CGPoint) -> Bool {
+        pixel(image, at: point).prefix(3).allSatisfy { $0 > 240 }
+    }
+
+    private func pixel(_ image: CGImage, at point: CGPoint) -> [UInt8] {
         let x = Int(point.x), y = Int(point.y)
         var pixel = [UInt8](repeating: 0, count: 4)
         let context = CGContext(
@@ -64,6 +88,6 @@ struct ThemeCardThumbnailLayoutTests {
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         )
         context?.draw(image, in: CGRect(x: -x, y: y - image.height + 1, width: image.width, height: image.height))
-        return pixel.prefix(3).allSatisfy { $0 > 240 }
+        return pixel
     }
 }

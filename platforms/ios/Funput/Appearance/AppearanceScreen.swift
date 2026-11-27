@@ -18,12 +18,14 @@ struct AppearanceScreen: View {
         store: any FunputConfigurationStoring = FunputConfigurationStore(),
         customStore: any CustomThemeStoring = CustomThemeStore(),
         assetStore: any ThemeAssetStoring = ThemeAssetStore(),
+        snapshotStore: any ThemeSnapshotStoring = ThemeSnapshotFileStore(),
         bootstrap: any KeyboardBootstrapSynchronizing = KeyboardBootstrapSynchronizer()
     ) {
         _model = StateObject(wrappedValue: AppearanceModel(
             store: store,
             customStore: customStore,
             assetStore: assetStore,
+            snapshotStore: snapshotStore,
             bootstrap: bootstrap
         ))
     }
@@ -32,6 +34,7 @@ struct AppearanceScreen: View {
         AppScreen {
             ThemeGallery(
                 model: model,
+                snapshots: model.snapshots,
                 onPreview: { showsPreview = true },
                 onEdit: { editorRequest = .edit(customThemeID: $0) },
                 onDelete: { id in

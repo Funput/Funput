@@ -21,6 +21,8 @@ extension AppearanceModel {
 
 struct ThemeGallery: View {
     @ObservedObject var model: AppearanceModel
+    /// Observed apart from the model so a newly captured picture redraws the cards.
+    @ObservedObject var snapshots: ThemeSnapshotLibrary
     /// Called after a card was chosen for preview.
     let onPreview: () -> Void
     let onEdit: (String) -> Void
@@ -68,6 +70,7 @@ struct ThemeGallery: View {
             theme: theme,
             resolvedTheme: presentation.theme,
             backgroundImageData: model.imageData(for: theme),
+            snapshot: isCustom ? model.snapshot(for: theme) : nil,
             interfaceStyle: model.previewMode.interfaceStyle,
             isPreviewed: theme.id == model.previewThemeID,
             isApplied: theme.id == model.appliedThemeID,
