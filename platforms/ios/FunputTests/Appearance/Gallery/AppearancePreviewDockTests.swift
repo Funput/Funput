@@ -2,9 +2,11 @@ import CoreGraphics
 import FunputShared
 import KeyboardLayout
 import KeyboardRenderer
+import SwiftUI
 import Testing
 import ThemeRuntime
 import ThemeSchema
+import UIKit
 @testable import Funput
 
 @MainActor
@@ -42,6 +44,29 @@ struct AppearancePreviewDockTests {
         #expect(presentation.previewHeight(limit: .infinity) == natural)
         #expect(presentation.previewHeight(limit: natural - 40) == natural - 40)
         #expect(presentation.previewHeight(limit: 10) == 148)
+    }
+
+    /// At xxxLarge text on a 440pt-wide phone the bar squeezed "Áp dụng" onto two lines
+    /// (60pt tall became 93pt) instead of switching to its icon-only row.
+    @Test("The apply button never wraps, so the bar keeps one row height", arguments: [375.0, 402.0, 440.0])
+    func applyLabelDoesNotWrap(width: Double) {
+        func barHeight(isApplied: Bool) -> CGFloat {
+            let bar = AppearancePreviewDockBar(
+                mode: .constant(.light),
+                isApplied: isApplied,
+                isCustom: false,
+                apply: {},
+                customize: {},
+                close: {}
+            )
+            .environment(\.dynamicTypeSize, .xxxLarge)
+            return UIHostingController(rootView: bar)
+                .sizeThatFits(in: CGSize(width: width, height: 400)).height
+        }
+
+        // The prominent button runs a couple of points taller than the status label;
+        // a second line of text adds a whole line height.
+        #expect(barHeight(isApplied: false) < barHeight(isApplied: true) + 10)
     }
 
     private func makeModel() -> AppearanceModel {

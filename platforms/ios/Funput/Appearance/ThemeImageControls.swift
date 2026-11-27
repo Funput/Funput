@@ -14,8 +14,9 @@ struct ThemeImageControls: View {
         ContentCard {
             Text("Ảnh nền").font(.headline)
             if let data = draft.renderedImageData, let image = UIImage(data: data) {
-                Image(uiImage: image).resizable().scaledToFill()
-                    .frame(height: 110).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                Color.clear.frame(maxWidth: .infinity).frame(height: 110)
+                    .background { Image(uiImage: image).resizable().scaledToFill() }
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 HStack {
                     picker("Đổi ảnh")
                     Button {
