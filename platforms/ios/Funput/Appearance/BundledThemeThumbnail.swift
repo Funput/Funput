@@ -36,7 +36,7 @@ enum BundledThemeThumbnail {
 
     /// The artwork is captured with Liquid Glass, so it only stands in for glass themes
     /// where the keyboard really draws glass.
-    private static var rendersGlass: Bool {
+    static var rendersGlass: Bool {
         guard #available(iOS 26, *) else { return false }
         return !UIAccessibility.isReduceTransparencyEnabled
     }

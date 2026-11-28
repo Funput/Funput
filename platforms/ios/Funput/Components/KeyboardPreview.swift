@@ -18,6 +18,7 @@ struct KeyboardPreview: UIViewRepresentable {
     var backgroundImageData: Data? = nil
     var interfaceStyle: UIUserInterfaceStyle = .unspecified
     var isInteractive = false
+    var snapshotter: KeyboardPreviewSnapshotter?
 
     func makeUIView(context: Context) -> KeyboardPreviewSurface {
         let view = KeyboardPreviewSurface()
@@ -26,6 +27,7 @@ struct KeyboardPreview: UIViewRepresentable {
     }
 
     func updateUIView(_ view: KeyboardPreviewSurface, context: Context) {
+        snapshotter?.surface = view
         if view.overrideUserInterfaceStyle != interfaceStyle {
             view.overrideUserInterfaceStyle = interfaceStyle
         }
@@ -44,6 +46,9 @@ final class KeyboardPreviewSurface: UIView {
     private var appliedPresentation: KeyboardPresentation?
     private var appliedInteraction: Bool?
     private var appliedImageData: Data?
+    /// When the drawing last changed, and whether a finger landed on it since then.
+    private(set) var changedAt = Date()
+    var wasTouched = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -60,6 +65,12 @@ final class KeyboardPreviewSurface: UIView {
         surface.frame = bounds
     }
 
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let hit = super.hitTest(point, with: event)
+        if hit != nil, event?.type == .touches { wasTouched = true }
+        return hit
+    }
+
     func apply(
         presentation: KeyboardPresentation,
         backgroundImageData: Data?,
@@ -72,6 +83,9 @@ final class KeyboardPreviewSurface: UIView {
             surface.accessibilityElementsHidden = !isInteractive
             surface.accessibilityElements = isInteractive ? nil : []
             appliedInteraction = isInteractive
+        }
+        if appliedPresentation != presentation || appliedImageData != backgroundImageData {
+            (changedAt, wasTouched) = (Date(), false)
         }
         if appliedPresentation != presentation {
             surface.presentation = presentation

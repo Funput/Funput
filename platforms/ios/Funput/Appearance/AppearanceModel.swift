@@ -18,6 +18,7 @@ final class AppearanceModel: ObservableObject {
     let bootstrap: any KeyboardBootstrapSynchronizing
     let customStore: any CustomThemeStoring
     let assetStore: any ThemeAssetStoring
+    let snapshots: ThemeSnapshotLibrary
     private var didSetInitialMode = false
     private var imageDataCache: [String: Data] = [:]
 
@@ -25,11 +26,13 @@ final class AppearanceModel: ObservableObject {
         store: any FunputConfigurationStoring,
         customStore: any CustomThemeStoring = CustomThemeStore(),
         assetStore: any ThemeAssetStoring = PreviewThemeAssetStore(),
+        snapshotStore: any ThemeSnapshotStoring = PreviewThemeSnapshotStore(),
         bootstrap: any KeyboardBootstrapSynchronizing = NoopKeyboardBootstrapSynchronizer()
     ) {
         self.store = store
         self.customStore = customStore
         self.assetStore = assetStore
+        snapshots = ThemeSnapshotLibrary(storage: snapshotStore)
         self.bootstrap = bootstrap
         let loadedConfiguration = store.load()
         let loadedThemes = customStore.load()
@@ -136,13 +139,6 @@ final class AppearanceModel: ObservableObject {
     private func cleanupAssets() {
         let ids = Set(customThemes.compactMap { $0.theme.backgroundEffects.image?.assetID })
         assetStore.cleanup(referencedAssetIDs: ids)
+        snapshots.cleanup(keeping: Set(customThemes.map(\.id)))
     }
-}
-enum AppearancePreviewMode: String, CaseIterable, Identifiable {
-    case light
-    case dark
-
-    var id: String { rawValue }
-    var title: String { self == .light ? "Sáng" : "Tối" }
-    var interfaceStyle: UIUserInterfaceStyle { self == .light ? .light : .dark }
 }

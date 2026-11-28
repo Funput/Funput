@@ -3,27 +3,40 @@ import ThemeSchema
 import UIKit
 
 /// A lightweight gallery representation. Bundled themes show artwork captured from the
-/// production renderer (``BundledThemeThumbnail``); custom themes, and any theme the
-/// artwork cannot stand in for, fall back to a drawn sketch of palette and surfaces.
-/// Neither mounts another keyboard renderer.
+/// production renderer (``BundledThemeThumbnail``), custom themes a picture taken from a
+/// preview on screen (``ThemeSnapshotLibrary``). Without either, the card falls back to
+/// a drawn sketch of palette and surfaces. None mounts another keyboard renderer.
 struct ThemeCardThumbnail: View {
     let themeID: String
     let theme: ResolvedTheme
     let backgroundImageData: Data?
+    var snapshot: UIImage?
     let interfaceStyle: UIUserInterfaceStyle
 
     private let rowCounts = [10, 9, 7]
 
     var body: some View {
         if let artwork = BundledThemeThumbnail.image(themeID: themeID, theme: theme, style: interfaceStyle) {
-            Image(uiImage: artwork)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+            picture(artwork, contentMode: .fill)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        } else if let snapshot {
+            // A capture keeps the phone's own keyboard proportions, which rarely match
+            // the card, so it is fitted whole over a blurred fill of itself.
+            ZStack {
+                picture(snapshot, contentMode: .fill).blur(radius: 18, opaque: true)
+                picture(snapshot, contentMode: .fit)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         } else {
             sketch
         }
+    }
+
+    private func picture(_ image: UIImage, contentMode: ContentMode) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .aspectRatio(contentMode: contentMode)
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
     }
 
     /// The background sits in `.background` so it takes the keys' frame instead of setting
