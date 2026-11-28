@@ -26,17 +26,19 @@ struct ThemeCardThumbnail: View {
         }
     }
 
+    /// The background sits in `.background` so it takes the keys' frame instead of setting
+    /// it: a fill-scaled photo reports its own aspect, and as a ZStack sibling a portrait
+    /// photo stretched the whole sketch past the card (#805).
     private var sketch: some View {
-        ZStack {
-            background
-            VStack(spacing: 7) {
-                toolbar
-                ForEach(rowCounts.indices, id: \.self) { row in
-                    keyRow(row, count: rowCounts[row])
-                }
+        VStack(spacing: 7) {
+            toolbar
+            ForEach(rowCounts.indices, id: \.self) { row in
+                keyRow(row, count: rowCounts[row])
             }
-            .padding(12)
         }
+        .padding(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { background }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)

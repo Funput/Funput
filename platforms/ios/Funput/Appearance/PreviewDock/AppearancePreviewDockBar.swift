@@ -95,12 +95,15 @@ struct AppearancePreviewDockBar: View {
 
 private extension View {
     /// Keeps the title for VoiceOver either way, which hiding the text would not.
+    /// The title never wraps: the HStack would rather squeeze "Áp dụng" onto two lines
+    /// than shrink the mode picker, so a label that does not fit must drop to the
+    /// compact row instead.
     @ViewBuilder
     func dockLabelStyle(isCompact: Bool) -> some View {
         if isCompact {
             labelStyle(.iconOnly)
         } else {
-            labelStyle(.titleAndIcon)
+            labelStyle(.titleAndIcon).lineLimit(1).fixedSize()
         }
     }
 }
